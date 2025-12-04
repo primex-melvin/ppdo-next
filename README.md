@@ -1,4 +1,30 @@
-# Welcome to your Convex + Next.js + Convex Auth app
+# Conventional Commit Types
+
+A quick reference to the most commonly used commit message prefixes following the **Conventional Commits** standard.
+
+## 📘 Most Common Commit Types
+
+| Prefix   | Meaning                                                                 |
+|----------|-------------------------------------------------------------------------|
+| **feat:**    | Introduces a new feature                                               |
+| **fix:**     | Fixes a bug                                                            |
+| **docs:**    | Documentation changes only                                             |
+| **style:**   | Code style changes (formatting, missing semicolons, no logic changes) |
+| **refactor:**| Rewriting code without altering behavior                               |
+| **perf:**    | Performance improvements                                               |
+| **test:**    | Adding or updating tests only                                          |
+| **build:**   | Changes to build system, dependencies, or CI pipelines                 |
+| **ci:**      | CI configuration or scripts                                            |
+| **chore:**   | Maintenance tasks (e.g., cleaning files, bumps), no production code    |
+| **revert:**  | Reverts a previous commit                                              |
+
+---
+
+Feel free to copy or expand this list based on your team’s workflow!
+
+
+
+# Welcome to your Convex + React (Vite) + Convex Auth app
 
 This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
 
@@ -6,8 +32,8 @@ After the initial setup (<2 minutes) you'll have a working full-stack app using:
 
 - Convex as your backend (database, server logic)
 - [React](https://react.dev/) as your frontend (web page interactivity)
-- [Next.js](https://nextjs.org/) for optimized web hosting and page routing
-- [Tailwind](https://tailwindcss.com/) for building great looking accessible UI
+- [Vite](https://vitest.dev/) for optimized web hosting
+- [Tailwind](https://tailwindcss.com/) for building great looking UI
 - [Convex Auth](https://labs.convex.dev/auth) for authentication
 
 ## Get started
@@ -22,8 +48,12 @@ npm run dev
 If you're reading this README on GitHub and want to use this template, run:
 
 ```
-npm create convex@latest -- -t nextjs-convexauth
+npm create convex@latest -- -t react-vite-convexauth
 ```
+
+For more information on how to configure Convex Auth, check out the [Convex Auth docs](https://labs.convex.dev/auth/).
+
+For more examples of different Convex Auth flows, check out this [example repo](https://www.convex.dev/templates/convex-auth).
 
 ## Learn more
 
@@ -32,11 +62,6 @@ To learn more about developing your project with Convex, check out:
 - The [Tour of Convex](https://docs.convex.dev/get-started) for a thorough introduction to Convex principles.
 - The rest of [Convex docs](https://docs.convex.dev/) to learn about all Convex features.
 - [Stack](https://stack.convex.dev/) for in-depth articles on advanced topics.
-- [Convex Auth docs](https://labs.convex.dev/auth) for documentation on the Convex Auth library.
-
-## Configuring other authentication methods
-
-To configure different authentication methods, see [Configuration](https://labs.convex.dev/auth/config) in the Convex Auth docs.
 
 ## Join the community
 
