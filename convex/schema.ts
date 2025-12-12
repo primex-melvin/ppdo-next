@@ -722,6 +722,28 @@ export default defineSchema({
     .index("isPinned", ["isPinned"])
     .index("createdByAndProject", ["createdBy", "projectId"]),
 
+  /**
+   * Obligations.
+   * Tracks financial obligations/transactions for projects.
+   * Used in the Overview page "Recent Obligations" section.
+   */
+  obligations: defineTable({
+    projectId: v.id("projects"),
+    amount: v.number(),
+    name: v.string(),
+    email: v.string(),
+    type: v.string(),
+    description: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("projectId", ["projectId"])
+    .index("type", ["type"])
+    .index("createdBy", ["createdBy"])
+    .index("createdAt", ["createdAt"])
+    .index("projectAndType", ["projectId", "type"]),
+
   numbers: defineTable({
     value: v.number(),
   }),

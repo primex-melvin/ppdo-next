@@ -1,14 +1,25 @@
-// components/components/TransactionCard.tsx
+// app/dashboard/budget/[particularId]/[projectId]/components/TransactionCard.tsx
 
-import type React from "react"
-import { type TransactionCardProps } from "./types" // Import local type
+import type React from "react";
 
-export const TransactionCard: React.FC<TransactionCardProps> = ({ amount, name, email, type }) => {
-  const formattedAmount = amount.toLocaleString("en-US", { 
-    minimumFractionDigits: 2, 
-    maximumFractionDigits: 2 
-  })
-  
+export interface TransactionCardProps {
+  amount: number;
+  name: string;
+  email: string;
+  type: string;
+}
+
+export const TransactionCard: React.FC<TransactionCardProps> = ({
+  amount,
+  name,
+  email,
+  type,
+}) => {
+  const formattedAmount = amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
   return (
     <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
       <div className="flex flex-col gap-3">
@@ -21,10 +32,14 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({ amount, name, 
           </p>
         </div>
         <div className="text-left">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 break-words">{email}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
+            {name}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 break-words">
+            {email}
+          </p>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

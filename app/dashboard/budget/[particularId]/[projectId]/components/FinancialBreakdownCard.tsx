@@ -1,48 +1,64 @@
 // app/dashboard/budget/[particularId]/[projectId]/components/FinancialBreakdownCard.tsx
 
-"use client"
+"use client";
 
-import { useState } from "react"
-import {
-  Star,
-  TrendingUp,
-  DollarSign,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { useState } from "react";
+import { TrendingUp, DollarSign } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface FinancialBreakdownCardProps {
-  code?: string
-  description?: string
-  appropriation?: number
-  obligation?: number
-  balance?: number
+  projectId: Id<"projects">;
 }
 
-export function FinancialBreakdownCard({
-  code = "A",
-  description = "Crime Prevention and law enforcement activities",
-  appropriation = 10200000,
-  obligation = 950000,
-  balance = 9250000,
-}: FinancialBreakdownCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false)
+export function FinancialBreakdownCard({ projectId }: FinancialBreakdownCardProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  
+  // Fetch project data from backend
+  const project = useQuery(api.projects.get, { id: projectId });
+
+  if (!project) {
+    return (
+      <Card className="group relative overflow-hidden border-0 shadow-sm bg-white dark:bg-gray-900">
+        <CardContent className="space-y-4 p-6">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-4"></div>
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/3 mb-2"></div>
+                  <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Calculate effective budget (use revised if available, otherwise allocated)
+  const effectiveBudget = project.revisedBudget ?? project.allocatedBudget;
+  
+  // Get values from project
+  const appropriation = effectiveBudget;
+  const obligation = project.totalBudgetUtilized;
+  const balance = project.balance;
+  const description = project.projectName;
 
   // Calculate utilization rate
-  const utilizationRate = appropriation > 0 
-    ? ((obligation / appropriation) * 100).toFixed(2)
-    : "0.00"
-
-  const obligatedPercentage = ((obligation / appropriation) * 100).toFixed(1)
-  const remainingPercentage = ((balance / appropriation) * 100).toFixed(1)
+  const utilizationRate = project.utilizationRate.toFixed(2);
+  const obligatedPercentage = ((obligation / appropriation) * 100).toFixed(1);
+  const remainingPercentage = ((balance / appropriation) * 100).toFixed(1);
 
   return (
-    <Card
-      className="group relative overflow-hidden border-0 shadow-sm bg-white dark:bg-gray-900"
-    >
-      <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">{description}</p>
+    <Card className="group relative overflow-hidden border-0 shadow-sm bg-white dark:bg-gray-900">
+      <CardContent className="space-y-4 p-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+          {description}
+        </p>
 
         {/* Financial Details */}
         <div className="space-y-3">
@@ -51,7 +67,10 @@ export function FinancialBreakdownCard({
               Appropriation
             </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              ₱{appropriation.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₱{appropriation.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
           </div>
 
@@ -60,7 +79,10 @@ export function FinancialBreakdownCard({
               Obligation
             </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              ₱{obligation.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₱{obligation.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
           </div>
 
@@ -69,7 +91,10 @@ export function FinancialBreakdownCard({
               Balance
             </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              ₱{balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₱{balance.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
           </div>
 
@@ -78,9 +103,11 @@ export function FinancialBreakdownCard({
               Utilization Rate
             </p>
             <div className="flex items-center gap-3">
-              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{utilizationRate}%</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {utilizationRate}%
+              </p>
               <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-emerald-500 transition-all duration-300"
                   style={{ width: `${Math.min(Number(utilizationRate), 100)}%` }}
                 />
@@ -103,5 +130,5 @@ export function FinancialBreakdownCard({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

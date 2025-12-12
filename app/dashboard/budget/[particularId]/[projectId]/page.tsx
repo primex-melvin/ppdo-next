@@ -1,101 +1,100 @@
 // app/dashboard/budget/[particularId]/[projectId]/page.tsx
 
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter, useParams } from "next/navigation"
-import Link from "next/link"
-import { FinancialBreakdownTable } from "./components/FinancialBreakdownTable"
-import { getFinancialBreakdownByProject, getProjectById } from "./data"
-import type { FinancialBreakdownItem, Project } from "../../types"
-import { getParticularFullName } from "../data"
-import { updateItemInHierarchy, deleteItemFromHierarchy, addItemToHierarchy } from "./utils"
-import { FinancialBreakdownCard } from "./components/FinancialBreakdownCard"
-import { FinancialBreakdownTabs } from "./components/FinancialBreakdownTabs"
+import { useParams, useRouter } from "next/navigation";
+import { Id } from "@/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { FinancialBreakdownCard } from "./components/FinancialBreakdownCard";
+import { FinancialBreakdownTabs } from "./components/FinancialBreakdownTabs";
+import { ChevronLeft } from "lucide-react";
 
-export default function ProjectFinancialBreakdownPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [financialBreakdown, setFinancialBreakdown] = useState<FinancialBreakdownItem[]>([])
-  const [project, setProject] = useState<Project | null>(null)
-  const [particular, setParticular] = useState<string>("")
-  const router = useRouter()
-  const params = useParams()
+export default function ProjectDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  
+  // Get the raw string from params
+  const projectIdParam = params.projectId as string;
+  const particularIdParam = params.particularId as string;
 
-  // Extract projectId from params
-  const projectId = params.projectId as string
-  const particularId = params.particularId as string
+  // Validate and cast to Id<"projects">
+  // This is safe because Convex IDs are just strings with a specific format
+  const projectId = projectIdParam as Id<"projects">;
 
-  useEffect(() => {
-    // Load project data when params are available
-    if (projectId && particularId) {
-      const projectData = getProjectById(projectId, particularId)
-      setProject(projectData)
-      setParticular(particularId)
-      
-      const breakdown = getFinancialBreakdownByProject(projectId)
-      setFinancialBreakdown(breakdown)
-    }
-  }, [projectId, particularId])
+  // 1. Fetch project data first
+  const project = useQuery(api.projects.get, { id: projectId });
 
-  const handleAdd = (item: Omit<FinancialBreakdownItem, "id" | "children">) => {
-    // In production, call API
-    // For now, add to root level (parentId: null)
-    setFinancialBreakdown(addItemToHierarchy(financialBreakdown, null, item))
+  // 2. Fetch budget item using the ID found inside the project, NOT the URL.
+  // We use "skip" to wait until the project loads so we don't pass an invalid ID.
+  const budgetItem = useQuery(
+    api.budgetItems.get, 
+    project?.budgetItemId ? { id: project.budgetItemId } : "skip"
+  );
+
+  // Helper function to navigate back correctly
+  const handleBack = () => {
+    // Use the real ID if loaded, otherwise fallback to the URL param
+    const targetId = budgetItem?._id ?? particularIdParam;
+    router.push(`/dashboard/budget/${targetId}`);
+  };
+
+  if (!project || !budgetItem) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+            <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="h-96 bg-gray-200 dark:bg-gray-800 rounded"></div>
+              <div className="lg:col-span-3 h-96 bg-gray-200 dark:bg-gray-800 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
-
-  const handleEdit = (id: string, item: Omit<FinancialBreakdownItem, "id" | "children">) => {
-    // In production, call API
-    setFinancialBreakdown(updateItemInHierarchy(financialBreakdown, id, item))
-  }
-
-  const handleDelete = (id: string) => {
-    // In production, call API
-    setFinancialBreakdown(deleteItemFromHierarchy(financialBreakdown, id))
-  }
-
-  const particularFullName = getParticularFullName(particular)
 
   return (
-    <>
-      {/* Back Button and Page Header */}
-      <div className="mb-6 no-print">
-        <Link
-          href={`/dashboard/budget/${encodeURIComponent(particular)}`}
-          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 mb-4 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to {particularFullName}
-        </Link>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
 
-        <h1
-          className="text-3xl sm:text-4xl font-semibold text-zinc-900 dark:text-zinc-100 mb-1"
-          style={{ fontFamily: "var(--font-cinzel), serif" }}
+        {/* Back Button */}
+        {/* <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
         >
-          {project?.projectName || "Project Financial Breakdown"}
-        </h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          {particularFullName} - Balances as of{" "}
-          {new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
-      </div>
+          <ChevronLeft className="w-5 h-5" />
+          <span>Back to Budget Overview</span>
+        </button> */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-        {/* User Card - 1 column on large screens */}
-        <div className="lg:col-span-1">
-          <FinancialBreakdownCard />
+        {/* Header */}
+        <div className="space-y-2">
+          <h1
+            className="text-4xl font-bold text-gray-900 dark:text-gray-100"
+            style={{ fontFamily: "Cinzel, serif" }}
+          >
+            {project.projectName}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Detailed project tracking and budget utilization
+          </p>
         </div>
 
-        {/* Financial Breakdown Table - 3 columns on large screens */}
-        <div className="lg:col-span-3">
-          <FinancialBreakdownTabs projectId={projectId} />
+        {/* Layout Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Card - Financial Stats */}
+          <div className="lg:col-span-1">
+            <FinancialBreakdownCard projectId={projectId} />
+          </div>
+
+          {/* Right Side - Tabs (Overview, Analytics, etc.) */}
+          <div className="lg:col-span-3">
+            <FinancialBreakdownTabs projectId={projectId} />
+          </div>
         </div>
       </div>
-    </>
-  )
+    </div>
+  );
 }

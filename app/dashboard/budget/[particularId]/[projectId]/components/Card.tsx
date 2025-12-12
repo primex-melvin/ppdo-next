@@ -1,8 +1,13 @@
-// components/components/Card.tsx
+// app/dashboard/budget/[particularId]/[projectId]/components/Card.tsx
 
-import type React from "react"
-import { type CardProps } from "./types" // Import local type
+import type React from "react";
+import { type ReactNode } from "react";
+
+export interface CardProps {
+  children: ReactNode;
+  className?: string;
+}
 
 export const Card: React.FC<CardProps> = ({ children, className = "" }) => (
   <div className={`bg-white dark:bg-gray-900 ${className}`}>{children}</div>
-)
+);

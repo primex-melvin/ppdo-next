@@ -4,13 +4,18 @@
 
 import type React from "react"
 import { useState } from "react"
+import { Id } from "@/convex/_generated/dataModel"
 import { OverviewContent } from "./tabs/OverviewContent"
 import { AnalyticsContent } from "./tabs/AnalyticsContent"
 import { InspectionContent } from "./tabs/InspectionContent"
 import { RemarksContent } from "./tabs/RemarksContent"
-import { mockFinancialBreakdown, stats, transactions } from "./mockData" // Import mock data
-import { type FinancialBreakdownTabsProps } from "./types" // Import local type
+import { mockFinancialBreakdown } from "./mockData" // Import mock data
 import { Card } from "./Card"
+
+// Properly type the props with Convex ID
+interface FinancialBreakdownTabsProps {
+  projectId: Id<"projects">
+}
 
 // Placeholder for the missing ReportContent component - keeps the original structure intact
 const ReportContent: React.FC = () => {
@@ -39,15 +44,12 @@ export const FinancialBreakdownTabs: React.FC<FinancialBreakdownTabsProps> = ({ 
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
-        // Pass necessary data (mock data in this case)
-        return <OverviewContent stats={stats} transactions={transactions} />
+        return <OverviewContent projectId={projectId} />
       case "analytics":
         return <AnalyticsContent />
       case "inspection":
-        // Pass necessary data (mock data in this case)
         return <InspectionContent data={mockFinancialBreakdown} />
       case "remarks":
-        // Pass projectId which is required by RemarksContent
         return <RemarksContent projectId={projectId} /> 
       case "report":
         return <ReportContent />
