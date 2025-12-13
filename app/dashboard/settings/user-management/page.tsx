@@ -1,12 +1,16 @@
+// app/dashboard/settings/user-management/page.tsx
+
 "use client";
 
 import { useState } from "react";
 import { UserFormData, useUserManagement } from "./hooks/useUserManagement";
 import { useUserFilters } from "./hooks/useUserFilters";
+import { useDepartmentManagement } from "./hooks/useDepartmentManagement";
 import { UserModal } from "./components/UserModal";
 import { UserDeleteDialog } from "./components/UserDeleteDialog";
+import { DepartmentModal } from "./components/DepartmentModal";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Building2 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { formatDate, getInitials } from "@/lib/utils";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
@@ -15,9 +19,7 @@ import { UserFilters } from "./components/UserFilters";
 import { UserRoleBadge } from "./components/UserRoleBadge";
 import { UserActions } from "./components/UserActions";
 import { UserStatusBadge } from "./components/UserStatusBadge";
-import { User } from "@/types/user.types"; // Added import
-
-// Removed local User interface to fix type mismatch with UserModal
+import { User } from "@/types/user.types";
 
 export default function UserManagementPage() {
   const { accentColorValue } = useAccentColor();
@@ -27,15 +29,25 @@ export default function UserManagementPage() {
     departments,
     isLoading,
     isSubmitting,
+    createUser,
     updateUser,
     updateStatus,
+    deleteUser,
   } = useUserManagement();
+  const {
+    departments: allDepartments,
+    isSubmitting: isDepartmentSubmitting,
+    createDepartment,
+    updateDepartment,
+    deleteDepartment,
+  } = useDepartmentManagement();
   const { filters, filteredUsers, updateFilter } = useUserFilters(users);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // Pagination
@@ -62,18 +74,23 @@ export default function UserManagementPage() {
 
   const handleModalSubmit = async (data: Partial<UserFormData>) => {
     if (selectedUser) {
+      // Updating existing user
       return await updateUser(selectedUser._id as Id<"users">, data);
-    } else { 
-      console.log("User creation not yet implemented"); 
-      return false; 
-    } 
+    } else {
+      // Creating new user
+      return await createUser(data as UserFormData);
+    }
   };
 
   const handleDeleteConfirm = async () => {
     if (!selectedUser) return;
-    console.log("User deletion not yet implemented");
-    setShowDeleteDialog(false);
-    setSelectedUser(null);
+    
+    const success = await deleteUser(selectedUser._id as Id<"users">);
+    
+    if (success) {
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
+    }
   };
 
   const handleUpdateStatus = async (
@@ -87,7 +104,6 @@ export default function UserManagementPage() {
       if (!reason) return;
     }
     
-    // Use nullish coalescing to ensure 'reason' is string or undefined, not null
     await updateStatus(user._id as Id<"users">, newStatus, reason ?? undefined);
   };
 
@@ -131,14 +147,29 @@ export default function UserManagementPage() {
               Manage system users and access permissions
             </p>
           </div>
-          <Button
-            onClick={handleAddUser}
-            style={{ backgroundColor: accentColorValue }}
-            className="text-white hover:opacity-90"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
+          <div className="flex gap-2">
+            {/* Manage Departments Button - Only for Super Admin */}
+            {isSuperAdmin && (
+              <Button
+                onClick={() => setShowDepartmentModal(true)}
+                variant="outline"
+                className="border-zinc-300 dark:border-zinc-700"
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                Manage Departments
+              </Button>
+            )}
+            
+            {/* Add User Button */}
+            <Button
+              onClick={handleAddUser}
+              style={{ backgroundColor: accentColorValue }}
+              className="text-white hover:opacity-90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add User
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -299,6 +330,19 @@ export default function UserManagementPage() {
         }}
         onConfirm={handleDeleteConfirm}
         user={selectedUser}
+        isDeleting={isSubmitting}
+      />
+
+      <DepartmentModal
+        open={showDepartmentModal}
+        onClose={() => setShowDepartmentModal(false)}
+        departments={allDepartments}
+        users={users}
+        onCreate={createDepartment}
+        onUpdate={updateDepartment}
+        onDelete={deleteDepartment}
+        isSubmitting={isDepartmentSubmitting}
+        accentColor={accentColorValue}
       />
     </>
   );

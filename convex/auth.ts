@@ -59,6 +59,271 @@ export const initializeNewUser = mutation({
 });
 
 /**
+ * Create a new user (admin and super_admin only)
+ */
+export const createUser = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    role: v.union(
+      v.literal("super_admin"),
+      v.literal("admin"),
+      v.literal("user")
+    ),
+    departmentId: v.optional(v.id("departments")),
+    position: v.optional(v.string()),
+    employeeId: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("inactive"),
+        v.literal("suspended")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db.get(currentUserId);
+    
+    // Only super_admin and admin can create users
+    if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "admin")) {
+      throw new Error("Not authorized - administrator access required");
+    }
+    
+    // Only super_admin can create other super_admins
+    if (args.role === "super_admin" && currentUser.role !== "super_admin") {
+      throw new Error("Not authorized - only super_admin can create other super_admins");
+    }
+
+    // Check if email already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existingUser) {
+      throw new Error("A user with this email already exists");
+    }
+
+    // Verify department exists if provided
+    if (args.departmentId) {
+      const department = await ctx.db.get(args.departmentId);
+      if (!department) {
+        throw new Error("Department not found");
+      }
+    }
+
+    const now = Date.now();
+    
+    // Create the user
+    const userId = await ctx.db.insert("users", {
+      name: args.name,
+      email: args.email,
+      role: args.role,
+      departmentId: args.departmentId,
+      position: args.position,
+      employeeId: args.employeeId,
+      status: args.status || "active",
+      createdAt: now,
+      updatedAt: now,
+      lastLogin: now,
+      failedLoginAttempts: 0,
+    });
+
+    // Log the action
+    await ctx.db.insert("userAuditLog", {
+      performedBy: currentUserId,
+      targetUserId: userId,
+      action: "user_created",
+      newValues: JSON.stringify({
+        name: args.name,
+        email: args.email,
+        role: args.role,
+        departmentId: args.departmentId,
+        status: args.status || "active",
+      }),
+      timestamp: now,
+    });
+
+    return { userId, success: true };
+  },
+});
+
+/**
+ * Update user profile information (admin and super_admin only)
+ */
+export const updateUserProfile = mutation({
+  args: {
+    userId: v.id("users"),
+    name: v.optional(v.string()),
+    position: v.optional(v.string()),
+    employeeId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db.get(currentUserId);
+    
+    // Only super_admin and admin can update user profiles
+    if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "admin")) {
+      throw new Error("Not authorized - administrator access required");
+    }
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new Error("User not found");
+    }
+
+    // Admin cannot update super_admin profiles
+    if (currentUser.role === "admin" && targetUser.role === "super_admin") {
+      throw new Error("Not authorized - cannot modify super_admin profile");
+    }
+
+    const now = Date.now();
+    const updateData: any = {
+      updatedAt: now,
+    };
+
+    if (args.name !== undefined) updateData.name = args.name;
+    if (args.position !== undefined) updateData.position = args.position;
+    if (args.employeeId !== undefined) updateData.employeeId = args.employeeId;
+
+    await ctx.db.patch(args.userId, updateData);
+
+    // Log the action
+    await ctx.db.insert("userAuditLog", {
+      performedBy: currentUserId,
+      targetUserId: args.userId,
+      action: "user_updated",
+      previousValues: JSON.stringify({
+        name: targetUser.name,
+        position: targetUser.position,
+        employeeId: targetUser.employeeId,
+      }),
+      newValues: JSON.stringify(updateData),
+      timestamp: now,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Delete a user (admin and super_admin only)
+ */
+export const deleteUser = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db.get(currentUserId);
+    
+    // Only super_admin and admin can delete users
+    if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "admin")) {
+      throw new Error("Not authorized - administrator access required");
+    }
+
+    // Cannot delete yourself
+    if (currentUserId === args.userId) {
+      throw new Error("Cannot delete your own account");
+    }
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new Error("User not found");
+    }
+
+    // Admin cannot delete super_admin
+    if (currentUser.role === "admin" && targetUser.role === "super_admin") {
+      throw new Error("Not authorized - cannot delete super_admin");
+    }
+
+    const now = Date.now();
+
+    // Log the action before deletion
+    await ctx.db.insert("userAuditLog", {
+      performedBy: currentUserId,
+      targetUserId: args.userId,
+      action: "user_deleted",
+      previousValues: JSON.stringify({
+        name: targetUser.name,
+        email: targetUser.email,
+        role: targetUser.role,
+        status: targetUser.status,
+      }),
+      timestamp: now,
+    });
+
+    // Delete related sessions
+    const sessions = await ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    for (const session of sessions) {
+      await ctx.db.delete(session._id);
+    }
+
+    // Delete related accounts
+    const accounts = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    for (const account of accounts) {
+      await ctx.db.delete(account._id);
+    }
+
+    // Delete user permissions
+    const userPermissions = await ctx.db
+      .query("userPermissions")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    for (const permission of userPermissions) {
+      await ctx.db.delete(permission._id);
+    }
+
+    // Delete device fingerprints
+    const devices = await ctx.db
+      .query("deviceFingerprints")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    for (const device of devices) {
+      await ctx.db.delete(device._id);
+    }
+
+    // Delete login locations
+    const locations = await ctx.db
+      .query("loginLocations")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    for (const location of locations) {
+      await ctx.db.delete(location._id);
+    }
+
+    // Finally, delete the user
+    await ctx.db.delete(args.userId);
+
+    return { success: true };
+  },
+});
+
+/**
  * Verify user can sign in based on status
  * Enhanced with login attempt recording
  */
@@ -305,7 +570,7 @@ export const recordFailedLogin = mutation({
 
     // Record login attempt
     const attemptId = await ctx.db.insert("loginAttempts", {
-      userId: user?._id, // Will be undefined if user not found, which is allowed
+      userId: user?._id,
       identifier: args.email,
       status,
       failureReason: args.failureReason,

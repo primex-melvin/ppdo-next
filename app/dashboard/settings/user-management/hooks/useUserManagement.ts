@@ -20,14 +20,42 @@ export interface UserFormData {
 export function useUserManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Queries - Fixed to pass empty objects as arguments
+  // Queries
   const users = useQuery(api.auth.listAllUsers, {});
   const departments = useQuery(api.departments.list, {});
 
   // Mutations
+  const createUserMutation = useMutation(api.auth.createUser);
   const updateUserRole = useMutation(api.auth.updateUserRole);
   const updateUserStatus = useMutation(api.auth.updateUserStatus);
   const updateUserDepartment = useMutation(api.auth.updateUserDepartment);
+  const updateUserProfile = useMutation(api.auth.updateUserProfile);
+  const deleteUserMutation = useMutation(api.auth.deleteUser);
+
+  // Create user
+  const handleCreateUser = async (data: UserFormData) => {
+    try {
+      setIsSubmitting(true);
+      
+      await createUserMutation({
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        departmentId: data.departmentId,
+        position: data.position,
+        employeeId: data.employeeId,
+        status: data.status,
+      });
+      
+      toast.success("User created successfully");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create user");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Update role
   const handleUpdateRole = async (
@@ -98,6 +126,16 @@ export function useUserManagement() {
     try {
       setIsSubmitting(true);
       
+      // Update profile fields (name, position, employeeId)
+      if (data.name || data.position || data.employeeId) {
+        await updateUserProfile({
+          userId,
+          name: data.name,
+          position: data.position,
+          employeeId: data.employeeId,
+        });
+      }
+      
       // Update role if provided
       if (data.role) {
         await updateUserRole({ userId, newRole: data.role });
@@ -128,14 +166,33 @@ export function useUserManagement() {
     }
   };
 
+  // Delete user
+  const handleDeleteUser = async (userId: Id<"users">) => {
+    try {
+      setIsSubmitting(true);
+      
+      await deleteUserMutation({ userId });
+      
+      toast.success("User deleted successfully");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete user");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     users,
     departments,
     isLoading: users === undefined || departments === undefined,
     isSubmitting,
+    createUser: handleCreateUser,
     updateRole: handleUpdateRole,
     updateStatus: handleUpdateStatus,
     updateDepartment: handleUpdateDepartment,
     updateUser: handleUpdateUser,
+    deleteUser: handleDeleteUser,
   };
 }
