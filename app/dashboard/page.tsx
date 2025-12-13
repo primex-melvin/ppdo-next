@@ -119,9 +119,8 @@ export default function Dashboard() {
           Overview of planning and development activities
         </p>
       </div>
-
-
-      {/* (moved) */}
+      
+      <LoginTrail />
 
       {/* Gauges + Bar Charts + Status Blocks */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
@@ -338,7 +337,6 @@ export default function Dashboard() {
             />
           </div>
           <div>
-            <LoginTrail />
         </div>
       </div>
     </>

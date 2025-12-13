@@ -14,6 +14,7 @@ import type * as departments from "../departments.js";
 import type * as http from "../http.js";
 import type * as inspections from "../inspections.js";
 import type * as lib_rbac from "../lib/rbac.js";
+import type * as loginTrail from "../loginTrail.js";
 import type * as media from "../media.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as obligations from "../obligations.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   inspections: typeof inspections;
   "lib/rbac": typeof lib_rbac;
+  loginTrail: typeof loginTrail;
   media: typeof media;
   myFunctions: typeof myFunctions;
   obligations: typeof obligations;

@@ -1,20 +1,68 @@
 // app/signin/page.tsx
 
 "use client";
-
 import { useAuthActions } from "@convex-dev/auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useState, useEffect } from "react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-export default function SignUp() {
+export default function SignIn() {
   const { signIn } = useAuthActions();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [clientIP, setClientIP] = useState<string>("Unknown");
   const router = useRouter();
-  const updateLastLogin = useMutation(api.myFunctions.updateLastLogin);
+  
+  // Mutations for login trail tracking
+  const recordSuccessfulLogin = useMutation(api.auth.recordSuccessfulLogin);
+  const recordFailedLogin = useMutation(api.auth.recordFailedLogin);
+
+  // Fetch client IP on mount
+  useEffect(() => {
+    async function fetchIP() {
+      try {
+        // Try primary IP detection service
+        const response = await fetch('https://api.ipify.org?format=json', {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setClientIP(data.ip || 'Unknown');
+          return;
+        }
+      } catch (error) {
+        // Ignore errors
+      }
+
+      // Fallback to alternative service
+      try {
+        const response = await fetch('https://api.my-ip.io/ip', {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (response.ok) {
+          const ip = await response.text();
+          setClientIP(ip.trim() || 'Unknown');
+          return;
+        }
+      } catch (error) {
+        // Ignore errors
+      }
+
+      // Final fallback
+      setClientIP('Unknown');
+    }
+    fetchIP();
+  }, []);
+
+  // Helper function to get user agent
+  const getUserAgent = () => {
+    if (typeof window !== "undefined") {
+      return window.navigator.userAgent;
+    }
+    return undefined;
+  };
 
   return (
     <main
@@ -187,25 +235,60 @@ export default function SignUp() {
                 e.preventDefault();
                 setLoading(true);
                 setError(null);
-                
                 const formData = new FormData(e.target as HTMLFormElement);
                 const email = formData.get("email") as string;
+                const ipAddress = clientIP;
+                const userAgent = getUserAgent();
                 
                 try {
                   // Sign in with Convex Auth
                   formData.set("flow", "signIn");
-                  const result = await signIn("password", formData);
                   
-                  // Update last login timestamp after successful sign in
-                  if (result && typeof result === 'object' && '_id' in result) {
-                    await updateLastLogin({ userId: result._id as any });
+                  await signIn("password", formData);
+                  
+                  // Record successful login attempt IMMEDIATELY before redirecting
+                  try {
+                    await recordSuccessfulLogin({
+                      email: email,
+                      ipAddress: ipAddress,
+                      userAgent: userAgent,
+                    });
+                  } catch (trackingError) {
+                    // Continue to dashboard anyway, don't block user entry for logging failure
                   }
                   
                   // Redirect to dashboard
                   router.push("/dashboard");
                 } catch (error: any) {
-                  console.error("Sign in error:", error);
-                  setError(error.message || "Failed to sign in. Please check your credentials.");
+                  // Capture the error message or default to a generic auth failure message
+                  let failureReasonForLog = error.message || "Authentication Failed (Invalid email or password)";
+
+                  // Record failed login attempt
+                  try {
+                    await recordFailedLogin({
+                      email,
+                      ipAddress,
+                      userAgent,
+                      failureReason: failureReasonForLog,
+                    });
+                  } catch (trackingError) {
+                    // Don't block error display if tracking fails
+                  }
+                  
+                  // Determine error message for the user
+                  let errorMessage = "Failed to sign in. Please check your credentials.";
+                  // Check for specific error types
+                  if (error.message?.includes("locked")) {
+                    errorMessage = "Your account has been locked due to multiple failed login attempts. Please contact support.";
+                  } else if (error.message?.includes("suspended")) {
+                    errorMessage = "Your account has been suspended. Please contact support.";
+                  } else if (error.message?.includes("inactive")) {
+                    errorMessage = "Your account is inactive. Please contact support.";
+                  } else if (error.message) {
+                    errorMessage = error.message;
+                  }
+                  
+                  setError(errorMessage);
                   setLoading(false);
                 }
               }}

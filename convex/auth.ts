@@ -21,6 +21,13 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           updatedAt: now,
           lastLogin: now,
         });
+      } else {
+        // Existing user - update last login
+        const now = Date.now();
+        await ctx.db.patch(args.userId, {
+          lastLogin: now,
+          updatedAt: now,
+        });
       }
     },
   },
@@ -53,6 +60,7 @@ export const initializeNewUser = mutation({
 
 /**
  * Verify user can sign in based on status
+ * Enhanced with login attempt recording
  */
 export const verifyUserCanSignIn = query({
   args: {
@@ -70,6 +78,14 @@ export const verifyUserCanSignIn = query({
 
     if (!user) {
       return { allowed: true }; // Let auth handle user not found
+    }
+
+    // Check if account is locked
+    if (user.isLocked) {
+      return {
+        allowed: false,
+        reason: user.lockReason || "Your account has been locked for security reasons.",
+      };
     }
 
     // Check if status field exists (for backward compatibility)
@@ -92,6 +108,263 @@ export const verifyUserCanSignIn = query({
     }
 
     return { allowed: true };
+  },
+});
+
+/**
+ * Record successful login
+ * Call this after successful authentication
+ */
+export const recordSuccessfulLogin = mutation({
+  args: {
+    userId: v.optional(v.id("users")),
+    email: v.optional(v.string()), 
+    ipAddress: v.string(),
+    userAgent: v.optional(v.string()),
+    sessionId: v.optional(v.id("authSessions")),
+  },
+  handler: async (ctx, args) => {
+    let user = null;
+    
+    // Find user by ID or Email
+    if (args.userId) {
+      user = await ctx.db.get(args.userId);
+    } else if (args.email) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("email", (q) => q.eq("email", args.email))
+        .first();
+    }
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const userId = user._id;
+    const now = Date.now();
+
+    // Parse user agent to extract device and browser info
+    const deviceInfo = parseUserAgent(args.userAgent);
+    const geoLocation = await parseIPAddress(args.ipAddress);
+
+    // Record login attempt
+    await ctx.db.insert("loginAttempts", {
+      userId: userId,
+      identifier: user.email || args.email || "unknown",
+      status: "success",
+      ipAddress: args.ipAddress,
+      geoLocation: geoLocation ? JSON.stringify(geoLocation) : undefined,
+      deviceInfo: JSON.stringify(deviceInfo.device),
+      browserInfo: JSON.stringify(deviceInfo.browser),
+      sessionId: args.sessionId,
+      timestamp: now,
+      riskScore: 0,
+      flaggedForReview: false,
+    });
+
+    // Update user's last login and reset failed attempts
+    await ctx.db.patch(userId, {
+      lastLogin: now,
+      failedLoginAttempts: 0,
+      updatedAt: now,
+    });
+
+    // Update or create device fingerprint
+    const fingerprint = generateDeviceFingerprint(args.ipAddress, args.userAgent);
+    const existingDevice = await ctx.db
+      .query("deviceFingerprints")
+      .withIndex("userAndFingerprint", (q) => 
+        q.eq("userId", userId).eq("fingerprint", fingerprint)
+      )
+      .first();
+
+    if (existingDevice) {
+      // Update existing device
+      await ctx.db.patch(existingDevice._id, {
+        lastSeen: now,
+        lastIpAddress: args.ipAddress,
+        loginCount: existingDevice.loginCount + 1,
+        isActive: true,
+      });
+    } else {
+      // Create new device
+      await ctx.db.insert("deviceFingerprints", {
+        userId: userId,
+        fingerprint,
+        deviceInfo: JSON.stringify(deviceInfo.device),
+        browserInfo: JSON.stringify(deviceInfo.browser),
+        firstSeen: now,
+        lastSeen: now,
+        lastIpAddress: args.ipAddress,
+        isTrusted: false,
+        loginCount: 1,
+        isActive: true,
+      });
+    }
+
+    // Update or create login location
+    if (geoLocation) {
+      const existingLocation = await ctx.db
+        .query("loginLocations")
+        .withIndex("userAndLocation", (q) => 
+          q.eq("userId", userId)
+           .eq("city", geoLocation.city)
+           .eq("country", geoLocation.country)
+        )
+        .first();
+
+      if (existingLocation) {
+        await ctx.db.patch(existingLocation._id, {
+          lastSeen: now,
+          loginCount: existingLocation.loginCount + 1,
+        });
+      } else {
+        await ctx.db.insert("loginLocations", {
+          userId: userId,
+          city: geoLocation.city,
+          region: geoLocation.region,
+          country: geoLocation.country,
+          coordinates: JSON.stringify({ lat: 0, lng: 0 }),
+          firstSeen: now,
+          lastSeen: now,
+          isTrusted: false,
+          loginCount: 1,
+        });
+      }
+    }
+
+    return { success: true };
+  },
+});
+
+/**
+ * Record failed login attempt
+ * Call this when login fails (e.g. invalid password)
+ */
+export const recordFailedLogin = mutation({
+  args: {
+    email: v.string(),
+    ipAddress: v.string(),
+    userAgent: v.optional(v.string()),
+    failureReason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", args.email))
+      .first();
+
+    const now = Date.now();
+    const deviceInfo = parseUserAgent(args.userAgent);
+    const geoLocation = await parseIPAddress(args.ipAddress);
+
+    // Calculate risk score
+    let riskScore = 20; // Base score for failed login
+    const riskFactors: string[] = [];
+
+    // Check for multiple failed attempts
+    if (user) {
+      const recentFailedAttempts = await ctx.db
+        .query("loginAttempts")
+        .withIndex("userAndStatus", (q) => 
+          q.eq("userId", user._id).eq("status", "failed")
+        )
+        .order("desc")
+        .take(10);
+
+      const recentCount = recentFailedAttempts.filter(
+        a => a.timestamp > now - 60 * 60 * 1000 // Last hour
+      ).length;
+
+      if (recentCount > 3) {
+        riskScore += 30;
+        riskFactors.push("multiple_failed_attempts");
+      }
+
+      // Check for unusual location
+      const knownLocations = await ctx.db
+        .query("loginLocations")
+        .withIndex("userId", (q) => q.eq("userId", user._id))
+        .collect();
+      
+      const locationKnown = geoLocation && knownLocations.some(
+        loc => loc.city === geoLocation.city && loc.country === geoLocation.country
+      );
+
+      if (geoLocation && !locationKnown) {
+        riskScore += 25;
+        riskFactors.push("unusual_location");
+      }
+    } else {
+      // User does not exist, but we still log it with a high initial risk
+      riskScore += 10;
+      riskFactors.push("unknown_user");
+    }
+
+    const status = riskScore > 70 ? "suspicious" : "failed";
+
+    // Record login attempt
+    const attemptId = await ctx.db.insert("loginAttempts", {
+      userId: user?._id, // Will be undefined if user not found, which is allowed
+      identifier: args.email,
+      status,
+      failureReason: args.failureReason,
+      ipAddress: args.ipAddress,
+      geoLocation: geoLocation ? JSON.stringify(geoLocation) : undefined,
+      deviceInfo: JSON.stringify(deviceInfo.device),
+      browserInfo: JSON.stringify(deviceInfo.browser),
+      timestamp: now,
+      riskScore,
+      riskFactors: JSON.stringify(riskFactors),
+      flaggedForReview: riskScore > 70,
+    });
+
+    // Update user's failed login count if they exist
+    if (user) {
+      const failedCount = (user.failedLoginAttempts || 0) + 1;
+      
+      await ctx.db.patch(user._id, {
+        failedLoginAttempts: failedCount,
+        lastFailedLogin: now,
+        updatedAt: now,
+      });
+
+      // Lock account if too many failed attempts
+      if (failedCount >= 5) {
+        await ctx.db.patch(user._id, {
+          isLocked: true,
+          lockReason: `Account locked after ${failedCount} failed login attempts`,
+          lockedAt: now,
+        });
+
+        // Create security alert
+        await ctx.db.insert("securityAlerts", {
+          type: "account_locked",
+          severity: "high",
+          userId: user._id,
+          loginAttemptId: attemptId,
+          title: "Account Locked - Multiple Failed Attempts",
+          description: `Account ${args.email} has been locked after ${failedCount} failed login attempts.`,
+          status: "open",
+          createdAt: now,
+        });
+      } else if (riskScore > 70) {
+        // Create security alert for suspicious attempt
+        await ctx.db.insert("securityAlerts", {
+          type: "suspicious_login",
+          severity: "medium",
+          userId: user._id,
+          loginAttemptId: attemptId,
+          title: "Suspicious Login Attempt",
+          description: `Suspicious login attempt detected for ${args.email} from ${args.ipAddress}`,
+          metadata: JSON.stringify({ riskScore, riskFactors }),
+          status: "open",
+          createdAt: now,
+        });
+      }
+    }
+
+    return { success: true, riskScore, status };
   },
 });
 
@@ -433,3 +706,90 @@ export const getUserAuditLog = query({
     return enrichedLogs;
   },
 });
+
+// Helper functions
+
+function parseUserAgent(userAgent?: string) {
+  // Simple user agent parsing
+  const ua = userAgent || "";
+  
+  const device = {
+    type: "Unknown",
+    os: "Unknown",
+    osVersion: "",
+  };
+  
+  const browser = {
+    browser: "Unknown",
+    browserVersion: "",
+    userAgent: ua,
+  };
+
+  // Detect OS
+  if (ua.includes("Windows")) {
+    device.os = "Windows";
+    device.type = "Windows PC";
+  } else if (ua.includes("Mac OS")) {
+    device.os = "macOS";
+    device.type = ua.includes("iPhone") || ua.includes("iPad") ? "iOS Device" : "MacBook";
+  } else if (ua.includes("Android")) {
+    device.os = "Android";
+    device.type = "Android Device";
+  } else if (ua.includes("Linux")) {
+    device.os = "Linux";
+    device.type = "Linux PC";
+  }
+
+  // Detect Browser
+  if (ua.includes("Chrome") && !ua.includes("Edge")) {
+    browser.browser = "Chrome";
+    const match = ua.match(/Chrome\/(\d+)/);
+    if (match) browser.browserVersion = match[1];
+  } else if (ua.includes("Firefox")) {
+    browser.browser = "Firefox";
+    const match = ua.match(/Firefox\/(\d+)/);
+    if (match) browser.browserVersion = match[1];
+  } else if (ua.includes("Safari") && !ua.includes("Chrome")) {
+    browser.browser = "Safari";
+    const match = ua.match(/Version\/(\d+)/);
+    if (match) browser.browserVersion = match[1];
+  } else if (ua.includes("Edge")) {
+    browser.browser = "Edge";
+    const match = ua.match(/Edge\/(\d+)/);
+    if (match) browser.browserVersion = match[1];
+  }
+
+  return { device, browser };
+}
+
+async function parseIPAddress(ipAddress: string) {
+  // Simple IP-based geolocation
+  // For now, detect if it's a local IP
+  if (ipAddress.startsWith("192.168.") || ipAddress.startsWith("10.") || ipAddress === "127.0.0.1") {
+    return {
+      city: "Tarlac City",
+      region: "Central Luzon",
+      country: "Philippines",
+    };
+  }
+
+  // For production, implement real geolocation lookup
+  return {
+    city: "Unknown",
+    region: "Unknown",
+    country: "Unknown",
+  };
+}
+
+function generateDeviceFingerprint(ipAddress: string, userAgent?: string): string {
+  // Simple fingerprinting
+  const data = `${ipAddress}-${userAgent || "unknown"}`;
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    const char = data.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return `fp_${Math.abs(hash).toString(36)}`;
+}
