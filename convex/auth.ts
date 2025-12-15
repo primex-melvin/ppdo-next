@@ -1058,3 +1058,94 @@ function generateDeviceFingerprint(ipAddress: string, userAgent?: string): strin
   }
   return `fp_${Math.abs(hash).toString(36)}`;
 }
+
+/**
+ * Check the onboarding status of the current user.
+ * Returns the list of completed steps and necessary data for the onboarding flow.
+ */
+export const getOnboardingStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return null;
+    }
+
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      return null;
+    }
+
+    // Get all active departments for the selection dropdown
+    const departments = await ctx.db
+      .query("departments")
+      .withIndex("isActive", (q) => q.eq("isActive", true))
+      .collect();
+
+    const result = {
+      userId: user._id,
+      completedSteps: user.completedOnboardingSteps || [],
+      currentUserName: user.user_name || "",
+      currentDepartmentId: user.departmentId,
+      departments: departments.map(d => ({ _id: d._id, name: d.name, code: d.code })),
+      hasImage: !!user.image,
+    };
+
+    return result;
+  },
+});
+
+/**
+ * Complete the initial onboarding step.
+ * Updates username, department, and avatar.
+ */
+export const completeInitialOnboarding = mutation({
+  args: {
+    username: v.string(),
+    departmentId: v.id("departments"),
+    imageStorageId: v.optional(v.string()), // Optional, passed if user uploaded a new one
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const now = Date.now();
+    const completedSteps = new Set(user.completedOnboardingSteps || []);
+    completedSteps.add("initial_profile");
+
+    const updates: any = {
+      user_name: args.username,
+      departmentId: args.departmentId,
+      completedOnboardingSteps: Array.from(completedSteps),
+      updatedAt: now,
+    };
+
+    // If an image was uploaded, generate the URL and save both ID and URL
+    if (args.imageStorageId) {
+      const imageUrl = await ctx.storage.getUrl(args.imageStorageId);
+      updates.image = imageUrl;
+      updates.imageStorageId = args.imageStorageId;
+    }
+
+    await ctx.db.patch(userId, updates);
+
+    // Log this significant profile update
+    await ctx.db.insert("userAuditLog", {
+      performedBy: userId,
+      targetUserId: userId,
+      action: "user_updated",
+      notes: "Completed initial onboarding",
+      newValues: JSON.stringify({
+        user_name: args.username,
+        departmentId: args.departmentId,
+        hasImage: !!args.imageStorageId
+      }),
+      timestamp: now,
+    });
+
+    return { success: true };
+  },
+});

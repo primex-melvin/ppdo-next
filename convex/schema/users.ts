@@ -2,12 +2,11 @@
 
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
-
 export const userTables = {
   /**
    * Users.
-   * Enhanced with RBAC, department relationship, and account status tracking.
-   */
+* Enhanced with RBAC, department relationship, and account status tracking.
+*/
   users: defineTable({
     // Basic user information
     name: v.optional(v.string()),
@@ -19,13 +18,17 @@ export const userTables = {
     user_name: v.optional(v.string()),
     
     image: v.optional(v.string()),
+    // Store the storage ID for the avatar to easily retrieve/update later
+    imageStorageId: v.optional(v.string()),
+
     email: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),
     phone: v.optional(v.string()),
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
     
-    /**
+ 
+   /**
      * User role for RBAC.
      * - super_admin: Full system access, manage all users, departments, and system settings
      * - admin: Department-level admin, can manage users and resources within their department
@@ -36,7 +39,8 @@ export const userTables = {
       v.union(
         v.literal("super_admin"),
         v.literal("admin"),
-        v.literal("user")
+ 
+       v.literal("user")
       )
     ),
     
@@ -53,11 +57,12 @@ export const userTables = {
     /**
      * Employee ID or staff number
      */
-    employeeId: v.optional(v.string()),
+    employeeId: 
+v.optional(v.string()),
     
     /**
      * Account status.
-     * - active: Normal account, can sign in and use the system
+* - active: Normal account, can sign in and use the system
      * - inactive: Account disabled, cannot sign in (e.g., user requested deactivation)
      * - suspended: Account suspended by admin, cannot sign in (e.g., policy violation)
      * @default "active"
@@ -68,7 +73,14 @@ export const userTables = {
         v.literal("inactive"),
         v.literal("suspended")
       )
-    ),
+   
+ ),
+
+    /**
+     * Track completed onboarding steps/flows.
+     * Example: ["initial_profile", "feature_walkthrough_v1"]
+     */
+    completedOnboardingSteps: v.optional(v.array(v.string())),
     
     /**
      * Last successful login timestamp
@@ -86,7 +98,8 @@ export const userTables = {
     updatedAt: v.optional(v.number()),
     
     /**
-     * Reason for suspension (only relevant when status is "suspended")
+    
+ * Reason for suspension (only relevant when status is "suspended")
      */
     suspensionReason: v.optional(v.string()),
     
@@ -102,21 +115,23 @@ export const userTables = {
     
     /**
      * User preferences (stored as JSON string)
-     * Can include theme, language, notification settings, etc.
+ 
+    * Can include theme, language, notification settings, etc.
      */
     preferences: v.optional(v.string()),
     
     /**
      * Security preferences (JSON string)
      * { 
-     *   twoFactorEnabled, 
-     *   loginNotifications, 
-     *   trustedDevicesOnly,
-     *   requireLocationVerification 
+     * twoFactorEnabled, 
+     * loginNotifications, 
+     * trustedDevicesOnly,
+     * requireLocationVerification 
      * }
      */
     securityPreferences: v.optional(v.string()),
     
+
     /**
      * Account locked due to security reasons
      */
@@ -134,7 +149,8 @@ export const userTables = {
     
     /**
      * Failed login attempt count (reset on success)
-     */
+     
+*/
     failedLoginAttempts: v.optional(v.number()),
     
     /**

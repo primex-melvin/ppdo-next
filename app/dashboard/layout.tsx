@@ -11,6 +11,7 @@ import { SearchProvider } from "./contexts/SearchContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { AccentColorProvider } from "./contexts/AccentColorContext";
 import { BreadcrumbProvider } from "./contexts/BreadcrumbContext";
+import { OnboardingModal } from "@/components/modals/OnboardingModal";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
@@ -36,8 +37,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+      
       {/* AI Assistant */}
       <AIAssistant />
+      
+      {/* Global Onboarding Modal - checks status automatically */}
+      <OnboardingModal />
     </div>
   );
 }

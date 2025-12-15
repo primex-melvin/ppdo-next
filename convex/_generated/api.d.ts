@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as blockedManagement from "../blockedManagement.js";
 import type * as budgetItems from "../budgetItems.js";
+import type * as config_onboardingConfig from "../config/onboardingConfig.js";
 import type * as departments from "../departments.js";
 import type * as http from "../http.js";
 import type * as inspections from "../inspections.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   blockedManagement: typeof blockedManagement;
   budgetItems: typeof budgetItems;
+  "config/onboardingConfig": typeof config_onboardingConfig;
   departments: typeof departments;
   http: typeof http;
   inspections: typeof inspections;
