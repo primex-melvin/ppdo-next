@@ -13,6 +13,7 @@ import { auditTables } from "./schema/audit";
 import { securityTables } from "./schema/security";
 import { miscTables } from "./schema/misc";
 import { accessRequestTables } from "./schema/accessRequests";
+import { budgetSharedAccessTables } from "./schema/budgetSharedAccess";
 
 export default defineSchema({
   ...authTables,
@@ -26,5 +27,6 @@ export default defineSchema({
   ...auditTables,
   ...securityTables,
   ...accessRequestTables,
+  ...budgetSharedAccessTables,
   ...miscTables,
 });

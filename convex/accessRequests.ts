@@ -136,6 +136,7 @@ export const myRequests = query({
 
 /**
  * Update access request status (admin only)
+ * CRITICAL FIX: Now actually grants access when approving!
  */
 export const updateStatus = mutation({
   args: {
@@ -163,6 +164,12 @@ export const updateStatus = mutation({
       throw new Error("Administrator access required");
     }
 
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    // Update the request status
     await ctx.db.patch(args.requestId, {
       status: args.status,
       reviewedBy: userId,
@@ -170,6 +177,31 @@ export const updateStatus = mutation({
       adminNotes: args.adminNotes,
       updatedAt: Date.now(),
     });
+
+    // CRITICAL: If approved, grant actual access to the budget page
+    if (args.status === "approved") {
+      // Check if user already has access
+      const existingAccess = await ctx.db
+        .query("budgetSharedAccess")
+        .withIndex("userIdAndActive", (q) => 
+          q.eq("userId", request.userId).eq("isActive", true)
+        )
+        .first();
+
+      const now = Date.now();
+
+      if (!existingAccess) {
+        // Grant access with viewer level by default
+        await ctx.db.insert("budgetSharedAccess", {
+          userId: request.userId,
+          accessLevel: "viewer", // Default to viewer, can be changed later
+          grantedBy: userId,
+          grantedAt: now,
+          isActive: true,
+          notes: `Access granted via request approval. Request ID: ${args.requestId}`,
+        });
+      }
+    }
 
     return { success: true };
   },
