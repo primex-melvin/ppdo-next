@@ -27,12 +27,14 @@ export const passwordResetTables = {
     
     /**
      * Request status
+     * - pending: awaiting admin review
+     * - approved: admin has set new password
+     * - rejected: admin has rejected the request
      */
     status: v.union(
       v.literal("pending"),
       v.literal("approved"),
-      v.literal("rejected"),
-      v.literal("completed")
+      v.literal("rejected")
     ),
     
     /**

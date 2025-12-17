@@ -25,6 +25,7 @@ import type * as media from "../media.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as obligations from "../obligations.js";
 import type * as passwordReset from "../passwordReset.js";
+import type * as passwordResetManagement from "../passwordResetManagement.js";
 import type * as permissions from "../permissions.js";
 import type * as projects from "../projects.js";
 import type * as remarks from "../remarks.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   myFunctions: typeof myFunctions;
   obligations: typeof obligations;
   passwordReset: typeof passwordReset;
+  passwordResetManagement: typeof passwordResetManagement;
   permissions: typeof permissions;
   projects: typeof projects;
   remarks: typeof remarks;

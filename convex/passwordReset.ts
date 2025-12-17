@@ -182,8 +182,7 @@ export const getAllPasswordResetRequests = query({
     status: v.optional(v.union(
       v.literal("pending"),
       v.literal("approved"),
-      v.literal("rejected"),
-      v.literal("completed")
+      v.literal("rejected")
     )),
   },
   handler: async (ctx, args) => {

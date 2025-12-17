@@ -3,6 +3,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { UserFormData, useUserManagement } from "./hooks/useUserManagement";
 import { useUserFilters } from "./hooks/useUserFilters";
 import { useDepartmentManagement } from "./hooks/useDepartmentManagement";
@@ -10,7 +13,7 @@ import { UserModal } from "./components/UserModal";
 import { UserDeleteDialog } from "./components/UserDeleteDialog";
 import { DepartmentModal } from "./components/DepartmentModal";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Building2 } from "lucide-react";
+import { Plus, Loader2, Building2, KeyRound } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { formatDate, getInitials } from "@/lib/utils";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
@@ -22,6 +25,7 @@ import { UserStatusBadge } from "./components/UserStatusBadge";
 import { User } from "@/types/user.types";
 
 export default function UserManagementPage() {
+  const router = useRouter();
   const { accentColorValue } = useAccentColor();
   const { user: currentUser, isAdmin, isSuperAdmin } = useCurrentUser();
   const {
@@ -42,6 +46,13 @@ export default function UserManagementPage() {
     deleteDepartment,
   } = useDepartmentManagement();
   const { filters, filteredUsers, updateFilter } = useUserFilters(users);
+
+  // Get pending password reset requests count
+  const pendingResets = useQuery(
+    api.passwordReset.getAllPasswordResetRequests,
+    { status: "pending" }
+  );
+  const pendingCount = pendingResets?.length || 0;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -107,6 +118,10 @@ export default function UserManagementPage() {
     await updateStatus(user._id as Id<"users">, newStatus, reason ?? undefined);
   };
 
+  const handlePasswordResetManagement = () => {
+    router.push("/dashboard/settings/user-management/password-reset-management");
+  };
+
   // Authorization check
   if (!isAdmin && !isSuperAdmin) {
     return (
@@ -160,6 +175,23 @@ export default function UserManagementPage() {
               </Button>
             )}
             
+            {/* Password Reset Management Button - Only for Admin and Super Admin */}
+            {(isAdmin || isSuperAdmin) && (
+              <Button
+                onClick={handlePasswordResetManagement}
+                variant="outline"
+                className="border-zinc-300 dark:border-zinc-700 relative"
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                Reset Requests
+                {pendingCount > 0 && (
+                  <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold animate-pulse">
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </span>
+                )}
+              </Button>
+            )}
+
             {/* Add User Button */}
             <Button
               onClick={handleAddUser}
