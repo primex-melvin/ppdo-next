@@ -1,5 +1,3 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/components/BreakdownHistoryTable.tsx
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -17,7 +15,8 @@ import {
 
 interface Breakdown {
   _id: string;
-  reportDate: number;
+  projectTitle: string; // NEW FIELD
+  reportDate: number; // Hidden from table but kept for sorting if needed internally
   district: string;
   municipality: string;
   barangay?: string;
@@ -52,7 +51,6 @@ export function BreakdownHistoryTable({
   onDelete,
 }: BreakdownHistoryTableProps) {
   const { accentColorValue } = useAccentColor();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("reportDate");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -96,6 +94,7 @@ export function BreakdownHistoryTable({
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((breakdown) => {
         return (
+          breakdown.projectTitle.toLowerCase().includes(query) ||
           breakdown.district.toLowerCase().includes(query) ||
           breakdown.municipality.toLowerCase().includes(query) ||
           breakdown.barangay?.toLowerCase().includes(query) ||
@@ -164,14 +163,6 @@ export function BreakdownHistoryTable({
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const formatDate = (timestamp: number): string => {
-    return new Intl.DateTimeFormat("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(new Date(timestamp));
   };
 
   const getStatusColor = (status: string): string => {
@@ -348,7 +339,7 @@ export function BreakdownHistoryTable({
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                   <input
                     type="text"
-                    placeholder="Search by location, status, or any value..."
+                    placeholder="Search by project title, location, status, or any value..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-offset-0"
@@ -433,13 +424,24 @@ export function BreakdownHistoryTable({
             <thead>
               <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
                 <th className="px-3 sm:px-4 py-3 text-left min-w-[250px] sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
+                  <button
+                    onClick={() => handleSort("projectTitle")}
+                    className="group flex items-center gap-2 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+                      Program/Activity/Project
+                    </span>
+                    <SortIcon field="projectTitle" />
+                  </button>
+                </th>
+                <th className="px-3 sm:px-4 py-3 text-left min-w-[200px] sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
                   <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
                     Location
                   </span>
                 </th>
                 <th className="px-3 sm:px-4 py-3 text-left min-w-[120px] sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
                   <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                    Implementing Agency
+                    Identifying Office/ Agency
                   </span>
                 </th>
                 <th className="px-3 sm:px-4 py-3 text-right min-w-[140px] sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
@@ -469,17 +471,6 @@ export function BreakdownHistoryTable({
                     Remarks
                   </span>
                 </th>
-                <th className="px-3 sm:px-4 py-3 text-left min-w-[120px] sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("reportDate")}
-                    className="group flex items-center gap-2 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Report Date
-                    </span>
-                    <SortIcon field="reportDate" />
-                  </button>
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -492,6 +483,11 @@ export function BreakdownHistoryTable({
                   >
                     <td className="px-3 sm:px-4 py-3">
                       <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {breakdown.projectTitle}
+                      </span>
+                    </td>
+                    <td className="px-3 sm:px-4 py-3">
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
                         @ {formatLocation(breakdown)}
                       </span>
                     </td>
@@ -517,11 +513,6 @@ export function BreakdownHistoryTable({
                     <td className="px-3 sm:px-4 py-3">
                       <span className="text-sm text-zinc-600 dark:text-zinc-400">
                         {breakdown.remarksRaw}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-4 py-3">
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {formatDate(breakdown.reportDate)}
                       </span>
                     </td>
                   </tr>

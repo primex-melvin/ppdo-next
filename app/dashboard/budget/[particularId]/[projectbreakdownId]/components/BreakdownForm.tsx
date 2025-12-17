@@ -1,5 +1,3 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/components/BreakdownForm.tsx
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +27,8 @@ import { AlertCircle } from "lucide-react";
 
 // Define the form schema with Zod
 const breakdownSchema = z.object({
-  reportDate: z.string().min(1, { message: "Report date is required." }),
+  projectTitle: z.string().min(1, { message: "Project title is required." }), // Added projectTitle
+  // Removed reportDate from input validation
   district: z.string().min(1, { message: "District is required." }),
   municipality: z.string().min(1, { message: "Municipality is required." }),
   barangay: z.string().optional(),
@@ -56,6 +55,7 @@ type BreakdownFormValues = z.infer<typeof breakdownSchema>;
 
 interface Breakdown {
   _id: string;
+  projectTitle: string; // Added projectTitle
   reportDate: number;
   district: string;
   municipality: string;
@@ -71,7 +71,7 @@ interface Breakdown {
 
 interface BreakdownFormProps {
   breakdown?: Breakdown | null;
-  onSave: (breakdown: Omit<Breakdown, "_id">) => void;
+  onSave: (breakdown: Omit<Breakdown, "_id" | "reportDate">) => void;
   onCancel: () => void;
 }
 
@@ -82,19 +82,11 @@ export function BreakdownForm({
 }: BreakdownFormProps) {
   const { accentColorValue } = useAccentColor();
 
-  // Convert timestamp to date string for form
-  const timestampToDateString = (timestamp?: number): string => {
-    if (!timestamp) return "";
-    return new Date(timestamp).toISOString().split("T")[0];
-  };
-
   // Define the form
   const form = useForm<BreakdownFormValues>({
     resolver: zodResolver(breakdownSchema),
     defaultValues: {
-      reportDate: breakdown
-        ? timestampToDateString(breakdown.reportDate)
-        : "",
+      projectTitle: breakdown?.projectTitle || "",
       district: breakdown?.district || "",
       municipality: breakdown?.municipality || "",
       barangay: breakdown?.barangay || "",
@@ -115,11 +107,9 @@ export function BreakdownForm({
 
   // Define submit handler
   function onSubmit(values: BreakdownFormValues) {
-    // Convert date string to timestamp
-    const reportDate = new Date(values.reportDate).getTime();
-
     const breakdownData = {
-      reportDate,
+      projectTitle: values.projectTitle,
+      // reportDate is handled by the parent or backend now
       district: values.district,
       municipality: values.municipality,
       barangay: values.barangay,
@@ -131,24 +121,23 @@ export function BreakdownForm({
       statusCategory: values.statusCategory,
       batchId: values.batchId,
     };
-
     onSave(breakdownData as any);
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Report Date */}
+        {/* Project Title - New First Field */}
         <FormField
-          name="reportDate"
+          name="projectTitle"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-zinc-700 dark:text-zinc-300">
-                Report Date
+                Project Title
               </FormLabel>
               <FormControl>
                 <Input
-                  type="date"
+                  placeholder="e.g., Construction of Multi-Purpose Building"
                   className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
                   {...field}
                 />

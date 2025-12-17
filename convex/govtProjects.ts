@@ -4,23 +4,17 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-/**
- * Log a Government Project Update (The Migration Tool).
- * * Logic:
- * 1. Checks if a Project with this name already exists in the main 'projects' table.
- * 2. If NO: Creates a new 'project' entry automatically.
- * 3. If YES: Uses the existing ID.
- * 4. Inserts the detailed snapshot into 'govtProjectBreakdowns'.
- * 5. Updates the main 'project' table with the latest numbers (syncing).
- */
 export const logProjectReport = mutation({
   args: {
     // Identity
-    projectName: v.string(), // "Construction of Multi-Purpose Building"
-    departmentId: v.id("departments"), // Who manages this?
+    projectName: v.string(),
+    departmentId: v.id("departments"),
     
-    // Report Context
-    reportDate: v.number(), // Timestamp of "As Of" date
+    // NEW: Project Title
+    projectTitle: v.string(),
+    
+    // Report Context (hidden from UI but kept for tracking)
+    reportDate: v.number(),
     batchId: v.optional(v.string()),
 
     // Location Data
@@ -58,19 +52,15 @@ export const logProjectReport = mutation({
     if (existingProject) {
       projectId = existingProject._id;
       
-      // Update the parent project with the latest stats from this report
-      // Only update if this report is newer than what's currently there (optional logic)
       await ctx.db.patch(projectId, {
         projectAccomplishment: args.accomplishmentRate,
-        allocatedBudget: args.appropriation, // Update budget to match report
+        allocatedBudget: args.appropriation,
         remarks: args.remarksRaw,
         updatedAt: now,
         updatedBy: userId
       });
 
     } else {
-      // Create new Parent Project
-      // We map the statusCategory to the simpler 'status' in projects table
       let mainStatus = "on_track";
       if (args.statusCategory === "completed") mainStatus = "completed";
       if (args.statusCategory === "suspended") mainStatus = "on_hold";
@@ -80,10 +70,10 @@ export const logProjectReport = mutation({
         projectName: args.projectName,
         departmentId: args.departmentId,
         allocatedBudget: args.appropriation,
-        totalBudgetUtilized: 0, // Default for new
+        totalBudgetUtilized: 0,
         utilizationRate: 0,
         balance: args.appropriation,
-        dateStarted: args.reportDate, // Approximation
+        dateStarted: args.reportDate,
         projectAccomplishment: args.accomplishmentRate,
         status: mainStatus as any,
         remarks: args.remarksRaw,
@@ -94,9 +84,10 @@ export const logProjectReport = mutation({
       });
     }
 
-    // 2. INSERT THE DETAILED BREAKDOWN (The History Log)
+    // 2. INSERT THE DETAILED BREAKDOWN WITH PROJECT TITLE
     const breakdownId = await ctx.db.insert("govtProjectBreakdowns", {
       projectId: projectId,
+      projectTitle: args.projectTitle, // NEW FIELD
       reportDate: args.reportDate,
       batchId: args.batchId,
       
@@ -120,10 +111,6 @@ export const logProjectReport = mutation({
   },
 });
 
-/**
- * Get the History Timeline for a specific project.
- * Useful for graphing "Slippage" or progress over time.
- */
 export const getProjectHistory = query({
   args: {
     projectId: v.id("projects"),
@@ -134,26 +121,15 @@ export const getProjectHistory = query({
       .withIndex("projectId", (q) => q.eq("projectId", args.projectId))
       .collect();
 
-    // Sort by report date (oldest to newest)
     return history.sort((a, b) => a.reportDate - b.reportDate);
   },
 });
 
-/**
- * Get Breakdown Stats by Municipality
- * (e.g., How much budget is allocated to Anao vs Tarlac City?)
- */
 export const getStatsByMunicipality = query({
-  args: {
-     // Optional filter by date range or fund source could go here
-  },
+  args: {},
   handler: async (ctx) => {
-    // Note: In a real app with thousands of rows, you might want to aggregate this 
-    // differently or use a dedicated aggregation table.
     const allBreakdowns = await ctx.db.query("govtProjectBreakdowns").collect();
 
-    // We only want the *latest* report for each project to avoid double counting
-    // Group by projectId first
     const latestByProject = new Map();
     
     for (const record of allBreakdowns) {
@@ -163,7 +139,6 @@ export const getStatsByMunicipality = query({
       }
     }
 
-    // Now aggregate the unique latest records by municipality
     const stats: Record<string, { count: number, totalBudget: number }> = {};
     
     latestByProject.forEach((record) => {

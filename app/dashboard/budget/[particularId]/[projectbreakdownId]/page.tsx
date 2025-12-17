@@ -1,5 +1,3 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/page.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,6 +22,7 @@ import {
 
 interface Breakdown {
   _id: string;
+  projectTitle: string; // Added projectTitle
   reportDate: number;
   district: string;
   municipality: string;
@@ -87,7 +86,6 @@ export default function ProjectBreakdownPage() {
   
   // Extract the actual project ID from the slug
   const projectId = extractProjectId(slugWithId);
-
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -99,13 +97,11 @@ export default function ProjectBreakdownPage() {
     api.projects.get,
     projectId ? { id: projectId as Id<"projects"> } : "skip"
   );
-
   // Get the breakdown history for this project
   const breakdownHistory = useQuery(
     api.govtProjects.getProjectHistory,
     projectId ? { projectId: projectId as Id<"projects"> } : "skip"
   );
-
   const particularFullName = getParticularFullName(particularId);
 
   // Set custom breadcrumbs when project data is loaded
@@ -124,7 +120,6 @@ export default function ProjectBreakdownPage() {
       setCustomBreadcrumbs(null);
     };
   }, [project, particularFullName, particularId, setCustomBreadcrumbs]);
-
   // Mutations
   const logProjectReport = useMutation(api.govtProjects.logProjectReport);
 
@@ -148,7 +143,6 @@ export default function ProjectBreakdownPage() {
         ).size,
       }
     : null;
-
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-PH", {
       style: "currency",
@@ -169,8 +163,9 @@ export default function ProjectBreakdownPage() {
   const handlePrint = () => {
     window.print();
   };
-
-  const handleAdd = async (breakdownData: Omit<Breakdown, "_id">) => {
+  
+  // Updated handleAdd to include projectTitle and generate reportDate
+  const handleAdd = async (breakdownData: Omit<Breakdown, "_id" | "reportDate"> & { reportDate?: number }) => {
     try {
       if (!project) {
         toast.error("Project not found");
@@ -180,7 +175,8 @@ export default function ProjectBreakdownPage() {
       await logProjectReport({
         projectName: project.projectName,
         departmentId: project.departmentId,
-        reportDate: breakdownData.reportDate,
+        projectTitle: breakdownData.projectTitle, // Pass projectTitle
+        reportDate: breakdownData.reportDate || Date.now(), // Use provided date or current time
         district: breakdownData.district,
         municipality: breakdownData.municipality,
         barangay: breakdownData.barangay,
@@ -191,7 +187,6 @@ export default function ProjectBreakdownPage() {
         statusCategory: breakdownData.statusCategory as any,
         batchId: breakdownData.batchId,
       });
-
       toast.success("Breakdown record created successfully!");
       setShowAddModal(false);
     } catch (error) {
@@ -206,8 +201,8 @@ export default function ProjectBreakdownPage() {
     setSelectedBreakdown(breakdown);
     setShowEditModal(true);
   };
-
-  const handleUpdate = async (breakdownData: Omit<Breakdown, "_id">) => {
+  
+  const handleUpdate = async (breakdownData: Omit<Breakdown, "_id" | "reportDate">) => {
     try {
       // TODO: Implement update mutation in backend
       toast.info("Update functionality coming soon!");
@@ -226,7 +221,6 @@ export default function ProjectBreakdownPage() {
       setShowDeleteModal(true);
     }
   };
-
   const handleConfirmDelete = async () => {
     try {
       // TODO: Implement delete mutation in backend

@@ -4,46 +4,41 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export const govtProjectBreakdownTables = {
-  /**
-   * Govt Project Breakdowns (The "Ledger").
-   * This table stores the historical snapshots from the PDF reports.
-   * It links to the main 'projects' table via projectId.
-   */
   govtProjectBreakdowns: defineTable({
     // --- LINK TO MAIN PROJECT ---
-    projectId: v.id("projects"), // The foreign key
+    projectId: v.id("projects"),
 
-    // --- REPORT METADATA ---
-    reportDate: v.number(), // The "As of June 15, 2022" date
-    batchId: v.optional(v.string()), // Optional: To group uploads (e.g., "Import_June_2022")
+    // --- NEW: PROJECT TITLE (e.g., "Construction of Multi-Purpose Building") ---
+    projectTitle: v.string(),
 
-    // --- LOCATION BREAKDOWN (From the "@ Location" text) ---
-    district: v.string(),        // e.g., "First District"
-    municipality: v.string(),    // e.g., "Anao"
-    barangay: v.optional(v.string()), // e.g., "San Jose North"
+    // --- REPORT METADATA (keeping for backend, hidden from UI) ---
+    reportDate: v.number(),
+    batchId: v.optional(v.string()),
+
+    // --- LOCATION BREAKDOWN ---
+    district: v.string(),
+    municipality: v.string(),
+    barangay: v.optional(v.string()),
     
     // --- CLASSIFICATION ---
-    fundSource: v.optional(v.string()),      // e.g., "20% Development Fund 2022"
-    programType: v.optional(v.string()),     // e.g., "Infrastructure", "Social Services"
-    implementingAgency: v.optional(v.string()), // e.g., "PEO"
+    fundSource: v.optional(v.string()),
+    programType: v.optional(v.string()),
+    implementingAgency: v.optional(v.string()),
 
     // --- FINANCIAL SNAPSHOT ---
-    appropriation: v.number(),   // The Budget allocated in this report
-    obligation: v.optional(v.number()), // Amount obligated so far
-    balance: v.optional(v.number()),    // Remaining balance
+    appropriation: v.number(),
+    obligation: v.optional(v.number()),
+    balance: v.optional(v.number()),
 
     // --- PHYSICAL STATUS SNAPSHOT ---
-    accomplishmentRate: v.number(), // 0 to 100
+    accomplishmentRate: v.number(),
     
     // --- STATUS DETAILS ---
-    // The raw text from the "Remarks" column (e.g., "NOA, Contract, NTP under process")
-    remarksRaw: v.string(), 
-    
-    // Normalized status for charts
+    remarksRaw: v.string(),
     statusCategory: v.union(
-      v.literal("pre_procurement"), // POW/DED
-      v.literal("procurement"),     // Bidding/NOA/NTP
-      v.literal("implementation"),  // On-going
+      v.literal("pre_procurement"),
+      v.literal("procurement"),
+      v.literal("implementation"),
       v.literal("completed"),
       v.literal("suspended"),
       v.literal("cancelled")
@@ -53,9 +48,9 @@ export const govtProjectBreakdownTables = {
     createdBy: v.id("users"),
     createdAt: v.number(),
   })
-    .index("projectId", ["projectId"]) // Fast lookup of history for a specific project
-    .index("reportDate", ["reportDate"]) // Fast lookup for "Show me all June reports"
-    .index("municipality", ["municipality"]) // Filter by town
-    .index("statusCategory", ["statusCategory"]) // Filter by status
-    .index("projectIdAndDate", ["projectId", "reportDate"]), // Ensure no duplicate reports for same month
+    .index("projectId", ["projectId"])
+    .index("reportDate", ["reportDate"])
+    .index("municipality", ["municipality"])
+    .index("statusCategory", ["statusCategory"])
+    .index("projectIdAndDate", ["projectId", "reportDate"]),
 };
