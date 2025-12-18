@@ -95,7 +95,7 @@ export const get = query({
 });
 
 /**
- * Get project by name
+ * Get project by name (particulars)
  */
 export const getByProjectName = query({
   args: {
@@ -129,18 +129,19 @@ export const getByProjectName = query({
 
 /**
  * Create a new project
+ * Accepts 'particulars' from frontend, stores as 'projectName' in database
  */
 export const create = mutation({
   args: {
-    projectName: v.string(),
+    particulars: v.string(), // Frontend sends 'particulars'
     departmentId: v.id("departments"),
     totalBudgetAllocated: v.number(),
     obligatedBudget: v.optional(v.number()),
     totalBudgetUtilized: v.number(),
     projectCompleted: v.number(),
     projectDelayed: v.number(),
-    projectsOnTrack: v.number(),
-    notes: v.optional(v.string()),
+    projectsOngoing: v.number(), // Frontend sends 'projectsOngoing'
+    remarks: v.optional(v.string()), // Frontend sends 'remarks'
     year: v.optional(v.number()),
     status: v.optional(
       v.union(
@@ -164,10 +165,10 @@ export const create = mutation({
       throw new Error("Department not found");
     }
 
-    // Check if project name already exists
+    // Check if project name already exists (using particulars value)
     const existing = await ctx.db
       .query("projects")
-      .withIndex("projectName", (q) => q.eq("projectName", args.projectName))
+      .withIndex("projectName", (q) => q.eq("projectName", args.particulars))
       .first();
 
     if (existing) {
@@ -183,14 +184,14 @@ export const create = mutation({
     const now = Date.now();
 
     const projectData: any = {
-      projectName: args.projectName,
+      projectName: args.particulars, // Map particulars to projectName for database
       departmentId: args.departmentId,
       totalBudgetAllocated: args.totalBudgetAllocated,
       totalBudgetUtilized: args.totalBudgetUtilized,
       utilizationRate: utilizationRate,
       projectCompleted: args.projectCompleted,
       projectDelayed: args.projectDelayed,
-      projectsOnTrack: args.projectsOnTrack,
+      projectsOnTrack: args.projectsOngoing, // Map projectsOngoing to projectsOnTrack for database
       createdBy: userId,
       createdAt: now,
       updatedAt: now,
@@ -200,7 +201,7 @@ export const create = mutation({
 
     // Only add optional fields if they have values
     if (args.obligatedBudget !== undefined) projectData.obligatedBudget = args.obligatedBudget;
-    if (args.notes !== undefined) projectData.notes = args.notes;
+    if (args.remarks !== undefined) projectData.notes = args.remarks; // Map remarks to notes for database
     if (args.year !== undefined) projectData.year = args.year;
     if (args.status !== undefined) projectData.status = args.status;
     if (args.targetDateCompletion !== undefined) projectData.targetDateCompletion = args.targetDateCompletion;
@@ -214,19 +215,20 @@ export const create = mutation({
 
 /**
  * Update an existing project
+ * Accepts 'particulars' from frontend, stores as 'projectName' in database
  */
 export const update = mutation({
   args: {
     id: v.id("projects"),
-    projectName: v.string(),
+    particulars: v.string(), // Frontend sends 'particulars'
     departmentId: v.id("departments"),
     totalBudgetAllocated: v.number(),
     obligatedBudget: v.optional(v.number()),
     totalBudgetUtilized: v.number(),
     projectCompleted: v.number(),
     projectDelayed: v.number(),
-    projectsOnTrack: v.number(),
-    notes: v.optional(v.string()),
+    projectsOngoing: v.number(), // Frontend sends 'projectsOngoing'
+    remarks: v.optional(v.string()), // Frontend sends 'remarks'
     year: v.optional(v.number()),
     status: v.optional(
       v.union(
@@ -255,11 +257,11 @@ export const update = mutation({
       throw new Error("Department not found");
     }
 
-    // Check if project name is being changed and if it conflicts
-    if (args.projectName !== existing.projectName) {
+    // Check if project name is being changed and if it conflicts (using particulars value)
+    if (args.particulars !== existing.projectName) {
       const conflictingProject = await ctx.db
         .query("projects")
-        .withIndex("projectName", (q) => q.eq("projectName", args.projectName))
+        .withIndex("projectName", (q) => q.eq("projectName", args.particulars))
         .first();
       
       if (conflictingProject && conflictingProject._id !== args.id) {
@@ -276,21 +278,21 @@ export const update = mutation({
     const now = Date.now();
 
     const updateData: any = {
-      projectName: args.projectName,
+      projectName: args.particulars, // Map particulars to projectName for database
       departmentId: args.departmentId,
       totalBudgetAllocated: args.totalBudgetAllocated,
       totalBudgetUtilized: args.totalBudgetUtilized,
       utilizationRate: utilizationRate,
       projectCompleted: args.projectCompleted,
       projectDelayed: args.projectDelayed,
-      projectsOnTrack: args.projectsOnTrack,
+      projectsOnTrack: args.projectsOngoing, // Map projectsOngoing to projectsOnTrack for database
       updatedBy: userId,
       updatedAt: now,
     };
 
     // Only add optional fields if they have values
     if (args.obligatedBudget !== undefined) updateData.obligatedBudget = args.obligatedBudget;
-    if (args.notes !== undefined) updateData.notes = args.notes;
+    if (args.remarks !== undefined) updateData.notes = args.remarks; // Map remarks to notes for database
     if (args.year !== undefined) updateData.year = args.year;
     if (args.status !== undefined) updateData.status = args.status;
     if (args.targetDateCompletion !== undefined) updateData.targetDateCompletion = args.targetDateCompletion;
@@ -498,7 +500,7 @@ export const getStatistics = query({
     
     const totalCompleted = projects.reduce((sum, p) => sum + p.projectCompleted, 0);
     const totalDelayed = projects.reduce((sum, p) => sum + p.projectDelayed, 0);
-    const totalOnTrack = projects.reduce((sum, p) => sum + p.projectsOnTrack, 0);
+    const totalOngoing = projects.reduce((sum, p) => sum + p.projectsOnTrack, 0);
     
     const averageProjectCompleted = totalProjects > 0 
       ? totalCompleted / totalProjects 
@@ -508,8 +510,8 @@ export const getStatistics = query({
       ? totalDelayed / totalProjects 
       : 0;
     
-    const averageProjectsOnTrack = totalProjects > 0 
-      ? totalOnTrack / totalProjects 
+    const averageProjectsOngoing = totalProjects > 0 
+      ? totalOngoing / totalProjects 
       : 0;
 
     const statusCounts = {
@@ -526,10 +528,10 @@ export const getStatistics = query({
       averageUtilizationRate,
       totalCompleted,
       totalDelayed,
-      totalOnTrack,
+      totalOngoing,
       averageProjectCompleted,
       averageProjectDelayed,
-      averageProjectsOnTrack,
+      averageProjectsOngoing,
       statusCounts,
     };
   },

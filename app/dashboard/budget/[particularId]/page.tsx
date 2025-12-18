@@ -55,83 +55,84 @@ export default function ParticularProjectsPage() {
   const particularFullName = getParticularFullName(particular);
 
   const handleAddProject = async (projectData: any) => {
-    try {
-      // Find the department by name (implementing office)
-      const department = departments?.find(
-        d => d.name === projectData.implementingOffice || d.code === projectData.implementingOffice
-      );
-      
-      if (!department) {
-        toast.error("Please select a valid department/implementing office.");
-        return;
-      }
-
-      await createProject({
-        projectName: projectData.projectName,
-        departmentId: department._id as Id<"departments">,
-        totalBudgetAllocated: projectData.totalBudgetAllocated,
-        obligatedBudget: projectData.obligatedBudget || undefined,
-        totalBudgetUtilized: projectData.totalBudgetUtilized || 0,
-        projectCompleted: projectData.projectCompleted || 0,
-        projectDelayed: projectData.projectDelayed || 0,
-        projectsOnTrack: projectData.projectsOnTrack || 0,
-        notes: projectData.notes || undefined,
-        year: projectData.year || undefined,
-        status: projectData.status || undefined,
-        targetDateCompletion: projectData.targetDateCompletion || undefined,
-        projectManagerId: projectData.projectManagerId || undefined,
-      });
-
-      toast.success("Project created successfully!", {
-        description: `"${projectData.projectName}" has been added.`,
-      });
-    } catch (error) {
-      console.error("Error creating project:", error);
-      toast.error("Failed to create project", {
-        description: error instanceof Error ? error.message : "Please try again.",
-      });
+  try {
+    // Find the department by name (implementing office)
+    const department = departments?.find(
+      d => d.name === projectData.implementingOffice || d.code === projectData.implementingOffice
+    );
+    
+    if (!department) {
+      toast.error("Please select a valid department/implementing office.");
+      return;
     }
-  };
 
-  const handleEditProject = async (id: string, projectData: any) => {
-    try {
-      // Find the department by name (implementing office)
-      const department = departments?.find(
-        d => d.name === projectData.implementingOffice || d.code === projectData.implementingOffice
-      );
-      
-      if (!department) {
-        toast.error("Please select a valid department/implementing office.");
-        return;
-      }
+    await createProject({
+      particulars: projectData.particulars, // Changed from projectName to particulars
+      departmentId: department._id as Id<"departments">,
+      totalBudgetAllocated: projectData.totalBudgetAllocated,
+      obligatedBudget: projectData.obligatedBudget || undefined,
+      totalBudgetUtilized: projectData.totalBudgetUtilized || 0,
+      projectCompleted: projectData.projectCompleted || 0,
+      projectDelayed: projectData.projectDelayed || 0,
+      projectsOngoing: projectData.projectsOngoing || 0, // Changed from projectsOnTrack
+      remarks: projectData.remarks || undefined, // Changed from notes
+      year: projectData.year || undefined,
+      status: projectData.status || undefined,
+      targetDateCompletion: projectData.targetDateCompletion || undefined,
+      projectManagerId: projectData.projectManagerId || undefined,
+    });
 
-      await updateProject({
-        id: id as Id<"projects">,
-        projectName: projectData.projectName,
-        departmentId: department._id as Id<"departments">,
-        totalBudgetAllocated: projectData.totalBudgetAllocated,
-        obligatedBudget: projectData.obligatedBudget || undefined,
-        totalBudgetUtilized: projectData.totalBudgetUtilized || 0,
-        projectCompleted: projectData.projectCompleted || 0,
-        projectDelayed: projectData.projectDelayed || 0,
-        projectsOnTrack: projectData.projectsOnTrack || 0,
-        notes: projectData.notes || undefined,
-        year: projectData.year || undefined,
-        status: projectData.status || undefined,
-        targetDateCompletion: projectData.targetDateCompletion || undefined,
-        projectManagerId: projectData.projectManagerId || undefined,
-      });
+    toast.success("Project created successfully!", {
+      description: `"${projectData.particulars}" has been added.`,
+    });
+  } catch (error) {
+    console.error("Error creating project:", error);
+    toast.error("Failed to create project", {
+      description: error instanceof Error ? error.message : "Please try again.",
+    });
+  }
+};
 
-      toast.success("Project updated successfully!", {
-        description: `"${projectData.projectName}" has been updated.`,
-      });
-    } catch (error) {
-      console.error("Error updating project:", error);
-      toast.error("Failed to update project", {
-        description: error instanceof Error ? error.message : "Please try again.",
-      });
+const handleEditProject = async (id: string, projectData: any) => {
+  try {
+    // Find the department by name (implementing office)
+    const department = departments?.find(
+      d => d.name === projectData.implementingOffice || d.code === projectData.implementingOffice
+    );
+    
+    if (!department) {
+      toast.error("Please select a valid department/implementing office.");
+      return;
     }
-  };
+
+    await updateProject({
+      id: id as Id<"projects">,
+      particulars: projectData.particulars, // Changed from projectName to particulars
+      departmentId: department._id as Id<"departments">,
+      totalBudgetAllocated: projectData.totalBudgetAllocated,
+      obligatedBudget: projectData.obligatedBudget || undefined,
+      totalBudgetUtilized: projectData.totalBudgetUtilized || 0,
+      projectCompleted: projectData.projectCompleted || 0,
+      projectDelayed: projectData.projectDelayed || 0,
+      projectsOngoing: projectData.projectsOngoing || 0, // Changed from projectsOnTrack
+      remarks: projectData.remarks || undefined, // Changed from notes
+      year: projectData.year || undefined,
+      status: projectData.status || undefined,
+      targetDateCompletion: projectData.targetDateCompletion || undefined,
+      projectManagerId: projectData.projectManagerId || undefined,
+    });
+
+    toast.success("Project updated successfully!", {
+      description: `"${projectData.particulars}" has been updated.`,
+    });
+  } catch (error) {
+    console.error("Error updating project:", error);
+    toast.error("Failed to update project", {
+      description: error instanceof Error ? error.message : "Please try again.",
+    });
+  }
+};
+
 
   const handleDeleteProject = async (id: string) => {
     try {
@@ -147,25 +148,25 @@ export default function ParticularProjectsPage() {
 
   // Transform Convex projects to match component interface
   const transformedProjects = allProjects?.map(project => ({
-    id: project._id,
-    projectName: project.projectName,
-    implementingOffice: project.departmentName || project.departmentCode || "Unknown",
-    totalBudgetAllocated: project.totalBudgetAllocated,
-    obligatedBudget: project.obligatedBudget,
-    totalBudgetUtilized: project.totalBudgetUtilized,
-    utilizationRate: project.utilizationRate,
-    projectCompleted: project.projectCompleted,
-    projectDelayed: project.projectDelayed,
-    projectsOnTrack: project.projectsOnTrack,
-    notes: project.notes ?? "",
-    year: project.year,
-    status: project.status,
-    targetDateCompletion: project.targetDateCompletion,
-    // Add pin fields
-    isPinned: project.isPinned,
-    pinnedAt: project.pinnedAt,
-    pinnedBy: project.pinnedBy,
-  })) ?? [];
+  id: project._id,
+  particulars: project.projectName, // Map projectName to particulars for frontend
+  implementingOffice: project.departmentName || project.departmentCode || "Unknown",
+  totalBudgetAllocated: project.totalBudgetAllocated,
+  obligatedBudget: project.obligatedBudget,
+  totalBudgetUtilized: project.totalBudgetUtilized,
+  utilizationRate: project.utilizationRate,
+  projectCompleted: project.projectCompleted,
+  projectDelayed: project.projectDelayed,
+  projectsOngoing: project.projectsOnTrack, // Map projectsOnTrack to projectsOngoing for frontend
+  remarks: project.notes ?? "", // Map notes to remarks for frontend
+  year: project.year,
+  status: project.status,
+  targetDateCompletion: project.targetDateCompletion,
+  // Add pin fields
+  isPinned: project.isPinned,
+  pinnedAt: project.pinnedAt,
+  pinnedBy: project.pinnedBy,
+})) ?? [];
 
   // Calculate summary statistics
   const totalAllocatedBudget = transformedProjects.reduce(

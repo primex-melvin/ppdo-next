@@ -91,18 +91,14 @@ const budgetItemSchema = z
     totalBudgetUtilized: z.number().min(0, {
       message: "Must be 0 or greater.",
     }),
-    projectCompleted: z.number().min(0, {
+    projectCompleted: z.number().int().min(0, {
       message: "Must be 0 or greater.",
-    }).max(100, {
-      message: "Must be 100 or less.",
     }),
     projectDelayed: z.number().int().min(0, {
       message: "Must be a whole number (0 or greater).",
     }),
-    projectsOnTrack: z.number().min(0, {
+    projectsOnTrack: z.number().int().min(0, {
       message: "Must be 0 or greater.",
-    }).max(100, {
-      message: "Must be 100 or less.",
     }),
     year: z.number().int().min(2000).max(2100).optional().or(z.literal(0)),
     status: z.enum(["done", "pending", "ongoing"]).optional(),
@@ -508,24 +504,24 @@ export function BudgetItemForm({
 
         {/* Project Status Fields */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Project Completion (%) */}
+          {/* Project Completed (Count) */}
           <FormField
             name="projectCompleted"
             render={({ field }) => {
               const value = field.value;
-              const isInvalid = value < 0 || value > 100;
+              const isInvalid = value < 0;
               
               return (
                 <FormItem>
                   <FormLabel className="text-zinc-700 dark:text-zinc-300">
-                    Project Completion (%)
+                    Projects Completed (Count)
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="0"
                       min="0"
-                      max="100"
-                      step="0.1"
+                      step="1"
+                      type="number"
                       className={`bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 ${
                         isInvalid
                           ? "border-red-500 dark:border-red-500 focus-visible:ring-red-500"
@@ -534,13 +530,13 @@ export function BudgetItemForm({
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value.trim();
-                        field.onChange(parseFloat(value) || 0);
+                        field.onChange(parseInt(value) || 0);
                       }}
                     />
                   </FormControl>
                   {isInvalid && (
                     <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                      Must be between 0 and 100
+                      Must be 0 or greater
                     </p>
                   )}
                   <FormMessage />
@@ -562,6 +558,7 @@ export function BudgetItemForm({
                     placeholder="0"
                     min="0"
                     step="1"
+                    type="number"
                     className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
                     {...field}
                     onChange={(e) => {
@@ -575,24 +572,24 @@ export function BudgetItemForm({
             )}
           />
 
-          {/* Projects On Track (%) */}
+          {/* Projects On Track (Count) */}
           <FormField
             name="projectsOnTrack"
             render={({ field }) => {
               const value = field.value;
-              const isInvalid = value < 0 || value > 100;
+              const isInvalid = value < 0;
               
               return (
                 <FormItem>
                   <FormLabel className="text-zinc-700 dark:text-zinc-300">
-                    Projects On Track (%)
+                    Projects On Track (Count)
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="0"
                       min="0"
-                      max="100"
-                      step="0.1"
+                      step="1"
+                      type="number"
                       className={`bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 ${
                         isInvalid
                           ? "border-red-500 dark:border-red-500 focus-visible:ring-red-500"
@@ -601,13 +598,13 @@ export function BudgetItemForm({
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value.trim();
-                        field.onChange(parseFloat(value) || 0);
+                        field.onChange(parseInt(value) || 0);
                       }}
                     />
                   </FormControl>
                   {isInvalid && (
                     <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                      Must be between 0 and 100
+                      Must be 0 or greater
                     </p>
                   )}
                   <FormMessage />

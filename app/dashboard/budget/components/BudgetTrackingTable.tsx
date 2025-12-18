@@ -59,14 +59,12 @@ export function BudgetTrackingTable({
   const [selectedItem, setSelectedItem] = useState<BudgetItem | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   
-  // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
     item: BudgetItem;
   } | null>(null);
   
-  // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -78,7 +76,6 @@ export function BudgetTrackingTable({
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
 
-  // Check if user is admin or super_admin
   const isAdmin =
     accessCheck?.user?.role === "admin" ||
     accessCheck?.user?.role === "super_admin";
@@ -98,7 +95,6 @@ export function BudgetTrackingTable({
     return () => clearInterval(interval);
   }, [showAddModal]);
 
-  // Close context menu on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
@@ -113,7 +109,6 @@ export function BudgetTrackingTable({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close context menu on scroll
   useEffect(() => {
     const handleScroll = () => {
       setContextMenu(null);
@@ -124,7 +119,6 @@ export function BudgetTrackingTable({
     return () => document.removeEventListener("scroll", handleScroll, true);
   }, []);
 
-  // Get unique values for filters
   const uniqueStatuses = useMemo(() => {
     const statuses = new Set<string>();
     budgetItems.forEach(item => {
@@ -141,11 +135,9 @@ export function BudgetTrackingTable({
     return Array.from(years).sort((a, b) => b - a);
   }, [budgetItems]);
 
-  // Filter and sort items
   const filteredAndSortedItems = useMemo(() => {
     let filtered = [...budgetItems];
 
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(item => {
@@ -164,27 +156,22 @@ export function BudgetTrackingTable({
       });
     }
 
-    // Apply status filter
     if (statusFilter.length > 0) {
       filtered = filtered.filter(item => item.status && statusFilter.includes(item.status));
     }
 
-    // Apply year filter
     if (yearFilter.length > 0) {
       filtered = filtered.filter(item => item.year && yearFilter.includes(item.year));
     }
 
-    // Apply sorting
     if (sortField && sortDirection) {
       filtered.sort((a, b) => {
         let aVal = a[sortField];
         let bVal = b[sortField];
 
-        // Handle undefined values
         if (aVal === undefined) return 1;
         if (bVal === undefined) return -1;
 
-        // Compare values
         if (typeof aVal === "string" && typeof bVal === "string") {
           return sortDirection === "asc" 
             ? aVal.localeCompare(bVal)
@@ -199,7 +186,6 @@ export function BudgetTrackingTable({
       });
     }
 
-    // Keep pinned items at top
     return filtered.sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
@@ -328,7 +314,6 @@ export function BudgetTrackingTable({
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible);
-    // Clear filters when hiding search
     if (isSearchVisible) {
       clearAllFilters();
     }
@@ -340,7 +325,6 @@ export function BudgetTrackingTable({
     window.print();
   };
 
-  // Calculate totals
   const totals = filteredAndSortedItems.reduce(
     (acc, item) => ({
       totalBudgetAllocated: acc.totalBudgetAllocated + item.totalBudgetAllocated,
@@ -374,7 +358,6 @@ export function BudgetTrackingTable({
   return (
     <>
       <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        {/* Header with Search and Actions */}
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 space-y-4 no-print">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -437,7 +420,6 @@ export function BudgetTrackingTable({
             </div>
           </div>
 
-          {/* Search Bar - Collapsible */}
           {isSearchVisible && (
             <div className="space-y-4 animate-in slide-in-from-top duration-200">
               <div className="flex items-center gap-2">
@@ -465,7 +447,6 @@ export function BudgetTrackingTable({
                 )}
               </div>
 
-              {/* Active Filters Display */}
               {(statusFilter.length > 0 || yearFilter.length > 0) && (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Active filters:</span>
@@ -503,7 +484,6 @@ export function BudgetTrackingTable({
           )}
         </div>
 
-        {/* Print Header */}
         <div className="hidden print-only p-4 border-b border-zinc-900">
           <h2 className="text-xl font-bold text-zinc-900 mb-2">Budget Tracking</h2>
           <p className="text-sm text-zinc-700">
@@ -517,7 +497,6 @@ export function BudgetTrackingTable({
           </p>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
           <table className="w-full">
             <thead>
@@ -623,6 +602,17 @@ export function BudgetTrackingTable({
                 </th>
                 <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
                   <button
+                    onClick={() => handleSort("totalBudgetAllocated")}
+                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+                      Budget Allocated
+                    </span>
+                    <SortIcon field="totalBudgetAllocated" />
+                  </button>
+                </th>
+                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
+                  <button
                     onClick={() => handleSort("obligatedBudget")}
                     className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                   >
@@ -692,7 +682,7 @@ export function BudgetTrackingTable({
             <tbody>
               {filteredAndSortedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center">
+                  <td colSpan={10} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Search className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3" />
                       <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
@@ -759,53 +749,62 @@ export function BudgetTrackingTable({
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className={`text-sm font-medium ${getProjectStatusColor(item.projectCompleted)}`}>
-                          {item.projectCompleted.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className={`text-sm font-medium ${getProjectStatusColor(item.projectDelayed)}`}>
-                          {item.projectDelayed.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className={`text-sm font-medium ${getProjectStatusColor(item.projectsOnTrack)}`}>
-                          {item.projectsOnTrack.toFixed(1)}%
-                        </span>
-                      </td>
+  <span className={`text-sm font-medium ${getProjectStatusColor(item.projectCompleted)}`}>
+    {Math.round(item.projectCompleted)} {/* Changed: removed .toFixed(1) and % */}
+  </span>
+</td>
+<td className="px-4 sm:px-6 py-4 text-right">
+  <span className={`text-sm font-medium ${getProjectStatusColor(item.projectDelayed)}`}>
+    {Math.round(item.projectDelayed)} {/* Changed: removed .toFixed(1) and % */}
+  </span>
+</td>
+<td className="px-4 sm:px-6 py-4 text-right">
+  <span className={`text-sm font-medium ${getProjectStatusColor(item.projectsOnTrack)}`}>
+    {Math.round(item.projectsOnTrack)} {/* Changed: removed .toFixed(1) and % */}
+  </span>
+</td>
+
                     </tr>
                   ))}
-                  {/* Totals Row */}
-                  <tr className="border-t-2 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 font-semibold">
-                    <td className="px-4 sm:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
-                      TOTAL
-                    </td>
-                    <td className="px-4 sm:px-6 py-4"></td>
-                    <td className="px-4 sm:px-6 py-4"></td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      ₱{totals.totalBudgetAllocated.toLocaleString()}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      ₱{totals.obligatedBudget.toLocaleString()}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      ₱{totals.totalBudgetUtilized.toLocaleString()}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right">
-                      <span className={`text-sm font-semibold ${getUtilizationColor(totalUtilizationRate)}`}>
-                        {totalUtilizationRate.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      {totals.projectCompleted.toFixed(1)}%
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      {totals.projectDelayed.toFixed(1)}%
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      {totals.projectsOnTrack.toFixed(1)}%
-                    </td>
-                  </tr>
+                <tr className="border-t-2 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 font-semibold">
+  <td className="px-4 sm:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+    TOTAL
+  </td>
+
+  <td className="px-4 sm:px-6 py-4"></td>
+  <td className="px-4 sm:px-6 py-4"></td>
+
+  <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
+    ₱{totals.totalBudgetAllocated.toLocaleString()}
+  </td>
+
+  <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
+    ₱{totals.obligatedBudget.toLocaleString()}
+  </td>
+
+  <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
+    ₱{totals.totalBudgetUtilized.toLocaleString()}
+  </td>
+
+  <td className="px-4 sm:px-6 py-4 text-right">
+    <span
+      className={`text-sm font-semibold ${getUtilizationColor(
+        totalUtilizationRate
+      )}`}
+    >
+      {totalUtilizationRate.toFixed(1)}%
+    </span>
+  </td>
+<td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
+  {Math.round(totals.projectCompleted)}
+</td>
+<td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
+  {Math.round(totals.projectDelayed)}
+</td>
+<td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
+  {Math.round(totals.projectsOnTrack)}
+</td>
+</tr>
                 </>
               )}
             </tbody>
@@ -813,7 +812,6 @@ export function BudgetTrackingTable({
         </div>
       </div>
 
-      {/* Context Menu */}
       {contextMenu && (
         <div
           ref={contextMenuRef}
@@ -828,15 +826,9 @@ export function BudgetTrackingTable({
             className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-3"
           >
             {contextMenu.item.isPinned ? (
-              <>
-                <PinOff className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                <span className="text-zinc-700 dark:text-zinc-300">Unpin</span>
-              </>
+              <><PinOff className="w-4 h-4 text-zinc-600 dark:text-zinc-400" /><span className="text-zinc-700 dark:text-zinc-300">Unpin</span></>
             ) : (
-              <>
-                <Pin className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                <span className="text-zinc-700 dark:text-zinc-300">Pin to top</span>
-              </>
+              <><Pin className="w-4 h-4 text-zinc-600 dark:text-zinc-400" /><span className="text-zinc-700 dark:text-zinc-300">Pin to top</span></>
             )}
           </button>
           {onEdit && (
@@ -860,7 +852,6 @@ export function BudgetTrackingTable({
         </div>
       )}
 
-      {/* Modals */}
       {showAddModal && (
         <Modal
           isOpen={showAddModal}

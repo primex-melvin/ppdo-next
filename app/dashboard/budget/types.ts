@@ -48,10 +48,10 @@ export interface BudgetItemFromDB {
   updatedBy?: string;
 }
 
-// Updated Project interface to match new schema
+// Updated Project interface with new terminology
 export interface Project {
   id: string;
-  projectName: string;
+  particulars: string; // Changed from projectName
   implementingOffice: string; // Department name for display
   totalBudgetAllocated: number;
   obligatedBudget?: number;
@@ -59,8 +59,8 @@ export interface Project {
   utilizationRate: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
-  notes?: string;
+  projectsOngoing: number; // Changed from projectsOnTrack
+  remarks?: string; // Changed from notes
   year?: number;
   status?: "done" | "pending" | "ongoing";
   projectManagerId?: string;
