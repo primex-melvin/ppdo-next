@@ -130,7 +130,8 @@ export const createUser = mutation({
 });
 
 /**
- * Update user profile information (admin and super_admin only)
+ * Update user profile information (admin and super_admin only, or self-update)
+ * UPDATED: Now includes image upload support
  */
 export const updateUserProfile = mutation({
   args: {
@@ -146,6 +147,9 @@ export const updateUserProfile = mutation({
     
     position: v.optional(v.string()),
     employeeId: v.optional(v.string()),
+    
+    // NEW: Image upload support
+    imageStorageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
@@ -154,10 +158,8 @@ export const updateUserProfile = mutation({
     }
 
     const currentUser = await ctx.db.get(currentUserId);
-    
-    // Only super_admin and admin can update user profiles
-    if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "admin")) {
-      throw new Error("Not authorized - administrator access required");
+    if (!currentUser) {
+      throw new Error("User not found");
     }
 
     const targetUser = await ctx.db.get(args.userId);
@@ -165,8 +167,20 @@ export const updateUserProfile = mutation({
       throw new Error("User not found");
     }
 
+    // Check authorization:
+    // - Users can update their own profile
+    // - Admins can update profiles (except super_admin profiles)
+    // - Super_admins can update any profile
+    const isSelfUpdate = currentUserId === args.userId;
+    const isAdmin = currentUser.role === "admin";
+    const isSuperAdmin = currentUser.role === "super_admin";
+
+    if (!isSelfUpdate && !isAdmin && !isSuperAdmin) {
+      throw new Error("Not authorized - cannot modify other users' profiles");
+    }
+
     // Admin cannot update super_admin profiles
-    if (currentUser.role === "admin" && targetUser.role === "super_admin") {
+    if (isAdmin && !isSuperAdmin && targetUser.role === "super_admin") {
       throw new Error("Not authorized - cannot modify super_admin profile");
     }
 
@@ -214,6 +228,16 @@ export const updateUserProfile = mutation({
     if (args.position !== undefined) updateData.position = args.position;
     if (args.employeeId !== undefined) updateData.employeeId = args.employeeId;
 
+    // Handle image upload
+    if (args.imageStorageId !== undefined) {
+      // Get the URL for the uploaded image
+      const imageUrl = await ctx.storage.getUrl(args.imageStorageId);
+      if (imageUrl) {
+        updateData.image = imageUrl;
+        updateData.imageStorageId = args.imageStorageId;
+      }
+    }
+
     await ctx.db.patch(args.userId, updateData);
 
     // Log the action
@@ -229,6 +253,7 @@ export const updateUserProfile = mutation({
         name: targetUser.name,
         position: targetUser.position,
         employeeId: targetUser.employeeId,
+        hasImage: !!targetUser.image,
       }),
       newValues: JSON.stringify(updateData),
       timestamp: now,
