@@ -123,7 +123,7 @@ export default function ProjectBreakdownPage() {
     projectId ? { id: projectId as Id<"projects"> } : "skip"
   );
   
-  // ✅ FIXED: Use 'particulars' instead of 'projectName'
+  // Use 'particulars' instead of 'projectName'
   const breakdownHistory = useQuery(
     api.govtProjects.getProjectBreakdowns,
     project ? { projectName: project.particulars } : "skip"
@@ -379,7 +379,6 @@ export default function ProjectBreakdownPage() {
                 className="text-3xl sm:text-4xl font-semibold text-zinc-900 dark:text-zinc-100 mb-1"
                 style={{ fontFamily: "var(--font-cinzel), serif" }}
               >
-                {/* ✅ FIXED: Use 'particulars' instead of 'projectName' */}
                 {project?.particulars || "Loading..."}
               </h1>
               <p className="text-zinc-600 dark:text-zinc-400">
@@ -409,7 +408,6 @@ export default function ProjectBreakdownPage() {
               </>
             )}
           </Button>
-          {/* ✅ FIXED: Use 'particulars' for ActivityLogSheet */}
           {project && (
             <ActivityLogSheet 
               projectName={project.particulars}
@@ -418,7 +416,7 @@ export default function ProjectBreakdownPage() {
         </div>
       </div>
 
-      {/* Project Overview Cards - Conditionally Rendered - UPDATED to use new fields */}
+      {/* Project Overview Cards - Conditionally Rendered */}
       {showHeader && project && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6 no-print">
           <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
@@ -426,7 +424,6 @@ export default function ProjectBreakdownPage() {
               Implementing Office
             </p>
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {/* ✅ FIXED: Use 'implementingOffice' instead of 'departmentName' */}
               {project.implementingOffice || "N/A"}
             </p>
           </div>
@@ -469,7 +466,6 @@ export default function ProjectBreakdownPage() {
             </div>
           )}
 
-          {/* ✅ FIXED: Use 'remarks' instead of 'notes' */}
           {project.remarks && (
             <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
               <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-1">
@@ -607,7 +603,6 @@ export default function ProjectBreakdownPage() {
           size="xl"
         >
           <BreakdownForm
-            {/* ✅ FIXED: Use 'particulars' instead of 'projectName' */}
             defaultProjectName={project.particulars}
             defaultImplementingOffice={project.implementingOffice}
             onSave={handleAdd}

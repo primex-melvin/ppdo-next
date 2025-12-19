@@ -50,8 +50,7 @@ export function BudgetTrackingTable({
   const router = useRouter();
   const accessCheck = useQuery(api.budgetAccess.canAccess);
   const pendingRequestsCount = useQuery(api.accessRequests.getPendingCount);
-  const pinBudgetItem = useMutation(api.budgetItems.pin);
-  const unpinBudgetItem = useMutation(api.budgetItems.unpin);
+  const togglePinBudgetItem = useMutation(api.budgetItems.togglePin);
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -243,13 +242,8 @@ export function BudgetTrackingTable({
 
   const handlePin = async (item: BudgetItem) => {
     try {
-      if (item.isPinned) {
-        await unpinBudgetItem({ id: item.id as Id<"budgetItems"> });
-        toast.success("Budget item unpinned");
-      } else {
-        await pinBudgetItem({ id: item.id as Id<"budgetItems"> });
-        toast.success("Budget item pinned to top");
-      }
+      await togglePinBudgetItem({ id: item.id as Id<"budgetItems"> });
+      toast.success(item.isPinned ? "Budget item unpinned" : "Budget item pinned to top");
     } catch (error) {
       console.error("Error toggling pin:", error);
       toast.error("Failed to pin/unpin item");
