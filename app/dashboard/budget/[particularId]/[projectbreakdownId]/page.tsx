@@ -122,15 +122,18 @@ export default function ProjectBreakdownPage() {
     api.projects.get,
     projectId ? { id: projectId as Id<"projects"> } : "skip"
   );
-  // Get all breakdowns for this project using the new backend
+  
+  // ✅ FIXED: Use 'particulars' instead of 'projectName'
   const breakdownHistory = useQuery(
     api.govtProjects.getProjectBreakdowns,
-    project ? { projectName: project.projectName } : "skip"
+    project ? { projectName: project.particulars } : "skip"
   );
+  
   // Fetch departments for the form
   const departments = useQuery(api.departments.list, { includeInactive: false });
 
   const particularFullName = getParticularFullName(particularId);
+  
   // Set custom breadcrumbs when project data is loaded
   useEffect(() => {
     if (project) {
@@ -138,7 +141,7 @@ export default function ProjectBreakdownPage() {
         { label: "Home", href: "/dashboard" },
         { label: "Budget", href: "/dashboard/budget" },
         { label: particularFullName, href: `/dashboard/budget/${encodeURIComponent(particularId)}` },
-        { label: project.departmentName || "Loading..." },
+        { label: project.implementingOffice || "Loading..." },
       ]);
     }
 
@@ -376,7 +379,8 @@ export default function ProjectBreakdownPage() {
                 className="text-3xl sm:text-4xl font-semibold text-zinc-900 dark:text-zinc-100 mb-1"
                 style={{ fontFamily: "var(--font-cinzel), serif" }}
               >
-                {project?.projectName || "Loading..."}
+                {/* ✅ FIXED: Use 'particulars' instead of 'projectName' */}
+                {project?.particulars || "Loading..."}
               </h1>
               <p className="text-zinc-600 dark:text-zinc-400">
                 Historical breakdown and progress tracking
@@ -405,9 +409,10 @@ export default function ProjectBreakdownPage() {
               </>
             )}
           </Button>
+          {/* ✅ FIXED: Use 'particulars' for ActivityLogSheet */}
           {project && (
             <ActivityLogSheet 
-              projectName={project.projectName}
+              projectName={project.particulars}
             />
           )}
         </div>
@@ -421,7 +426,8 @@ export default function ProjectBreakdownPage() {
               Implementing Office
             </p>
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {project.departmentName || "N/A"}
+              {/* ✅ FIXED: Use 'implementingOffice' instead of 'departmentName' */}
+              {project.implementingOffice || "N/A"}
             </p>
           </div>
 
@@ -463,13 +469,14 @@ export default function ProjectBreakdownPage() {
             </div>
           )}
 
-          {project.notes && (
+          {/* ✅ FIXED: Use 'remarks' instead of 'notes' */}
+          {project.remarks && (
             <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
               <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-1">
-                Notes
+                Remarks
               </p>
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {project.notes}
+                {project.remarks}
               </p>
             </div>
           )}
@@ -600,10 +607,9 @@ export default function ProjectBreakdownPage() {
           size="xl"
         >
           <BreakdownForm
-            defaultProjectName={project.projectName}
-            defaultImplementingOffice={
-              departments.find(d => d._id === project.departmentId)?.name || project.departmentName
-            }
+            {/* ✅ FIXED: Use 'particulars' instead of 'projectName' */}
+            defaultProjectName={project.particulars}
+            defaultImplementingOffice={project.implementingOffice}
             onSave={handleAdd}
             onCancel={() => setShowAddModal(false)}
           />

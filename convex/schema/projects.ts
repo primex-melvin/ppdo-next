@@ -12,18 +12,28 @@ export const projectTables = {
     // ============================================================================
     // PROJECT IDENTIFICATION
     // ============================================================================
-    projectName: v.string(),
+    /**
+     * Project particulars/name
+     * Note: Backend uses "particulars" to match budgetItems terminology
+     */
+    particulars: v.string(),
     
     /**
-     * Implementing Office (Department)
+     * Implementing Office (Department name as string for display)
      */
-    departmentId: v.id("departments"),
+    implementingOffice: v.string(),
+    
+    /**
+     * Department ID reference (optional for filtering/grouping)
+     */
+    departmentId: v.optional(v.id("departments")),
 
     /**
-     * 🆕 PARENT BUDGET ITEM
+     * 🆕 PARENT BUDGET ITEM (OPTIONAL)
      * Links this project to a specific budget item for aggregation.
+     * When linked, this project's status contributes to parent's metrics.
      */
-    budgetItemId: v.id("budgetItems"),
+    budgetItemId: v.optional(v.id("budgetItems")),
     
     // ============================================================================
     // FINANCIAL DATA (matches budgetItems)
@@ -38,16 +48,24 @@ export const projectTables = {
     // ============================================================================
     projectCompleted: v.number(),
     projectDelayed: v.number(),
-    projectsOnTrack: v.number(), // Often referred to as "projectsOngoing" in args
+    projectsOnTrack: v.number(), // Often referred to as "projectsOngoing" in frontend
     
     // ============================================================================
     // ADDITIONAL PROJECT FIELDS
     // ============================================================================
-    notes: v.optional(v.string()),
+    remarks: v.optional(v.string()),
     year: v.optional(v.number()),
+    
+    /**
+     * Project status - determines how it's counted in parent budgetItem
+     * - "done": Counts toward projectCompleted
+     * - "delayed": Counts toward projectDelayed
+     * - "pending" or "ongoing": Counts toward projectsOnTrack
+     */
     status: v.optional(
       v.union(
         v.literal("done"),
+        v.literal("delayed"),    // ← ADDED for aggregation
         v.literal("pending"),
         v.literal("ongoing")
       )
@@ -74,9 +92,10 @@ export const projectTables = {
     updatedAt: v.number(),
     updatedBy: v.optional(v.id("users")),
   })
-    .index("projectName", ["projectName"])
+    .index("particulars", ["particulars"])
+    .index("implementingOffice", ["implementingOffice"])
     .index("departmentId", ["departmentId"])
-    // 🆕 NEW INDEXES FOR AGGREGATION
+    // 🆕 CRITICAL INDEXES FOR AGGREGATION
     .index("budgetItemId", ["budgetItemId"]) 
     .index("budgetItemAndStatus", ["budgetItemId", "status"])
     // EXISTING INDEXES

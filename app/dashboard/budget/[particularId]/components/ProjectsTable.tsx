@@ -1,5 +1,4 @@
 // app/dashboard/budget/[particularId]/components/ProjectsTable.tsx
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -47,8 +46,7 @@ export function ProjectsTable({
 }: ProjectsTableProps) {
   const { accentColorValue } = useAccentColor();
   const router = useRouter();
-  const pinProject = useMutation(api.projects.pin);
-  const unpinProject = useMutation(api.projects.unpin);
+  const togglePinProject = useMutation(api.projects.togglePin); // ✅ FIXED: Use togglePin instead of pin/unpin
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -195,7 +193,7 @@ export function ProjectsTable({
   const formatPercentage = (value: number): string => `${value.toFixed(1)}%`;
 
   const formatNumber = (value: number): string => {
-    return Math.round(value).toString(); // Ensure whole numbers
+    return Math.round(value).toString();
   };
 
   const getUtilizationColor = (rate: number): string => {
@@ -212,10 +210,9 @@ export function ProjectsTable({
 
   const getStatusColor = (status?: string): string => {
     if (!status) return "text-zinc-600 dark:text-zinc-400";
-    if (status === "completed") return "text-green-600 dark:text-green-400";
-    if (status === "on_track") return "text-blue-600 dark:text-blue-400";
+    if (status === "done") return "text-green-600 dark:text-green-400";
+    if (status === "ongoing" || status === "pending") return "text-blue-600 dark:text-blue-400";
     if (status === "delayed") return "text-red-600 dark:text-red-400";
-    if (status === "on_hold") return "text-orange-600 dark:text-orange-400";
     return "text-zinc-600 dark:text-zinc-400";
   };
 
@@ -245,13 +242,8 @@ export function ProjectsTable({
   const handlePin = async (project: Project) => {
     try {
       const isPinned = 'isPinned' in project ? (project as any).isPinned : false;
-      if (isPinned) {
-        await unpinProject({ id: project.id as Id<"projects"> });
-        toast.success("Project unpinned");
-      } else {
-        await pinProject({ id: project.id as Id<"projects"> });
-        toast.success("Project pinned to top");
-      }
+      await togglePinProject({ id: project.id as Id<"projects"> }); // ✅ FIXED: Use togglePin
+      toast.success(isPinned ? "Project unpinned" : "Project pinned to top");
     } catch (error) {
       toast.error("Failed to pin/unpin project");
     }
@@ -308,13 +300,22 @@ export function ProjectsTable({
   const totals = filteredAndSortedProjects.reduce(
     (acc, project) => ({
       totalBudgetAllocated: acc.totalBudgetAllocated + project.totalBudgetAllocated,
+      obligatedBudget: acc.obligatedBudget + (project.obligatedBudget || 0),
       totalBudgetUtilized: acc.totalBudgetUtilized + project.totalBudgetUtilized,
       utilizationRate: acc.utilizationRate + project.utilizationRate / (filteredAndSortedProjects.length || 1),
       projectCompleted: acc.projectCompleted + project.projectCompleted,
       projectDelayed: acc.projectDelayed + (project.projectDelayed || 0),
       projectsOngoing: acc.projectsOngoing + project.projectsOngoing,
     }),
-    { totalBudgetAllocated: 0, totalBudgetUtilized: 0, utilizationRate: 0, projectCompleted: 0, projectDelayed: 0, projectsOngoing: 0 }
+    { 
+      totalBudgetAllocated: 0, 
+      obligatedBudget: 0,
+      totalBudgetUtilized: 0, 
+      utilizationRate: 0, 
+      projectCompleted: 0, 
+      projectDelayed: 0, 
+      projectsOngoing: 0 
+    }
   );
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -367,140 +368,144 @@ export function ProjectsTable({
                 <tr><td colSpan={12} className="px-4 py-12 text-center text-sm text-zinc-500">No projects found matching your criteria.</td></tr>
               ) : (
                 <>
-              {filteredAndSortedProjects.map((project) => (
-  <tr
-    key={project.id}
-    onContextMenu={(e) => handleContextMenu(e, project)}
-    onClick={(e) => handleRowClick(project, e)}
-    className={`hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer ${
-      'isPinned' in project && (project as any).isPinned
-        ? 'bg-amber-50 dark:bg-amber-950/20'
-        : ''
-    }`}
-  >
-    <td className="px-3 py-3">
-      <div className="flex items-center gap-2">
-        {('isPinned' in project && (project as any).isPinned) && (
-          <Pin className="w-3.5 h-3.5 text-amber-600" />
-        )}
-        <span className="text-sm font-medium">
-          {project.particulars}
-        </span>
-      </div>
-    </td>
+                  {filteredAndSortedProjects.map((project) => (
+                    <tr
+                      key={project.id}
+                      onContextMenu={(e) => handleContextMenu(e, project)}
+                      onClick={(e) => handleRowClick(project, e)}
+                      className={`hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer ${
+                        'isPinned' in project && (project as any).isPinned
+                          ? 'bg-amber-50 dark:bg-amber-950/20'
+                          : ''
+                      }`}
+                    >
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          {('isPinned' in project && (project as any).isPinned) && (
+                            <Pin className="w-3.5 h-3.5 text-amber-600" />
+                          )}
+                          <span className="text-sm font-medium">
+                            {project.particulars}
+                          </span>
+                        </div>
+                      </td>
 
-    <td className="px-3 py-3 text-sm text-zinc-600">
-      {project.implementingOffice}
-    </td>
+                      <td className="px-3 py-3 text-sm text-zinc-600">
+                        {project.implementingOffice}
+                      </td>
 
-    <td className="px-3 py-3 text-sm text-center">
-      {project.year || "-"}
-    </td>
+                      <td className="px-3 py-3 text-sm text-center">
+                        {project.year || "-"}
+                      </td>
 
-    <td className="px-3 py-3 text-sm">
-      <span className={`font-medium ${getStatusColor(project.status)}`}>
-        {project.status
-          ? project.status
-              .replace('_', ' ')
-              .charAt(0)
-              .toUpperCase() +
-            project.status.slice(1).replace('_', ' ')
-          : '-'}
-      </span>
-    </td>
+                      <td className="px-3 py-3 text-sm">
+                        <span className={`font-medium ${getStatusColor(project.status)}`}>
+                          {project.status
+                            ? project.status
+                                .replace('_', ' ')
+                                .charAt(0)
+                                .toUpperCase() +
+                              project.status.slice(1).replace('_', ' ')
+                            : '-'}
+                        </span>
+                      </td>
 
-    <td className="px-3 py-3 text-right text-sm font-medium">
-      {formatCurrency(project.totalBudgetAllocated)}
-    </td>
+                      <td className="px-3 py-3 text-right text-sm font-medium">
+                        {formatCurrency(project.totalBudgetAllocated)}
+                      </td>
 
-    <td className="px-3 py-3 text-right text-sm">
-      {project.obligatedBudget
-        ? formatCurrency(project.obligatedBudget)
-        : "-"}
-    </td>
+                      <td className="px-3 py-3 text-right text-sm">
+                        {project.obligatedBudget
+                          ? formatCurrency(project.obligatedBudget)
+                          : "-"}
+                      </td>
 
-    <td className="px-3 py-3 text-right text-sm font-medium">
-      {formatCurrency(project.totalBudgetUtilized)}
-    </td>
+                      <td className="px-3 py-3 text-right text-sm font-medium">
+                        {formatCurrency(project.totalBudgetUtilized)}
+                      </td>
 
-    <td className="px-3 py-3 text-right text-sm font-semibold">
-      <span className={getUtilizationColor(project.utilizationRate)}>
-        {formatPercentage(project.utilizationRate)}
-      </span>
-    </td>
+                      <td className="px-3 py-3 text-right text-sm font-semibold">
+                        <span className={getUtilizationColor(project.utilizationRate)}>
+                          {formatPercentage(project.utilizationRate)}
+                        </span>
+                      </td>
 
-    <td className="px-3 py-3 text-right text-sm">
-      <span className={getAccomplishmentColor(project.projectCompleted)}>
-        {Math.round(project.projectCompleted)}
-      </span>
-    </td>
+                      <td className="px-3 py-3 text-right text-sm">
+                        <span className={getAccomplishmentColor(project.projectCompleted)}>
+                          {Math.round(project.projectCompleted)}
+                        </span>
+                      </td>
 
-    <td className="px-3 py-3 text-right text-sm">
-      {Math.round(project.projectDelayed)}
-    </td>
+                      <td className="px-3 py-3 text-right text-sm">
+                        {Math.round(project.projectDelayed)}
+                      </td>
 
-    <td className="px-3 py-3 text-right text-sm">
-      {Math.round(project.projectsOngoing)}
-    </td>
+                      <td className="px-3 py-3 text-right text-sm">
+                        {Math.round(project.projectsOngoing)}
+                      </td>
 
-    <td className="px-3 py-3 text-sm text-zinc-500 truncate max-w-[150px]">
-      {project.remarks || "-"}
-    </td>
-  </tr>
-))}
-<tr className="border-t-2 border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50 font-semibold">
-  <td className="px-3 py-3" colSpan={4}>
-    <span className="text-sm text-zinc-900">TOTAL</span>
-  </td>
+                      <td className="px-3 py-3 text-sm text-zinc-500 truncate max-w-[150px]">
+                        {project.remarks || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="border-t-2 border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50 font-semibold">
+                    <td className="px-3 py-3" colSpan={4}>
+                      <span className="text-sm text-zinc-900">TOTAL</span>
+                    </td>
 
-  <td
-    className="px-3 py-3 text-right text-sm"
-    style={{ color: accentColorValue }}
-  >
-    {formatCurrency(totals.totalBudgetAllocated)}
-  </td>
+                    <td
+                      className="px-3 py-3 text-right text-sm"
+                      style={{ color: accentColorValue }}
+                    >
+                      {formatCurrency(totals.totalBudgetAllocated)}
+                    </td>
 
-  <td className="px-3 py-3 text-right text-sm">-</td>
+                    <td
+                      className="px-3 py-3 text-right text-sm"
+                      style={{ color: accentColorValue }}
+                    >
+                      {formatCurrency(totals.obligatedBudget)}
+                    </td>
 
-  <td
-    className="px-3 py-3 text-right text-sm"
-    style={{ color: accentColorValue }}
-  >
-    {formatCurrency(totals.totalBudgetUtilized)}
-  </td>
+                    <td
+                      className="px-3 py-3 text-right text-sm"
+                      style={{ color: accentColorValue }}
+                    >
+                      {formatCurrency(totals.totalBudgetUtilized)}
+                    </td>
 
-  <td className="px-3 py-3 text-right text-sm">
-    <span className={getUtilizationColor(totals.utilizationRate)}>
-      {formatPercentage(totals.utilizationRate)}
-    </span>
-  </td>
+                    <td className="px-3 py-3 text-right text-sm">
+                      <span className={getUtilizationColor(totals.utilizationRate)}>
+                        {formatPercentage(totals.utilizationRate)}
+                      </span>
+                    </td>
 
-  <td
-    className="px-3 py-3 text-right text-sm"
-    style={{ color: accentColorValue }}
-  >
-    {formatNumber(totals.projectCompleted)}
-  </td>
+                    <td
+                      className="px-3 py-3 text-right text-sm"
+                      style={{ color: accentColorValue }}
+                    >
+                      {formatNumber(totals.projectCompleted)}
+                    </td>
 
-  <td
-    className="px-3 py-3 text-right text-sm"
-    style={{ color: accentColorValue }}
-  >
-    {totals.projectDelayed}
-  </td>
+                    <td
+                      className="px-3 py-3 text-right text-sm"
+                      style={{ color: accentColorValue }}
+                    >
+                      {totals.projectDelayed}
+                    </td>
 
-  <td
-    className="px-3 py-3 text-right text-sm"
-    style={{ color: accentColorValue }}
-  >
-    {formatNumber(totals.projectsOngoing)}
-  </td>
+                    <td
+                      className="px-3 py-3 text-right text-sm"
+                      style={{ color: accentColorValue }}
+                    >
+                      {formatNumber(totals.projectsOngoing)}
+                    </td>
 
-  <td className="px-3 py-3 text-sm text-zinc-400 text-center">
-    -
-  </td>
-</tr>
-
+                    <td className="px-3 py-3 text-sm text-zinc-400 text-center">
+                      -
+                    </td>
+                  </tr>
                 </>
               )}
             </tbody>

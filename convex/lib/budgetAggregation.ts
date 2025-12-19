@@ -1,12 +1,11 @@
 // convex/lib/budgetAggregation.ts
-
 import { GenericMutationCtx } from "convex/server";
 import { DataModel, Id } from "../_generated/dataModel";
 
 type MutationCtx = GenericMutationCtx<DataModel>;
 
 /**
- * Calculate and update budgetItem metrics from child projects
+ * Calculate and update budgetItem metrics based on child project STATUSES
  * This is the SINGLE SOURCE OF TRUTH for budgetItem project counts
  */
 export async function recalculateBudgetItemMetrics(
@@ -29,32 +28,45 @@ export async function recalculateBudgetItemMetrics(
       updatedAt: Date.now(),
       updatedBy: userId,
     });
-    return { projectsCount: 0 };
+    return {
+      projectsCount: 0,
+      completed: 0,
+      delayed: 0,
+      onTrack: 0,
+    };
   }
 
-  // Aggregate counts from all child projects
+  // Count projects based on their STATUS field
   const aggregated = projects.reduce(
-    (acc, project) => ({
-      completed: acc.completed + (project.projectCompleted || 0),
-      delayed: acc.delayed + (project.projectDelayed || 0),
-      // Schema uses 'projectsOnTrack', inputs often refer to 'ongoing'
-      ongoing: acc.ongoing + (project.projectsOnTrack || 0),
-    }),
-    { completed: 0, delayed: 0, ongoing: 0 }
+    (acc, project) => {
+      const status = project.status;
+      
+      if (status === "done") {
+        acc.completed++;
+      } else if (status === "delayed") {
+        acc.delayed++;
+      } else if (status === "pending" || status === "ongoing") {
+        acc.onTrack++;
+      }
+      // Projects without status are not counted
+      
+      return acc;
+    },
+    { completed: 0, delayed: 0, onTrack: 0 }
   );
 
   // Update budget item with aggregated totals
   await ctx.db.patch(budgetItemId, {
     projectCompleted: aggregated.completed,
     projectDelayed: aggregated.delayed,
-    projectsOnTrack: aggregated.ongoing,
+    projectsOnTrack: aggregated.onTrack,
     updatedAt: Date.now(),
     updatedBy: userId,
   });
 
   return {
     projectsCount: projects.length,
-    aggregated,
+    ...aggregated,
   };
 }
 
@@ -71,7 +83,10 @@ export async function recalculateMultipleBudgetItems(
   
   for (const budgetItemId of budgetItemIds) {
     const result = await recalculateBudgetItemMetrics(ctx, budgetItemId, userId);
-    results.push({ budgetItemId, ...result });
+    results.push({
+      budgetItemId,
+      ...result,
+    });
   }
   
   return results;
@@ -86,7 +101,7 @@ export async function recalculateAllBudgetItems(
   userId: Id<"users">
 ) {
   const allBudgetItems = await ctx.db.query("budgetItems").collect();
-  const budgetItemIds = allBudgetItems.map(bi => bi._id);
+  const budgetItemIds = allBudgetItems.map((bi) => bi._id);
   
   return await recalculateMultipleBudgetItems(ctx, budgetItemIds, userId);
 }

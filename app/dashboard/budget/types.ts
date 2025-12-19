@@ -1,5 +1,12 @@
 // app/dashboard/budget/types.ts
 
+// ===== BUDGET ITEM TYPES =====
+
+/**
+ * Frontend BudgetItem interface
+ * NOTE: projectCompleted, projectDelayed, projectsOnTrack are READ-ONLY
+ * They are calculated automatically from child project statuses
+ */
 export interface BudgetItem {
   id: string;
   particular: string;
@@ -7,25 +14,39 @@ export interface BudgetItem {
   obligatedBudget?: number;
   totalBudgetUtilized: number;
   utilizationRate: number;
-  // These are now READ-ONLY, calculated from child projects
+  
+  // 🔒 READ-ONLY: Calculated from child projects
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number; // Backend schema uses projectsOnTrack
+  projectsOnTrack: number;
+  
   year?: number;
   status?: "done" | "pending" | "ongoing";
   isPinned?: boolean;
   pinnedAt?: number;
   pinnedBy?: string;
+  notes?: string;
 }
 
-export type SortDirection = "asc" | "desc" | null;
-export type SortField = keyof BudgetItem | null;
-
-export interface ColumnFilter {
-  field: keyof BudgetItem;
-  value: any;
+/**
+ * BudgetItem data when creating/updating
+ * EXCLUDES the calculated project count fields
+ */
+export interface BudgetItemFormData {
+  particular: string;
+  totalBudgetAllocated: number;
+  obligatedBudget?: number;
+  totalBudgetUtilized: number;
+  year?: number;
+  status?: "done" | "pending" | "ongoing";
+  notes?: string;
+  departmentId?: string;
+  fiscalYear?: number;
 }
 
+/**
+ * BudgetItem as stored in Convex database
+ */
 export interface BudgetItemFromDB {
   _id: string;
   _creationTime: number;
@@ -34,12 +55,100 @@ export interface BudgetItemFromDB {
   obligatedBudget?: number;
   totalBudgetUtilized: number;
   utilizationRate: number;
+  
+  // Calculated fields
   projectCompleted: number;
   projectDelayed: number;
   projectsOnTrack: number;
+  
   notes?: string;
   year?: number;
   status?: "done" | "pending" | "ongoing";
+  isPinned?: boolean;
+  pinnedAt?: number;
+  pinnedBy?: string;
+  departmentId?: string;
+  fiscalYear?: number;
+  
+  createdBy: string;
+  createdAt: number;
+  updatedAt: number;
+  updatedBy?: string;
+}
+
+// ===== PROJECT TYPES =====
+
+/**
+ * Frontend Project interface
+ */
+export interface Project {
+  id: string;
+  particulars: string;
+  budgetItemId?: string;
+  implementingOffice: string;
+  totalBudgetAllocated: number;
+  obligatedBudget?: number;
+  totalBudgetUtilized: number;
+  utilizationRate: number;
+  
+  // Project-level counts (stored in project record)
+  projectCompleted: number;
+  projectDelayed: number;
+  projectsOngoing: number; // Frontend term for projectsOnTrack
+  
+  remarks?: string;
+  year?: number;
+  status?: "done" | "delayed" | "pending" | "ongoing";
+  targetDateCompletion?: number;
+  projectManagerId?: string;
+  
+  // Pin fields
+  isPinned?: boolean;
+  pinnedAt?: number;
+  pinnedBy?: string;
+}
+
+/**
+ * Project data when creating/updating
+ */
+export interface ProjectFormData {
+  particulars: string;
+  budgetItemId?: string;
+  implementingOffice: string;
+  totalBudgetAllocated: number;
+  obligatedBudget?: number;
+  totalBudgetUtilized: number;
+  projectCompleted: number;
+  projectDelayed: number;
+  projectsOngoing: number;
+  remarks?: string;
+  year?: number;
+  status?: "done" | "delayed" | "pending" | "ongoing";
+  targetDateCompletion?: number;
+  projectManagerId?: string;
+}
+
+/**
+ * Project as stored in Convex database
+ */
+export interface ProjectFromDB {
+  _id: string;
+  _creationTime: number;
+  particulars: string;
+  budgetItemId?: string;
+  implementingOffice: string;
+  totalBudgetAllocated: number;
+  obligatedBudget?: number;
+  totalBudgetUtilized: number;
+  utilizationRate: number;
+  projectCompleted: number;
+  projectDelayed: number;
+  projectsOnTrack: number;
+  remarks?: string;
+  year?: number;
+  status?: "done" | "delayed" | "pending" | "ongoing";
+  targetDateCompletion?: number;
+  projectManagerId?: string;
   isPinned?: boolean;
   pinnedAt?: number;
   pinnedBy?: string;
@@ -49,29 +158,17 @@ export interface BudgetItemFromDB {
   updatedBy?: string;
 }
 
-// Updated Project interface with new terminology
-export interface Project {
-  id: string;
-  particulars: string; // Changed from projectName
-  budgetItemId?: string; // New field linking to parent budget item
-  implementingOffice: string; // Department name for display
-  totalBudgetAllocated: number;
-  obligatedBudget?: number;
-  totalBudgetUtilized: number;
-  utilizationRate: number;
-  projectCompleted: number;
-  projectDelayed: number;
-  projectsOngoing: number; // Frontend term for projectsOnTrack
-  remarks?: string; // Frontend term for notes
-  year?: number;
-  status?: "done" | "pending" | "ongoing";
-  projectManagerId?: string;
-  // Pin fields
-  isPinned?: boolean;
-  pinnedAt?: number;
-  pinnedBy?: string;
-  targetDateCompletion?: number;
+// ===== UTILITY TYPES =====
+
+export type SortDirection = "asc" | "desc" | null;
+export type SortField = keyof BudgetItem | null;
+
+export interface ColumnFilter {
+  field: keyof BudgetItem;
+  value: any;
 }
+
+// ===== CONSTANTS =====
 
 export const BUDGET_PARTICULARS = [
   "GAD",
@@ -105,6 +202,8 @@ export const PARTICULAR_FULL_NAMES: Record<BudgetParticular, string> = {
   "20%_DF": "20% DEVELOPMENT FUND",
 };
 
+// ===== FINANCIAL BREAKDOWN =====
+
 export interface FinancialBreakdownItem {
   id: string;
   code?: string;
@@ -115,6 +214,8 @@ export interface FinancialBreakdownItem {
   level: number;
   children?: FinancialBreakdownItem[];
 }
+
+// ===== REMARKS =====
 
 export interface Remark {
   id: string;

@@ -67,9 +67,13 @@ export default function ProjectDetailPage() {
             className="text-4xl font-bold text-gray-900 dark:text-gray-100"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            {project.projectName}
+            {/* ✅ FIXED: Use 'particulars' instead of 'projectName' */}
+            {project.particulars}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
+            {project.implementingOffice && (
+              <span className="font-medium">{project.implementingOffice} • </span>
+            )}
             Detailed project tracking and budget utilization
           </p>
         </div>

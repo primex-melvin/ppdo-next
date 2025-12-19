@@ -1,14 +1,14 @@
 // convex/budgetItems.ts
-
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-// 🆕 Import aggregation logic for manual trigger
-import { recalculateBudgetItemMetrics, recalculateAllBudgetItems } from "./lib/budgetAggregation";
+import {
+  recalculateBudgetItemMetrics,
+  recalculateAllBudgetItems,
+} from "./lib/budgetAggregation";
 
 /**
- * Get all budget items ordered by creation date (newest first)
- * Pinned items will appear first
+ * Get all budget items for the current user
  */
 export const list = query({
   args: {},
@@ -20,25 +20,11 @@ export const list = query({
 
     const budgetItems = await ctx.db
       .query("budgetItems")
-      .withIndex("createdAt")
+      .withIndex("createdBy", (q) => q.eq("createdBy", userId))
       .order("desc")
       .collect();
 
-    // Sort: pinned items first (by pinnedAt desc), then unpinned items
-    const sortedItems = budgetItems.sort((a, b) => {
-      // Both pinned - sort by pinnedAt (most recent first)
-      if (a.isPinned && b.isPinned) {
-        return (b.pinnedAt || 0) - (a.pinnedAt || 0);
-      }
-      // Only a is pinned
-      if (a.isPinned) return -1;
-      // Only b is pinned
-      if (b.isPinned) return 1;
-      // Neither pinned - sort by creation time
-      return b._creationTime - a._creationTime;
-    });
-
-    return sortedItems;
+    return budgetItems;
   },
 });
 
@@ -46,9 +32,7 @@ export const list = query({
  * Get a single budget item by ID
  */
 export const get = query({
-  args: {
-    id: v.id("budgetItems"),
-  },
+  args: { id: v.id("budgetItems") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) {
@@ -56,17 +40,24 @@ export const get = query({
     }
 
     const budgetItem = await ctx.db.get(args.id);
+    
+    if (!budgetItem) {
+      throw new Error("Budget item not found");
+    }
+
+    if (budgetItem.createdBy !== userId) {
+      throw new Error("Not authorized");
+    }
+
     return budgetItem;
   },
 });
 
 /**
- * Get budget item by particulars name
+ * Get a single budget item by particulars (name)
  */
 export const getByParticulars = query({
-  args: {
-    particulars: v.string(),
-  },
+  args: { particulars: v.string() },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) {
@@ -76,255 +67,19 @@ export const getByParticulars = query({
     const budgetItem = await ctx.db
       .query("budgetItems")
       .withIndex("particulars", (q) => q.eq("particulars", args.particulars))
+      .filter((q) => q.eq(q.field("createdBy"), userId))
       .first();
+
+    if (!budgetItem) {
+      throw new Error("Budget item not found");
+    }
 
     return budgetItem;
   },
 });
 
 /**
- * Create a new budget item
- * ❌ Removed manual project count inputs. Initialized to 0.
- */
-export const create = mutation({
-  args: {
-    particulars: v.string(),
-    totalBudgetAllocated: v.number(),
-    obligatedBudget: v.optional(v.number()),
-    totalBudgetUtilized: v.number(),
-    // ❌ REMOVED MANUAL METRIC INPUTS
-    notes: v.optional(v.string()),
-    year: v.optional(v.number()),
-    status: v.optional(
-      v.union(
-        v.literal("done"),
-        v.literal("pending"),
-        v.literal("ongoing")
-      )
-    ),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
-      throw new Error("Not authenticated");
-    }
-
-    // Check if particulars already exists
-    const existing = await ctx.db
-      .query("budgetItems")
-      .withIndex("particulars", (q) => q.eq("particulars", args.particulars))
-      .first();
-
-    if (existing) {
-      throw new Error("Budget item with this particulars already exists");
-    }
-
-    // Calculate utilization rate
-    const utilizationRate =
-      args.totalBudgetAllocated > 0
-        ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
-        : 0;
-
-    const now = Date.now();
-    const budgetItemData: any = {
-      particulars: args.particulars,
-      totalBudgetAllocated: args.totalBudgetAllocated,
-      totalBudgetUtilized: args.totalBudgetUtilized,
-      utilizationRate: utilizationRate,
-      // 🆕 AUTO-INITIALIZED TO ZERO (will be computed from child projects)
-      projectCompleted: 0,
-      projectDelayed: 0,
-      projectsOnTrack: 0,
-      createdBy: userId,
-      createdAt: now,
-      updatedAt: now,
-      updatedBy: userId,
-      isPinned: false,
-    };
-
-    // Only add optional fields if they have values
-    if (args.obligatedBudget !== undefined) budgetItemData.obligatedBudget = args.obligatedBudget;
-    if (args.notes !== undefined) budgetItemData.notes = args.notes;
-    if (args.year !== undefined) budgetItemData.year = args.year;
-    if (args.status !== undefined) budgetItemData.status = args.status;
-
-    const budgetItemId = await ctx.db.insert("budgetItems", budgetItemData);
-
-    return budgetItemId;
-  },
-});
-
-/**
- * Update an existing budget item
- * ❌ Removed manual project count inputs.
- */
-export const update = mutation({
-  args: {
-    id: v.id("budgetItems"),
-    totalBudgetAllocated: v.number(),
-    obligatedBudget: v.optional(v.number()),
-    totalBudgetUtilized: v.number(),
-    // ❌ REMOVED MANUAL METRIC INPUTS
-    notes: v.optional(v.string()),
-    year: v.optional(v.number()),
-    status: v.optional(
-      v.union(
-        v.literal("done"),
-        v.literal("pending"),
-        v.literal("ongoing")
-      )
-    ),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const existing = await ctx.db.get(args.id);
-    if (!existing) {
-      throw new Error("Budget item not found");
-    }
-
-    // Calculate utilization rate
-    const utilizationRate =
-      args.totalBudgetAllocated > 0
-        ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
-        : 0;
-
-    const now = Date.now();
-    const updateData: any = {
-      totalBudgetAllocated: args.totalBudgetAllocated,
-      totalBudgetUtilized: args.totalBudgetUtilized,
-      utilizationRate: utilizationRate,
-      // ❌ DO NOT UPDATE project counts - they are computed from child projects
-      updatedBy: userId,
-      updatedAt: now,
-    };
-
-    // Only add optional fields if they have values
-    if (args.obligatedBudget !== undefined) updateData.obligatedBudget = args.obligatedBudget;
-    if (args.notes !== undefined) updateData.notes = args.notes;
-    if (args.year !== undefined) updateData.year = args.year;
-    if (args.status !== undefined) updateData.status = args.status;
-
-    await ctx.db.patch(args.id, updateData);
-
-    return args.id;
-  },
-});
-
-/**
- * Delete a budget item
- */
-export const remove = mutation({
-  args: {
-    id: v.id("budgetItems"),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const existing = await ctx.db.get(args.id);
-    if (!existing) {
-      throw new Error("Budget item not found");
-    }
-
-    await ctx.db.delete(args.id);
-    return args.id;
-  },
-});
-
-/**
- * Pin a budget item to the top of the list
- */
-export const pin = mutation({
-  args: {
-    id: v.id("budgetItems"),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
-      throw new Error("Not authenticated");
-    }
-
-    // Get the user to check role
-    const user = await ctx.db.get(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Check if user has access (admin or super_admin)
-    if (user.role !== "admin" && user.role !== "super_admin") {
-      throw new Error("Unauthorized: Only admins can pin items");
-    }
-
-    // Get the budget item
-    const budgetItem = await ctx.db.get(args.id);
-    if (!budgetItem) {
-      throw new Error("Budget item not found");
-    }
-
-    // Update the budget item
-    await ctx.db.patch(args.id, {
-      isPinned: true,
-      pinnedAt: Date.now(),
-      pinnedBy: userId,
-      updatedAt: Date.now(),
-      updatedBy: userId,
-    });
-
-    return { success: true };
-  },
-});
-
-/**
- * Unpin a budget item
- */
-export const unpin = mutation({
-  args: {
-    id: v.id("budgetItems"),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
-      throw new Error("Not authenticated");
-    }
-
-    // Get the user to check role
-    const user = await ctx.db.get(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Check if user has access (admin or super_admin)
-    if (user.role !== "admin" && user.role !== "super_admin") {
-      throw new Error("Unauthorized: Only admins can unpin items");
-    }
-
-    // Get the budget item
-    const budgetItem = await ctx.db.get(args.id);
-    if (!budgetItem) {
-      throw new Error("Budget item not found");
-    }
-
-    // Update the budget item
-    await ctx.db.patch(args.id, {
-      isPinned: false,
-      pinnedAt: undefined,
-      pinnedBy: undefined,
-      updatedAt: Date.now(),
-      updatedBy: userId,
-    });
-
-    return { success: true };
-  },
-});
-
-/**
- * Get budget statistics
+ * Get statistics for all budget items
  */
 export const getStatistics = query({
   args: {},
@@ -334,106 +89,263 @@ export const getStatistics = query({
       throw new Error("Not authenticated");
     }
 
-    const budgetItems = await ctx.db.query("budgetItems").collect();
+    const budgetItems = await ctx.db
+      .query("budgetItems")
+      .withIndex("createdBy", (q) => q.eq("createdBy", userId))
+      .collect();
+
+    if (budgetItems.length === 0) {
+      return {
+        totalAllocated: 0,
+        totalUtilized: 0,
+        averageUtilizationRate: 0,
+        totalProjects: 0,
+      };
+    }
 
     const totalAllocated = budgetItems.reduce(
       (sum, item) => sum + item.totalBudgetAllocated,
       0
     );
-
-    const totalObligated = budgetItems.reduce(
-      (sum, item) => sum + (item.obligatedBudget || 0),
-      0
-    );
-
     const totalUtilized = budgetItems.reduce(
       (sum, item) => sum + item.totalBudgetUtilized,
       0
     );
-
     const averageUtilizationRate =
-      budgetItems.length > 0
-        ? budgetItems.reduce((sum, item) => sum + item.utilizationRate, 0) /
-          budgetItems.length
-        : 0;
-
-    const averageProjectCompleted =
-      budgetItems.length > 0
-        ? budgetItems.reduce((sum, item) => sum + item.projectCompleted, 0) /
-          budgetItems.length
-        : 0;
-
-    const averageProjectDelayed =
-      budgetItems.length > 0
-        ? budgetItems.reduce((sum, item) => sum + item.projectDelayed, 0) /
-          budgetItems.length
-        : 0;
-
-    const averageProjectsOnTrack =
-      budgetItems.length > 0
-        ? budgetItems.reduce((sum, item) => sum + item.projectsOnTrack, 0) /
-          budgetItems.length
-        : 0;
+      budgetItems.reduce((sum, item) => sum + item.utilizationRate, 0) /
+      budgetItems.length;
 
     return {
       totalAllocated,
-      totalObligated,
       totalUtilized,
       averageUtilizationRate,
-      averageProjectCompleted,
-      averageProjectDelayed,
-      averageProjectsOnTrack,
       totalProjects: budgetItems.length,
     };
   },
 });
 
 /**
- * MANUAL RECALCULATION - Trigger for single budget item
- * Useful for fixing inconsistencies or testing
+ * Create a new budget item
+ * NOTE: Project counts are NOT provided - they will be calculated from child projects
  */
-export const recalculateMetrics = mutation({
+export const create = mutation({
+  args: {
+    particulars: v.string(),
+    totalBudgetAllocated: v.number(),
+    obligatedBudget: v.optional(v.number()),
+    totalBudgetUtilized: v.number(),
+    year: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("done"), v.literal("pending"), v.literal("ongoing"))),
+    notes: v.optional(v.string()),
+    departmentId: v.optional(v.id("departments")),
+    fiscalYear: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const now = Date.now();
+    
+    // Calculate utilization rate
+    const utilizationRate =
+      args.totalBudgetAllocated > 0
+        ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
+        : 0;
+
+    // Create budget item with project counts initialized to 0
+    const budgetItemId = await ctx.db.insert("budgetItems", {
+      particulars: args.particulars,
+      totalBudgetAllocated: args.totalBudgetAllocated,
+      obligatedBudget: args.obligatedBudget,
+      totalBudgetUtilized: args.totalBudgetUtilized,
+      utilizationRate,
+      // Initialize project counts to 0 - will be calculated when projects are added
+      projectCompleted: 0,
+      projectDelayed: 0,
+      projectsOnTrack: 0,
+      year: args.year,
+      status: args.status,
+      notes: args.notes,
+      departmentId: args.departmentId,
+      fiscalYear: args.fiscalYear,
+      createdBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return budgetItemId;
+  },
+});
+
+/**
+ * Update an existing budget item
+ * NOTE: Project counts are NOT updated here - they are calculated from child projects
+ */
+export const update = mutation({
+  args: {
+    id: v.id("budgetItems"),
+    particulars: v.string(),
+    totalBudgetAllocated: v.number(),
+    obligatedBudget: v.optional(v.number()),
+    totalBudgetUtilized: v.number(),
+    year: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("done"), v.literal("pending"), v.literal("ongoing"))),
+    notes: v.optional(v.string()),
+    departmentId: v.optional(v.id("departments")),
+    fiscalYear: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) {
+      throw new Error("Budget item not found");
+    }
+
+    if (existing.createdBy !== userId) {
+      throw new Error("Not authorized");
+    }
+
+    const now = Date.now();
+    
+    // Calculate utilization rate
+    const utilizationRate =
+      args.totalBudgetAllocated > 0
+        ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
+        : 0;
+
+    // Update budget item - do NOT touch project counts
+    await ctx.db.patch(args.id, {
+      particulars: args.particulars,
+      totalBudgetAllocated: args.totalBudgetAllocated,
+      obligatedBudget: args.obligatedBudget,
+      totalBudgetUtilized: args.totalBudgetUtilized,
+      utilizationRate,
+      year: args.year,
+      status: args.status,
+      notes: args.notes,
+      departmentId: args.departmentId,
+      fiscalYear: args.fiscalYear,
+      updatedAt: now,
+      updatedBy: userId,
+    });
+
+    return args.id;
+  },
+});
+
+/**
+ * Delete a budget item
+ */
+export const remove = mutation({
+  args: { id: v.id("budgetItems") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) {
+      throw new Error("Budget item not found");
+    }
+
+    if (existing.createdBy !== userId) {
+      throw new Error("Not authorized");
+    }
+
+    // Check if there are any projects linked to this budget item
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("budgetItemId", (q) => q.eq("budgetItemId", args.id))
+      .collect();
+
+    if (projects.length > 0) {
+      throw new Error(
+        `Cannot delete budget item with ${projects.length} linked project(s). Delete the projects first.`
+      );
+    }
+
+    await ctx.db.delete(args.id);
+    return args.id;
+  },
+});
+
+/**
+ * Toggle pin status for a budget item
+ */
+export const togglePin = mutation({
   args: {
     id: v.id("budgetItems"),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    const user = await ctx.db.get(userId);
-    if (!user || (user.role !== "super_admin" && user.role !== "admin")) {
-      throw new Error("Unauthorized: Only admins can manually recalculate");
+    if (userId === null) {
+      throw new Error("Not authenticated");
     }
 
-    const result = await recalculateBudgetItemMetrics(ctx, args.id, userId);
-    
-    return {
-      success: true,
-      message: "Metrics recalculated successfully",
-      ...result,
-    };
+    const existing = await ctx.db.get(args.id);
+    if (!existing) {
+      throw new Error("Budget item not found");
+    }
+
+    if (existing.createdBy !== userId) {
+      throw new Error("Not authorized");
+    }
+
+    const now = Date.now();
+    const newPinnedState = !existing.isPinned;
+
+    await ctx.db.patch(args.id, {
+      isPinned: newPinnedState,
+      pinnedAt: newPinnedState ? now : undefined,
+      pinnedBy: newPinnedState ? userId : undefined,
+      updatedAt: now,
+      updatedBy: userId,
+    });
+
+    return args.id;
   },
 });
 
 /**
- * BULK RECALCULATION - Recalculate all budget items
- * Super admin only - expensive operation
+ * INTERNAL: Recalculate metrics for a specific budget item
+ * This is called automatically by project mutations
+ */
+export const recalculateMetrics = internalMutation({
+  args: {
+    budgetItemId: v.id("budgetItems"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await recalculateBudgetItemMetrics(
+      ctx,
+      args.budgetItemId,
+      args.userId
+    );
+  },
+});
+
+/**
+ * MANUAL: Recalculate all budget item metrics
+ * Use this for one-time sync of existing data
  */
 export const recalculateAllMetrics = mutation({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    const user = await ctx.db.get(userId);
-    if (!user || user.role !== "super_admin") {
-      throw new Error("Unauthorized: Only super_admin can recalculate all");
+    if (userId === null) {
+      throw new Error("Not authenticated");
     }
 
     const results = await recalculateAllBudgetItems(ctx, userId);
     
     return {
-      success: true,
       message: `Recalculated ${results.length} budget items`,
       results,
     };

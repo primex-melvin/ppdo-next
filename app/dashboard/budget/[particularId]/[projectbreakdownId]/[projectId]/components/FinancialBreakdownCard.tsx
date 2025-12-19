@@ -39,14 +39,15 @@ export function FinancialBreakdownCard({ projectId }: FinancialBreakdownCardProp
     );
   }
 
-  // UPDATED: Use new field names from schema
+  // ✅ FIXED: Use 'particulars' instead of 'projectName'
+  const description = project.particulars;
+
+  // Use new field names from schema
   const appropriation = project.totalBudgetAllocated;
   const obligation = project.totalBudgetUtilized;
   
-  // UPDATED: Calculate balance (allocated - utilized)
+  // Calculate balance (allocated - utilized)
   const balance = project.totalBudgetAllocated - project.totalBudgetUtilized;
-  
-  const description = project.projectName;
 
   // Get utilization rate from project (already calculated)
   const utilizationRate = project.utilizationRate.toFixed(2);

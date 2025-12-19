@@ -1,5 +1,4 @@
 // app/dashboard/budget/page.tsx
-
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
@@ -17,17 +16,21 @@ interface BudgetItemFromDB {
   _creationTime: number;
   particulars: string;
   totalBudgetAllocated: number;
+  obligatedBudget?: number;
   totalBudgetUtilized: number;
   utilizationRate: number;
+  // 🔒 READ-ONLY: Calculated from child projects
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number; // DB uses OnTrack
+  projectsOnTrack: number;
   notes?: string;
   year?: number;
   status?: "done" | "pending" | "ongoing";
   isPinned?: boolean;
   pinnedAt?: number;
   pinnedBy?: Id<"users">;
+  departmentId?: Id<"departments">;
+  fiscalYear?: number;
   createdBy: Id<"users">;
   createdAt: number;
   updatedAt: number;
@@ -38,8 +41,10 @@ interface BudgetItemForUI {
   id: string;
   particular: string;
   totalBudgetAllocated: number;
+  obligatedBudget?: number;
   totalBudgetUtilized: number;
   utilizationRate: number;
+  // These are READ-ONLY and calculated automatically
   projectCompleted: number;
   projectDelayed: number;
   projectsOnTrack: number;
@@ -92,8 +97,10 @@ export default function BudgetTrackingPage() {
       id: item._id,
       particular: item.particulars,
       totalBudgetAllocated: item.totalBudgetAllocated,
+      obligatedBudget: item.obligatedBudget,
       totalBudgetUtilized: item.totalBudgetUtilized,
       utilizationRate: item.utilizationRate,
+      // These are calculated automatically from child projects
       projectCompleted: item.projectCompleted,
       projectDelayed: item.projectDelayed,
       projectsOnTrack: item.projectsOnTrack,
@@ -105,14 +112,19 @@ export default function BudgetTrackingPage() {
     })) ?? [];
 
   const handleAdd = async (
-    item: Omit<BudgetItemForUI, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack">
+    item: Omit<
+      BudgetItemForUI,
+      "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack"
+    >
   ) => {
     try {
       await createBudgetItem({
         particulars: item.particular,
         totalBudgetAllocated: item.totalBudgetAllocated,
+        obligatedBudget: item.obligatedBudget,
         totalBudgetUtilized: item.totalBudgetUtilized,
-        // Metrics are removed here, backend initializes them to 0
+        // 🎯 PROJECT COUNTS REMOVED - Backend initializes them to 0
+        // They will be calculated when projects are added
         year: item.year,
         status: item.status,
       });
@@ -128,14 +140,19 @@ export default function BudgetTrackingPage() {
 
   const handleEdit = async (
     id: string,
-    item: Omit<BudgetItemForUI, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack">
+    item: Omit<
+      BudgetItemForUI,
+      "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack"
+    >
   ) => {
     try {
       await updateBudgetItem({
         id: id as Id<"budgetItems">,
+        particulars: item.particular,
         totalBudgetAllocated: item.totalBudgetAllocated,
+        obligatedBudget: item.obligatedBudget,
         totalBudgetUtilized: item.totalBudgetUtilized,
-        // Metrics are removed here, backend handles them
+        // 🎯 PROJECT COUNTS REMOVED - Backend handles them automatically
         year: item.year,
         status: item.status,
       });
@@ -227,7 +244,7 @@ export default function BudgetTrackingPage() {
 
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
           <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-            Total Projects
+            Total Particulars
           </p>
           <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {statistics.totalProjects}

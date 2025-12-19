@@ -1,5 +1,4 @@
 // app/dashboard/budget/[particularId]/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -38,15 +37,19 @@ export default function ParticularProjectsPage() {
   const particular = decodeURIComponent(params.particularId as string);
 
   // Get budget item by particular name to get its ID
-  const budgetItem = useQuery(api.budgetItems.getByParticulars, { particulars: particular });
-  
+  const budgetItem = useQuery(api.budgetItems.getByParticulars, {
+    particulars: particular,
+  });
+
   // Get all departments for the dropdown
   const departments = useQuery(api.departments.list, { includeInactive: false });
-  
-  // Get projects using the list query (no budgetItemId filter in old list, but we filter in UI for now)
-  // Ideally, use a new query `api.projects.listByBudgetItem` if created, or filter the list
-  const allProjects = useQuery(api.projects.list, {});
-  
+
+  // Get projects filtered by budgetItemId
+  const projects = useQuery(
+    api.projects.list,
+    budgetItem ? { budgetItemId: budgetItem._id } : "skip"
+  );
+
   // Mutations
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
@@ -55,19 +58,11 @@ export default function ParticularProjectsPage() {
   const particularFullName = getParticularFullName(particular);
 
   // Transform Convex projects to match component interface
-  // Filter for projects related to this particular budget item
-  // Note: Old schema matched by projectName (particular), new schema links by budgetItemId
-  const transformedProjects = allProjects
-    ?.filter(project => {
-        // Fallback for old projects: match by name
-        // For new projects: match by budgetItemId
-        if (budgetItem && project.budgetItemId === budgetItem._id) return true;
-        return project.projectName === particular;
-    })
-    .map(project => ({
+  const transformedProjects =
+    projects?.map((project) => ({
       id: project._id,
-      particulars: project.projectName, // Map projectName to particulars for frontend
-      implementingOffice: project.departmentName || project.departmentCode || "Unknown",
+      particulars: project.particulars,
+      implementingOffice: project.implementingOffice,
       totalBudgetAllocated: project.totalBudgetAllocated,
       obligatedBudget: project.obligatedBudget,
       totalBudgetUtilized: project.totalBudgetUtilized,
@@ -75,11 +70,10 @@ export default function ParticularProjectsPage() {
       projectCompleted: project.projectCompleted,
       projectDelayed: project.projectDelayed,
       projectsOngoing: project.projectsOnTrack, // Map projectsOnTrack to projectsOngoing for frontend
-      remarks: project.notes ?? "", // Map notes to remarks for frontend
+      remarks: project.remarks ?? "",
       year: project.year,
       status: project.status,
       targetDateCompletion: project.targetDateCompletion,
-      // Add pin fields
       isPinned: project.isPinned,
       pinnedAt: project.pinnedAt,
       pinnedBy: project.pinnedBy,
@@ -88,14 +82,16 @@ export default function ParticularProjectsPage() {
 
   const handleAddProject = async (projectData: any) => {
     if (!budgetItem) {
-        toast.error("Budget item not found. Cannot create project.");
-        return;
+      toast.error("Budget item not found. Cannot create project.");
+      return;
     }
 
     try {
       // Find the department by name (implementing office)
       const department = departments?.find(
-        d => d.name === projectData.implementingOffice || d.code === projectData.implementingOffice
+        (d) =>
+          d.name === projectData.implementingOffice ||
+          d.code === projectData.implementingOffice
       );
 
       if (!department) {
@@ -104,29 +100,30 @@ export default function ParticularProjectsPage() {
       }
 
       await createProject({
-        particulars: projectData.particulars, // Matches budget item name usually
-        budgetItemId: budgetItem._id, // 🆕 CRITICAL: Link to budget item
-        departmentId: department._id as Id<"departments">,
+        particulars: projectData.particulars,
+        budgetItemId: budgetItem._id, // 🎯 CRITICAL: Link to budget item for auto-aggregation
+        implementingOffice: projectData.implementingOffice,
         totalBudgetAllocated: projectData.totalBudgetAllocated,
         obligatedBudget: projectData.obligatedBudget || undefined,
         totalBudgetUtilized: projectData.totalBudgetUtilized || 0,
         projectCompleted: projectData.projectCompleted || 0,
         projectDelayed: projectData.projectDelayed || 0,
-        projectsOngoing: projectData.projectsOngoing || 0,
+        projectsOnTrack: projectData.projectsOngoing || 0, // Map from frontend's projectsOngoing
         remarks: projectData.remarks || undefined,
         year: projectData.year || undefined,
-        status: projectData.status || undefined,
+        status: projectData.status || undefined, // ⚠️ This triggers auto-aggregation
         targetDateCompletion: projectData.targetDateCompletion || undefined,
         projectManagerId: projectData.projectManagerId || undefined,
       });
 
       toast.success("Project created successfully!", {
-        description: `"${projectData.particulars}" has been added.`,
+        description: `"${projectData.particulars}" has been added. Parent budget item metrics updated automatically.`,
       });
     } catch (error) {
       console.error("Error creating project:", error);
       toast.error("Failed to create project", {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
       });
     }
   };
@@ -137,7 +134,9 @@ export default function ParticularProjectsPage() {
     try {
       // Find the department by name (implementing office)
       const department = departments?.find(
-        d => d.name === projectData.implementingOffice || d.code === projectData.implementingOffice
+        (d) =>
+          d.name === projectData.implementingOffice ||
+          d.code === projectData.implementingOffice
       );
 
       if (!department) {
@@ -149,27 +148,28 @@ export default function ParticularProjectsPage() {
         id: id as Id<"projects">,
         particulars: projectData.particulars,
         budgetItemId: budgetItem._id, // Ensure link is maintained
-        departmentId: department._id as Id<"departments">,
+        implementingOffice: projectData.implementingOffice,
         totalBudgetAllocated: projectData.totalBudgetAllocated,
         obligatedBudget: projectData.obligatedBudget || undefined,
         totalBudgetUtilized: projectData.totalBudgetUtilized || 0,
         projectCompleted: projectData.projectCompleted || 0,
         projectDelayed: projectData.projectDelayed || 0,
-        projectsOngoing: projectData.projectsOngoing || 0,
+        projectsOnTrack: projectData.projectsOngoing || 0,
         remarks: projectData.remarks || undefined,
         year: projectData.year || undefined,
-        status: projectData.status || undefined,
+        status: projectData.status || undefined, // ⚠️ Status change triggers auto-aggregation
         targetDateCompletion: projectData.targetDateCompletion || undefined,
         projectManagerId: projectData.projectManagerId || undefined,
       });
 
       toast.success("Project updated successfully!", {
-        description: `"${projectData.particulars}" has been updated.`,
+        description: `"${projectData.particulars}" has been updated. Parent metrics recalculated.`,
       });
     } catch (error) {
       console.error("Error updating project:", error);
       toast.error("Failed to update project", {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
       });
     }
   };
@@ -177,11 +177,14 @@ export default function ParticularProjectsPage() {
   const handleDeleteProject = async (id: string) => {
     try {
       await deleteProject({ id: id as Id<"projects"> });
-      toast.success("Project deleted successfully!");
+      toast.success("Project deleted successfully!", {
+        description: "Parent budget item metrics updated automatically.",
+      });
     } catch (error) {
       console.error("Error deleting project:", error);
       toast.error("Failed to delete project", {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
       });
     }
   };
@@ -195,9 +198,13 @@ export default function ParticularProjectsPage() {
     (sum, project) => sum + project.totalBudgetUtilized,
     0
   );
-  const avgUtilizationRate = transformedProjects.length > 0
-    ? transformedProjects.reduce((sum, project) => sum + project.utilizationRate, 0) / transformedProjects.length
-    : 0;
+  const avgUtilizationRate =
+    transformedProjects.length > 0
+      ? transformedProjects.reduce(
+          (sum, project) => sum + project.utilizationRate,
+          0
+        ) / transformedProjects.length
+      : 0;
 
   return (
     <>
@@ -285,10 +292,14 @@ export default function ParticularProjectsPage() {
 
       {/* Projects Table */}
       <div className="mb-6">
-        {allProjects === undefined || departments === undefined || budgetItem === undefined ? (
+        {projects === undefined ||
+        departments === undefined ||
+        budgetItem === undefined ? (
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-12 text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-zinc-300 border-t-transparent dark:border-zinc-700 dark:border-t-transparent"></div>
-            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading projects...</p>
+            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+              Loading projects...
+            </p>
           </div>
         ) : (
           <ProjectsTable
