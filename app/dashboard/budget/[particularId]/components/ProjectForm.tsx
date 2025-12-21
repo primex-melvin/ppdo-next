@@ -1,4 +1,3 @@
-// app/dashboard/budget/[particularId]/components/ProjectForm.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,13 +19,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Accordion,
   AccordionContent,
@@ -50,6 +42,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ProjectParticularCombobox } from "./ProjectParticularCombobox";
+import { ImplementingAgencyCombobox } from "./ImplementingAgencyCombobox";
 
 const FORM_STORAGE_KEY = "project_form_draft";
 
@@ -100,24 +93,21 @@ interface ProjectFormProps {
 
 export function ProjectForm({ project, budgetItemId, onSave, onCancel }: ProjectFormProps) {
   const { accentColorValue } = useAccentColor();
-  
   const shouldFetchParent = budgetItemId !== undefined && budgetItemId !== null && budgetItemId !== "";
-  
+
   const parentBudgetItem = useQuery(
     api.budgetItems.get,
     shouldFetchParent ? { id: budgetItemId as any } : "skip"
   );
-  
+
   const siblingProjects = useQuery(
     api.projects.list,
     shouldFetchParent ? { budgetItemId: budgetItemId as any } : "skip"
   );
-  
-  const departments = useQuery(api.departments.list, { includeInactive: false });
-  
+
   const [showBudgetWarningModal, setShowBudgetWarningModal] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<ProjectFormValues | null>(null);
-  
+
   const getSavedDraft = () => {
     if (project) return null;
     try {
@@ -132,7 +122,7 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
   };
 
   const savedDraft = getSavedDraft();
-  
+
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: savedDraft || {
@@ -237,7 +227,7 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
     const isOverBudget = totalBudgetAllocated > available;
     const overBudgetAmount = isOverBudget ? totalBudgetAllocated - available : 0;
     const percentage = available > 0 ? (totalBudgetAllocated / available) * 100 : 0;
-    
+
     return {
       isLoading: false,
       parentTotal,
@@ -256,14 +246,14 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
     if (utilizationRate >= 60) return "text-orange-600 dark:text-orange-400";
     return "text-green-600 dark:text-green-400";
   };
-  
+
   const getBudgetWarningColor = () => {
     if (budgetAvailability.isOverBudget) return "text-red-600 dark:text-red-400";
     if (budgetAvailability.percentage >= 90) return "text-orange-600 dark:text-orange-400";
     if (budgetAvailability.percentage >= 75) return "text-yellow-600 dark:text-yellow-400";
     return "text-green-600 dark:text-green-400";
   };
-  
+
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-PH", {
       style: "currency",
@@ -299,7 +289,7 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
 
     onSave(projectData);
   };
-  
+
   const handleConfirmOverBudget = () => {
     if (pendingFormData) {
       proceedWithSave(pendingFormData);
@@ -323,7 +313,7 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
     }
     onCancel();
   };
-  
+
   return (
     <>
       <Form {...form}>
@@ -354,7 +344,7 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
             )}
           />
 
-          {/* Implementing Office */}
+          {/* Implementing Office - NOW WITH COMBOBOX */}
           <FormField
             name="implementingOffice"
             render={({ field }) => (
@@ -362,32 +352,16 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
                 <FormLabel className="text-zinc-700 dark:text-zinc-300">
                   Implementing Office
                 </FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={departments === undefined}
-                >
-                  <FormControl>
-                    <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
-                      <SelectValue placeholder={departments === undefined ? "Loading departments..." : "Select implementing office"} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {departments && departments.length > 0 ? (
-                      departments.map((dept) => (
-                        <SelectItem key={dept._id} value={dept.name}>
-                          {dept.name} {dept.code ? `(${dept.code})` : ""}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="none" disabled>
-                        No departments available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <ImplementingAgencyCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={false}
+                    error={form.formState.errors.implementingOffice?.message}
+                  />
+                </FormControl>
                 <FormDescription className="text-zinc-500 dark:text-zinc-400">
-                  Select the department responsible for this project
+                  Select the agency/department responsible for this project
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -757,7 +731,6 @@ export function ProjectForm({ project, budgetItemId, onSave, onCancel }: Project
               type="submit"
               className="text-white"
               style={{ backgroundColor: accentColorValue }}
-              disabled={departments === undefined}
             >
               {project ? "Update" : "Create"}
             </Button>

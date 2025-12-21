@@ -65,7 +65,7 @@ export default async function AgencyDetailPage({ params }: PageProps) {
         <div className="container mx-auto px-4 py-4 md:py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/implementing-agencies">
+              <Link href="/dashboard/implementing-agencies">
                 <Button variant="ghost" size="icon" className="hover:bg-[#15803D]/10">
                   <ArrowLeft className="h-5 w-5" style={{ color: "#15803D" }} />
                 </Button>

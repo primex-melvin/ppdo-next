@@ -23,6 +23,7 @@ import { projectActivityTables } from "./schema/projectActivities";
 import { budgetItemActivityTables } from "./schema/budgetItemActivities";
 import { budgetParticularTables } from "./schema/budgetParticulars";
 import { projectParticularTables } from "./schema/projectParticulars";
+import { implementingAgencyTables } from "./schema/implementingAgencies";
 
 export default defineSchema({
   ...authTables,
@@ -47,4 +48,5 @@ export default defineSchema({
   ...budgetItemActivityTables,
   ...budgetParticularTables,
   ...projectParticularTables,
+  ...implementingAgencyTables
 });

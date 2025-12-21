@@ -1,4 +1,5 @@
 // convex/projects.ts
+// 🆕 ENHANCED: Now validates implementing agencies, updates usage counts, and links departmentId
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -94,9 +95,16 @@ export const moveToTrash = mutation({
       });
     }
 
-    // 🆕 Update usage count for the project particular
+    // Update usage count for the project particular
     await ctx.runMutation(internal.projectParticulars.updateUsageCount, {
       code: existing.particulars,
+      delta: -1,
+    });
+
+    // Update usage count for implementing agency
+    await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {
+      code: existing.implementingOffice,
+      usageContext: "project",
       delta: -1,
     });
 
@@ -154,9 +162,16 @@ export const restoreFromTrash = mutation({
       }
     }
 
-    // 🆕 Update usage count for the project particular
+    // Update usage count for the project particular
     await ctx.runMutation(internal.projectParticulars.updateUsageCount, {
       code: existing.particulars,
+      delta: 1,
+    });
+
+    // Update usage count for implementing agency
+    await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {
+      code: existing.implementingOffice,
+      usageContext: "project",
       delta: 1,
     });
 
@@ -186,7 +201,7 @@ export const get = query({
 
 /**
  * Create a new project
- * 🆕 UPDATED: Now validates project particular exists and updates usage count
+ * 🆕 UPDATED: Now validates implementing agency exists, updates usage count, and links departmentId
  */
 export const create = mutation({
     args: {
@@ -205,12 +220,11 @@ export const create = mutation({
         const userId = await getAuthUserId(ctx);
         if (userId === null) throw new Error("Not authenticated");
         
-        // 🆕 Validate project particular exists and is active
+        // Validate project particular exists and is active
         const particular = await ctx.db
           .query("projectParticulars")
           .withIndex("code", (q) => q.eq("code", args.particulars))
           .first();
-
         if (!particular) {
           throw new Error(
             `Project particular "${args.particulars}" does not exist. Please add it in Project Particulars management first.`
@@ -223,6 +237,23 @@ export const create = mutation({
           );
         }
 
+        // 🆕 Validate implementing agency exists and is active
+        const agency = await ctx.db
+          .query("implementingAgencies")
+          .withIndex("code", (q) => q.eq("code", args.implementingOffice))
+          .first();
+        if (!agency) {
+          throw new Error(
+            `Implementing agency "${args.implementingOffice}" does not exist. Please add it in Implementing Agencies management first.`
+          );
+        }
+
+        if (!agency.isActive) {
+          throw new Error(
+            `Implementing agency "${args.implementingOffice}" is inactive and cannot be used. Please activate it first.`
+          );
+        }
+
         if (args.budgetItemId) {
             const budgetItem = await ctx.db.get(args.budgetItemId);
             if (!budgetItem) throw new Error("Budget item not found");
@@ -232,11 +263,15 @@ export const create = mutation({
         const utilizationRate = args.totalBudgetAllocated > 0
             ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
             : 0;
+            
+        // 🆕 Auto-link department ID if this agency represents a department
+        const departmentId = agency.departmentId;
 
         const projectId = await ctx.db.insert("projects", {
             particulars: args.particulars,
             budgetItemId: args.budgetItemId,
             implementingOffice: args.implementingOffice,
+            departmentId: departmentId, // 🆕 Saved for hybrid relationship
             totalBudgetAllocated: args.totalBudgetAllocated,
             obligatedBudget: args.obligatedBudget,
             totalBudgetUtilized: args.totalBudgetUtilized,
@@ -255,9 +290,16 @@ export const create = mutation({
             isDeleted: false,
         });
 
-        // 🆕 Update usage count for the project particular
+        // Update usage count for the project particular
         await ctx.runMutation(internal.projectParticulars.updateUsageCount, {
           code: args.particulars,
+          delta: 1,
+        });
+
+        // Update usage count for implementing agency
+        await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {
+          code: args.implementingOffice,
+          usageContext: "project",
           delta: 1,
         });
 
@@ -278,7 +320,7 @@ export const create = mutation({
 
 /**
  * Update an existing project
- * 🆕 UPDATED: Now validates project particular exists if changed
+ * 🆕 UPDATED: Now validates implementing agency if changed and updates departmentId
  */
 export const update = mutation({
     args: {
@@ -302,13 +344,12 @@ export const update = mutation({
         const existing = await ctx.db.get(args.id);
         if (!existing) throw new Error("Project not found");
 
-        // 🆕 If particular is changing, validate new particular
+        // If particular is changing, validate new particular
         if (args.particulars !== existing.particulars) {
           const particular = await ctx.db
             .query("projectParticulars")
             .withIndex("code", (q) => q.eq("code", args.particulars))
             .first();
-
           if (!particular) {
             throw new Error(
               `Project particular "${args.particulars}" does not exist. Please add it in Project Particulars management first.`
@@ -322,15 +363,48 @@ export const update = mutation({
           }
 
           // Update usage counts
-          // Decrease old particular
           await ctx.runMutation(internal.projectParticulars.updateUsageCount, {
             code: existing.particulars,
             delta: -1,
           });
-
-          // Increase new particular
           await ctx.runMutation(internal.projectParticulars.updateUsageCount, {
             code: args.particulars,
+            delta: 1,
+          });
+        }
+
+        // 🆕 If implementing office is changing, validate and update counts
+        let departmentId = existing.departmentId; // Default to existing
+        
+        if (args.implementingOffice !== existing.implementingOffice) {
+          const agency = await ctx.db
+            .query("implementingAgencies")
+            .withIndex("code", (q) => q.eq("code", args.implementingOffice))
+            .first();
+          if (!agency) {
+            throw new Error(
+              `Implementing agency "${args.implementingOffice}" does not exist. Please add it in Implementing Agencies management first.`
+            );
+          }
+
+          if (!agency.isActive) {
+            throw new Error(
+              `Implementing agency "${args.implementingOffice}" is inactive and cannot be used. Please activate it first.`
+            );
+          }
+          
+          // 🆕 Update departmentId based on new agency
+          departmentId = agency.departmentId;
+
+          // Update usage counts
+          await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {
+            code: existing.implementingOffice,
+            usageContext: "project",
+            delta: -1,
+          });
+          await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {
+            code: args.implementingOffice,
+            usageContext: "project",
             delta: 1,
           });
         }
@@ -344,13 +418,13 @@ export const update = mutation({
         const utilizationRate = args.totalBudgetAllocated > 0
             ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
             : 0;
-        
         const oldBudgetItemId = existing.budgetItemId;
         
         await ctx.db.patch(args.id, {
             particulars: args.particulars,
             budgetItemId: args.budgetItemId,
             implementingOffice: args.implementingOffice,
+            departmentId: departmentId, // 🆕 Updated if agency changed
             totalBudgetAllocated: args.totalBudgetAllocated,
             obligatedBudget: args.obligatedBudget,
             totalBudgetUtilized: args.totalBudgetUtilized,
@@ -429,9 +503,16 @@ export const remove = mutation({
     // 4. Permanent Delete Project
     await ctx.db.delete(args.id);
 
-    // 🆕 Update usage count for the project particular
+    // Update usage count for the project particular
     await ctx.runMutation(internal.projectParticulars.updateUsageCount, {
       code: existing.particulars,
+      delta: -1,
+    });
+
+    // Update usage count for implementing agency
+    await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {
+      code: existing.implementingOffice,
+      usageContext: "project",
       delta: -1,
     });
 

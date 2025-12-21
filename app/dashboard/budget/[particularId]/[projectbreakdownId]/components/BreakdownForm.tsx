@@ -1,11 +1,8 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/components/BreakdownForm.tsx
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useQuery } from "convex/react";
 import { useAccentColor } from "../../../../contexts/AccentColorContext";
 import {
   Form,
@@ -26,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { api } from "@/convex/_generated/api";
 import {
   Accordion,
   AccordionContent,
@@ -34,6 +30,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ChevronDown, MapPin, FileText } from "lucide-react";
+import { ImplementingAgencyCombobox } from "../../components/ImplementingAgencyCombobox";
 
 // Define the form schema with Zod - matching new backend schema with STRICT 3 statuses
 const breakdownSchema = z.object({
@@ -102,8 +99,6 @@ export function BreakdownForm({
   defaultImplementingOffice,
 }: BreakdownFormProps) {
   const { accentColorValue } = useAccentColor();
-  // Fetch active departments
-  const departments = useQuery(api.departments.list, { includeInactive: false });
   // Helper to convert date to timestamp
   const dateToTimestamp = (dateString: string): number | undefined => {
     if (!dateString) return undefined;
@@ -212,7 +207,7 @@ export function BreakdownForm({
               )}
             />
 
-            {/* Implementing Office */}
+            {/* Implementing Office - NOW WITH COMBOBOX */}
             <FormField
               name="implementingOffice"
               render={({ field }) => (
@@ -220,32 +215,16 @@ export function BreakdownForm({
                   <FormLabel className="text-zinc-700 dark:text-zinc-300">
                     Implementing Office <span className="text-red-500">*</span>
                   </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
-                        <SelectValue placeholder="Select implementing office" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {departments === undefined ? (
-                        <SelectItem value="loading" disabled>
-                          Loading departments...
-                        </SelectItem>
-                      ) : departments.length === 0 ? (
-                        <SelectItem value="no-departments" disabled>
-                          No departments available
-                        </SelectItem>
-                      ) : (
-                        departments.map((dept) => (
-                          <SelectItem key={dept._id} value={dept.name}>
-                            {dept.code} - {dept.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ImplementingAgencyCombobox
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={false}
+                      error={form.formState.errors.implementingOffice?.message}
+                    />
+                  </FormControl>
                   <FormDescription className="text-zinc-500 dark:text-zinc-400 text-xs">
-                    Department responsible for implementation
+                    Agency/department responsible for implementation
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -524,7 +503,7 @@ export function BreakdownForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-zinc-700 dark:text-zinc-300">
-                     Project Accomplishment (%)
+                    Project Accomplishment (%)
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -652,7 +631,7 @@ export function BreakdownForm({
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
+                  )}
                   />
 
                   {/* Municipality */}
@@ -673,7 +652,7 @@ export function BreakdownForm({
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
+                  )}
                   />
 
                   {/* Barangay */}
@@ -694,7 +673,7 @@ export function BreakdownForm({
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
+                  )}
                   />
                 </div>
               </div>

@@ -1,4 +1,3 @@
-// app/dashboard/budget/[particularId]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -46,7 +45,7 @@ export default function ParticularProjectsPage() {
     particulars: particular,
   });
 
-  // 🔧 ADD: Debug log to verify budgetItem is loaded
+  // Debug log to verify budgetItem is loaded
   useEffect(() => {
     console.log("🎯 [Page] Budget Item Query Result:", {
       particular,
@@ -56,12 +55,12 @@ export default function ParticularProjectsPage() {
     });
   }, [particular, budgetItem]);
 
-  // 🆕 Get breakdown statistics for this budget item
+  // Get breakdown statistics for this budget item
   const breakdownStats = useQuery(api.govtProjects.getBreakdownStats, {
     budgetItemId: budgetItem?._id,
   });
 
-  // Get all departments for the dropdown
+  // Get all departments for the dropdown (kept for reference if needed by other components)
   const departments = useQuery(api.departments.list, { includeInactive: false });
 
   // Get projects filtered by budgetItemId
@@ -73,7 +72,8 @@ export default function ParticularProjectsPage() {
   // Mutations
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
-  const deleteProject = useMutation(api.projects.moveToTrash); // Changed from remove to moveToTrash
+  const deleteProject = useMutation(api.projects.moveToTrash);
+  
   const [showTrashModal, setShowTrashModal] = useState(false);
 
   const recalculateBudgetItem = useMutation(api.budgetItems.recalculateSingleBudgetItem);
@@ -110,18 +110,9 @@ export default function ParticularProjectsPage() {
     }
 
     try {
-      // Find the department by name
-      const department = departments?.find(
-        (d) =>
-          d.name === projectData.implementingOffice ||
-          d.code === projectData.implementingOffice
-      );
-
-      if (!department) {
-        toast.error("Please select a valid department/implementing office.");
-        return;
-      }
-
+      // NOTE: Removed legacy department validation here.
+      // Validation is now handled by the Combobox (UI) and the Backend (API).
+      
       await createProject({
         particulars: projectData.particulars,
         budgetItemId: budgetItem._id,
@@ -149,19 +140,9 @@ export default function ParticularProjectsPage() {
 
   const handleEditProject = async (id: string, projectData: any) => {
     if (!budgetItem) return;
-
     try {
-      const department = departments?.find(
-        (d) =>
-          d.name === projectData.implementingOffice ||
-          d.code === projectData.implementingOffice
-      );
-
-      if (!department) {
-        toast.error("Please select a valid department/implementing office.");
-        return;
-      }
-
+      // NOTE: Removed legacy department validation here.
+      
       await updateProject({
         id: id as Id<"projects">,
         particulars: projectData.particulars,
@@ -201,15 +182,13 @@ export default function ParticularProjectsPage() {
     }
   };
 
-  // 🆕 Handle manual recalculation
+  // Handle manual recalculation
   const handleRecalculateBudgetItem = async () => {
     if (!budgetItem) return;
-    
     try {
       const result = await recalculateBudgetItem({
         budgetItemId: budgetItem._id,
       });
-      
       toast.success("Budget item recalculated successfully!", {
         description: `Status: ${result.status}, Projects: ${result.projectsCount}`,
       });
@@ -297,13 +276,9 @@ export default function ParticularProjectsPage() {
             </span>
           )}
         </p>
-
-        
       </div>
 
-      
-
-      {/* 🆕 Status Information Card */}
+      {/* Status Information Card */}
       {budgetItem && (
         <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6 no-print">
           <div className="flex items-center justify-between mb-4">
@@ -422,9 +397,7 @@ export default function ParticularProjectsPage() {
 
       {/* Projects Table */}
       <div className="mb-6">
-        {projects === undefined ||
-        departments === undefined ||
-        budgetItem === undefined ? (
+        {projects === undefined || departments === undefined || budgetItem === undefined ? (
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-12 text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-zinc-300 border-t-transparent dark:border-zinc-700 dark:border-t-transparent"></div>
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
@@ -439,12 +412,12 @@ export default function ParticularProjectsPage() {
             onAdd={handleAddProject}
             onEdit={handleEditProject}
             onDelete={handleDeleteProject}
-            onOpenTrash={() => setShowTrashModal(true)} // Pass handler
+            onOpenTrash={() => setShowTrashModal(true)} 
           />
         )}
       </div>
 
-      {/* NEW: Trash Modal for Projects */}
+      {/* Trash Modal for Projects */}
       <TrashBinModal 
         isOpen={showTrashModal} 
         onClose={() => setShowTrashModal(false)} 
@@ -454,7 +427,7 @@ export default function ParticularProjectsPage() {
   );
 }
 
-// 🆕 Helper function
+// Helper function
 function getStatusColorClass(status?: "completed" | "ongoing" | "delayed"): string {
   if (!status) return "text-zinc-600 dark:text-zinc-400";
   switch (status) {
