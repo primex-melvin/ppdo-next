@@ -1,73 +1,89 @@
-git commit command for all changes, follow the reference:
+# PPDO Next Project
 
-# Conventional Commit Types
+## 📝 Git Commit Guide
 
-A quick reference to the most commonly used commit message prefixes following the **Conventional Commits** standard.
+Follow these commit message prefixes to keep our git history clean and organized!
 
-## 📘 Most Common Commit Types
+### Common Commit Types
 
-| Prefix   | Meaning                                                                 |
-|----------|-------------------------------------------------------------------------|
-| **feat:**    | Introduces a new feature                                               |
-| **fix:**     | Fixes a bug                                                            |
-| **docs:**    | Documentation changes only                                             |
-| **style:**   | Code style changes (formatting, missing semicolons, no logic changes) |
-| **refactor:**| Rewriting code without altering behavior                               |
-| **perf:**    | Performance improvements                                               |
-| **test:**    | Adding or updating tests only                                          |
-| **build:**   | Changes to build system, dependencies, or CI pipelines                 |
-| **ci:**      | CI configuration or scripts                                            |
-| **chore:**   | Maintenance tasks (e.g., cleaning files, bumps), no production code    |
-| **revert:**  | Reverts a previous commit                                              |
+| Prefix   | Meaning                                                                 | Example |
+|----------|-------------------------------------------------------------------------|---------|
+| **feat:**    | Introduces a new feature                                               | `feat: add user profile page` |
+| **fix:**     | Fixes a bug                                                            | `fix: resolve login redirect issue` |
+| **docs:**    | Documentation changes only                                             | `docs: update README with setup steps` |
+| **style:**   | Code style changes (formatting, missing semicolons, no logic changes) | `style: format dashboard layout` |
+| **refactor:**| Rewriting code without altering behavior                               | `refactor: simplify auth logic` |
+| **perf:**    | Performance improvements                                               | `perf: optimize database queries` |
+| **test:**    | Adding or updating tests only                                          | `test: add unit tests for auth` |
+| **build:**   | Changes to build system, dependencies, or CI pipelines                 | `build: update next.js to v14` |
+| **ci:**      | CI configuration or scripts                                            | `ci: add github actions workflow` |
+| **chore:**   | Maintenance tasks (e.g., cleaning files, bumps), no production code    | `chore: clean up unused imports` |
+| **revert:**  | Reverts a previous commit                                              | `revert: undo feature X` |
 
 ---
 
-Feel free to copy or expand this list based on your team’s workflow!
+## 🌍 Environment Configuration (Convex)
 
+We use **Convex environment variables** to control which features show up in different environments (development, staging, production).
 
+### What This Does
 
-# Welcome to your Convex + React (Vite) + Convex Auth app
+- **Development/Local**: Hides the onboarding modal so you can work without distractions
+- **Staging**: Same as development - clean testing environment
+- **Production**: Shows all features including the onboarding modal for real users
 
-This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
+### 🚀 Quick Setup
 
-After the initial setup (<2 minutes) you'll have a working full-stack app using:
+#### Step 1: Create the Convex Config File
 
-- Convex as your backend (database, server logic)
-- [React](https://react.dev/) as your frontend (web page interactivity)
-- [Vite](https://vitest.dev/) for optimized web hosting
-- [Tailwind](https://tailwindcss.com/) for building great looking UI
-- [Convex Auth](https://labs.convex.dev/auth) for authentication
+Create a new file: `convex/config.ts`
 
-## Get started
+```typescript
+import { query } from "./_generated/server";
 
-If you just cloned this codebase and didn't use `npm create convex`, run:
-
+export const getEnvironment = query({
+  args: {},
+  handler: async (ctx) => {
+    // Get environment from Convex environment variable
+    // Defaults to "production" if APP_ENV is not set
+    const env = process.env.APP_ENV || "production";
+    return env as "production" | "staging" | "development";
+  },
+});
 ```
-npm install
-npm run dev
+
+#### Step 2: Set Your Environment Variable
+
+Open your terminal and run one of these commands:
+
+**For Local Development** (this is what you'll use most of the time):
+```bash
+npx convex env set APP_ENV development
 ```
 
-If you're reading this README on GitHub and want to use this template, run:
-
+**For Staging** (if your team has a staging environment):
+```bash
+npx convex env set APP_ENV staging --prod
 ```
-npm create convex@latest -- -t react-vite-convexauth
+
+**For Production** (live site):
+```bash
+npx convex env set APP_ENV production --prod
 ```
 
-For more information on how to configure Convex Auth, check out the [Convex Auth docs](https://labs.convex.dev/auth/).
+#### Step 3: Verify It's Working
 
-For more examples of different Convex Auth flows, check out this [example repo](https://www.convex.dev/templates/convex-auth).
+1. Save your changes and restart your dev server
+2. The onboarding modal should now be hidden in development
+3. Check the Convex dashboard to confirm the variable is set
 
-## Learn more
+### 🤔 Common Questions
 
-To learn more about developing your project with Convex, check out:
+**Q: Do I need to set this every time I work on the project?**  
+A: Nope! Once you set it, it stays until you change it.
 
-- The [Tour of Convex](https://docs.convex.dev/get-started) for a thorough introduction to Convex principles.
-- The rest of [Convex docs](https://docs.convex.dev/) to learn about all Convex features.
-- [Stack](https://stack.convex.dev/) for in-depth articles on advanced topics.
+**Q: What if I forget to set it?**  
+A: No worries! It defaults to "production" mode, so everything will still work.
 
-## Join the community
-
-Join thousands of developers building full-stack apps with Convex:
-
-- Join the [Convex Discord community](https://convex.dev/community) to get help in real-time.
-- Follow [Convex on GitHub](https://github.com/get-convex/), star and contribute to the open-source implementation of Convex.
+**Q: How do I check what environment I'm in?**  
+A: Run `npx convex env list` to see all your environment variables.
