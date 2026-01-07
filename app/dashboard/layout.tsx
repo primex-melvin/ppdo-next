@@ -23,8 +23,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const currentUser = useQuery(api.auth.getCurrentUser);
 
   // Get environment variable
-  const env = process.env.NEXT_PUBLIC_APP_ENV || "development";
-  const shouldShowOnboarding = env === "development";
+  const env = process.env.NEXT_PUBLIC_APP_ENV;
+  const shouldShowOnboarding = env === "production";
 
   useEffect(() => {
     if (isLoading) return;
