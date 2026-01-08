@@ -31,10 +31,21 @@ export default function ParticularProjectsPage() {
   }, [showDetails]);
 
   const [showTrashModal, setShowTrashModal] = useState(false);
+  const [newlyAddedProjectId, setNewlyAddedProjectId] = useState<string | null>(null);
 
   const { budgetItem, breakdownStats, projects, isLoading } = useParticularData(particular);
   const { handleAddProject, handleEditProject, handleDeleteProject, handleRecalculate } = 
     useProjectMutations(budgetItem?._id);
+
+  // Wrapper for handleAddProject to track newly added project
+  const handleAddProjectWithTracking = async (projectData: any) => {
+    const projectId = await handleAddProject(projectData);
+    if (projectId) {
+      setNewlyAddedProjectId(projectId);
+      // Clear the highlight after 3 seconds
+      setTimeout(() => setNewlyAddedProjectId(null), 3000);
+    }
+  };
 
   const particularFullName = getParticularFullName(particular);
   const stats = calculateProjectStats(projects);
@@ -79,10 +90,11 @@ export default function ParticularProjectsPage() {
             projects={projects}
             particularId={particular}
             budgetItemId={budgetItem!._id}
-            onAdd={handleAddProject}
+            onAdd={handleAddProjectWithTracking}
             onEdit={handleEditProject}
             onDelete={handleDeleteProject}
             onOpenTrash={() => setShowTrashModal(true)}
+            newlyAddedProjectId={newlyAddedProjectId}
           />
         )}
       </div>

@@ -17,27 +17,30 @@ export function useParticularData(particular: string) {
   );
 
   const transformedProjects =
-    projects?.map((project) => ({
-      id: project._id,
-      particulars: project.particulars,
-      implementingOffice: project.implementingOffice,
-      totalBudgetAllocated: project.totalBudgetAllocated,
-      obligatedBudget: project.obligatedBudget,
-      totalBudgetUtilized: project.totalBudgetUtilized,
-      utilizationRate: project.utilizationRate,
-      projectCompleted: project.projectCompleted,
-      projectDelayed: project.projectDelayed,
-      projectsOngoing: project.projectsOnTrack,
-      remarks: project.remarks ?? "",
-      year: project.year,
-      status: project.status,
-      targetDateCompletion: project.targetDateCompletion,
-      isPinned: project.isPinned,
-      pinnedAt: project.pinnedAt,
-      pinnedBy: project.pinnedBy,
-      budgetItemId: project.budgetItemId,
-      categoryId: project.categoryId,
-    })) ?? [];
+    projects
+      ?.map((project) => ({
+        id: project._id,
+        particulars: project.particulars,
+        implementingOffice: project.implementingOffice,
+        totalBudgetAllocated: project.totalBudgetAllocated,
+        obligatedBudget: project.obligatedBudget,
+        totalBudgetUtilized: project.totalBudgetUtilized,
+        utilizationRate: project.utilizationRate,
+        projectCompleted: project.projectCompleted,
+        projectDelayed: project.projectDelayed,
+        projectsOngoing: project.projectsOnTrack,
+        remarks: project.remarks ?? "",
+        year: project.year,
+        status: project.status,
+        targetDateCompletion: project.targetDateCompletion,
+        isPinned: project.isPinned,
+        pinnedAt: project.pinnedAt,
+        pinnedBy: project.pinnedBy,
+        budgetItemId: project.budgetItemId,
+        categoryId: project.categoryId,
+        _creationTime: project._creationTime, // Include creation time for sorting
+      }))
+      .sort((a, b) => b._creationTime - a._creationTime) ?? []; // Sort newest first
 
   return {
     budgetItem,

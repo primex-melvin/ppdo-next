@@ -11,6 +11,7 @@ import { useAccentColor } from "../../../contexts/AccentColorContext";
 import { Modal } from "../../components/Modal";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { ProjectForm } from "./ProjectForm";
+import { motion } from "framer-motion";
 import {
   Search,
   ArrowUpDown,
@@ -66,10 +67,11 @@ interface ProjectsTableProps {
   projects: Project[];
   particularId: string;
   budgetItemId?: string;
-  onAdd?: (project: Omit<Project, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing">) => void;
+  onAdd?: (project: Omit<Project, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing">) => void | Promise<void>;
   onEdit?: (id: string, project: Omit<Project, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing">) => void;
   onDelete?: (id: string) => void;
   onOpenTrash?: () => void;
+  newlyAddedProjectId?: string | null;
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -98,9 +100,11 @@ export function ProjectsTable({
   onEdit,
   onDelete,
   onOpenTrash,
+  newlyAddedProjectId,
 }: ProjectsTableProps) {
   const { accentColorValue } = useAccentColor();
   const router = useRouter();
+  const newProjectRowRef = useRef<HTMLTableRowElement>(null);
   
   const currentUser = useQuery(api.users.current);
   const togglePinProject = useMutation(api.projects.togglePin);
@@ -174,6 +178,18 @@ export function ProjectsTable({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Auto-scroll to newly added project
+  useEffect(() => {
+    if (newlyAddedProjectId && newProjectRowRef.current) {
+      setTimeout(() => {
+        newProjectRowRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+    }
+  }, [newlyAddedProjectId]);
 
   const filteredAndSortedProjects = useMemo(() => {
     let filtered = [...projects];
@@ -830,9 +846,27 @@ export function ProjectsTable({
                               </td>
                             </tr>
 
-                            {group.projects.map((project) => (
-                                <tr
+                            {group.projects.map((project) => {
+                              const isNewProject = project.id === newlyAddedProjectId;
+                              return (
+                                <motion.tr
                                 key={project.id}
+                                ref={isNewProject ? newProjectRowRef : undefined}
+                                initial={isNewProject ? { 
+                                  boxShadow: `0 0 0 3px ${accentColorValue}`,
+                                  scale: 1.01 
+                                } : false}
+                                animate={isNewProject ? {
+                                  boxShadow: [
+                                    `0 0 0 3px ${accentColorValue}`,
+                                    `0 0 0 0px ${accentColorValue}00`,
+                                  ],
+                                  scale: [1.01, 1]
+                                } : {}}
+                                transition={isNewProject ? { 
+                                  duration: 2,
+                                  ease: "easeOut"
+                                } : {}}
                                 onContextMenu={(e) => { e.preventDefault();
                                 setContextMenu({ x: e.clientX, y: e.clientY, project }); }}
                                 onClick={(e) => handleRowClick(project, e)}
@@ -897,8 +931,9 @@ export function ProjectsTable({
                                 {!hiddenColumns.has('remarks') && (
                                     <td className="px-3 py-3 text-sm text-zinc-500 truncate max-w-[150px]">{project.remarks || "-"}</td>
                                 )}
-                                </tr>
-                            ))}
+                                </motion.tr>
+                              );
+                            })}
                         </React.Fragment>
                       );
                    })}

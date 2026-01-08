@@ -12,7 +12,7 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
   const handleAddProject = async (projectData: any) => {
     if (!budgetItemId) {
       toast.error("Budget item not found. Cannot create project.");
-      return;
+      return null;
     }
 
     try {
@@ -34,17 +34,21 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
         toast.success(response.message || "Project created successfully!", {
           description: `"${projectData.particulars}" has been added.`,
         });
+        // Return the project ID for highlighting
+        return response.data?.id || response.id || null;
       } else {
         toast.error(response.error?.message || "Failed to create project");
         if (response.error?.code === "VALIDATION_ERROR") {
           console.error("Validation details:", response.error.details);
         }
+        return null;
       }
     } catch (error) {
       console.error("Error creating project:", error);
       toast.error("An unexpected error occurred", {
         description: error instanceof Error ? error.message : "Please try again.",
       });
+      return null;
     }
   };
 
