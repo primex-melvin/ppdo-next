@@ -50,8 +50,9 @@ const particularCodeString = z
   .refine((val) => val.trim().length > 0, {
     message: "Cannot be empty or only whitespace.",
   })
-  .refine((val) => /^[A-Z0-9_%\s]+$/i.test(val), {
-    message: "Only letters, numbers, underscores, percentage signs, and spaces are allowed.",
+  // Allow accented characters like "ô" while keeping existing allowed symbols
+  .refine((val) => /^[\p{L}0-9_%\s]+$/u.test(val), {
+    message: "Only letters (including accents), numbers, underscores, percentage signs, and spaces are allowed.",
   })
   .transform((val) => val.trim());
 

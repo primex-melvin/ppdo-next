@@ -87,15 +87,15 @@ export function ProjectParticularCombobox({
     return allParticulars?.find((p) => p.code === value);
   }, [allParticulars, value]);
   
-  // ✅ UPDATED: Validate if search query can be a new code (now allows spaces and %)
+  // ✅ UPDATED: Validate if search query can be a new code (allows accented letters, spaces, and %)
   const canCreateNew = React.useMemo(() => {
     if (!searchQuery || searchQuery.trim().length === 0) return false;
     
     const trimmedSearch = searchQuery.trim();
     const upperSearch = trimmedSearch.toUpperCase();
     
-    // ✅ UPDATED: Check format (uppercase alphanumeric, underscores, spaces, and percentage signs)
-    const validFormat = /^[A-Z0-9_%\s]+$/.test(upperSearch);
+    // ✅ UPDATED: Check format using Unicode letters (including accents)
+    const validFormat = /^[\p{L}0-9_%\s]+$/u.test(upperSearch);
     if (!validFormat) return false;
     
     // Check if already exists in list
