@@ -7,7 +7,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useAccentColor } from "../../../../contexts/AccentColorContext";
+import { useAccentColor } from "../../../../../../contexts/AccentColorContext";
 import { Search, GripVertical, Edit, Trash2, Printer } from "lucide-react";
 import {
   ContextMenu,

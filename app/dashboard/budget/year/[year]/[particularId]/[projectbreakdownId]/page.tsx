@@ -4,16 +4,16 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
-import { useAccentColor } from "../../../contexts/AccentColorContext";
-import { useBreadcrumb } from "../../../contexts/BreadcrumbContext";
+import { api } from "../../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../../convex/_generated/dataModel";
+import { useAccentColor } from "../../../../../contexts/AccentColorContext";
+import { useBreadcrumb } from "../../../../../contexts/BreadcrumbContext";
 import { BreakdownHistoryTable } from "./components/BreakdownHistoryTable";
 import { BreakdownForm } from "./components/BreakdownForm";
-import { Modal } from "../../components/Modal";
-import { ConfirmationModal } from "../../components/ConfirmationModal";
+import { Modal } from "../../../../components/Modal";
+import { ConfirmationModal } from "../../../../components/ConfirmationModal";
 import { toast } from "sonner";
-import { ActivityLogSheet } from "../../../components/ActivityLogSheet";
+import { ActivityLogSheet } from "../../../../../components/ActivityLogSheet";
 import {
   Accordion,
   AccordionContent,
@@ -85,6 +85,7 @@ export default function ProjectBreakdownPage() {
   const params = useParams();
   const { accentColorValue } = useAccentColor();
   const { setCustomBreadcrumbs } = useBreadcrumb();
+  const year = Number(params.year);
   
   // 🔧 CRITICAL: Extract IDs from URL params
   const particularId = decodeURIComponent(params.particularId as string);
@@ -127,7 +128,8 @@ export default function ProjectBreakdownPage() {
       setCustomBreadcrumbs([
         { label: "Home", href: "/dashboard" },
         { label: "Budget", href: "/dashboard/budget" },
-        { label: particularFullName, href: `/dashboard/budget/${encodeURIComponent(particularId)}` },
+        { label: String(year), href: `/dashboard/budget/year/${year}` },
+        { label: particularFullName, href: `/dashboard/budget/year/${year}/${encodeURIComponent(particularId)}` },
         { label: project.implementingOffice || "Loading..." },
       ]);
     }

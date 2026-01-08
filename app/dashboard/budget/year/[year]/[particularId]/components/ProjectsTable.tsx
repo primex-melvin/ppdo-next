@@ -6,10 +6,10 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Project } from "../../types";
-import { useAccentColor } from "../../../contexts/AccentColorContext";
-import { Modal } from "../../components/Modal";
-import { ConfirmationModal } from "../../components/ConfirmationModal";
+import { Project } from "../../../../types";
+import { useAccentColor } from "../../../../../contexts/AccentColorContext";
+import { Modal } from "../../../../components/Modal";
+import { ConfirmationModal } from "../../../../components/ConfirmationModal";
 import { ProjectForm } from "./ProjectForm";
 import { motion } from "framer-motion";
 import {

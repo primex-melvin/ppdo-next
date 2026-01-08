@@ -34,6 +34,7 @@ interface BudgetTrackingTableProps {
   onDelete?: (id: string) => void;
   expandButton?: React.ReactNode;
   onOpenTrash?: () => void;
+  initialYear?: number; // optional initial year filter (e.g., from /budget/year/[year])
 }
 
 export function BudgetTrackingTable({
@@ -43,6 +44,7 @@ export function BudgetTrackingTable({
   onDelete,
   expandButton,
   onOpenTrash,
+  initialYear,
 }: BudgetTrackingTableProps) {
   const { accentColorValue } = useAccentColor();
   const router = useRouter();
@@ -67,7 +69,7 @@ export function BudgetTrackingTable({
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [yearFilter, setYearFilter] = useState<number[]>([]);
+  const [yearFilter, setYearFilter] = useState<number[]>(initialYear ? [initialYear] : []);
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   
@@ -116,6 +118,15 @@ export function BudgetTrackingTable({
     document.addEventListener("scroll", handleScroll, true);
     return () => document.removeEventListener("scroll", handleScroll, true);
   }, []);
+
+  useEffect(() => {
+    // Sync year filter when navigating to /budget/year/[year]
+    if (initialYear) {
+      setYearFilter([initialYear]);
+    } else {
+      setYearFilter([]);
+    }
+  }, [initialYear]);
 
   const uniqueStatuses = useMemo(() => {
     const statuses = new Set<string>();
@@ -223,6 +234,11 @@ export function BudgetTrackingTable({
 
   const handleRowClick = (item: BudgetItem, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) {
+      return;
+    }
+    // Prefer deep link with year + item id when available for uniqueness
+    if (item.year) {
+      router.push(`/dashboard/budget/year/${item.year}/${encodeURIComponent(item.id)}`);
       return;
     }
     router.push(`/dashboard/budget/${encodeURIComponent(item.particular)}`);

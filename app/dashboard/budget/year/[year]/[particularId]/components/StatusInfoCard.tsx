@@ -1,4 +1,4 @@
-import { getStatusColorClass } from "../../types";
+import { getStatusColorClass } from "../../../../types";
 
 interface StatusInfoCardProps {
   budgetStatus?: string;

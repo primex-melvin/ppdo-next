@@ -9,7 +9,7 @@ import { z } from "zod";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useAccentColor } from "../../../contexts/AccentColorContext";
+import { useAccentColor } from "../../../../../contexts/AccentColorContext";
 import {
   Form,
   FormControl,
@@ -35,7 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Calculator, AlertCircle, Info, AlertTriangle, PlusCircle, MinusCircle } from "lucide-react";
-import { Project } from "../../types";
+import { Project } from "../../../../types";
 import { ProjectParticularCombobox } from "./ProjectParticularCombobox";
 import { ImplementingOfficeSelector } from "./ImplementingOfficeSelector";
 import { ProjectCategoryCombobox } from "./ProjectCategoryCombobox";

@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useBreadcrumb } from "../../../../contexts/BreadcrumbContext";
 import { ProjectsTable } from "./components/ProjectsTable";
 import { ParticularPageHeader } from "./components/ParticularPageHeader";
 import { StatusInfoCard } from "./components/StatusInfoCard";
 import { ProjectSummaryStats } from "./components/ProjectSummaryStats";
 import { ProjectLoadingState } from "./components/ProjectLoadingState";
-import { TrashBinModal } from "../../components/TrashBinModal";
+import { TrashBinModal } from "../../../../components/TrashBinModal";
 import { useParticularData } from "./components/useParticularData";
 import { useProjectMutations } from "./components/useProjectMutations";
 import { getParticularFullName, calculateProjectStats } from "./utils";
@@ -15,6 +16,8 @@ import { getParticularFullName, calculateProjectStats } from "./utils";
 export default function ParticularProjectsPage() {
   const params = useParams();
   const particular = decodeURIComponent(params.particularId as string);
+  const year = Number(params.year);
+  const { setCustomBreadcrumbs } = useBreadcrumb();
 
   const [showDetails, setShowDetails] = useState(() => {
     if (typeof window !== "undefined") {
@@ -29,6 +32,18 @@ export default function ParticularProjectsPage() {
       localStorage.setItem("showBudgetDetails", JSON.stringify(showDetails));
     }
   }, [showDetails]);
+
+  useEffect(() => {
+    if (!Number.isNaN(year)) {
+      setCustomBreadcrumbs([
+        { label: "Home", href: "/dashboard" },
+        { label: "Budget", href: "/dashboard/budget" },
+        { label: String(year), href: `/dashboard/budget/year/${year}` },
+        { label: getParticularFullName(particular) },
+      ]);
+    }
+    return () => setCustomBreadcrumbs(null);
+  }, [particular, setCustomBreadcrumbs, year]);
 
   const [showTrashModal, setShowTrashModal] = useState(false);
   const [newlyAddedProjectId, setNewlyAddedProjectId] = useState<string | null>(null);
@@ -49,6 +64,22 @@ export default function ParticularProjectsPage() {
 
   const particularFullName = getParticularFullName(particular);
   const stats = calculateProjectStats(projects);
+
+  if (!isLoading && !budgetItem) {
+    return (
+      <div className="p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <p className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
+          Budget item not found. It may have been removed or you may not have access.
+        </p>
+        <button
+          onClick={() => window.history.back()}
+          className="mt-3 text-sm text-blue-700 dark:text-blue-300 hover:underline"
+        >
+          Go back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>

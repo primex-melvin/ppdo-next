@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { History, RefreshCw, Eye, EyeOff } from "lucide-react";
-import { ActivityLogSheet } from "../../../components/ActivityLogSheet";
-import { getStatusDisplayText, getStatusColorClass } from "../../types";
+import { ActivityLogSheet } from "../../../../../components/ActivityLogSheet";
+import { getStatusDisplayText, getStatusColorClass } from "../../../../types";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface ParticularPageHeaderProps {
