@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Sidebar } from "../dashboard/components/sidebar";
+
 import { Header } from "../dashboard/components/Header";
 import { Breadcrumbs } from "../dashboard/components/Breadcrumbs";
 import { TimeLocation } from "../dashboard/components/TimeLocation";
@@ -11,6 +11,7 @@ import { SearchProvider } from "../dashboard/contexts/SearchContext";
 import { SidebarProvider } from "../dashboard/contexts/SidebarContext";
 import { AccentColorProvider } from "../dashboard/contexts/AccentColorContext";
 import { BreadcrumbProvider } from "../dashboard/contexts/BreadcrumbContext";
+import { Sidebar } from "../dashboard/components/sidebar/Sidebar";
 
 function MailContent({ children }: { children: React.ReactNode }) {
   return (
