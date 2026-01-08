@@ -26,7 +26,7 @@ export const defaultNavItems: NavItem[] = [
   },
   {
     name: "Projects (11 plans)",
-    href: "/dashboard/budget",
+    href: "/dashboard/project",
     category: "Department",
     icon: <Calculator size={20} />,
   },

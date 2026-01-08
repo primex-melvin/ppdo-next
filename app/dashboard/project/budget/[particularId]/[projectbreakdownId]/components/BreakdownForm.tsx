@@ -9,7 +9,7 @@ import { z } from "zod";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useAccentColor } from "../../../../contexts/AccentColorContext";
+import { useAccentColor } from "../../../../../contexts/AccentColorContext";
 import {
   Form,
   FormControl,

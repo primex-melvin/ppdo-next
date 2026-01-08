@@ -1,4 +1,4 @@
-import { getStatusColorClass } from "../../types";
+import { getStatusColorClass } from "../../../types";
 
 interface StatusInfoCardProps {
   budgetStatus?: string;
@@ -24,7 +24,7 @@ export function StatusInfoCard({
   };
 
   return (
-    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6 no-print">
+    <div className="mb-6 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6 no-print">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Status Information

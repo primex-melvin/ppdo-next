@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { getRemarksByProject, addRemark } from "../data";
-import { Remark } from "@/app/dashboard/budget/types";
+import { Remark } from "@/app/dashboard/project/types";
 
 interface RemarksSectionProps {
   projectId: string;

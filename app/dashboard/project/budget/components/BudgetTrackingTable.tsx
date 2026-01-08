@@ -5,8 +5,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { BudgetItem, SortDirection, SortField } from "../types";
-import { useAccentColor } from "../../contexts/AccentColorContext";
+import { BudgetItem, SortDirection, SortField } from "../../types";
+import { useAccentColor } from "../../../contexts/AccentColorContext";
 import { Modal } from "./Modal";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { BudgetItemForm } from "./BudgetItemForm";
@@ -92,6 +92,23 @@ export function BudgetTrackingTable({
     const interval = setInterval(checkDraft, 1000);
     return () => clearInterval(interval);
   }, [showAddModal]);
+
+  useEffect(() => {
+    // Initialize year filter from navigation selection (client-only)
+    try {
+      const storedYear = typeof window !== "undefined" ? localStorage.getItem("budget_selected_year") : null;
+      if (storedYear) {
+        const yy = parseInt(storedYear, 10);
+        if (!isNaN(yy)) {
+          setYearFilter([yy]);
+        }
+        // Clear so future direct visits don't auto-apply old selection
+        localStorage.removeItem("budget_selected_year");
+      }
+    } catch (_) {
+      // no-op if storage is unavailable
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -727,7 +744,7 @@ export function BudgetTrackingTable({
                       <td className="px-4 sm:px-6 py-4">
                         <div className="flex items-center gap-2">
                           {item.isPinned && (
-                            <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                            <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500 shrink-0" />
                           )}
                           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                             {item.particular}

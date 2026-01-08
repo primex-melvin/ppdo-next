@@ -7,7 +7,7 @@ import { ParticularPageHeader } from "./components/ParticularPageHeader";
 import { StatusInfoCard } from "./components/StatusInfoCard";
 import { ProjectSummaryStats } from "./components/ProjectSummaryStats";
 import { ProjectLoadingState } from "./components/ProjectLoadingState";
-import { TrashBinModal } from "../../components/TrashBinModal";
+import { TrashBinModal } from "../../../components/TrashBinModal";
 import { useParticularData } from "./components/useParticularData";
 import { useProjectMutations } from "./components/useProjectMutations";
 import { getParticularFullName, calculateProjectStats } from "./utils";

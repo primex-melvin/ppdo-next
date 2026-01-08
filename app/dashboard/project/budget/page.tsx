@@ -3,14 +3,10 @@
 import { useState } from "react";
 import { Expand } from "lucide-react";
 import AccessDeniedPage from "@/components/AccessDeniedPage";
+import { BudgetPageHeader, BudgetStatistics, ExpandModal, LoadingState, useBudgetAccess, useBudgetData, useBudgetMutations } from "./components";
 import { BudgetTrackingTable } from "./components/BudgetTrackingTable";
-import { BudgetPageHeader } from "./components/BudgetPageHeader";
-import { BudgetStatistics } from "./components/BudgetStatistics";
-import { ExpandModal } from "./components/ExpandModal";
-import { LoadingState } from "./components/LoadingState";
-import { TrashBinModal } from "../components/TrashBinModal";
-import { useBudgetData, useBudgetAccess } from "./components/useBudgetData";
-import { useBudgetMutations } from "./components/useBudgetMutations";
+import { TrashBinModal } from "../../components/TrashBinModal";
+
 
 export default function BudgetTrackingPage() {
   const { accessCheck, isLoading: isLoadingAccess, canAccess } = useBudgetAccess();
