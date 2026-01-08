@@ -1,0 +1,57 @@
+import React from "react";
+import { NavItem } from "./types";
+import {
+  LayoutDashboard,
+  Gauge,
+  Building,
+  FileEdit,
+  Settings as SettingsIcon,
+  Calculator,
+  Vault,
+  Building2,
+} from "lucide-react";
+
+export const defaultNavItems: NavItem[] = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    category: "My Workspace",
+    icon: <LayoutDashboard size={20} />,
+  },
+  {
+    name: "Personal KPI",
+    href: "/dashboard/personal-kpi",
+    category: "My Workspace",
+    icon: <Gauge size={20} />,
+  },
+  {
+    name: "Projects (11 plans)",
+    href: "/dashboard/budget",
+    category: "Department",
+    icon: <Calculator size={20} />,
+  },
+  {
+    name: "Trust Funds (Project Organs)",
+    href: "/dashboard/trust-funds",
+    category: "Department",
+    icon: <Vault size={20} />,
+  },
+  { name: "Office", 
+    href: "/dashboard/office", 
+    category: "Cross Department", 
+    icon: <Building2 size={20} /> },
+  {
+    name: "CMS",
+    href: "/dashboard/cms",
+    category: "Control Panel",
+    icon: <FileEdit size={20} />,
+  },
+  {
+    name: "Settings",
+    category: "Control Panel",
+    icon: <SettingsIcon size={20} />,
+    submenu: [
+      { name: "User Management", href: "/dashboard/settings/user-management" },
+    ],
+  },
+];

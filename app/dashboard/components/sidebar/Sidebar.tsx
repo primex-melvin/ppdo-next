@@ -1,87 +1,61 @@
-// app/dashboard/components/sidebar/Sidebar.tsx
-
 "use client";
 
-import { useState } from "react";
-import { useSidebar } from "../../contexts/SidebarContext";
-import { useAccentColor } from "../../contexts/AccentColorContext";
-import { groupItemsByCategory } from "./utils";
-import { defaultNavItems } from "./navConfig";
-import { SidebarProps } from "./types";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { SidebarHeader } from "./SidebarHeader";
 import { SidebarNav } from "./SidebarNav";
 import { SidebarFooter } from "./SidebarFooter";
-import { MobileMenuButton } from "./MobileMenuButton";
+import { SidebarProps } from "./types";
+import { groupItemsByCategory } from "./utils";
+import { defaultNavItems } from "./navItems";
+import { useSidebar } from "../../contexts/SidebarContext";
+import { useAccentColor } from "../../contexts/AccentColorContext";
 
-/**
- * Main Sidebar Component
- * 
- * A responsive sidebar navigation component that supports:
- * - Mobile and desktop views with different behaviors
- * - Minimized/expanded states (desktop only)
- * - Categorized navigation items
- * - Active route highlighting with accent colors
- * - Submenu expansion
- * 
- * @param navItems - Optional custom navigation items (defaults to defaultNavItems)
- */
 export function Sidebar({ navItems = defaultNavItems }: SidebarProps) {
-  // Mobile sidebar overlay state
   const [isOpen, setIsOpen] = useState(true);
-  
-  // Desktop minimized state from context
   const { isMinimized } = useSidebar();
-  
-  // Accent color for active states
+  const pathname = usePathname();
   const { accentColorValue } = useAccentColor();
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
-  // Group navigation items by category
-  const groupedCategories = groupItemsByCategory(navItems);
+  const grouped = groupItemsByCategory(navItems);
 
-  const handleClose = () => setIsOpen(false);
-  const handleOpen = () => setIsOpen(true);
+  useEffect(() => {
+    navItems.forEach((item, index) => {
+      if (item.submenu && item.submenu.length > 0) {
+        const itemKey = item.href || `nav-item-${index}`;
+        const hasActiveSubmenu = item.submenu.some((sub) => pathname === sub.href);
+        if (hasActiveSubmenu) setExpandedItems((prev) => new Set(prev).add(itemKey));
+      }
+    });
+  }, [pathname, navItems]);
 
   return (
     <>
-      {/* Mobile overlay backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={handleClose}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsOpen(false)} />}
 
-      {/* Sidebar container */}
       <aside
-        className={`
-          fixed md:sticky top-0 left-0 z-50
-          h-dvh
-          bg-[#f8f8f8]/95 dark:bg-zinc-900/95 backdrop-blur-sm
-          border-r border-zinc-200 dark:border-zinc-800
-          transition-all duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-          ${isMinimized ? "md:w-20" : "md:w-64"}
-          w-64
-          flex flex-col
-        `}
+        className={`fixed md:sticky top-0 left-0 z-50 h-dvh bg-[#f8f8f8]/95 dark:bg-zinc-900/95 backdrop-blur-sm border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} ${isMinimized ? "md:w-20" : "md:w-64"} w-64 flex flex-col`}
       >
-        <SidebarHeader
-          isMinimized={isMinimized}
-          onClose={handleClose}
-          showCloseButton={true}
-        />
-
+        <SidebarHeader isMinimized={isMinimized} onCloseMobile={() => setIsOpen(false)} />
         <SidebarNav
-          categories={groupedCategories}
+          categories={grouped}
           isMinimized={isMinimized}
+          pathname={pathname}
           accentColor={accentColorValue}
+          expanded={expandedItems}
+          setExpanded={setExpandedItems}
         />
-
         <SidebarFooter isMinimized={isMinimized} />
       </aside>
 
-      {/* Mobile menu toggle button */}
-      <MobileMenuButton isOpen={isOpen} onClick={handleOpen} />
+      {!isOpen && (
+        <button onClick={() => setIsOpen(true)} className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Sidebar } from "../dashboard/components/Sidebar";
+import { Sidebar } from "../dashboard/components/sidebar";
 import { Header } from "../dashboard/components/Header";
 import { Breadcrumbs } from "../dashboard/components/Breadcrumbs";
 import { TimeLocation } from "../dashboard/components/TimeLocation";

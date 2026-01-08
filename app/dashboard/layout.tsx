@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-import { Sidebar } from "./components/Sidebar";
+
 import { Header } from "./components/Header";
 import { Breadcrumbs } from "./components/Breadcrumbs";
 import { TimeLocation } from "./components/TimeLocation";
@@ -16,6 +16,7 @@ import { SidebarProvider } from "./contexts/SidebarContext";
 import { AccentColorProvider } from "./contexts/AccentColorContext";
 import { BreadcrumbProvider } from "./contexts/BreadcrumbContext";
 import { OnboardingModal } from "@/components/modals/OnboardingModal";
+import { Sidebar } from "./components/sidebar/Sidebar";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();

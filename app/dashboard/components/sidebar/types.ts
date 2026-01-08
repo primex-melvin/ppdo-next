@@ -1,4 +1,4 @@
-// app/dashboard/components/sidebar/types.ts
+import type React from "react";
 
 export interface SubMenuItem {
   name: string;
