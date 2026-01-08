@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/[projectId]/components/StatCard.tsx
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[projectId]/components/StatCard.tsx
 
 import type React from "react";
 

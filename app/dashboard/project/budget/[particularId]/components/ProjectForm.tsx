@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/components/ProjectForm.tsx
+// app/dashboard/project/budget/[particularId]/components/ProjectForm.tsx
 
 "use client";
 
@@ -39,7 +39,7 @@ import { Project } from "../../../types";
 import { ProjectParticularCombobox } from "./ProjectParticularCombobox";
 import { ImplementingOfficeSelector } from "./ImplementingOfficeSelector";
 import { ProjectCategoryCombobox } from "./ProjectCategoryCombobox";
-import { BudgetViolationModal } from "@/app/dashboard/project/budget/components/BudgetViolationModal";
+import { BudgetViolationModal } from "@/app/dashboard/project/budget//components/BudgetViolationModal";
 
 const FORM_STORAGE_KEY = "project_form_draft";
 

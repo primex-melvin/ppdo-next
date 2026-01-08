@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/components/ImplementingOfficeSelector.tsx
+// app/dashboard/project/budget/[particularId]/components/ImplementingOfficeSelector.tsx
 "use client";
 
 import * as React from "react";

@@ -1,4 +1,4 @@
-// app/dashboard/budget/components/BudgetParticularCombobox.tsx
+// app/dashboard/project/budget/components/BudgetParticularCombobox.tsx
 "use client";
 
 import * as React from "react";

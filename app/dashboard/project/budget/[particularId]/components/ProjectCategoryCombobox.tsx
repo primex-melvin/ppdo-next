@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/components/ProjectCategoryCombobox.tsx
+// app/dashboard/project/budget/[particularId]/components/ProjectCategoryCombobox.tsx
 "use client";
 
 import * as React from "react";

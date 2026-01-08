@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/[projectId]/components/types.ts
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[projectId]/components/types.ts
 
 import { type ReactNode } from "react"
 import { Id } from "@/convex/_generated/dataModel"

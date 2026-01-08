@@ -6,7 +6,7 @@ The `[particularId]` page has been refactored from a 491-line monolithic file in
 ## File Structure
 
 ```
-app/dashboard/budget/[particularId]/
+app/dashboard/project/budget/[particularId]/
 ├── components/
 │   ├── useParticularData.ts        # Data fetching hook
 │   ├── useProjectMutations.ts      # Mutation operations hook

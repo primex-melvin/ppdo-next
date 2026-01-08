@@ -126,8 +126,8 @@ export default function ProjectBreakdownPage() {
     if (project) {
       setCustomBreadcrumbs([
         { label: "Home", href: "/dashboard" },
-        { label: "Budget", href: "/dashboard/budget" },
-        { label: particularFullName, href: `/dashboard/budget/${encodeURIComponent(particularId)}` },
+        { label: "Budget", href: "/dashboard/project/budget" },
+        { label: particularFullName, href: `/dashboard/project/budget/${encodeURIComponent(particularId)}` },
         { label: project.implementingOffice || "Loading..." },
       ]);
     }
@@ -380,7 +380,7 @@ export default function ProjectBreakdownPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 no-print">
         <div className="flex-1">
           <Link
-            href={`/dashboard/budget/${encodeURIComponent(particularId)}`}
+            href={`/dashboard/project/budget/${encodeURIComponent(particularId)}`}
             className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 mb-4 transition-colors"
           >
             <svg

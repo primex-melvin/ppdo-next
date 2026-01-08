@@ -40,7 +40,7 @@ export default function ProjectDashboardLanding() {
     } catch (_) {
       // Ignore storage failures; user can still filter manually
     }
-    router.push("/dashboard/project/budget");
+    router.push("/dashboard/project/budget/");
   };
 
   return (

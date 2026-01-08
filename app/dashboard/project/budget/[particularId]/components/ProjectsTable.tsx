@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/components/ProjectsTable.tsx
+// app/dashboard/project/budget/[particularId]/components/ProjectsTable.tsx
 
 "use client";
 
@@ -461,7 +461,7 @@ export function ProjectsTable({
   const handleRowClick = (project: Project, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("[role='checkbox']") || (e.target as HTMLElement).closest(".no-click")) return;
     const projectSlug = `${project.particulars.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${project.id}`;
-    router.push(`/dashboard/budget/${encodeURIComponent(particularId)}/${projectSlug}`);
+    router.push(`/dashboard/project/budget/${encodeURIComponent(particularId)}/${projectSlug}`);
   };
 
   const handleSort = (field: SortField) => {

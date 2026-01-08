@@ -6,7 +6,7 @@ This module has been refactored to follow best practices for maintainability, sc
 ## Folder Structure
 
 ```
-app/dashboard/budget/
+app/dashboard/project/budget/
 ├── components/
 │   ├── useBudgetData.ts          # Custom hooks for data fetching
 │   ├── useBudgetMutations.ts     # Custom hooks for mutations

@@ -1,4 +1,4 @@
-// app/dashboard/budget/components/BudgetTrackingTable.tsx
+// app/dashboard/project/budget/components/BudgetTrackingTable.tsx
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -242,7 +242,7 @@ export function BudgetTrackingTable({
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    router.push(`/dashboard/budget/${encodeURIComponent(item.particular)}`);
+    router.push(`/dashboard/project/budget/${encodeURIComponent(item.particular)}`);
   };
 
   const handleContextMenu = (e: React.MouseEvent, item: BudgetItem) => {

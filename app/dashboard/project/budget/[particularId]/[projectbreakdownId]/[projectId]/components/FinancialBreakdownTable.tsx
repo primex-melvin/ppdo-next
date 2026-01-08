@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/[projectId]/components/FinancialBreakdownTable.tsx
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[projectId]/components/FinancialBreakdownTable.tsx
 
 "use client";
 
@@ -7,8 +7,8 @@ import { flattenFinancialBreakdown } from "../data";
 import { FinancialBreakdownItemForm } from "./FinancialBreakdownItemForm";
 import { FinancialBreakdownItem } from "./types";
 import { useAccentColor } from "@/app/dashboard/contexts/AccentColorContext";
-import { Modal } from "@/app/dashboard/project/budget/components/Modal";
-import { ConfirmationModal } from "@/app/dashboard/project/budget/components/ConfirmationModal";
+import { Modal } from "@/app/dashboard/project/budget//components/Modal";
+import { ConfirmationModal } from "@/app/dashboard/project/budget//components/ConfirmationModal";
 
 interface FinancialBreakdownTableProps {
   items: FinancialBreakdownItem[];

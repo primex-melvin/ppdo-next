@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/components/BreakdownHistoryTable.tsx
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/components/BreakdownHistoryTable.tsx
 
 "use client";
 
@@ -160,7 +160,7 @@ export function BreakdownHistoryTable({
       .replace(/^-+|-+$/g, '')}-${breakdown._id}`;
 
     // Navigate to breakdown detail page (3rd level)
-    router.push(`/dashboard/budget/${particularId}/${projectbreakdownId}/${breakdownSlug}`);
+    router.push(`/dashboard/project/budget/${particularId}/${projectbreakdownId}/${breakdownSlug}`);
   };
 
   /* =======================

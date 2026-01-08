@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/[projectId]/data.ts
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[projectId]/data.ts
 
 import { Project, Remark } from "../../../../types";
 import { getProjectsByParticular } from "../../data";

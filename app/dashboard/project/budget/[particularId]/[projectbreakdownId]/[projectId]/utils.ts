@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/[projectId]/utils.ts
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[projectId]/utils.ts
 
 import { FinancialBreakdownItem } from "./components/types";
 

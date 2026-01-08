@@ -5,12 +5,12 @@ Successfully refactored two major budget pages into modular, maintainable, and s
 
 ## Files Refactored
 
-### 1. Budget Tracking Page (`/dashboard/budget/page.tsx`)
+### 1. Budget Tracking Page (`/dashboard/project/budget/page.tsx`)
 - **Before**: 320 lines, monolithic
 - **After**: 86 lines, modular
 - **Reduction**: 73% fewer lines in main file
 
-### 2. Particular Projects Page (`/dashboard/budget/[particularId]/page.tsx`)
+### 2. Particular Projects Page (`/dashboard/project/budget/[particularId]/page.tsx`)
 - **Before**: 491 lines, monolithic  
 - **After**: 97 lines, modular
 - **Reduction**: 80% fewer lines in main file
@@ -19,7 +19,7 @@ Successfully refactored two major budget pages into modular, maintainable, and s
 
 ### Budget Page
 ```
-app/dashboard/budget/
+app/dashboard/project/budget/
 ├── components/
 │   ├── useBudgetData.ts           # Data fetching hooks
 │   ├── useBudgetMutations.ts      # Mutation hooks  
@@ -33,7 +33,7 @@ app/dashboard/budget/
 
 ### ParticularId Page
 ```
-app/dashboard/budget/[particularId]/
+app/dashboard/project/budget/[particularId]/
 ├── components/
 │   ├── useParticularData.ts       # Data fetching hook
 │   ├── useProjectMutations.ts     # Mutation hook

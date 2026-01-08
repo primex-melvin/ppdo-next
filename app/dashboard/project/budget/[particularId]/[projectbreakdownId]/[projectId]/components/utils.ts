@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/[projectId]/components/utils.ts
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[projectId]/components/utils.ts
 
 /**
  * Utility function to get the Tailwind CSS classes for an inspection status.

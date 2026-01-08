@@ -1,4 +1,4 @@
-// app/dashboard/budget/types.ts
+// app/dashboard/project/budget/types.ts
 
 // ===== SHARED STATUS TYPE =====
 

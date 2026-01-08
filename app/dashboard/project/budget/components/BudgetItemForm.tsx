@@ -1,4 +1,4 @@
-// app/dashboard/budget/components/BudgetItemForm.tsx
+// app/dashboard/project/budget/components/BudgetItemForm.tsx
 
 "use client";
 

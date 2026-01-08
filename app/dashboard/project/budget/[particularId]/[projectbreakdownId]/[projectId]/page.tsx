@@ -1,4 +1,4 @@
-// app/dashboard/budget/[particularId]/[projectbreakdownId]/[projectId]/page.tsx
+// app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[projectId]/page.tsx
 
 "use client";
 
@@ -47,7 +47,7 @@ export default function BreakdownDetailPage() {
   );
 
   const handleBack = () => {
-    router.push(`/dashboard/budget/${particularId}/${projectbreakdownId}`);
+    router.push(`/dashboard/project/budget/${particularId}/${projectbreakdownId}`);
   };
 
   if (!breakdown || !project) {
