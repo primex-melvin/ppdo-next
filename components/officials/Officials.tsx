@@ -121,9 +121,9 @@ export default function Officials() {
               <Image
                 src={slides[current].photo}
                 alt={slides[current].name}
-                width={280}
-                height={280}
-                className="relative z-10"
+                width={345}
+                height={345}
+                className="relative z-10 rounded-full object-cover shadow-lg"
               />
             </div>
           </div>
