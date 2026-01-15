@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 const navLinks = [
@@ -15,6 +16,9 @@ const navLinks = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (href: string) => pathname === href;
 
   return (
     <nav
@@ -29,7 +33,13 @@ export default function Navbar() {
             <li key={i}>
               <Link
                 href={link.href}
-                className="hover:text-yellow-400 transition-colors"
+                className={`transition-colors duration-300
+                  ${
+                    isActive(link.href)
+                      ? "text-yellow-400"
+                      : "text-white hover:text-yellow-400"
+                  }
+                `}
               >
                 {link.label}
               </Link>
@@ -66,8 +76,13 @@ export default function Navbar() {
                 <Link
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="text-[#012130] bg-[#e4f7e9] px-4 py-2 rounded-lg
-                             hover:bg-[#c9efd6] transition-all"
+                  className={`transition-colors
+                    ${
+                      isActive(link.href)
+                        ? "text-yellow-600"
+                        : "text-[#012130] hover:text-yellow-600"
+                    }
+                  `}
                 >
                   {link.label}
                 </Link>

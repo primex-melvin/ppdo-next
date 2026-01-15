@@ -82,8 +82,10 @@ export default function NewsEventsPage() {
         </FadeIn>
       </section>
 
-      {/* BOTTOM */}
-      <Footer />
+      {/* Footer */}
+            <FadeIn>
+            <Footer />
+            </FadeIn>
     </>
   );
 }

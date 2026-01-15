@@ -37,8 +37,10 @@ export default function OrgChartPage() {
         </FadeIn>
       </section>
 
-      {/* BOTTOM */}
-      <Footer />
+      {/* Footer */}
+            <FadeIn>
+            <Footer />
+            </FadeIn>
     </>
   );
 }

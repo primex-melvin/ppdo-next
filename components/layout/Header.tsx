@@ -22,43 +22,6 @@ export default function Header() {
           {/* LEFT */}
           <div className="hidden sm:flex items-center gap-6">
             <span className="font-extrabold text-lg tracking-wide">GOVPH</span>
-
-            <div className="relative group cursor-pointer">
-              <span className="flex items-center gap-1">
-                Transparency ▼
-              </span>
-              <div className="absolute left-0 top-5 hidden group-hover:block bg-white text-black shadow-lg rounded-md w-36 z-50">
-                <ul className="py-1 text-sm">
-                  <li className="px-3 py-1 hover:bg-gray-100 cursor-pointer">
-                    Budget
-                  </li>
-                  <li className="px-3 py-1 hover:bg-gray-100 cursor-pointer">
-                    Procurement
-                  </li>
-                  <li className="px-3 py-1 hover:bg-gray-100 cursor-pointer">
-                    Reports
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT ACTIONS */}
-          <div className="flex flex-wrap gap-2 sm:gap-4 justify-center sm:justify-end">
-            <button
-              type="button"
-              className="hover:underline cursor-pointer"
-            >
-              Accessibility Statement
-            </button>
-
-            <button
-              type="button"
-              className="hover:underline cursor-pointer"
-            >
-              Accessibility
-            </button>
-
             <Link
               href="/signin"
               className="flex items-center gap-1 px-3 hover:underline"

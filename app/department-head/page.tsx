@@ -71,8 +71,10 @@ export default function DepartmentHeadPage() {
         </div>
       </section>
 
-      {/* BOTTOM */}
-      <Footer />
+      {/* Footer */}
+            <FadeIn>
+            <Footer />
+            </FadeIn>
     </>
   );
 }
