@@ -59,8 +59,10 @@ export default function ContactUsPage() {
         </FadeIn>
       </section>
 
-      {/* BOTTOM */}
-      <Footer />
+      {/* Footer */}
+            <FadeIn>
+            <Footer />
+            </FadeIn>
     </>
   );
 }
