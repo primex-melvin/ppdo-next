@@ -2,27 +2,27 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, AlertCircle, Lock } from "lucide-react";
+import { toast } from "sonner";
 
-import { ParticularTypeSelector } from "./_components/ParticularTypeSelector";
-import { BudgetParticularsList } from "./_components/BudgetParticularsList";
-import { ProjectParticularsList } from "./_components/ProjectParticularsList";
+import { ConsolidatedParticularsList } from "./_components/ConsolidatedParticularsList";
+import { YearSelector } from "./_components/YearSelector";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Lock } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useUrlState } from "./_hooks/useUrlState";
 
 export default function ParticularPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
+  const { urlState, updateUrlState } = useUrlState();
+  
+  const [selectedYear, setSelectedYear] = useState<string>(urlState.year || "all");
+  
+  // Ref to track last year update to URL
+  const lastYearUpdate = useRef<string>("");
+  const isInitialMount = useRef(true);
 
   // Fetch all data
   const budgetParticulars = useQuery(api.budgetParticulars.list, {
@@ -34,98 +34,46 @@ export default function ParticularPage() {
   const budgetItems = useQuery(api.budgetItems.list);
   const projects = useQuery(api.projects.list, {});
 
-  const [selectedType, setSelectedType] = useState<"budget" | "project">("budget");
-  const [selectedYear, setSelectedYear] = useState<string>("all");
+  // Get available years
+  const availableYears = useMemo(() => {
+    if (!budgetItems || !projects) return [];
+    const years = new Set<number>();
+    budgetItems.forEach((item) => {
+      if (item.year) years.add(item.year);
+    });
+    projects.forEach((project) => {
+      if (project.year) years.add(project.year);
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [budgetItems, projects]);
+
+  // Sync URL state with local state ONLY on mount
+  useEffect(() => {
+    if (isInitialMount.current && urlState.year) {
+      setSelectedYear(urlState.year);
+    }
+    isInitialMount.current = false;
+  }, []); // Only run once on mount
+
+  // Update URL when year changes - with deduplication
+  useEffect(() => {
+    if (lastYearUpdate.current !== selectedYear) {
+      lastYearUpdate.current = selectedYear;
+      // Always include year in URL, even if "all"
+      updateUrlState({ year: selectedYear });
+    }
+  }, [selectedYear]); // Removed updateUrlState from deps
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    const yearText = year === "all" ? "All Years" : `Year ${year}`;
+    toast.success(`Filtering by: ${yearText}`, { duration: 2000 });
+  };
 
   // Check if user has access
   const hasAccess =
     user?.role === "admin" || user?.role === "super_admin" || user?.role === "user";
   const canManage = user?.role === "admin" || user?.role === "super_admin";
-
-  // Calculate year statistics for budget particulars
-  const budgetYearCounts = useMemo(() => {
-    if (!budgetParticulars || !budgetItems) return [];
-
-    const yearMap = new Map<number | "all", Set<string>>();
-    yearMap.set("all", new Set());
-
-    budgetItems.forEach((item) => {
-      if (item.isDeleted) return;
-
-      // Add to all
-      yearMap.get("all")!.add(item.particulars);
-
-      // Add to specific year
-      if (item.year) {
-        if (!yearMap.has(item.year)) {
-          yearMap.set(item.year, new Set());
-        }
-        yearMap.get(item.year)!.add(item.particulars);
-      }
-    });
-
-    return Array.from(yearMap.entries())
-      .map(([year, codes]) => ({
-        year,
-        count: codes.size,
-      }))
-      .sort((a, b) => {
-        if (a.year === "all") return -1;
-        if (b.year === "all") return 1;
-        return (b.year as number) - (a.year as number);
-      });
-  }, [budgetParticulars, budgetItems]);
-
-  // Calculate year statistics for project particulars
-  const projectYearCounts = useMemo(() => {
-    if (!projectParticulars || !projects) return [];
-
-    const yearMap = new Map<number | "all", Set<string>>();
-    yearMap.set("all", new Set());
-
-    projects.forEach((project) => {
-      if (project.isDeleted) return;
-
-      // Add to all
-      yearMap.get("all")!.add(project.particulars);
-
-      // Add to specific year
-      if (project.year) {
-        if (!yearMap.has(project.year)) {
-          yearMap.set(project.year, new Set());
-        }
-        yearMap.get(project.year)!.add(project.particulars);
-      }
-    });
-
-    return Array.from(yearMap.entries())
-      .map(([year, codes]) => ({
-        year,
-        count: codes.size,
-      }))
-      .sort((a, b) => {
-        if (a.year === "all") return -1;
-        if (b.year === "all") return 1;
-        return (b.year as number) - (a.year as number);
-      });
-  }, [projectParticulars, projects]);
-
-  // Get available years for dropdown
-  const availableYears = useMemo(() => {
-    const years = new Set<number>();
-
-    if (selectedType === "budget" && budgetItems) {
-      budgetItems.forEach((item) => {
-        if (item.year && !item.isDeleted) years.add(item.year);
-      });
-    } else if (selectedType === "project" && projects) {
-      projects.forEach((project) => {
-        if (project.year && !project.isDeleted) years.add(project.year);
-      });
-    }
-
-    return Array.from(years).sort((a, b) => b - a);
-  }, [selectedType, budgetItems, projects]);
 
   // Loading state
   if (
@@ -175,33 +123,14 @@ export default function ParticularPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header with Year Filter */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Particulars Management</h1>
-          <p className="text-gray-500 mt-1">
-            Manage budget and project particular categories
-          </p>
-        </div>
-
-        {/* Year Filter Dropdown */}
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-gray-500" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Years</SelectItem>
-              {availableYears.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="space-y-4">
+      {/* Page Header with Year Selector */}
+      <div>
+        <YearSelector
+          selectedYear={selectedYear}
+          availableYears={availableYears}
+          onYearChange={handleYearChange}
+        />
       </div>
 
       {/* Permission Notice */}
@@ -215,23 +144,11 @@ export default function ParticularPage() {
         </Alert>
       )}
 
-      {/* Type Selector Cards */}
-      <ParticularTypeSelector
-        budgetYearCounts={budgetYearCounts}
-        projectYearCounts={projectYearCounts}
-        selectedType={selectedType}
-        onSelectType={(type) => {
-          setSelectedType(type);
-          setSelectedYear("all"); // Reset year filter when switching types
-        }}
+      {/* Consolidated List */}
+      <ConsolidatedParticularsList 
+        selectedYear={selectedYear} 
+        onYearChange={handleYearChange}
       />
-
-      {/* Main Content - Show selected list */}
-      {selectedType === "budget" ? (
-        <BudgetParticularsList selectedYear={selectedYear} />
-      ) : (
-        <ProjectParticularsList selectedYear={selectedYear} />
-      )}
     </div>
   );
 }
