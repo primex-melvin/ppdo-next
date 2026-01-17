@@ -10,35 +10,36 @@ import { Modal } from "./Modal";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { BudgetItemForm } from "./BudgetItemForm";
 import BudgetShareModal from "./BudgetShareModal";
-import {
-  Share2,
-  Search,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Pin,
-  PinOff,
-  Edit,
-  Trash2,
-  Filter,
-  X,
-  CheckCircle2
-} from "lucide-react";
+import { BudgetTableHeader } from "./components/table/BudgetTableHeader";
+import { BudgetTableRow } from "./components/table/BudgetTableRow";
+import { BudgetTableTotalsRow } from "./components/table/BudgetTableTotalsRow";
+import { BudgetTableEmptyState } from "./components/table/BudgetTableEmptyState";
+import { BudgetContextMenu } from "./components/table/BudgetContextMenu";
+import { BudgetSearchFilters } from "./components/filters/BudgetSearchFilters";
+import { Share2, Search, CheckCircle2, Trash2 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
-import { BudgetItem, SortDirection, SortField } from "@/types/types";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import DashboardToolbar from "@/components/ui/dashboard-toolbar";
+import { 
+  BudgetItem, 
+  ContextMenuState, 
+  SortField, 
+  SortDirection 
+} from "@/app/dashboard/project/budget/types";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
+  filterBySearchQuery,
+  filterByStatus,
+  filterByYear,
+  sortBudgetItems,
+  sortWithPinnedFirst,
+  calculateBudgetTotals,
+  calculateTotalUtilizationRate,
+  extractUniqueStatuses,
+  extractUniqueYears,
+} from "@/app/dashboard/project/budget/utils";
+import { STORAGE_KEYS, TIMEOUTS } from "@/app/dashboard/project/budget/constants";
 
 interface BudgetTrackingTableProps {
   budgetItems: BudgetItem[];
@@ -64,6 +65,7 @@ export function BudgetTrackingTable({
   const togglePinBudgetItem = useMutation(api.budgetItems.togglePin);
   const bulkMoveToTrash = useMutation(api.budgetItems.bulkMoveToTrash);
 
+  // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -72,12 +74,10 @@ export function BudgetTrackingTable({
   const [hasDraft, setHasDraft] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    item: BudgetItem;
-  } | null>(null);
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
+  // Filter & Sort states
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -92,10 +92,14 @@ export function BudgetTrackingTable({
     accessCheck?.user?.role === "admin" ||
     accessCheck?.user?.role === "super_admin";
 
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
   useEffect(() => {
     const checkDraft = () => {
       try {
-        const saved = localStorage.getItem("budget_item_form_draft");
+        const saved = localStorage.getItem(STORAGE_KEYS.FORM_DRAFT);
         setHasDraft(!!saved);
       } catch (error) {
         setHasDraft(false);
@@ -108,7 +112,7 @@ export function BudgetTrackingTable({
   }, [showAddModal]);
 
   useEffect(() => {
-    // Priority 1: Read from URL query params (explicit, shareable)
+    // Priority 1: Read from URL query params
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const yearParam = urlParams.get("year");
@@ -117,12 +121,12 @@ export function BudgetTrackingTable({
         const year = parseInt(yearParam);
         if (!isNaN(year)) {
           setYearFilter([year]);
-          return; // Early exit, URL params take priority
+          return;
         }
       }
 
-      // Priority 2: Fallback to sessionStorage (current session preference only)
-      const sessionYear = sessionStorage.getItem("budget_year_preference");
+      // Priority 2: Fallback to sessionStorage
+      const sessionYear = sessionStorage.getItem(STORAGE_KEYS.YEAR_PREFERENCE);
       if (sessionYear) {
         const year = parseInt(sessionYear);
         if (!isNaN(year)) {
@@ -132,15 +136,13 @@ export function BudgetTrackingTable({
     }
   }, []);
 
-  // Sync yearFilter state changes back to URL query params
+  // Sync yearFilter to URL
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (yearFilter.length > 0) {
-        // Build URL with year params
         const params = new URLSearchParams();
-        yearFilter.forEach(year => params.append("year", String(year)));
+        yearFilter.forEach((year) => params.append("year", String(year)));
 
-        // Preserve other query params (search, sort, status, etc.)
         const currentParams = new URLSearchParams(window.location.search);
         currentParams.forEach((value, key) => {
           if (key !== "year") {
@@ -151,7 +153,6 @@ export function BudgetTrackingTable({
         const newUrl = `${window.location.pathname}?${params.toString()}`;
         window.history.replaceState(null, "", newUrl);
       } else {
-        // No year filter, clean URL
         const currentParams = new URLSearchParams(window.location.search);
         currentParams.delete("year");
 
@@ -167,12 +168,14 @@ export function BudgetTrackingTable({
   }, [yearFilter]);
 
   useEffect(() => {
-    // If coming from project page with intent to add a new item
     try {
-      const shouldOpenAdd = typeof window !== "undefined" ? localStorage.getItem("budget_open_add") : null;
+      const shouldOpenAdd =
+        typeof window !== "undefined"
+          ? localStorage.getItem(STORAGE_KEYS.OPEN_ADD)
+          : null;
       if (shouldOpenAdd === "true") {
         setShowAddModal(true);
-        localStorage.removeItem("budget_open_add");
+        localStorage.removeItem(STORAGE_KEYS.OPEN_ADD);
       }
     } catch (_) {
       // storage unavailable
@@ -181,7 +184,10 @@ export function BudgetTrackingTable({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(event.target as Node)
+      ) {
         setContextMenu(null);
       }
     };
@@ -200,119 +206,64 @@ export function BudgetTrackingTable({
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowHeaderSkeleton(false), 600);
+    const t = setTimeout(() => setShowHeaderSkeleton(false), TIMEOUTS.HEADER_SKELETON);
     return () => clearTimeout(t);
   }, []);
 
-  const uniqueStatuses = useMemo(() => {
-    const statuses = new Set<string>();
-    budgetItems.forEach(item => {
-      if (item.status) statuses.add(item.status);
-    });
-    return Array.from(statuses).sort();
-  }, [budgetItems]);
+  // ============================================================================
+  // MEMOIZED VALUES
+  // ============================================================================
 
-  const uniqueYears = useMemo(() => {
-    const years = new Set<number>();
-    budgetItems.forEach(item => {
-      if (item.year) years.add(item.year);
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [budgetItems]);
+  const uniqueStatuses = useMemo(
+    () => extractUniqueStatuses(budgetItems),
+    [budgetItems]
+  );
+
+  const uniqueYears = useMemo(
+    () => extractUniqueYears(budgetItems),
+    [budgetItems]
+  );
 
   const filteredAndSortedItems = useMemo(() => {
-    let filtered = [...budgetItems];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(item => {
-        return (
-          item.particular.toLowerCase().includes(query) ||
-          item.year?.toString().includes(query) ||
-          item.status?.toLowerCase().includes(query) ||
-          item.totalBudgetAllocated.toString().includes(query) ||
-          (item.obligatedBudget?.toString() || "").includes(query) ||
-          item.totalBudgetUtilized.toString().includes(query) ||
-          item.utilizationRate.toFixed(1).includes(query) ||
-          item.projectCompleted.toFixed(1).includes(query) ||
-          item.projectDelayed.toFixed(1).includes(query) ||
-          item.projectsOnTrack.toFixed(1).includes(query)
-        );
-      });
-    }
-
-    if (statusFilter.length > 0) {
-      filtered = filtered.filter(item => item.status && statusFilter.includes(item.status));
-    }
-
-    if (yearFilter.length > 0) {
-      filtered = filtered.filter(item => item.year && yearFilter.includes(item.year));
-    }
-
-    // ✅ FIXED: SAFE SORTING LOGIC
-    if (sortField && sortDirection) {
-      filtered.sort((a, b) => {
-        // Use type assertion to safely index the object
-        const field = sortField as keyof BudgetItem;
-        const aVal = a[field];
-        const bVal = b[field];
-
-        if (aVal === undefined || aVal === null) return 1;
-        if (bVal === undefined || bVal === null) return -1;
-
-        if (typeof aVal === "string" && typeof bVal === "string") {
-          return sortDirection === "asc"
-            ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal);
-        }
-
-        if (typeof aVal === "number" && typeof bVal === "number") {
-          return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-        }
-
-        return 0;
-      });
-    }
-
-    return filtered.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return 0;
-    });
+    let filtered = filterBySearchQuery(budgetItems, searchQuery);
+    filtered = filterByStatus(filtered, statusFilter);
+    filtered = filterByYear(filtered, yearFilter);
+    filtered = sortBudgetItems(filtered, sortField, sortDirection);
+    filtered = sortWithPinnedFirst(filtered);
+    return filtered;
   }, [budgetItems, searchQuery, statusFilter, yearFilter, sortField, sortDirection]);
 
-  const getUtilizationColor = (rate: number): string => {
-    if (rate >= 80) return "text-red-600 dark:text-red-400";
-    if (rate >= 60) return "text-orange-600 dark:text-orange-400";
-    return "text-green-600 dark:text-green-400";
-  };
+  const totals = useMemo(
+    () => calculateBudgetTotals(filteredAndSortedItems),
+    [filteredAndSortedItems]
+  );
 
-  const getProjectStatusColor = (value: number): string => {
-    if (value >= 50) return "text-green-600 dark:text-green-400";
-    if (value >= 30) return "text-orange-600 dark:text-orange-400";
-    return "text-zinc-600 dark:text-zinc-400";
-  };
+  const totalUtilizationRate = useMemo(
+    () => calculateTotalUtilizationRate(totals),
+    [totals]
+  );
 
-  const getStatusColor = (status?: string): string => {
-    if (!status) return "text-zinc-600 dark:text-zinc-400";
+  const isAllSelected =
+    filteredAndSortedItems.length > 0 &&
+    selectedIds.size === filteredAndSortedItems.length;
+  const isIndeterminate =
+    selectedIds.size > 0 && selectedIds.size < filteredAndSortedItems.length;
 
-    switch (status) {
-      case "completed":
-        return "text-green-600 dark:text-green-400";
-      case "ongoing":
-        return "text-blue-600 dark:text-blue-400";
-      case "delayed":
-        return "text-red-600 dark:text-red-400";
-      default:
-        return "text-zinc-600 dark:text-zinc-400";
-    }
-  };
+  const hasActiveFilters = Boolean(
+    searchQuery || statusFilter.length > 0 || yearFilter.length > 0 || sortField
+  );
+
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
 
   const handleRowClick = (item: BudgetItem, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    router.push(`/dashboard/project/budget/${encodeURIComponent(item.particular)}`);
+    router.push(
+      `/dashboard/project/budget/${encodeURIComponent(item.particular)}`
+    );
   };
 
   const handleContextMenu = (e: React.MouseEvent, item: BudgetItem) => {
@@ -339,7 +290,9 @@ export function BudgetTrackingTable({
   const handlePin = async (item: BudgetItem) => {
     try {
       await togglePinBudgetItem({ id: item.id as Id<"budgetItems"> });
-      toast.success(item.isPinned ? "Budget item unpinned" : "Budget item pinned to top");
+      toast.success(
+        item.isPinned ? "Budget item unpinned" : "Budget item pinned to top"
+      );
     } catch (error) {
       console.error("Error toggling pin:", error);
       toast.error("Failed to pin/unpin item");
@@ -347,7 +300,17 @@ export function BudgetTrackingTable({
     setContextMenu(null);
   };
 
-  const handleSave = (formData: Omit<BudgetItem, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack" | "status">) => {
+  const handleSave = (
+    formData: Omit<
+      BudgetItem,
+      | "id"
+      | "utilizationRate"
+      | "projectCompleted"
+      | "projectDelayed"
+      | "projectsOnTrack"
+      | "status"
+    >
+  ) => {
     if (selectedItem && onEdit) {
       onEdit(selectedItem.id, formData);
     } else if (onAdd) {
@@ -380,18 +343,14 @@ export function BudgetTrackingTable({
   };
 
   const toggleStatusFilter = (status: string) => {
-    setStatusFilter(prev =>
-      prev.includes(status)
-        ? prev.filter(s => s !== status)
-        : [...prev, status]
+    setStatusFilter((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
     );
   };
 
   const toggleYearFilter = (year: number) => {
-    setYearFilter(prev =>
-      prev.includes(year)
-        ? prev.filter(y => y !== year)
-        : [...prev, year]
+    setYearFilter((prev) =>
+      prev.includes(year) ? prev.filter((y) => y !== year) : [...prev, year]
     );
   };
 
@@ -405,7 +364,7 @@ export function BudgetTrackingTable({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = new Set(filteredAndSortedItems.map(item => item.id));
+      const allIds = new Set(filteredAndSortedItems.map((item) => item.id));
       setSelectedIds(allIds);
     } else {
       setSelectedIds(new Set());
@@ -430,23 +389,24 @@ export function BudgetTrackingTable({
 
     try {
       const response: any = await bulkMoveToTrash({
-        ids: Array.from(selectedIds) as Id<"budgetItems">[]
+        ids: Array.from(selectedIds) as Id<"budgetItems">[],
       });
 
       if (response.success) {
-        toast.success(response.message || `Moved ${selectedIds.size} item(s) to trash`);
+        toast.success(
+          response.message || `Moved ${selectedIds.size} item(s) to trash`
+        );
         setSelectedIds(new Set());
       } else {
-        toast.error(response.error?.message || "Failed to move items to trash");
+        toast.error(
+          response.error?.message || "Failed to move items to trash"
+        );
       }
     } catch (error) {
       console.error("Error in bulk trash:", error);
       toast.error("An error occurred while moving items to trash");
     }
   };
-
-  const isAllSelected = filteredAndSortedItems.length > 0 && selectedIds.size === filteredAndSortedItems.length;
-  const isIndeterminate = selectedIds.size > 0 && selectedIds.size < filteredAndSortedItems.length;
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible);
@@ -455,51 +415,27 @@ export function BudgetTrackingTable({
     }
   };
 
-  const hasActiveFilters = searchQuery || statusFilter.length > 0 || yearFilter.length > 0 || sortField;
-
   const handlePrint = () => {
     window.print();
   };
 
-  const totals = filteredAndSortedItems.reduce(
-    (acc, item) => ({
-      totalBudgetAllocated: acc.totalBudgetAllocated + item.totalBudgetAllocated,
-      obligatedBudget: acc.obligatedBudget + (item.obligatedBudget || 0),
-      totalBudgetUtilized: acc.totalBudgetUtilized + item.totalBudgetUtilized,
-      projectCompleted: acc.projectCompleted + item.projectCompleted,
-      projectDelayed: acc.projectDelayed + item.projectDelayed,
-      projectsOnTrack: acc.projectsOnTrack + item.projectsOnTrack,
-    }),
-    {
-      totalBudgetAllocated: 0,
-      obligatedBudget: 0,
-      totalBudgetUtilized: 0,
-      projectCompleted: 0,
-      projectDelayed: 0,
-      projectsOnTrack: 0,
-    }
-  );
-
-  const totalUtilizationRate =
-    totals.totalBudgetAllocated > 0
-      ? (totals.totalBudgetUtilized / totals.totalBudgetAllocated) * 100
-      : 0;
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />;
-    if (sortDirection === "asc") return <ArrowUp className="w-3.5 h-3.5" />;
-    return <ArrowDown className="w-3.5 h-3.5" />;
-  };
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
     <>
       <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        {/* Toolbar */}
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 space-y-4 no-print">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-[200px]">
               {selectedIds.size > 0 ? (
                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7">
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7"
+                  >
                     <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                     {selectedIds.size} Selected
                   </Badge>
@@ -513,7 +449,9 @@ export function BudgetTrackingTable({
                   </Button>
                 </div>
               ) : (
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Budget Items</h3>
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  Budget Items
+                </h3>
               )}
             </div>
 
@@ -542,11 +480,14 @@ export function BudgetTrackingTable({
                       >
                         <Share2 className="w-4 h-4" />
                         <span className="hidden sm:inline">Share</span>
-                        {pendingRequestsCount !== undefined && pendingRequestsCount > 0 && (
-                          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                            {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
-                          </span>
-                        )}
+                        {pendingRequestsCount !== undefined &&
+                          pendingRequestsCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                              {pendingRequestsCount > 9
+                                ? "9+"
+                                : pendingRequestsCount}
+                            </span>
+                          )}
                       </Button>
                     )}
                     {expandButton}
@@ -554,10 +495,11 @@ export function BudgetTrackingTable({
                       onClick={toggleSearch}
                       variant="outline"
                       size="sm"
-                      className={`${isSearchVisible
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-500'
-                        : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600'
-                        } gap-2`}
+                      className={`${
+                        isSearchVisible
+                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                          : "bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                      } gap-2`}
                       title={isSearchVisible ? "Hide Search" : "Show Search"}
                     >
                       <Search className="w-4 h-4" />
@@ -570,20 +512,32 @@ export function BudgetTrackingTable({
                       className="gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
                       title="Print"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                        />
                       </svg>
                       <span className="hidden sm:inline">Print</span>
                     </Button>
-                    <Button
-                      onClick={selectedIds.size > 0 ? handleBulkTrash : onOpenTrash}
-                      variant={selectedIds.size > 0 ? "destructive" : "outline"}
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      {selectedIds.size > 0 ? `To Trash (${selectedIds.size})` : 'Recycle Bin'}
-                    </Button>
+                    {selectedIds.size > 0 && (
+                      <Button
+                        onClick={handleBulkTrash}
+                        variant="destructive"
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        To Trash ({selectedIds.size})
+                      </Button>
+                    )}
                     {onAdd && (
                       <Button
                         onClick={() => setShowAddModal(true)}
@@ -601,78 +555,30 @@ export function BudgetTrackingTable({
             </div>
           </div>
 
-
+          {/* Search Filters */}
           {isSearchVisible && (
-            <div className="space-y-4 animate-in slide-in-from-top duration-200">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by particular, year, status, or any value..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-offset-0"
-                    style={{
-                      '--tw-ring-color': accentColorValue,
-                    } as React.CSSProperties}
-                  />
-                </div>
-                {hasActiveFilters && (
-                  <Button
-                    onClick={clearAllFilters}
-                    variant="secondary"
-                    size="sm"
-                    className="gap-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                  >
-                    <X className="w-4 h-4" />
-                    <span className="hidden sm:inline">Clear Filters</span>
-                    <span className="sm:hidden">Clear</span>
-                  </Button>
-                )}
-              </div>
-
-              {(statusFilter.length > 0 || yearFilter.length > 0) && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Active filters:</span>
-                  {statusFilter.map(status => (
-                    <span
-                      key={status}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                    >
-                      Status: {status}
-                      <button
-                        onClick={() => toggleStatusFilter(status)}
-                        className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                  {yearFilter.map(year => (
-                    <span
-                      key={year}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                    >
-                      Year: {year}
-                      <button
-                        onClick={() => toggleYearFilter(year)}
-                        className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            <BudgetSearchFilters
+              searchQuery={searchQuery}
+              statusFilter={statusFilter}
+              yearFilter={yearFilter}
+              accentColorValue={accentColorValue}
+              hasActiveFilters={hasActiveFilters}
+              onSearchChange={setSearchQuery}
+              onClearFilters={clearAllFilters}
+              onToggleStatusFilter={toggleStatusFilter}
+              onToggleYearFilter={toggleYearFilter}
+            />
           )}
         </div>
 
+        {/* Print Header */}
         <div className="hidden print-only p-4 border-b border-zinc-900">
-          <h2 className="text-xl font-bold text-zinc-900 mb-2">Budget Tracking</h2>
+          <h2 className="text-xl font-bold text-zinc-900 mb-2">
+            Budget Tracking
+          </h2>
           <p className="text-sm text-zinc-700">
-            Generated on: {new Date().toLocaleDateString("en-US", {
+            Generated on:{" "}
+            {new Date().toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -682,307 +588,45 @@ export function BudgetTrackingTable({
           </p>
         </div>
 
+        {/* Table */}
         <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
-                {isAdmin && (
-                  <th className="w-10 px-3 py-4 text-center sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-20">
-                    <Checkbox
-                      checked={isAllSelected}
-                      onCheckedChange={handleSelectAll}
-                      aria-label="Select all"
-                      className={isIndeterminate ? "opacity-50" : ""}
-                    />
-                  </th>
-                )}
-                <th className="px-4 sm:px-6 py-4 text-left sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("particular")}
-                    className="group flex items-center gap-2 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Particulars
-                    </span>
-                    <SortIcon field="particular" />
-                  </button>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-center sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="group flex items-center gap-2 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                          Year
-                        </span>
-                        {showHeaderSkeleton && <Skeleton className="h-3 w-8 rounded" />}
-                        <Filter className={`w-3.5 h-3.5 ${yearFilter.length > 0 ? 'text-blue-600' : 'opacity-50'}`} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center">
-                      <DropdownMenuLabel>Filter by Year</DropdownMenuLabel>
-                      {uniqueYears.length > 0 ? (
-                        uniqueYears.map((year) => (
-                          <DropdownMenuCheckboxItem
-                            key={year}
-                            checked={yearFilter.includes(year)}
-                            onCheckedChange={() => toggleYearFilter(year)}
-                          >
-                            {year}
-                          </DropdownMenuCheckboxItem>
-                        ))
-                      ) : (
-                        <DropdownMenuCheckboxItem disabled checked={false}>
-                          No years available
-                        </DropdownMenuCheckboxItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-center sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="group flex items-center gap-2 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                          Status
-                        </span>
-                        {showHeaderSkeleton && <Skeleton className="h-3 w-10 rounded" />}
-                        <Filter className={`w-3.5 h-3.5 ${statusFilter.length > 0 ? 'text-blue-600' : 'opacity-50'}`} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center">
-                      <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                      {uniqueStatuses.length > 0 ? (
-                        uniqueStatuses.map((status) => (
-                          <DropdownMenuCheckboxItem
-                            key={status}
-                            checked={statusFilter.includes(status)}
-                            onCheckedChange={() => toggleStatusFilter(status)}
-                          >
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </DropdownMenuCheckboxItem>
-                        ))
-                      ) : (
-                        <DropdownMenuCheckboxItem disabled checked={false}>
-                          No statuses available
-                        </DropdownMenuCheckboxItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("totalBudgetAllocated")}
-                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Budget Allocated
-                    </span>
-                    <SortIcon field="totalBudgetAllocated" />
-                  </button>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("obligatedBudget")}
-                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Obligated Budget
-                    </span>
-                    <SortIcon field="obligatedBudget" />
-                  </button>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("totalBudgetUtilized")}
-                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Budget Utilized
-                    </span>
-                    <SortIcon field="totalBudgetUtilized" />
-                  </button>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("utilizationRate")}
-                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Utilization Rate
-                    </span>
-                    <SortIcon field="utilizationRate" />
-                  </button>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("projectCompleted")}
-                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Completed
-                    </span>
-                    <SortIcon field="projectCompleted" />
-                  </button>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("projectDelayed")}
-                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Delayed
-                    </span>
-                    <SortIcon field="projectDelayed" />
-                  </button>
-                </th>
-                <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
-                  <button
-                    onClick={() => handleSort("projectsOnTrack")}
-                    className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                      Ongoing
-                    </span>
-                    <SortIcon field="projectsOnTrack" />
-                  </button>
-                </th>
-              </tr>
-            </thead>
+            <BudgetTableHeader
+              isAdmin={isAdmin}
+              isAllSelected={isAllSelected}
+              isIndeterminate={isIndeterminate}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              yearFilter={yearFilter}
+              statusFilter={statusFilter}
+              uniqueYears={uniqueYears}
+              uniqueStatuses={uniqueStatuses}
+              showHeaderSkeleton={showHeaderSkeleton}
+              onSelectAll={handleSelectAll}
+              onSort={handleSort}
+              onToggleYearFilter={toggleYearFilter}
+              onToggleStatusFilter={toggleStatusFilter}
+            />
             <tbody>
               {filteredAndSortedItems.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <Search className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3" />
-                      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                        No results found
-                      </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                        Try adjusting your search or filters
-                      </p>
-                    </div>
-                  </td>
-                </tr>
+                <BudgetTableEmptyState />
               ) : (
                 <>
-                  {filteredAndSortedItems.map((item) => (
-                    <tr
+                  {filteredAndSortedItems.map((item: BudgetItem) => (
+                    <BudgetTableRow
                       key={item.id}
-                      onContextMenu={(e) => handleContextMenu(e, item)}
-                      onClick={(e) => {
-                        if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("[role='checkbox']")) return;
-                        handleRowClick(item, e);
-                      }}
-                      className={`
-                        border-b border-zinc-200 dark:border-zinc-800 
-                        hover:bg-zinc-50 dark:hover:bg-zinc-800/50 
-                        transition-colors cursor-pointer
-                        ${item.isPinned ? 'bg-amber-50 dark:bg-amber-950/20' : ''}
-                        ${selectedIds.has(item.id) ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
-                      `}
-                    >
-                      {isAdmin && (
-                        <td className="px-3 py-4 text-center">
-                          <Checkbox
-                            checked={selectedIds.has(item.id)}
-                            onCheckedChange={(checked) => handleSelectRow(item.id, checked as boolean)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </td>
-                      )}
-                      <td className="px-4 sm:px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {item.isPinned && (
-                            <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500 shrink-0" />
-                          )}
-                          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            {item.particular}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-center">
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                          {item.year || "-"}
-                        </span>
-                      </td>
-
-                      <td className="px-4 sm:px-6 py-4 text-center">
-                        <span className={`text-sm font-medium ${getStatusColor(item.status)}`}>
-                          {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : "-"}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          ₱{item.totalBudgetAllocated.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          {item.obligatedBudget ? `₱${item.obligatedBudget.toLocaleString()}` : "-"}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          ₱{item.totalBudgetUtilized.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className={`text-sm font-semibold ${getUtilizationColor(item.utilizationRate)}`}>
-                          {item.utilizationRate.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className={`text-sm font-medium ${getProjectStatusColor(item.projectCompleted)}`}>
-                          {Math.round(item.projectCompleted)}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className={`text-sm font-medium ${getProjectStatusColor(item.projectDelayed)}`}>
-                          {Math.round(item.projectDelayed)}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span className={`text-sm font-medium ${getProjectStatusColor(item.projectsOnTrack)}`}>
-                          {Math.round(item.projectsOnTrack)}
-                        </span>
-                      </td>
-                    </tr>
+                      item={item}
+                      isAdmin={isAdmin}
+                      isSelected={selectedIds.has(item.id)}
+                      onContextMenu={handleContextMenu}
+                      onClick={handleRowClick}
+                      onSelectRow={handleSelectRow}
+                    />
                   ))}
-                  <tr className="border-t-2 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 font-semibold">
-                    <td></td>
-                    <td className="px-4 sm:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
-                      TOTAL
-                    </td>
-                    <td className="px-4 sm:px-6 py-4"></td>
-                    <td className="px-4 sm:px-6 py-4"></td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      ₱{totals.totalBudgetAllocated.toLocaleString()}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      ₱{totals.obligatedBudget.toLocaleString()}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      ₱{totals.totalBudgetUtilized.toLocaleString()}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right">
-                      <span
-                        className={`text-sm font-semibold ${getUtilizationColor(
-                          totalUtilizationRate
-                        )}`}
-                      >
-                        {totalUtilizationRate.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      {Math.round(totals.projectCompleted)}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      {Math.round(totals.projectDelayed)}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                      {Math.round(totals.projectsOnTrack)}
-                    </td>
-                  </tr>
+                  <BudgetTableTotalsRow
+                    totals={totals}
+                    totalUtilizationRate={totalUtilizationRate}
+                  />
                 </>
               )}
             </tbody>
@@ -990,46 +634,21 @@ export function BudgetTrackingTable({
         </div>
       </div>
 
+      {/* Context Menu */}
       {contextMenu && (
-        <div
+        <BudgetContextMenu
           ref={contextMenuRef}
-          className="fixed bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 py-1 z-50 min-w-[180px]"
-          style={{
-            top: `${contextMenu.y}px`,
-            left: `${contextMenu.x}px`,
-          }}
-        >
-          <button
-            onClick={() => handlePin(contextMenu.item)}
-            className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-3"
-          >
-            {contextMenu.item.isPinned ? (
-              <><PinOff className="w-4 h-4 text-zinc-600 dark:text-zinc-400" /><span className="text-zinc-700 dark:text-zinc-300">Unpin</span></>
-            ) : (
-              <><Pin className="w-4 h-4 text-zinc-600 dark:text-zinc-400" /><span className="text-zinc-700 dark:text-zinc-300">Pin to top</span></>
-            )}
-          </button>
-          {onEdit && (
-            <button
-              onClick={() => handleEdit(contextMenu.item)}
-              className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-3"
-            >
-              <Edit className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-              <span className="text-zinc-700 dark:text-zinc-300">Edit</span>
-            </button>
-          )}
-          {onDelete && (
-            <button
-              onClick={() => handleDelete(contextMenu.item)}
-              className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center gap-3"
-            >
-              <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-              <span className="text-red-700 dark:text-red-300">Move to Trash</span>
-            </button>
-          )}
-        </div>
+          position={{ x: contextMenu.x, y: contextMenu.y }}
+          item={contextMenu.item}
+          canEdit={!!onEdit}
+          canDelete={!!onDelete}
+          onPin={handlePin}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
 
+      {/* Modals */}
       {showAddModal && (
         <Modal
           isOpen={showAddModal}
