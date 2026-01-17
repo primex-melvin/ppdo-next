@@ -1,0 +1,131 @@
+// app/dashboard/project/budget/[particularId]/types/index.ts
+
+import { Id } from "@/convex/_generated/dataModel";
+
+// ============================================================================
+// PROJECT TYPES
+// ============================================================================
+
+export interface Project {
+  id: string;
+  particulars: string;
+  implementingOffice: string;
+  categoryId?: string;
+  totalBudgetAllocated: number;
+  obligatedBudget?: number;
+  totalBudgetUtilized: number;
+  utilizationRate: number;
+  projectCompleted: number;
+  projectDelayed: number;
+  projectsOngoing: number;
+  remarks?: string;
+  year?: number;
+  status?: "completed" | "ongoing" | "delayed";
+  targetDateCompletion?: number;
+  isPinned?: boolean;
+  pinnedAt?: number;
+  pinnedBy?: string;
+  budgetItemId?: string;
+  _creationTime?: number;
+}
+
+export type ProjectFormData = Omit<
+  Project,
+  | "id"
+  | "utilizationRate"
+  | "projectCompleted"
+  | "projectDelayed"
+  | "projectsOngoing"
+  | "status"
+> & { categoryId?: string };
+
+// ============================================================================
+// SORTING & FILTERING TYPES
+// ============================================================================
+
+export type ProjectSortField = keyof Project | null;
+export type SortDirection = "asc" | "desc" | null;
+
+export interface ProjectFilterState {
+  searchQuery: string;
+  statusFilter: string[];
+  officeFilter: string[];
+  yearFilter: number[];
+  sortField: ProjectSortField;
+  sortDirection: SortDirection;
+}
+
+// ============================================================================
+// CONTEXT MENU TYPES
+// ============================================================================
+
+export interface ProjectContextMenuState {
+  x: number;
+  y: number;
+  project: Project;
+}
+
+// ============================================================================
+// CATEGORY TYPES
+// ============================================================================
+
+export interface ProjectCategory {
+  _id: Id<"projectCategories">;
+  code: string;
+  fullName: string;
+  description?: string;
+  colorCode?: string;
+  iconName?: string;
+  displayOrder?: number;
+  isSystemDefault?: boolean;
+  usageCount?: number;
+}
+
+export interface GroupedProjects {
+  category: ProjectCategory | null;
+  projects: Project[];
+}
+
+// ============================================================================
+// TABLE COLUMN TYPES
+// ============================================================================
+
+export interface TableColumn {
+  id: string;
+  label: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  align?: "left" | "center" | "right";
+}
+
+// ============================================================================
+// TOTALS TYPES
+// ============================================================================
+
+export interface ProjectTotals {
+  totalBudgetAllocated: number;
+  obligatedBudget: number;
+  totalBudgetUtilized: number;
+  utilizationRate: number;
+  projectCompleted: number;
+  projectDelayed: number;
+  projectsOngoing: number;
+}
+
+// ============================================================================
+// BULK OPERATION RESPONSE TYPES
+// ============================================================================
+
+export interface BulkOperationResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    processed?: number;
+    failed?: number;
+    details?: Record<string, any>;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
