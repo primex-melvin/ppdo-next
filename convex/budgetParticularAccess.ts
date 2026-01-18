@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { Id } from "./_generated/dataModel";
 
 /**
  * Check if current user can access a specific budget particular page
@@ -80,10 +81,20 @@ export const canAccessParticular = query({
 
 /**
  * Get all users who have been granted access to a specific particular
+ * Returns enriched access records with user information
  */
 export const getSharedUsers = query({
   args: { particularCode: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Array<{
+    _id: Id<"budgetParticularSharedAccess">;
+    userId: Id<"users">;
+    userName: string;
+    userEmail: string;
+    departmentName?: string;
+    accessLevel: "viewer" | "editor" | "admin";
+    grantedAt: number;
+    grantedBy: Id<"users">;
+  }>> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
@@ -106,15 +117,44 @@ export const getSharedUsers = query({
       )
       .collect();
 
-    // Get user details for each access record
-    const usersWithAccess = await Promise.all(
-      accessRecords.map(async (record) => {
-        const user = await ctx.db.get(record.userId);
-        return user;
-      })
-    );
+    // Get user details for each access record and enrich the data
+    const enrichedRecords: Array<{
+      _id: Id<"budgetParticularSharedAccess">;
+      userId: Id<"users">;
+      userName: string;
+      userEmail: string;
+      departmentName?: string;
+      accessLevel: "viewer" | "editor" | "admin";
+      grantedAt: number;
+      grantedBy: Id<"users">;
+    }> = [];
 
-    return usersWithAccess.filter(Boolean);
+    for (const record of accessRecords) {
+      const user = await ctx.db.get(record.userId);
+      if (!user) continue; // Skip if user not found
+
+      let departmentName: string | undefined = undefined;
+      if (user.departmentId) {
+        const dept = await ctx.db.get(user.departmentId);
+        departmentName = dept?.name;
+      }
+
+      enrichedRecords.push({
+        _id: record._id,
+        userId: record.userId,
+        userName: user.name || 
+                 (user.firstName && user.lastName 
+                   ? `${user.firstName} ${user.lastName}`.trim() 
+                   : "Unknown"),
+        userEmail: user.email || "",
+        departmentName,
+        accessLevel: record.accessLevel,
+        grantedAt: record.grantedAt,
+        grantedBy: record.grantedBy,
+      });
+    }
+
+    return enrichedRecords;
   },
 });
 

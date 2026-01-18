@@ -15,7 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -25,7 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ShieldX, CheckCircle2 } from "lucide-react";
+import { ShieldX, CheckCircle2, User, Mail, Building2 } from "lucide-react";
+import { Checkbox } from "./ui/checkbox";
 
 interface AccessDeniedPageProps {
   userName?: string;
@@ -118,196 +118,182 @@ export default function AccessDeniedPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-950 dark:to-zinc-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
-        {/* Illustration Section */}
-        <div className="hidden md:flex items-center justify-center">
-          <div className="relative w-full max-w-md">
-            <svg
-              viewBox="0 0 400 400"
-              className="w-full h-auto"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Background Circle */}
-              <circle cx="200" cy="200" r="180" fill="#f1f5f9" />
+      <div className="w-full max-w-2xl">
+        <Card className="shadow-lg border-slate-200 dark:border-zinc-800">
+          <CardHeader className="space-y-4">
+            {/* SVG Illustration - Now at top */}
+            <div className="flex justify-center">
+              <div className="relative w-48 h-48">
+                <svg
+                  viewBox="0 0 200 200"
+                  className="w-full h-full"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  {/* Background Circle */}
+                  <circle cx="100" cy="100" r="90" fill="#f1f5f9" className="dark:fill-zinc-800" />
 
-              {/* Document Stack */}
-              <rect
-                x="120"
-                y="140"
-                width="160"
-                height="200"
-                rx="8"
-                fill="#cbd5e1"
-              />
-              <rect
-                x="110"
-                y="130"
-                width="160"
-                height="200"
-                rx="8"
-                fill="#e2e8f0"
-              />
-              <rect
-                x="100"
-                y="120"
-                width="160"
-                height="200"
-                rx="8"
-                fill="white"
-                stroke="#cbd5e1"
-                strokeWidth="2"
-              />
+                  {/* Document Stack */}
+                  <rect x="60" y="70" width="80" height="100" rx="4" fill="#cbd5e1" className="dark:fill-zinc-700" />
+                  <rect x="55" y="65" width="80" height="100" rx="4" fill="#e2e8f0" className="dark:fill-zinc-600" />
+                  <rect
+                    x="50"
+                    y="60"
+                    width="80"
+                    height="100"
+                    rx="4"
+                    fill="white"
+                    className="dark:fill-zinc-900"
+                    stroke="#cbd5e1"
+                    strokeWidth="2"
+                  />
 
-              {/* Document Lines */}
-              <line
-                x1="120"
-                y1="150"
-                x2="240"
-                y2="150"
-                stroke="#cbd5e1"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <line
-                x1="120"
-                y1="170"
-                x2="220"
-                y2="170"
-                stroke="#cbd5e1"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <line
-                x1="120"
-                y1="190"
-                x2="240"
-                y2="190"
-                stroke="#cbd5e1"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <line
-                x1="120"
-                y1="210"
-                x2="200"
-                y2="210"
-                stroke="#cbd5e1"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
+                  {/* Document Lines */}
+                  <line x1="60" y1="75" x2="120" y2="75" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="60" y1="85" x2="110" y2="85" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="60" y1="95" x2="120" y2="95" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="60" y1="105" x2="100" y2="105" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
 
-              {/* Shield with X */}
-              <circle cx="200" cy="240" r="50" fill="#ef4444" opacity="0.9" />
-              <circle cx="200" cy="240" r="42" fill="white" />
+                  {/* Shield with X */}
+                  <circle cx="100" cy="120" r="25" fill="#ef4444" opacity="0.9" />
+                  <circle cx="100" cy="120" r="21" fill="white" className="dark:fill-zinc-900" />
 
-              {/* X Mark */}
-              <line
-                x1="185"
-                y1="225"
-                x2="215"
-                y2="255"
-                stroke="#ef4444"
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-              <line
-                x1="215"
-                y1="225"
-                x2="185"
-                y2="255"
-                stroke="#ef4444"
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
+                  {/* X Mark */}
+                  <line
+                    x1="92"
+                    y1="112"
+                    x2="108"
+                    y2="128"
+                    stroke="#ef4444"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1="108"
+                    y1="112"
+                    x2="92"
+                    y2="128"
+                    stroke="#ef4444"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
 
-              {/* Lock Icon */}
-              <rect x="190" y="270" width="20" height="25" rx="3" fill="#64748b" />
-              <path
-                d="M 195 270 L 195 260 A 5 5 0 0 1 205 260 L 205 270"
-                stroke="#64748b"
-                strokeWidth="3"
-                fill="none"
-              />
-            </svg>
-          </div>
-        </div>
+                  {/* Lock Icon */}
+                  <rect x="95" y="135" width="10" height="12" rx="1.5" fill="#64748b" />
+                  <path
+                    d="M 97.5 135 L 97.5 130 A 2.5 2.5 0 0 1 102.5 130 L 102.5 135"
+                    stroke="#64748b"
+                    strokeWidth="1.5"
+                    fill="none"
+                  />
+                </svg>
+              </div>
+            </div>
 
-        {/* Content Section */}
-        <div className="w-full">
-          <Card className="shadow-lg border-slate-200 dark:border-zinc-800">
-            <CardHeader className="space-y-3">
-              <div className="flex items-center gap-3">
+            {/* Title Section */}
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center gap-2">
                 <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
-                  <ShieldX className="h-6 w-6 text-red-600 dark:text-red-500" />
+                  <ShieldX className="h-5 w-5 text-red-600 dark:text-red-500" />
                 </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold text-slate-900 dark:text-zinc-100">
-                    Access Denied
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-zinc-400 mt-1">
-                    Authorization Required
-                  </CardDescription>
+                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-zinc-100">
+                  Access Denied
+                </CardTitle>
+              </div>
+             <CardDescription className="text-sm text-slate-600 dark:text-zinc-400 text-center leading-snug">
+                You don’t have access to this page.{" "}
+                <span className="font-semibold">{pageRequested}</span> is restricted to approved users only.
+                If you believe you should have access, please complete the form below to request permission.
+              </CardDescription>
+
+            </div>
+
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+             {/* User Information - Display Only */}
+            <div className="p-4 bg-slate-50 dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-3">
+                Your Information
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Email */}
+                <div className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 mt-1 text-slate-500 dark:text-zinc-400" />
+                  <div>
+                    <Label className="text-xs text-slate-500 dark:text-zinc-500">
+                      Email Address
+                    </Label>
+                    <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 break-all">
+                      {userEmail || "Not provided"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Department */}
+                <div className="flex items-start gap-3">
+                  <Building2 className="w-4 h-4 mt-1 text-slate-500 dark:text-zinc-400" />
+                  <div>
+                    <Label className="text-xs text-slate-500 dark:text-zinc-500">
+                      Department / Office
+                    </Label>
+                    <p className="text-sm font-medium text-slate-900 dark:text-zinc-100">
+                      {departmentName}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <p className="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
-                You do not have permission to view this page. Access to{" "}
-                <span className="font-semibold">{pageRequested}</span> is
-                limited to authorized personnel. If you require access, please
-                complete the form below to submit a request.
-              </p>
-            </CardHeader>
+            </div>
 
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    value={userName}
-                    disabled
-                    className="bg-slate-100 dark:bg-zinc-800 cursor-not-allowed"
-                  />
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={userEmail}
-                    disabled
-                    className="bg-slate-100 dark:bg-zinc-800 cursor-not-allowed"
-                  />
-                </div>
+              {/* Request Form */}
+              <div className="space-y-4">
+              <div className="space-y-2">
+  <Label>
+    Access Type <span className="text-red-500">*</span>
+  </Label>
 
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department / Office</Label>
-                  <Input
-                    id="department"
-                    value={departmentName}
-                    disabled
-                    className="bg-slate-100 dark:bg-zinc-800 cursor-not-allowed"
-                  />
-                </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    {/* Viewer */}
+    <div className="flex items-center space-x-2 rounded-md border p-3">
+      <Checkbox
+        id="viewer"
+        checked={accessType === "viewer"}
+        onCheckedChange={() => setAccessType("viewer")}
+      />
+      <label
+        htmlFor="viewer"
+        className="text-sm font-medium leading-none cursor-pointer"
+      >
+        Viewer
+        <span className="block text-xs text-slate-500 dark:text-zinc-400">
+          Read only
+        </span>
+      </label>
+    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="accessType">
-                    Access Type <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={accessType} onValueChange={setAccessType}>
-                    <SelectTrigger
-                      id="accessType"
-                      className="bg-white dark:bg-zinc-900"
-                    >
-                      <SelectValue placeholder="Select access level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+    {/* Editor */}
+    <div className="flex items-center space-x-2 rounded-md border p-3">
+      <Checkbox
+        id="editor"
+        checked={accessType === "editor"}
+        onCheckedChange={() => setAccessType("editor")}
+      />
+      <label
+        htmlFor="editor"
+        className="text-sm font-medium leading-none cursor-pointer"
+      >
+        Editor
+        <span className="block text-xs text-slate-500 dark:text-zinc-400">
+          Can modify
+        </span>
+      </label>
+    </div>
+  </div>
+</div>
+
 
                 <div className="space-y-2">
                   <Label htmlFor="reason">
@@ -315,35 +301,35 @@ export default function AccessDeniedPage({
                   </Label>
                   <Textarea
                     id="reason"
-                    placeholder="Please provide a brief explanation for your access request"
-                    className="bg-white dark:bg-zinc-900 min-h-[100px] resize-none"
+                    placeholder="Example: I need to review budget allocations for my department's quarterly report"
+                    className="bg-white dark:bg-zinc-950 min-h-[100px] resize-none"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                   />
                 </div>
+              </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Submitting..." : "Submit Request"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.back()}
-                    className="flex-1"
-                    disabled={isSubmitting}
-                  >
-                    Go Back
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  className="flex-1"
+                  disabled={isSubmitting}
+                >
+                  Go Back
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

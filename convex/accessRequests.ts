@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { Id } from "./_generated/dataModel";
 
 /**
  * Create an access request
@@ -194,7 +195,7 @@ export const updateStatus = mutation({
         // Grant access with viewer level by default
         await ctx.db.insert("budgetSharedAccess", {
           userId: request.userId,
-          accessLevel: "viewer", // Default to viewer, can be changed later
+          accessLevel: "viewer",
           grantedBy: userId,
           grantedAt: now,
           isActive: true,
@@ -208,11 +209,26 @@ export const updateStatus = mutation({
 });
 
 /**
- * Get pending access requests for a specific particular code (NEW)
+ * Get pending access requests for a specific particular code
+ * Returns properly typed data for frontend consumption
  */
 export const getParticularPendingRequests = query({
   args: { particularCode: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Array<{
+    _id: Id<"accessRequests">;
+    userId: Id<"users">;
+    pageRequested: string;
+    accessType: string;
+    reason: string;
+    status: "pending" | "approved" | "rejected";
+    createdAt: number;
+    user: {
+      _id: Id<"users">;
+      name?: string;
+      email?: string;
+      departmentName?: string;
+    } | null;
+  }>> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
@@ -234,7 +250,6 @@ export const getParticularPendingRequests = query({
       .collect();
 
     // Filter for particular-specific requests
-    // Check if pageRequested matches the particular code
     const particularRequests = allRequests.filter(
       (request) => request.pageRequested === args.particularCode
     );
@@ -243,15 +258,42 @@ export const getParticularPendingRequests = query({
     const enrichedRequests = await Promise.all(
       particularRequests.map(async (request) => {
         const user = await ctx.db.get(request.userId);
+        
+        // Build simplified user object
+        let userInfo: {
+          _id: Id<"users">;
+          name?: string;
+          email?: string;
+          departmentName?: string;
+        } | null = null;
+
+        if (user) {
+          let departmentName: string | undefined = undefined;
+          if (user.departmentId) {
+            const dept = await ctx.db.get(user.departmentId);
+            departmentName = dept?.name;
+          }
+
+          userInfo = {
+            _id: user._id,
+            name: user.name || 
+                  (user.firstName && user.lastName 
+                    ? `${user.firstName} ${user.lastName}`.trim() 
+                    : undefined),
+            email: user.email,
+            departmentName,
+          };
+        }
+
         return {
           _id: request._id,
           userId: request.userId,
           pageRequested: request.pageRequested,
           accessType: request.accessType,
           reason: request.reason,
-          status: request.status,
+          status: request.status as "pending" | "approved" | "rejected",
           createdAt: request.createdAt,
-          user,
+          user: userInfo,
         };
       })
     );
@@ -261,7 +303,7 @@ export const getParticularPendingRequests = query({
 });
 
 /**
- * Get count of pending access requests for a specific particular (NEW)
+ * Get count of pending access requests for a specific particular
  */
 export const getParticularPendingCount = query({
   args: { particularCode: v.string() },
@@ -296,7 +338,7 @@ export const getParticularPendingCount = query({
 });
 
 /**
- * Request access to a specific particular (NEW)
+ * Request access to a specific particular
  */
 export const requestParticularAccess = mutation({
   args: {
@@ -335,7 +377,7 @@ export const requestParticularAccess = mutation({
       throw new Error("You already have access to this particular");
     }
 
-    // Check if there's already a pending request
+    // Check if there's already a pending request for this particular
     const allRequests = await ctx.db
       .query("accessRequests")
       .withIndex("userAndStatus", (q) =>
@@ -344,14 +386,14 @@ export const requestParticularAccess = mutation({
       .collect();
 
     const existingRequest = allRequests.find(
-      (req) => req.pageRequested === args.particularCode
+      (req) => req.pageRequested === args.particularCode && req.accessType === "particular"
     );
 
     if (existingRequest) {
       throw new Error("You already have a pending request for this particular");
     }
 
-    // Create access request
+    // Create access request with accessType: "particular" to differentiate from budget-level
     const requestId = await ctx.db.insert("accessRequests", {
       userId: userId,
       userName: user.name || "Unknown",
@@ -359,7 +401,7 @@ export const requestParticularAccess = mutation({
       departmentName: departmentName,
       departmentId: user.departmentId,
       pageRequested: args.particularCode,
-      accessType: "particular",
+      accessType: "particular", // ✅ IMPORTANT: This differentiates particular requests
       reason: args.reason || "Request access to view this particular",
       status: "pending",
       createdAt: Date.now(),
@@ -371,7 +413,7 @@ export const requestParticularAccess = mutation({
 });
 
 /**
- * Approve an access request (NEW - handles both budget and particular)
+ * Approve an access request (handles both budget and particular)
  */
 export const approveRequest = mutation({
   args: { requestId: v.id("accessRequests") },
@@ -469,7 +511,7 @@ export const approveRequest = mutation({
 });
 
 /**
- * Reject an access request (NEW)
+ * Reject an access request
  */
 export const rejectRequest = mutation({
   args: { requestId: v.id("accessRequests") },
