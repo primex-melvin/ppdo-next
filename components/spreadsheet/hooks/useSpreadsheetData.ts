@@ -1,4 +1,4 @@
-// app/components/spreadsheet/hooks/useSpreadsheetData.ts
+// app/components/Spreadsheet/hooks/useSpreadsheetData.ts
 
 import { useQuery } from "convex/react";
 import { useMemo } from "react";
@@ -8,10 +8,10 @@ import { SpreadsheetConfig } from "../types";
  * Hook to fetch and transform spreadsheet data
  */
 export function useSpreadsheetData(config: SpreadsheetConfig, filters?: any) {
-  // Dynamically call the correct query based on config
+  // Call the query directly with filters
   const rawData = useQuery(
-    config.fetchQuery as any,
-    filters || "skip"
+    config.fetchQuery,
+    filters || {}
   );
 
   const transformedData = useMemo(() => {

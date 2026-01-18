@@ -18,6 +18,7 @@ import { ActivityLogSheet } from "@/components/ActivityLogSheet";
 // Local Components
 import { ProjectForm } from "./ProjectForm";
 import { ProjectCategoryCombobox } from "./ProjectCategoryCombobox";
+import { ProjectShareModal } from "./ProjectShareModal";
 import { ProjectsTableToolbar } from "./ProjectsTable/ProjectsTableToolbar";
 import { ProjectsTableHeader } from "./ProjectsTable/ProjectsTableHeader";
 import { ProjectsTableBody } from "./ProjectsTable/ProjectsTableBody";
@@ -37,6 +38,7 @@ import {
   groupProjectsByCategory,
   calculateProjectTotals,
   createProjectSlug,
+  getParticularFullName,
 } from "../utils";
 import {
   applyFilters,
@@ -55,6 +57,7 @@ export function ProjectsTable({
   onDelete,
   onOpenTrash,
   newlyAddedProjectId,
+  expandButton,
 }: ProjectsTableProps) {
   const { accentColorValue } = useAccentColor();
   const router = useRouter();
@@ -63,6 +66,10 @@ export function ProjectsTable({
   // ==================== QUERIES & MUTATIONS ====================
   const currentUser = useQuery(api.users.current);
   const allCategories = useQuery(api.projectCategories.list, {});
+  const pendingParticularRequests = useQuery(
+    api.accessRequests.getParticularPendingCount,
+    { particularCode: particularId }
+  );
   
   const togglePinProject = useMutation(api.projects.togglePin);
   const bulkMoveToTrash = useMutation(api.projects.bulkMoveToTrash);
@@ -73,6 +80,7 @@ export function ProjectsTable({
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [showBulkCategoryConfirmModal, setShowBulkCategoryConfirmModal] = useState(false);
   const [showSingleCategoryModal, setShowSingleCategoryModal] = useState(false);
   const [showSearchWarningModal, setShowSearchWarningModal] = useState(false);
@@ -456,7 +464,11 @@ export function ProjectsTable({
           onPrint={() => window.print()}
           onOpenTrash={onOpenTrash}
           onBulkTrash={handleBulkTrash}
+          isAdmin={canManageBulkActions}
+          pendingRequestsCount={pendingParticularRequests}
+          onOpenShare={() => setShowShareModal(true)}
           onAddProject={onAdd ? () => setShowAddModal(true) : undefined}
+          expandButton={expandButton}
           accentColor={accentColorValue}
         />
 
@@ -493,7 +505,7 @@ export function ProjectsTable({
               accentColor={accentColorValue}
             />
 
-            {/* Footer (inside tbody for proper table structure) */}
+            {/* Footer */}
             <tfoot>
               <ProjectsTableFooter
                 totals={totals}
@@ -691,6 +703,16 @@ export function ProjectsTable({
         confirmText="Hide All"
         variant="default"
       />
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ProjectShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          particularCode={particularId}
+          particularFullName={getParticularFullName(particularId)}
+        />
+      )}
     </>
   );
 }

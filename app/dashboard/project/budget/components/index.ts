@@ -1,10 +1,12 @@
 // app/dashboard/project/budget/components/index.ts
 
-// Budget page hooks
-export { useBudgetData, useBudgetAccess } from "./useBudgetData";
-export { useBudgetMutations } from "./useBudgetMutations";
-
-// Budget page components
 export { BudgetPageHeader } from "./BudgetPageHeader";
-export { ExpandModal } from "./ExpandModal";
+export { BudgetTrackingTable } from "./BudgetTrackingTable";
+export { BudgetItemForm } from "./BudgetItemForm";
 export { LoadingState } from "./LoadingState";
+export { ExpandModal } from "./ExpandModal";
+
+// Hooks
+export { useBudgetAccess } from "./hooks/useBudgetAccess";
+export { useBudgetData } from "./hooks/useBudgetData";
+export { useBudgetMutations } from "./hooks/useBudgetMutations";

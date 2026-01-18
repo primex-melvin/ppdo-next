@@ -8,7 +8,8 @@ import {
   Download, 
   Printer, 
   FileSpreadsheet,
-  CheckCircle2 
+  CheckCircle2,
+  Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,7 @@ interface ProjectsTableToolbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSearchFocus: (e: React.FocusEvent<HTMLInputElement>) => void;
-  searchInputRef: React.RefObject<HTMLInputElement | null>; // ✅ FIXED: Allow null
+  searchInputRef: React.RefObject<HTMLInputElement | null>;
   
   // Selection
   selectedCount: number;
@@ -53,8 +54,17 @@ interface ProjectsTableToolbarProps {
   onOpenTrash?: () => void;
   onBulkTrash: () => void;
   
+  // Share (NEW)
+  isAdmin: boolean;
+  pendingRequestsCount: number | undefined;
+  onOpenShare: () => void;
+  
   // Add Project
   onAddProject?: () => void;
+  
+  // Expand Button
+  expandButton?: React.ReactNode;
+  
   accentColor: string;
 }
 
@@ -79,7 +89,11 @@ export function ProjectsTableToolbar({
   onPrint,
   onOpenTrash,
   onBulkTrash,
+  isAdmin,
+  pendingRequestsCount,
+  onOpenShare,
   onAddProject,
+  expandButton,
   accentColor,
 }: ProjectsTableToolbarProps) {
   return (
@@ -189,6 +203,31 @@ export function ProjectsTableToolbar({
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Share Button (Admin Only) - NEW */}
+        {isAdmin && (
+          <Button
+            onClick={onOpenShare}
+            variant="secondary"
+            size="sm"
+            className="relative gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+            title="Share & Manage Access"
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Share</span>
+            {pendingRequestsCount !== undefined &&
+              pendingRequestsCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {pendingRequestsCount > 9
+                    ? "9+"
+                    : pendingRequestsCount}
+                </span>
+              )}
+          </Button>
+        )}
+
+        {/* Expand Button (if provided) */}
+        {expandButton}
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 

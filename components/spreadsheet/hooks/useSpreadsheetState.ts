@@ -1,7 +1,7 @@
-// app/components/spreadsheet/hooks/useSpreadsheetState.ts
+// app/components/Spreadsheet/hooks/useSpreadsheetState.ts
 
 import { useState, useCallback } from "react";
-import { CellPosition, CellData, SpreadsheetState } from "../types";
+import { CellPosition, CellData } from "../types";
 import { getCellKey } from "../utils/formatting";
 
 /**

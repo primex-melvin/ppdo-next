@@ -206,3 +206,309 @@ export const updateStatus = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Get pending access requests for a specific particular code (NEW)
+ */
+export const getParticularPendingRequests = query({
+  args: { particularCode: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const currentUser = await ctx.db.get(userId);
+    if (!currentUser) return [];
+
+    // Only admins can view pending requests
+    if (
+      currentUser.role !== "admin" &&
+      currentUser.role !== "super_admin"
+    ) {
+      return [];
+    }
+
+    // Get all pending requests
+    const allRequests = await ctx.db
+      .query("accessRequests")
+      .withIndex("status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    // Filter for particular-specific requests
+    // Check if pageRequested matches the particular code
+    const particularRequests = allRequests.filter(
+      (request) => request.pageRequested === args.particularCode
+    );
+
+    // Enrich with user data
+    const enrichedRequests = await Promise.all(
+      particularRequests.map(async (request) => {
+        const user = await ctx.db.get(request.userId);
+        return {
+          _id: request._id,
+          userId: request.userId,
+          pageRequested: request.pageRequested,
+          accessType: request.accessType,
+          reason: request.reason,
+          status: request.status,
+          createdAt: request.createdAt,
+          user,
+        };
+      })
+    );
+
+    return enrichedRequests;
+  },
+});
+
+/**
+ * Get count of pending access requests for a specific particular (NEW)
+ */
+export const getParticularPendingCount = query({
+  args: { particularCode: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return 0;
+
+    const currentUser = await ctx.db.get(userId);
+    if (!currentUser) return 0;
+
+    // Only admins can view pending count
+    if (
+      currentUser.role !== "admin" &&
+      currentUser.role !== "super_admin"
+    ) {
+      return 0;
+    }
+
+    // Get all pending requests
+    const allRequests = await ctx.db
+      .query("accessRequests")
+      .withIndex("status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    // Count requests for this particular
+    const count = allRequests.filter(
+      (request) => request.pageRequested === args.particularCode
+    ).length;
+
+    return count;
+  },
+});
+
+/**
+ * Request access to a specific particular (NEW)
+ */
+export const requestParticularAccess = mutation({
+  args: {
+    particularCode: v.string(),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get user's department name
+    let departmentName = "Not Assigned";
+    if (user.departmentId) {
+      const department = await ctx.db.get(user.departmentId);
+      if (department) {
+        departmentName = department.name;
+      }
+    }
+
+    // Check if user already has access
+    const existingAccess = await ctx.db
+      .query("budgetParticularSharedAccess")
+      .withIndex("particularAndUser", (q) =>
+        q.eq("particularCode", args.particularCode).eq("userId", userId)
+      )
+      .first();
+
+    if (existingAccess && existingAccess.isActive) {
+      throw new Error("You already have access to this particular");
+    }
+
+    // Check if there's already a pending request
+    const allRequests = await ctx.db
+      .query("accessRequests")
+      .withIndex("userAndStatus", (q) =>
+        q.eq("userId", userId).eq("status", "pending")
+      )
+      .collect();
+
+    const existingRequest = allRequests.find(
+      (req) => req.pageRequested === args.particularCode
+    );
+
+    if (existingRequest) {
+      throw new Error("You already have a pending request for this particular");
+    }
+
+    // Create access request
+    const requestId = await ctx.db.insert("accessRequests", {
+      userId: userId,
+      userName: user.name || "Unknown",
+      userEmail: user.email || "No email",
+      departmentName: departmentName,
+      departmentId: user.departmentId,
+      pageRequested: args.particularCode,
+      accessType: "particular",
+      reason: args.reason || "Request access to view this particular",
+      status: "pending",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return requestId;
+  },
+});
+
+/**
+ * Approve an access request (NEW - handles both budget and particular)
+ */
+export const approveRequest = mutation({
+  args: { requestId: v.id("accessRequests") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db.get(userId);
+    if (!currentUser) {
+      throw new Error("User not found");
+    }
+
+    // Only admins can approve requests
+    if (
+      currentUser.role !== "admin" &&
+      currentUser.role !== "super_admin"
+    ) {
+      throw new Error("Only admins can approve access requests");
+    }
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    if (request.status !== "pending") {
+      throw new Error("Request is not pending");
+    }
+
+    // Update request status
+    await ctx.db.patch(args.requestId, {
+      status: "approved",
+      reviewedBy: userId,
+      reviewedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    const now = Date.now();
+
+    // Grant access based on access type
+    if (request.accessType === "particular") {
+      // Grant particular-level access
+      const existingAccess = await ctx.db
+        .query("budgetParticularSharedAccess")
+        .withIndex("particularAndUser", (q) =>
+          q
+            .eq("particularCode", request.pageRequested)
+            .eq("userId", request.userId)
+        )
+        .first();
+
+      if (existingAccess) {
+        // Reactivate existing access
+        await ctx.db.patch(existingAccess._id, {
+          isActive: true,
+          grantedBy: userId,
+          grantedAt: now,
+        });
+      } else {
+        // Create new access record
+        await ctx.db.insert("budgetParticularSharedAccess", {
+          particularCode: request.pageRequested,
+          userId: request.userId,
+          accessLevel: "viewer",
+          isActive: true,
+          grantedBy: userId,
+          grantedAt: now,
+        });
+      }
+    } else {
+      // Grant budget-level access (existing functionality)
+      const existingAccess = await ctx.db
+        .query("budgetSharedAccess")
+        .withIndex("userIdAndActive", (q) =>
+          q.eq("userId", request.userId).eq("isActive", true)
+        )
+        .first();
+
+      if (!existingAccess) {
+        await ctx.db.insert("budgetSharedAccess", {
+          userId: request.userId,
+          accessLevel: "viewer",
+          grantedBy: userId,
+          grantedAt: now,
+          isActive: true,
+          notes: `Access granted via request approval. Request ID: ${args.requestId}`,
+        });
+      }
+    }
+
+    return { success: true };
+  },
+});
+
+/**
+ * Reject an access request (NEW)
+ */
+export const rejectRequest = mutation({
+  args: { requestId: v.id("accessRequests") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db.get(userId);
+    if (!currentUser) {
+      throw new Error("User not found");
+    }
+
+    // Only admins can reject requests
+    if (
+      currentUser.role !== "admin" &&
+      currentUser.role !== "super_admin"
+    ) {
+      throw new Error("Only admins can reject access requests");
+    }
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    if (request.status !== "pending") {
+      throw new Error("Request is not pending");
+    }
+
+    // Update request status
+    await ctx.db.patch(args.requestId, {
+      status: "rejected",
+      reviewedBy: userId,
+      reviewedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});

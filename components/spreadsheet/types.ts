@@ -41,7 +41,7 @@ export interface SpreadsheetFeatures {
 export interface SpreadsheetConfig {
   // Data source
   tableName: string;
-  fetchQuery: string;
+  fetchQuery: any; // Convex query reference
   
   // Column definitions
   columns: ColumnDefinition[];

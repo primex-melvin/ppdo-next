@@ -144,4 +144,5 @@ export interface ProjectsTableProps {
   onDelete?: (id: string) => void;
   onOpenTrash?: () => void;
   newlyAddedProjectId?: string | null;
+  expandButton?: React.ReactNode;
 }

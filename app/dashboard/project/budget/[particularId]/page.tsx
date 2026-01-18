@@ -4,20 +4,33 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Expand } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import AccessDeniedPage from "@/components/AccessDeniedPage";
 import { ProjectsTable } from "./components/ProjectsTable";
 import { ParticularPageHeader } from "./components/ParticularPageHeader";
 import { StatusInfoCard } from "./components/StatusInfoCard";
 import { ProjectSummaryStats } from "./components/ProjectSummaryStats";
 import { ProjectLoadingState } from "./components/ProjectLoadingState";
+import { ProjectExpandModal } from "./components/ProjectExpandModal";
 import { TrashBinModal } from "../../../../../components/TrashBinModal";
 import { useParticularData } from "./components/useParticularData";
 import { useProjectMutations } from "./components/useProjectMutations";
+import { useParticularAccess } from "./hooks/useParticularAccess";
 import { getParticularFullName, calculateProjectStats } from "./utils";
 
 export default function ParticularProjectsPage() {
   const params = useParams();
   const particular = decodeURIComponent(params.particularId as string);
 
+  // ============================================================================
+  // ACCESS CONTROL - Check if user can access this particular
+  // ============================================================================
+  const { accessCheck, isLoading: isLoadingAccess, canAccess } = useParticularAccess(particular);
+
+  // ============================================================================
+  // EXISTING STATE
+  // ============================================================================
   const [showDetails, setShowDetails] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("showBudgetDetails");
@@ -34,17 +47,25 @@ export default function ParticularProjectsPage() {
 
   const [showTrashModal, setShowTrashModal] = useState(false);
   const [newlyAddedProjectId, setNewlyAddedProjectId] = useState<string | null>(null);
+  const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
 
-  const { budgetItem, breakdownStats, projects, isLoading } = useParticularData(particular);
+  // ============================================================================
+  // DATA FETCHING
+  // Note: We still call the hook but it will return empty data if no access
+  // This is safer than conditionally calling hooks (which violates React rules)
+  // ============================================================================
+  const { budgetItem, breakdownStats, projects, isLoading: isLoadingData } = useParticularData(particular);
+  
   const { handleAddProject, handleEditProject, handleDeleteProject, handleRecalculate } =
     useProjectMutations(budgetItem?._id);
 
-  // Wrapper for handleAddProject to track newly added project
+  // ============================================================================
+  // HELPER FUNCTIONS
+  // ============================================================================
   const handleAddProjectWithTracking = async (projectData: any) => {
     const projectId = await handleAddProject(projectData);
     if (projectId) {
       setNewlyAddedProjectId(projectId);
-      // Clear the highlight after 3 seconds
       setTimeout(() => setNewlyAddedProjectId(null), 3000);
     }
   };
@@ -52,6 +73,46 @@ export default function ParticularProjectsPage() {
   const particularFullName = getParticularFullName(particular);
   const stats = calculateProjectStats(projects);
 
+  // ============================================================================
+  // LOADING STATE - Checking Access
+  // ============================================================================
+  if (isLoadingAccess) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <p className="text-sm text-muted-foreground">
+            Checking access permissions...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // ACCESS DENIED - Show Access Denied Page
+  // ============================================================================
+  if (!canAccess) {
+    return (
+      <AccessDeniedPage
+        userName={accessCheck?.user?.name || ""}
+        userEmail={accessCheck?.user?.email || ""}
+        departmentName={accessCheck?.department?.name || "Not Assigned"}
+        pageRequested={`Budget Tracking - ${particularFullName}`}
+      />
+    );
+  }
+
+  // ============================================================================
+  // LOADING STATE - Fetching Data
+  // ============================================================================
+  if (isLoadingData) {
+    return <ProjectLoadingState />;
+  }
+
+  // ============================================================================
+  // MAIN RENDER - User has access
+  // ============================================================================
   return (
     <>
       <ParticularPageHeader
@@ -85,21 +146,28 @@ export default function ParticularProjectsPage() {
       )}
 
       <div className="mb-6">
-        {isLoading ? (
-          <ProjectLoadingState />
-        ) : (
-          <ProjectsTable
-            projects={projects}
-            particularId={particular}
-            budgetItemId={budgetItem!._id}
-            budgetItemYear={budgetItem?.year}
-            onAdd={handleAddProjectWithTracking}
-            onEdit={handleEditProject}
-            onDelete={handleDeleteProject}
-            onOpenTrash={() => setShowTrashModal(true)}
-            newlyAddedProjectId={newlyAddedProjectId}
-          />
-        )}
+        <ProjectsTable
+          projects={projects}
+          particularId={particular}
+          budgetItemId={budgetItem!._id}
+          budgetItemYear={budgetItem?.year}
+          onAdd={handleAddProjectWithTracking}
+          onEdit={handleEditProject}
+          onDelete={handleDeleteProject}
+          onOpenTrash={() => setShowTrashModal(true)}
+          newlyAddedProjectId={newlyAddedProjectId}
+          expandButton={
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Expand table"
+              onClick={() => setIsExpandModalOpen(true)}
+            >
+              <Expand className="w-4 h-4" />
+            </Button>
+          }
+        />
       </div>
 
       <TrashBinModal
@@ -107,6 +175,15 @@ export default function ParticularProjectsPage() {
         onClose={() => setShowTrashModal(false)}
         type="project"
       />
+
+      {budgetItem && (
+        <ProjectExpandModal
+          isOpen={isExpandModalOpen}
+          onClose={() => setIsExpandModalOpen(false)}
+          budgetItemId={budgetItem._id}
+          particular={particularFullName}
+        />
+      )}
     </>
   );
 }
