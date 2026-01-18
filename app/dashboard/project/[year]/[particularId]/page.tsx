@@ -1,9 +1,9 @@
-// app/dashboard/project/budget/[particularId]/page.tsx
+// app/dashboard/project/[year]/[particularId]/page.tsx
 
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AccessDeniedPage from "@/components/AccessDeniedPage";
@@ -21,7 +21,9 @@ import { getParticularFullName, calculateProjectStats } from "./utils";
 
 export default function ParticularProjectsPage() {
   const params = useParams();
+  const router = useRouter();
   const particular = decodeURIComponent(params.particularId as string);
+  const year = params.year as string;
 
   // ============================================================================
   // ACCESS CONTROL - Check if user can access this particular
@@ -51,8 +53,6 @@ export default function ParticularProjectsPage() {
 
   // ============================================================================
   // DATA FETCHING
-  // Note: We still call the hook but it will return empty data if no access
-  // This is safer than conditionally calling hooks (which violates React rules)
   // ============================================================================
   const { budgetItem, breakdownStats, projects, isLoading: isLoadingData } = useParticularData(particular);
   
@@ -98,7 +98,7 @@ export default function ParticularProjectsPage() {
         userName={accessCheck?.user?.name || ""}
         userEmail={accessCheck?.user?.email || ""}
         departmentName={accessCheck?.department?.name || "Not Assigned"}
-        pageRequested={`Budget Tracking - ${particularFullName}`}
+        pageRequested={`Budget Tracking ${year} - ${particularFullName}`}
       />
     );
   }

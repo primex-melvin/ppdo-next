@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import { useAccentColor } from "@/contexts/AccentColorContext";
 
 // UI Components
-import { Modal } from "@/app/dashboard/project/budget/components/Modal";
-import { ConfirmationModal } from "@/app/dashboard/project/budget/components/ConfirmationModal";
+import { Modal } from "@/app/dashboard/project/[year]/components/Modal";
+import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/ConfirmationModal";
 import { ActivityLogSheet } from "@/components/ActivityLogSheet";
 
 // Local Components
@@ -257,8 +257,15 @@ export function ProjectsTable({
       return;
     }
     
+    // 🔧 Get year from URL params instead of hardcoding
+    const pathSegments = window.location.pathname.split('/');
+    const projectIndex = pathSegments.findIndex(seg => seg === 'project');
+    const year = pathSegments[projectIndex + 1]; // Gets the [year] param
+    
     const projectSlug = createProjectSlug(project.particulars, project.id);
-    router.push(`/dashboard/project/budget/${encodeURIComponent(particularId)}/${projectSlug}`);
+    router.push(
+      `/dashboard/project/${year}/${encodeURIComponent(particularId)}/${projectSlug}`
+    );
   };
 
   const handleContextMenu = (project: Project, e: React.MouseEvent) => {

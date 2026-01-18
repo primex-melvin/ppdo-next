@@ -11,7 +11,7 @@ import { Modal } from "./Modal";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { BudgetItemForm } from "./BudgetItemForm";
 import BudgetShareModal from "./BudgetShareModal";
-import { BudgetTableToolbar } from "@/app/dashboard/project/budget/components/BudgetTableToolbar";
+import { BudgetTableToolbar } from "./BudgetTableToolbar";
 import { BudgetTableHeader } from "./table/BudgetTableHeader";
 import { BudgetTableRow } from "./table/BudgetTableRow";
 import { BudgetTableTotalsRow } from "./table/BudgetTableTotalsRow";
@@ -25,13 +25,13 @@ import {
   SortField,
   SortDirection,
   BudgetContextMenuState,
-} from "@/app/dashboard/project/budget/types";
+} from "@/app/dashboard/project/[year]/types";
 import {
   calculateBudgetTotals,
   calculateTotalUtilizationRate,
   extractUniqueStatuses,
   extractUniqueYears,
-} from "@/app/dashboard/project/budget/utils";
+} from "@/app/dashboard/project/[year]/utils";
 import {
   applyFilters,
   createBudgetFilterConfig,
@@ -41,7 +41,7 @@ import {
   createBudgetPrintConfig,
   withMutationHandling,
 } from "@/services";
-import { STORAGE_KEYS, TIMEOUTS, BUDGET_TABLE_COLUMNS } from "@/app/dashboard/project/budget/constants";
+import { STORAGE_KEYS, TIMEOUTS, BUDGET_TABLE_COLUMNS } from "@/app/dashboard/project/[year]/constants";
 
 interface BudgetTrackingTableProps {
   budgetItems: BudgetItem[];
@@ -318,8 +318,14 @@ export function BudgetTrackingTable({
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
+    
+    // Get current year from URL params
+    const pathSegments = window.location.pathname.split('/');
+    const yearIndex = pathSegments.findIndex(seg => seg === 'project') + 1;
+    const currentYear = pathSegments[yearIndex];
+    
     router.push(
-      `/dashboard/project/budget/${encodeURIComponent(item.particular)}`
+      `/dashboard/project/${currentYear}/${encodeURIComponent(item.particular)}`
     );
   };
 

@@ -40,7 +40,7 @@ import { Project } from "../../../../../../types/types";
 import { ProjectParticularCombobox } from "./ProjectParticularCombobox";
 import { ImplementingOfficeSelector } from "./ImplementingOfficeSelector";
 import { ProjectCategoryCombobox } from "./ProjectCategoryCombobox";
-import { BudgetViolationModal } from "@/app/dashboard/project/budget/components/BudgetViolationModal";
+import { BudgetViolationModal } from "@/app/dashboard/project/[year]/components/BudgetViolationModal";
 
 const FORM_STORAGE_KEY = "project_form_draft";
 

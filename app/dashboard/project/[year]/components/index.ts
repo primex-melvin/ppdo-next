@@ -1,5 +1,6 @@
-// app/dashboard/project/budget/components/index.ts
+// app/dashboard/project/[year]/components/index.ts
 
+// Original budget components
 export { BudgetPageHeader } from "./BudgetPageHeader";
 export { BudgetTrackingTable } from "./BudgetTrackingTable";
 export { BudgetItemForm } from "./BudgetItemForm";
@@ -10,3 +11,6 @@ export { ExpandModal } from "./ExpandModal";
 export { useBudgetAccess } from "./hooks/useBudgetAccess";
 export { useBudgetData } from "./hooks/useBudgetData";
 export { useBudgetMutations } from "./hooks/useBudgetMutations";
+
+// Year-specific components
+export { YearBudgetPageHeader } from "./YearBudgetPageHeader";

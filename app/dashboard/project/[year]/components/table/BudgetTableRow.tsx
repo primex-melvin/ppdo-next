@@ -4,8 +4,8 @@
 
 import { Pin } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BudgetItem } from "@/app/dashboard/project/budget/types";
-import { getUtilizationColor, getProjectStatusColor, getStatusColor } from "@/app/dashboard/project/budget/utils";
+import { BudgetItem } from "@/app/dashboard/project/[year]/types";
+import { getUtilizationColor, getProjectStatusColor, getStatusColor } from "@/app/dashboard/project/[year]/utils";
 
 interface BudgetTableRowProps {
   item: BudgetItem;

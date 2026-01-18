@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Folder, Calendar } from "lucide-react";
 import AccessDeniedPage from "@/components/AccessDeniedPage";
-import { LoadingState, useBudgetAccess, useBudgetData } from "@/app/dashboard/project/budget/components";
+import { LoadingState, useBudgetAccess, useBudgetData } from "@/app/dashboard/project/[year]/components";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAccentColor } from "@/contexts/AccentColorContext";
@@ -26,17 +26,7 @@ export default function ProjectDashboardLanding() {
   }, [budgetItems]);
 
   const handleOpenYear = (year: number) => {
-    // Use URL query parameter instead of localStorage
-    router.push(`/dashboard/project/budget/?year=${year}`);
-
-    // Optional: Store in sessionStorage as convenience backup
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem("budget_year_preference", String(year));
-      } catch (_) {
-        // Ignore if storage unavailable
-      }
-    }
+    router.push(`/dashboard/project/${year}`);
   };
 
   if (isLoadingAccess || isLoadingData) {
@@ -64,19 +54,6 @@ export default function ProjectDashboardLanding() {
               Open Latest
             </Button>
           )}
-          <button
-            onClick={() => {
-              try {
-                localStorage.setItem("budget_open_add", "true");
-              } catch (_) { }
-              router.push("/dashboard/project/budget/");
-            }}
-            className="cursor-pointer px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-md text-white"
-            style={{ backgroundColor: accentColorValue }}
-            title="Create a new budget item"
-          >
-            New Item Here
-          </button>
         </div>
       </div>
 

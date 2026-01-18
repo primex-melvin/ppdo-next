@@ -2,8 +2,8 @@
 
 "use client";
 
-import { BudgetTotals } from "@/app/dashboard/project/budget/types";
-import { getUtilizationColor } from "@/app/dashboard/project/budget/utils";
+import { BudgetTotals } from "@/app/dashboard/project/[year]/types";
+import { getUtilizationColor } from "@/app/dashboard/project/[year]/utils";
 
 interface BudgetTableTotalsRowProps {
   totals: BudgetTotals;

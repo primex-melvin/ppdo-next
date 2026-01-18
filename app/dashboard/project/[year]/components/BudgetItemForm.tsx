@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Info, PlusCircle, MinusCircle, AlertTriangle } from "lucide-react";
-import { BudgetParticularCombobox } from "@/app/dashboard/project/budget/components/BudgetParticularCombobox";
+import { BudgetParticularCombobox } from "@/app/dashboard/project/[year]/components/BudgetParticularCombobox";
 import { useAccentColor } from "@/contexts/AccentColorContext";
 
 interface BudgetItem {

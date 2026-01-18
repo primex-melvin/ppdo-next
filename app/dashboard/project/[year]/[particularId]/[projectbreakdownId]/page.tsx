@@ -1,3 +1,5 @@
+// app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,8 +24,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { TrashBinModal } from "@/components/TrashBinModal";
-import { Modal } from "@/app/dashboard/project/budget/components/Modal";
-import { ConfirmationModal } from "@/app/dashboard/project/budget/components/ConfirmationModal";
+import { Modal } from "@/app/dashboard/project/[year]/components/Modal";
+import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/ConfirmationModal";
 
 // Helper function to get full name from particular ID
 const getParticularFullName = (particular: string): string => {
@@ -87,7 +89,8 @@ export default function ProjectBreakdownPage() {
   const { accentColorValue } = useAccentColor();
   const { setCustomBreadcrumbs } = useBreadcrumb();
   
-  // 🔧 CRITICAL: Extract IDs from URL params
+  // 🔧 Extract ALL params from URL
+  const year = params.year as string;
   const particularId = decodeURIComponent(params.particularId as string);
   const slugWithId = params.projectbreakdownId as string;
   const projectId = extractProjectId(slugWithId);
@@ -100,7 +103,7 @@ export default function ProjectBreakdownPage() {
   const [showHeader, setShowHeader] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
   
-  // 🔧 CRITICAL: Fetch project using extracted ID
+  // 🔧 Fetch project using extracted ID
   const project = useQuery(
     api.projects.get,
     projectId ? { id: projectId as Id<"projects"> } : "skip"
@@ -112,7 +115,7 @@ export default function ProjectBreakdownPage() {
     project?.budgetItemId ? { id: project.budgetItemId } : "skip"
   );
   
-  // 🔧 CRITICAL: Fetch breakdowns filtered by projectId
+  // 🔧 Fetch breakdowns filtered by projectId
   const breakdownHistory = useQuery(
     api.govtProjects.getProjectBreakdowns,
     project ? { projectId: projectId as Id<"projects"> } : "skip"
@@ -122,13 +125,14 @@ export default function ProjectBreakdownPage() {
 
   const particularFullName = getParticularFullName(particularId);
   
-  // Set custom breadcrumbs
+  // 🔧 Set custom breadcrumbs with year
   useEffect(() => {
     if (project) {
       setCustomBreadcrumbs([
         { label: "Home", href: "/dashboard" },
-        { label: "Budget", href: "/dashboard/project/budget" },
-        { label: particularFullName, href: `/dashboard/project/budget/${encodeURIComponent(particularId)}` },
+        { label: "Project", href: "/dashboard/project" },
+        { label: `${year}`, href: `/dashboard/project/${year}` },
+        { label: particularFullName, href: `/dashboard/project/${year}/${encodeURIComponent(particularId)}` },
         { label: project.implementingOffice || "Loading..." },
       ]);
     }
@@ -136,7 +140,7 @@ export default function ProjectBreakdownPage() {
     return () => {
       setCustomBreadcrumbs(null);
     };
-  }, [project, particularFullName, particularId, setCustomBreadcrumbs]);
+  }, [project, particularFullName, particularId, year, setCustomBreadcrumbs]);
   
   // Mutations
   const createBreakdown = useMutation(api.govtProjects.createProjectBreakdown);
@@ -380,8 +384,9 @@ export default function ProjectBreakdownPage() {
       {/* Header with Toggle and Activity Log Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 no-print">
         <div className="flex-1">
+          {/* 🔧 Updated back link with year */}
           <Link
-            href={`/dashboard/project/budget/${encodeURIComponent(particularId)}`}
+            href={`/dashboard/project/${year}/${encodeURIComponent(particularId)}`}
             className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 mb-4 transition-colors"
           >
             <svg
@@ -409,7 +414,7 @@ export default function ProjectBreakdownPage() {
                 {project?.particulars || "Loading..."}
               </h1>
               <p className="text-zinc-600 dark:text-zinc-400">
-                Historical breakdown and progress tracking
+                Historical breakdown and progress tracking for {year}
               </p>
             </>
           )}
@@ -436,7 +441,7 @@ export default function ProjectBreakdownPage() {
             )}
           </Button>
           
-          {/* 🆕 Recalculate Button */}
+          {/* Recalculate Button */}
           {project && (
             <Button
               variant="outline"
@@ -451,12 +456,12 @@ export default function ProjectBreakdownPage() {
           )}
           
           {project && (
-              <ActivityLogSheet 
-                type="breakdown"
-                projectName={project.particulars}
-                implementingOffice={project.implementingOffice}
-              />
-            )}
+            <ActivityLogSheet 
+              type="breakdown"
+              projectName={project.particulars}
+              implementingOffice={project.implementingOffice}
+            />
+          )}
         </div>
       </div>
 
@@ -758,7 +763,7 @@ export default function ProjectBreakdownPage() {
         )}
       </div>
 
-      {/* Add Modal */}
+      {/* Modals */}
       {showAddModal && project && departments && (
         <Modal
           isOpen={showAddModal}
@@ -769,14 +774,13 @@ export default function ProjectBreakdownPage() {
           <BreakdownForm
             defaultProjectName={project.particulars}
             defaultImplementingOffice={project.implementingOffice}
-            projectId={projectId}  // 🔧 ADD THIS LINE
+            projectId={projectId}
             onSave={handleAdd}
             onCancel={() => setShowAddModal(false)}
           />
         </Modal>
       )}
 
-      {/* Edit Modal */}
       {showEditModal && selectedBreakdown && (
         <Modal
           isOpen={showEditModal}
@@ -789,7 +793,7 @@ export default function ProjectBreakdownPage() {
         >
           <BreakdownForm
             breakdown={selectedBreakdown}
-            projectId={projectId}  // 🔧 ADD THIS LINE
+            projectId={projectId}
             onSave={handleUpdate}
             onCancel={() => {
               setShowEditModal(false);
@@ -799,7 +803,6 @@ export default function ProjectBreakdownPage() {
         </Modal>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedBreakdown && (
         <ConfirmationModal
           isOpen={showDeleteModal}
@@ -812,7 +815,6 @@ export default function ProjectBreakdownPage() {
         />
       )}
 
-      {/* NEW: Trash Modal for Breakdowns */}
       <TrashBinModal 
         isOpen={showTrashModal} 
         onClose={() => setShowTrashModal(false)} 
@@ -822,7 +824,7 @@ export default function ProjectBreakdownPage() {
   );
 }
 
-// 🆕 Helper function for status colors
+// Helper function for status colors
 function getStatusColor(status?: "completed" | "ongoing" | "delayed"): string {
   if (!status) return "text-zinc-600 dark:text-zinc-400";
   switch (status) {

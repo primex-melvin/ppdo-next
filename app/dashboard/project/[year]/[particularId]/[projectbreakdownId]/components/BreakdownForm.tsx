@@ -40,7 +40,7 @@ import { Slider } from "@/components/ui/slider";
 import { ChevronDown, MapPin, FileText, AlertTriangle, Info, TrendingUp, Package, Eye, EyeOff } from "lucide-react";
 import { ImplementingOfficeSelector } from "./ImplementingOfficeSelector";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BudgetViolationModal } from "@/app/dashboard/project/budget/components/BudgetViolationModal";
+import { BudgetViolationModal } from "@/app/dashboard/project/[year]/components/BudgetViolationModal";
 
 // Updated Schema
 const breakdownSchema = z.object({
