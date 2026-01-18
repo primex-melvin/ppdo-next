@@ -1,4 +1,4 @@
-// app/dashboard/project/budget/[particularId]/types/index.ts
+// app/dashboard/project/budget/[particularId]/types.ts
 
 import { Id } from "@/convex/_generated/dataModel";
 
@@ -26,6 +26,7 @@ export interface Project {
   pinnedAt?: number;
   pinnedBy?: string;
   budgetItemId?: string;
+  projectManagerId?: string; // ✅ ADDED
   _creationTime?: number;
 }
 
@@ -128,4 +129,20 @@ export interface BulkOperationResponse {
     message: string;
     code?: string;
   };
+}
+
+// ============================================================================
+// COMPONENT PROPS TYPES
+// ============================================================================
+
+export interface ProjectsTableProps {
+  projects: Project[];
+  particularId: string;
+  budgetItemId?: string;
+  budgetItemYear?: number;
+  onAdd?: (project: Omit<Project, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing">) => void | Promise<void>;
+  onEdit?: (id: string, project: Omit<Project, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing">) => void;
+  onDelete?: (id: string) => void;
+  onOpenTrash?: () => void;
+  newlyAddedProjectId?: string | null;
 }

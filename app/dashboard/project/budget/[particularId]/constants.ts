@@ -1,6 +1,6 @@
-// app/dashboard/project/budget/[particularId]/constants/index.ts
+// app/dashboard/project/budget/[particularId]/constants.ts
 
-import { TableColumn } from "../types";
+import { TableColumn } from "./types";
 
 // ============================================================================
 // STORAGE KEYS
@@ -55,6 +55,12 @@ export const ANIMATION = {
   NEW_PROJECT_DURATION: 2000, // 2 seconds
   SCROLL_DELAY: 100, // 100ms
 } as const;
+
+// ============================================================================
+// PAGINATION
+// ============================================================================
+
+export const ITEMS_PER_PAGE = 20;
 
 // ============================================================================
 // EXPORT SETTINGS
