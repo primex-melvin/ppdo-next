@@ -42,7 +42,7 @@ export interface BudgetItemFromDB {
   pinnedBy?: string;
 }
 
-export type BudgetItemFormData = Omit
+export type BudgetItemFormData = Omit<
   BudgetItem,
   | "id"
   | "utilizationRate"
@@ -148,8 +148,5 @@ export interface BudgetTotals {
 export type SortDirection = "asc" | "desc" | null;
 export type SortField = BudgetSortField | null;
 
-export interface ContextMenuState {
-  x: number;
-  y: number;
-  item: BudgetItem;
-}
+// Re-export ContextMenuState for backward compatibility
+export type { ContextMenuState } from "@/lib/shared/types/table.types";

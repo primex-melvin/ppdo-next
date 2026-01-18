@@ -5,7 +5,7 @@ import { ProjectSortField, SortDirection } from "../../types";
 
 interface SortIconProps {
   field: ProjectSortField;
-  currentSortField: ProjectSortField;
+  currentSortField: ProjectSortField | null;
   currentSortDirection: SortDirection;
 }
 

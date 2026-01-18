@@ -43,7 +43,6 @@ import {
   createProjectFilterConfig,
   exportToCSV,
   createProjectExportConfig,
-  withMutationHandling,
 } from "@/services";
 
 export function ProjectsTable({
@@ -88,7 +87,7 @@ export function ProjectsTable({
   // ==================== STATE: SELECTION & FILTERS ====================
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<ProjectSortField>(null);
+  const [sortField, setSortField] = useState<ProjectSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [officeFilter, setOfficeFilter] = useState<string[]>([]);
@@ -256,28 +255,33 @@ export function ProjectsTable({
 
   const handleContextMenu = (project: Project, e: React.MouseEvent) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, project });
+    setContextMenu({ x: e.clientX, y: e.clientY, entity: project });
   };
 
   const handleBulkTrash = async () => {
-    const success = await withMutationHandling(
-      () => bulkMoveToTrash({ 
+    try {
+      const toastId = toast.loading(`Moving ${selectedIds.size} project(s) to trash...`);
+      
+      const result = await bulkMoveToTrash({ 
         ids: Array.from(selectedIds) as Id<"projects">[] 
-      }),
-      {
-        loadingMessage: `Moving ${selectedIds.size} project(s) to trash...`,
-        successMessage: `Successfully moved ${selectedIds.size} project(s) to trash`,
-        errorMessage: "Failed to move projects to trash",
-        onSuccess: (data) => {
-          const processed = data?.processed || 0;
-          const failed = data?.failed || 0;
-          if (failed > 0) {
-            toast.info(`Note: ${failed} project(s) failed to move`);
-          }
-          setSelectedIds(new Set());
-        },
+      });
+      
+      toast.dismiss(toastId);
+      
+      const processed = (result as any)?.processed || 0;
+      const failed = (result as any)?.failed || 0;
+      
+      toast.success(`Successfully moved ${selectedIds.size} project(s) to trash`);
+      
+      if (failed > 0) {
+        toast.info(`Note: ${failed} project(s) failed to move`);
       }
-    );
+      
+      setSelectedIds(new Set());
+    } catch (error) {
+      toast.error("Failed to move projects to trash");
+      console.error(error);
+    }
   };
 
   const handleBulkCategoryChange = (categoryId: Id<"projectCategories"> | undefined) => {
@@ -289,25 +293,25 @@ export function ProjectsTable({
   const confirmBulkCategoryUpdate = async () => {
     if (!pendingBulkCategoryId) return;
     
-    const success = await withMutationHandling(
-      () => bulkUpdateCategory({
+    try {
+      const toastId = toast.loading(`Updating ${selectedIds.size} project(s)...`);
+      
+      await bulkUpdateCategory({
         ids: Array.from(selectedIds) as Id<"projects">[],
         categoryId: pendingBulkCategoryId
-      }),
-      {
-        loadingMessage: `Updating ${selectedIds.size} project(s)...`,
-        successMessage: `Successfully updated ${selectedIds.size} project(s)`,
-        errorMessage: "Failed to update categories",
-        onSuccess: () => {
-          setSelectedIds(new Set());
-          setPendingBulkCategoryId(undefined);
-          setShowBulkCategoryConfirmModal(false);
-        },
-        onError: () => {
-          setShowBulkCategoryConfirmModal(false);
-        },
-      }
-    );
+      });
+      
+      toast.dismiss(toastId);
+      toast.success(`Successfully updated ${selectedIds.size} project(s)`);
+      
+      setSelectedIds(new Set());
+      setPendingBulkCategoryId(undefined);
+      setShowBulkCategoryConfirmModal(false);
+    } catch (error) {
+      toast.error("Failed to update categories");
+      setShowBulkCategoryConfirmModal(false);
+      console.error(error);
+    }
   };
 
   const handleSearchFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -364,16 +368,18 @@ export function ProjectsTable({
 
   const handleContextChangeCategory = () => {
     if (!contextMenu) return;
-    setSelectedCategoryProject(contextMenu.project);
-    setSingleCategoryId(contextMenu.project.categoryId as Id<"projectCategories"> | undefined);
+    setSelectedCategoryProject(contextMenu.entity);
+    setSingleCategoryId(contextMenu.entity.categoryId as Id<"projectCategories"> | undefined);
     setShowSingleCategoryModal(true);
   };
 
   const saveSingleCategoryChange = async () => {
     if (!selectedCategoryProject) return;
     
-    const success = await withMutationHandling(
-      () => updateProject({
+    try {
+      const toastId = toast.loading("Updating category...");
+      
+      await updateProject({
         id: selectedCategoryProject.id as Id<"projects">,
         categoryId: singleCategoryId,
         particulars: selectedCategoryProject.particulars,
@@ -385,24 +391,24 @@ export function ProjectsTable({
         year: selectedCategoryProject.year,
         projectManagerId: selectedCategoryProject.projectManagerId as Id<"users">,
         reason: "Category updated via context menu"
-      }),
-      {
-        loadingMessage: "Updating category...",
-        successMessage: "Category updated successfully",
-        errorMessage: "Failed to update category",
-        onSuccess: () => {
-          setShowSingleCategoryModal(false);
-          setSelectedCategoryProject(null);
-        },
-      }
-    );
+      });
+      
+      toast.dismiss(toastId);
+      toast.success("Category updated successfully");
+      
+      setShowSingleCategoryModal(false);
+      setSelectedCategoryProject(null);
+    } catch (error) {
+      toast.error("Failed to update category");
+      console.error(error);
+    }
   };
 
   const handlePinProject = async () => {
     if (!contextMenu) return;
     
     try {
-      await togglePinProject({ id: contextMenu.project.id as Id<"projects"> });
+      await togglePinProject({ id: contextMenu.entity.id as Id<"projects"> });
     } catch (error) {
       toast.error("Failed to toggle pin");
     }
@@ -410,19 +416,19 @@ export function ProjectsTable({
 
   const handleViewLog = () => {
     if (!contextMenu) return;
-    setSelectedLogProject(contextMenu.project);
+    setSelectedLogProject(contextMenu.entity);
     setLogSheetOpen(true);
   };
 
   const handleEditProject = () => {
     if (!contextMenu) return;
-    setSelectedProject(contextMenu.project);
+    setSelectedProject(contextMenu.entity);
     setShowEditModal(true);
   };
 
   const handleDeleteProject = () => {
     if (!contextMenu) return;
-    setSelectedProject(contextMenu.project);
+    setSelectedProject(contextMenu.entity);
     setShowDeleteModal(true);
   };
 

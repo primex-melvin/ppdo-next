@@ -39,7 +39,7 @@ export function handleMutationResponse<T>(
   if (response.success) {
     const message = successMessage || response.message || "Operation successful";
     toast.success(message, {
-      description: response.data?.details || undefined,
+      description: (response.data as any)?.details || undefined,
     });
     return true;
   } else {

@@ -4,7 +4,32 @@
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { withMutationHandling } from "@/services";
+import { toast } from "sonner";
+
+// Type guard for MutationResponse
+type MutationResponse = 
+  | {
+      success: true;
+      data?: any;
+      message?: string;
+    }
+  | {
+      success: false;
+      error: {
+        message: string;
+        code?: string;
+      };
+      message?: string;
+    };
+
+function isMutationResponse(value: unknown): value is MutationResponse {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'success' in value &&
+    typeof (value as any).success === 'boolean'
+  );
+}
 
 export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
   const createProject = useMutation(api.projects.create);
@@ -15,11 +40,14 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
   const handleAddProject = async (projectData: any): Promise<string | null> => {
     if (!budgetItemId) {
       console.error("Budget item not found. Cannot create project.");
+      toast.error("Budget item not found");
       return null;
     }
 
-    const success = await withMutationHandling(
-      () => createProject({
+    try {
+      const toastId = toast.loading("Creating project...");
+      
+      const response = await createProject({
         particulars: projectData.particulars,
         budgetItemId,
         categoryId: projectData.categoryId || undefined,
@@ -31,33 +59,54 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
         year: projectData.year || undefined,
         targetDateCompletion: projectData.targetDateCompletion || undefined,
         projectManagerId: projectData.projectManagerId || undefined,
-      }),
-      {
-        loadingMessage: "Creating project...",
-        successMessage: `Project "${projectData.particulars}" created successfully!`,
-        errorMessage: "Failed to create project",
-        onError: (error) => {
-          if (error?.code === "VALIDATION_ERROR") {
-            console.error("Validation details:", error.details);
-          }
-        },
+      });
+      
+      toast.dismiss(toastId);
+      
+      // Handle response based on structure
+      if (isMutationResponse(response)) {
+        // MutationResponse format
+        if (response.success && response.data?.projectId) {
+          toast.success(`Project "${projectData.particulars}" created successfully!`);
+          return response.data.projectId as string;
+        } else if (!response.success) {
+          toast.error(response.error.message || "Failed to create project");
+          return null;
+        } else {
+          toast.error("Failed to create project");
+          return null;
+        }
+      } else {
+        // Direct ID return format or unknown format
+        toast.success(`Project "${projectData.particulars}" created successfully!`);
+        // Handle both direct string ID and objects with projectId
+        if (typeof response === 'string') {
+          return response;
+        } else if (response && typeof response === 'object' && 'projectId' in response) {
+          return (response as any).projectId as string;
+        } else if (response && typeof response === 'object' && 'data' in response && (response as any).data?.projectId) {
+          return (response as any).data.projectId as string;
+        }
+        return response as unknown as string;
       }
-    );
-
-    // Extract project ID from response if available
-    // Note: This assumes the mutation returns the created project ID
-    // You may need to adjust based on your actual API response structure
-    return success ? (success as any).id || (success as any).data?.id || null : null;
+    } catch (error) {
+      toast.error("Failed to create project");
+      console.error("Create project error:", error);
+      return null;
+    }
   };
 
   const handleEditProject = async (id: string, projectData: any) => {
     if (!budgetItemId) {
       console.error("Budget item not found. Cannot edit project.");
+      toast.error("Budget item not found");
       return false;
     }
     
-    return await withMutationHandling(
-      () => updateProject({
+    try {
+      const toastId = toast.loading("Updating project...");
+      
+      const response = await updateProject({
         id: id as Id<"projects">,
         particulars: projectData.particulars,
         budgetItemId,
@@ -71,43 +120,99 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
         targetDateCompletion: projectData.targetDateCompletion || undefined,
         projectManagerId: projectData.projectManagerId || undefined,
         reason: "Updated via dashboard UI",
-      }),
-      {
-        loadingMessage: "Updating project...",
-        successMessage: `Project "${projectData.particulars}" updated successfully!`,
-        errorMessage: "Failed to update project",
+      });
+      
+      toast.dismiss(toastId);
+      
+      // Handle response based on structure
+      if (isMutationResponse(response)) {
+        // MutationResponse format
+        if (response.success) {
+          toast.success(`Project "${projectData.particulars}" updated successfully!`);
+          return true;
+        } else {
+          toast.error(response.error.message || "Failed to update project");
+          return false;
+        }
+      } else {
+        // Direct success (void or ID)
+        toast.success(`Project "${projectData.particulars}" updated successfully!`);
+        return true;
       }
-    );
+    } catch (error) {
+      toast.error("Failed to update project");
+      console.error("Update project error:", error);
+      return false;
+    }
   };
 
   const handleDeleteProject = async (id: string) => {
-    return await withMutationHandling(
-      () => deleteProject({
+    try {
+      const toastId = toast.loading("Moving to trash...");
+      
+      const response = await deleteProject({
         id: id as Id<"projects">,
         reason: "Moved to trash via project dashboard",
-      }),
-      {
-        loadingMessage: "Moving to trash...",
-        successMessage: "Project moved to trash successfully!",
-        errorMessage: "Failed to delete project",
+      });
+      
+      toast.dismiss(toastId);
+      
+      // Handle response based on structure
+      if (isMutationResponse(response)) {
+        // MutationResponse format
+        if (response.success) {
+          toast.success("Project moved to trash successfully!");
+          return true;
+        } else {
+          toast.error(response.error.message || "Failed to delete project");
+          return false;
+        }
+      } else {
+        // Direct success
+        toast.success("Project moved to trash successfully!");
+        return true;
       }
-    );
+    } catch (error) {
+      toast.error("Failed to delete project");
+      console.error("Delete project error:", error);
+      return false;
+    }
   };
 
   const handleRecalculate = async () => {
     if (!budgetItemId) {
       console.error("Budget item not found. Cannot recalculate.");
+      toast.error("Budget item not found");
       return false;
     }
     
-    return await withMutationHandling(
-      () => recalculateBudgetItem({ budgetItemId }),
-      {
-        loadingMessage: "Recalculating...",
-        successMessage: "Budget item recalculated successfully!",
-        errorMessage: "Failed to recalculate budget item",
+    try {
+      const toastId = toast.loading("Recalculating...");
+      
+      const response = await recalculateBudgetItem({ budgetItemId });
+      
+      toast.dismiss(toastId);
+      
+      // Handle response based on structure
+      if (isMutationResponse(response)) {
+        // MutationResponse format
+        if (response.success) {
+          toast.success("Budget item recalculated successfully!");
+          return true;
+        } else {
+          toast.error(response.error.message || "Failed to recalculate budget item");
+          return false;
+        }
+      } else {
+        // Direct success
+        toast.success("Budget item recalculated successfully!");
+        return true;
       }
-    );
+    } catch (error) {
+      toast.error("Failed to recalculate budget item");
+      console.error("Recalculate error:", error);
+      return false;
+    }
   };
 
   return {

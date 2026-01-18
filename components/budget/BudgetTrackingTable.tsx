@@ -26,6 +26,7 @@ import {
   ContextMenuState,
   SortField,
   SortDirection,
+  BudgetContextMenuState,
 } from "@/app/dashboard/project/budget/types";
 import {
   calculateBudgetTotals,
@@ -103,7 +104,7 @@ export function BudgetTrackingTable({
   // ============================================================================
   // CONTEXT MENU STATE
   // ============================================================================
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [contextMenu, setContextMenu] = useState<BudgetContextMenuState | null>(null);
 
   // ============================================================================
   // FILTER & SORT STATES
@@ -117,7 +118,7 @@ export function BudgetTrackingTable({
   const [showHeaderSkeleton, setShowHeaderSkeleton] = useState(true);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null!);
 
   const isAdmin =
     accessCheck?.user?.role === "admin" ||
@@ -324,7 +325,7 @@ export function BudgetTrackingTable({
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
-      item,
+      entity: item,  // Changed from 'item' to 'entity'
     });
   };
 
@@ -574,7 +575,7 @@ export function BudgetTrackingTable({
         <BudgetContextMenu
           ref={contextMenuRef}
           position={{ x: contextMenu.x, y: contextMenu.y }}
-          item={contextMenu.item}
+          item={contextMenu.entity}
           canEdit={!!onEdit}
           canDelete={!!onDelete}
           onPin={handlePin}

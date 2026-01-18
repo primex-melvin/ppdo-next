@@ -50,7 +50,7 @@ export function ProjectContextMenu({
 
   if (!contextMenu) return null;
 
-  const isPinned = 'isPinned' in contextMenu.project && (contextMenu.project as any).isPinned;
+  const isPinned = 'isPinned' in contextMenu.entity && (contextMenu.entity as any).isPinned;
 
   return (
     <div

@@ -26,7 +26,7 @@ export function useAutoSave<T>(
   delay: number = 500,
   enabled: boolean = true
 ): void {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     // Clear any pending saves

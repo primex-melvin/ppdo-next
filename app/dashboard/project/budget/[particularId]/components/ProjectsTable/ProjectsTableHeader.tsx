@@ -8,7 +8,7 @@ import { SortIcon } from "./SortIcon";
 
 interface ProjectsTableHeaderProps {
   hiddenColumns: Set<string>;
-  sortField: ProjectSortField;
+  sortField: ProjectSortField | null;
   sortDirection: SortDirection;
   onSort: (field: ProjectSortField) => void;
   canManageBulkActions: boolean;
@@ -115,4 +115,4 @@ export function ProjectsTableHeader({
       </tr>
     </thead>
   );
-} 
+}
