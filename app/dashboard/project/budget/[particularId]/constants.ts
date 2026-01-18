@@ -1,21 +1,35 @@
 // app/dashboard/project/budget/[particularId]/constants.ts
+// REPLACE ENTIRE FILE WITH THIS
 
 import { TableColumn } from "./types";
 
 // ============================================================================
-// STORAGE KEYS
+// RE-EXPORT SHARED CONSTANTS
 // ============================================================================
 
-export const STORAGE_KEYS = {
-  FORM_DRAFT: "project_form_draft",
-  YEAR_PREFERENCE: "budget_year_preference",
-  SHOW_DETAILS: "showBudgetDetails",
-} as const;
+export {
+  VALIDATION_MESSAGES,
+  VALIDATION_LIMITS,
+  CODE_PATTERN,
+} from "@/lib/shared/constants/validation";
+
+export {
+  STORAGE_KEYS,
+} from "@/lib/shared/constants/storage";
+
+export {
+  PAGINATION,
+  TIMEOUTS,
+  ANIMATION,
+} from "@/lib/shared/constants/display";
 
 // ============================================================================
-// TABLE COLUMNS
+// PROJECT-SPECIFIC CONSTANTS
 // ============================================================================
 
+/**
+ * Available columns for project table
+ */
 export const AVAILABLE_COLUMNS: TableColumn[] = [
   { id: "particulars", label: "Particulars", sortable: true, align: "left" },
   { id: "implementingOffice", label: "Implementing Office", filterable: true, align: "left" },
@@ -31,10 +45,9 @@ export const AVAILABLE_COLUMNS: TableColumn[] = [
   { id: "remarks", label: "Remarks", align: "left" },
 ];
 
-// ============================================================================
-// CATEGORY COLORS
-// ============================================================================
-
+/**
+ * Default category colors
+ */
 export const DEFAULT_CATEGORY_COLORS = [
   "#10b981",
   "#3b82f6",
@@ -45,27 +58,19 @@ export const DEFAULT_CATEGORY_COLORS = [
   "#06b6d4",
 ] as const;
 
+/**
+ * Uncategorized color
+ */
 export const UNCATEGORIZED_COLOR = "#71717a" as const;
 
-// ============================================================================
-// ANIMATION DURATIONS
-// ============================================================================
-
-export const ANIMATION = {
-  NEW_PROJECT_DURATION: 2000, // 2 seconds
-  SCROLL_DELAY: 100, // 100ms
-} as const;
-
-// ============================================================================
-// PAGINATION
-// ============================================================================
-
+/**
+ * Items per page for pagination
+ */
 export const ITEMS_PER_PAGE = 20;
 
-// ============================================================================
-// EXPORT SETTINGS
-// ============================================================================
-
+/**
+ * Export settings
+ */
 export const EXPORT = {
   CSV_FILENAME_PREFIX: "projects_export",
   DATE_FORMAT: "YYYY-MM-DD",

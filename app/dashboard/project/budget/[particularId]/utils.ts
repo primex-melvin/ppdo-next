@@ -1,4 +1,44 @@
 // app/dashboard/project/budget/[particularId]/utils.ts
+// REPLACE ENTIRE FILE WITH THIS
+
+// ============================================================================
+// RE-EXPORT SHARED UTILITIES
+// ============================================================================
+
+export {
+  formatNumberWithCommas,
+  parseFormattedNumber,
+  formatNumberForDisplay,
+  formatCurrency,
+  formatPercentage,
+} from "@/lib/shared/utils/formatting";
+
+export {
+  getUtilizationColor,
+  getProjectStatusColor,
+  getStatusColor,
+} from "@/lib/shared/utils/colors";
+
+export {
+  sortItems,
+  sortWithPinnedFirst,
+} from "@/lib/shared/utils/sorting";
+
+export {
+  filterBySearchQuery,
+  filterByStatus,
+  filterByYear,
+  extractUniqueValues,
+} from "@/lib/shared/utils/filtering";
+
+export {
+  generateCSV,
+  downloadCSV,
+} from "@/lib/shared/utils/csv";
+
+// ============================================================================
+// PROJECT-SPECIFIC UTILITIES
+// ============================================================================
 
 import { 
   Project, 
@@ -10,60 +50,8 @@ import {
   TableColumn 
 } from "./types";
 import { DEFAULT_CATEGORY_COLORS, UNCATEGORIZED_COLOR } from "./constants";
-
-// ============================================================================
-// FORMATTING UTILITIES
-// ============================================================================
-
-/**
- * Formats a number as currency (Philippine Peso)
- */
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-/**
- * Formats a number as percentage
- */
-export const formatPercentage = (value: number): string => {
-  return `${value.toFixed(1)}%`;
-};
-
-/**
- * Formats number with commas for input fields
- */
-export const formatNumberWithCommas = (value: string): string => {
-  const cleaned = value.replace(/[^\d.]/g, '');
-  const parts = cleaned.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  if (parts.length > 1) return parts[0] + '.' + parts[1].slice(0, 2);
-  return parts[0];
-};
-
-/**
- * Parses formatted number string to number
- */
-export const parseFormattedNumber = (value: string): number => {
-  const cleaned = value.replace(/,/g, '');
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? 0 : parsed;
-};
-
-/**
- * Formats number for display in input
- */
-export const formatNumberForDisplay = (value: number): string => {
-  if (value === 0) return '';
-  return new Intl.NumberFormat('en-PH', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
+import { sortItems } from "@/lib/shared/utils/sorting";
+import { filterBySearchQuery as genericFilterBySearch } from "@/lib/shared/utils/filtering";
 
 /**
  * Creates URL-safe slug from project particulars and ID
@@ -74,30 +62,6 @@ export const createProjectSlug = (particulars: string, id: string): string => {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")}-${id}`;
-};
-
-// ============================================================================
-// COLOR UTILITIES
-// ============================================================================
-
-/**
- * Gets color class based on utilization rate
- */
-export const getUtilizationColor = (rate: number): string => {
-  if (rate >= 80) return "text-red-600 dark:text-red-400";
-  if (rate >= 60) return "text-orange-600 dark:text-orange-400";
-  return "text-green-600 dark:text-green-400";
-};
-
-/**
- * Gets color class based on project status
- */
-export const getStatusColor = (status?: string): string => {
-  if (!status) return "text-zinc-600 dark:text-zinc-400";
-  if (status === "completed") return "text-green-600 dark:text-green-400";
-  if (status === "ongoing") return "text-blue-600 dark:text-blue-400";
-  if (status === "delayed") return "text-red-600 dark:text-red-400";
-  return "text-zinc-600 dark:text-zinc-400";
 };
 
 /**
@@ -124,10 +88,6 @@ export const getCategoryHeaderStyle = (category?: ProjectCategory | null): {
   return { backgroundColor: bg, color: "white" };
 };
 
-// ============================================================================
-// FILTERING UTILITIES
-// ============================================================================
-
 /**
  * Filters projects by search query
  */
@@ -135,16 +95,11 @@ export const filterProjectsBySearch = (
   projects: Project[],
   query: string
 ): Project[] => {
-  if (!query.trim()) return projects;
-
-  const lowerQuery = query.toLowerCase();
-  return projects.filter((project) => {
-    return (
-      project.particulars.toLowerCase().includes(lowerQuery) ||
-      project.implementingOffice.toLowerCase().includes(lowerQuery) ||
-      project.status?.toLowerCase().includes(lowerQuery)
-    );
-  });
+  return genericFilterBySearch(projects, query, [
+    "particulars",
+    "implementingOffice",
+    "status",
+  ] as (keyof Project)[]);
 };
 
 /**
@@ -184,57 +139,16 @@ export const filterProjectsByYear = (
   return projects.filter((project) => project.year && years.includes(project.year));
 };
 
-// ============================================================================
-// SORTING UTILITIES
-// ============================================================================
-
 /**
  * Sorts projects by field and direction
  */
 export const sortProjects = (
   projects: Project[],
-  field: ProjectSortField,
+  field: ProjectSortField | null,
   direction: SortDirection
 ): Project[] => {
-  if (!field || !direction) return projects;
-
-  return [...projects].sort((a, b) => {
-    const aVal = a[field];
-    const bVal = b[field];
-
-    if (aVal === undefined || aVal === null) return 1;
-    if (bVal === undefined || bVal === null) return -1;
-
-    if (typeof aVal === "string" && typeof bVal === "string") {
-      return direction === "asc"
-        ? aVal.localeCompare(bVal)
-        : bVal.localeCompare(aVal);
-    }
-
-    if (typeof aVal === "number" && typeof bVal === "number") {
-      return direction === "asc" ? aVal - bVal : bVal - aVal;
-    }
-
-    return 0;
-  });
+  return sortItems(projects, field, direction);
 };
-
-/**
- * Sorts projects with pinned items first
- */
-export const sortWithPinnedFirst = (projects: Project[]): Project[] => {
-  return [...projects].sort((a, b) => {
-    const aIsPinned = a.isPinned || false;
-    const bIsPinned = b.isPinned || false;
-    if (aIsPinned && !bIsPinned) return -1;
-    if (!aIsPinned && bIsPinned) return 1;
-    return 0;
-  });
-};
-
-// ============================================================================
-// GROUPING UTILITIES
-// ============================================================================
 
 /**
  * Groups projects by category
@@ -268,10 +182,6 @@ export const groupProjectsByCategory = (
       return orderA - orderB;
     });
 };
-
-// ============================================================================
-// CALCULATION UTILITIES
-// ============================================================================
 
 /**
  * Calculates totals from projects
@@ -308,10 +218,6 @@ export const countVisibleLabelColumns = (hiddenColumns: Set<string>): number => 
   return labels.filter((id) => !hiddenColumns.has(id)).length;
 };
 
-// ============================================================================
-// EXTRACTION UTILITIES
-// ============================================================================
-
 /**
  * Extracts unique implementing offices from projects
  */
@@ -345,10 +251,6 @@ export const extractUniqueYears = (projects: Project[]): number[] => {
   return Array.from(years).sort((a, b) => b - a);
 };
 
-// ============================================================================
-// EXPORT UTILITIES
-// ============================================================================
-
 /**
  * Generates CSV content from projects
  */
@@ -379,20 +281,6 @@ export const generateProjectsCSV = (
   });
 
   return [headers, ...rows].join("\n");
-};
-
-/**
- * Downloads CSV file
- */
-export const downloadCSV = (csvContent: string, filename: string): void => {
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 };
 
 /**

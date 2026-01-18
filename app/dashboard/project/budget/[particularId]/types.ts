@@ -1,6 +1,8 @@
 // app/dashboard/project/budget/[particularId]/types.ts
+// REPLACE ENTIRE FILE WITH THIS
 
 import { Id } from "@/convex/_generated/dataModel";
+import { SortState, ContextMenuState } from "@/lib/shared/types/table.types";
 
 // ============================================================================
 // PROJECT TYPES
@@ -26,7 +28,7 @@ export interface Project {
   pinnedAt?: number;
   pinnedBy?: string;
   budgetItemId?: string;
-  projectManagerId?: string; // ✅ ADDED
+  projectManagerId?: string;
   _creationTime?: number;
 }
 
@@ -41,10 +43,18 @@ export type ProjectFormData = Omit<
 > & { categoryId?: string };
 
 // ============================================================================
-// SORTING & FILTERING TYPES
+// SORTING & FILTERING TYPES (using shared types)
 // ============================================================================
 
-export type ProjectSortField = keyof Project | null;
+export type ProjectSortField = keyof Project;
+
+// Use shared SortState
+export type ProjectSortState = SortState<ProjectSortField>;
+
+// Use shared ContextMenuState
+export type ProjectContextMenuState = ContextMenuState<Project>;
+
+// Legacy support - remove in future
 export type SortDirection = "asc" | "desc" | null;
 
 export interface ProjectFilterState {
@@ -52,18 +62,8 @@ export interface ProjectFilterState {
   statusFilter: string[];
   officeFilter: string[];
   yearFilter: number[];
-  sortField: ProjectSortField;
+  sortField: ProjectSortField | null;
   sortDirection: SortDirection;
-}
-
-// ============================================================================
-// CONTEXT MENU TYPES
-// ============================================================================
-
-export interface ProjectContextMenuState {
-  x: number;
-  y: number;
-  project: Project;
 }
 
 // ============================================================================
