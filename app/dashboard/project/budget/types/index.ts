@@ -1,4 +1,5 @@
 // app/dashboard/project/budget/types/index.ts
+// UPDATED FILE - Add table-specific types
 
 import { Id } from "@/convex/_generated/dataModel";
 import { SortState, ContextMenuState } from "@/lib/shared/types/table.types";
@@ -41,7 +42,7 @@ export interface BudgetItemFromDB {
   pinnedBy?: string;
 }
 
-export type BudgetItemFormData = Omit<
+export type BudgetItemFormData = Omit
   BudgetItem,
   | "id"
   | "utilizationRate"
@@ -138,4 +139,17 @@ export interface BudgetTotals {
   projectCompleted: number;
   projectDelayed: number;
   projectsOnTrack: number;
+}
+
+// ============================================================================
+// TABLE TYPES
+// ============================================================================
+
+export type SortDirection = "asc" | "desc" | null;
+export type SortField = BudgetSortField | null;
+
+export interface ContextMenuState {
+  x: number;
+  y: number;
+  item: BudgetItem;
 }

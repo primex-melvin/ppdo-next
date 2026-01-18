@@ -1,4 +1,6 @@
 // app/dashboard/project/budget/components/BudgetTrackingTable.tsx
+// UPDATED FILE - Refactored to use modular components
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -10,23 +12,20 @@ import { Modal } from "./Modal";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { BudgetItemForm } from "./BudgetItemForm";
 import BudgetShareModal from "./BudgetShareModal";
+import { BudgetTableToolbar } from "@/app/dashboard/project/budget/components/BudgetTableToolbar";
 import { BudgetTableHeader } from "./components/table/BudgetTableHeader";
 import { BudgetTableRow } from "./components/table/BudgetTableRow";
 import { BudgetTableTotalsRow } from "./components/table/BudgetTableTotalsRow";
 import { BudgetTableEmptyState } from "./components/table/BudgetTableEmptyState";
 import { BudgetContextMenu } from "./components/table/BudgetContextMenu";
 import { BudgetSearchFilters } from "./components/filters/BudgetSearchFilters";
-import { Share2, Search, CheckCircle2, Trash2 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import DashboardToolbar from "@/components/ui/dashboard-toolbar";
-import { 
-  BudgetItem, 
-  ContextMenuState, 
-  SortField, 
-  SortDirection 
+import {
+  BudgetItem,
+  ContextMenuState,
+  SortField,
+  SortDirection,
 } from "@/app/dashboard/project/budget/types";
 import {
   calculateBudgetTotals,
@@ -34,7 +33,7 @@ import {
   extractUniqueStatuses,
   extractUniqueYears,
 } from "@/app/dashboard/project/budget/utils";
-import { 
+import {
   applyFilters,
   createBudgetFilterConfig,
   exportToCSV,
@@ -47,8 +46,29 @@ import { STORAGE_KEYS, TIMEOUTS } from "@/app/dashboard/project/budget/constants
 
 interface BudgetTrackingTableProps {
   budgetItems: BudgetItem[];
-  onAdd?: (item: Omit<BudgetItem, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack" | "status">) => void;
-  onEdit?: (id: string, item: Omit<BudgetItem, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack" | "status">) => void;
+  onAdd?: (
+    item: Omit<
+      BudgetItem,
+      | "id"
+      | "utilizationRate"
+      | "projectCompleted"
+      | "projectDelayed"
+      | "projectsOnTrack"
+      | "status"
+    >
+  ) => void;
+  onEdit?: (
+    id: string,
+    item: Omit<
+      BudgetItem,
+      | "id"
+      | "utilizationRate"
+      | "projectCompleted"
+      | "projectDelayed"
+      | "projectsOnTrack"
+      | "status"
+    >
+  ) => void;
   onDelete?: (id: string) => void;
   expandButton?: React.ReactNode;
   onOpenTrash?: () => void;
@@ -69,7 +89,9 @@ export function BudgetTrackingTable({
   const togglePinBudgetItem = useMutation(api.budgetItems.togglePin);
   const bulkMoveToTrash = useMutation(api.budgetItems.bulkMoveToTrash);
 
-  // Modal states
+  // ============================================================================
+  // MODAL STATES
+  // ============================================================================
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -78,10 +100,14 @@ export function BudgetTrackingTable({
   const [hasDraft, setHasDraft] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Context menu state
+  // ============================================================================
+  // CONTEXT MENU STATE
+  // ============================================================================
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
-  // Filter & Sort states
+  // ============================================================================
+  // FILTER & SORT STATES
+  // ============================================================================
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -91,6 +117,7 @@ export function BudgetTrackingTable({
   const [showHeaderSkeleton, setShowHeaderSkeleton] = useState(true);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin =
     accessCheck?.user?.role === "admin" ||
@@ -103,7 +130,7 @@ export function BudgetTrackingTable({
   useEffect(() => {
     const checkDraft = () => {
       try {
-        const saved = localStorage.getItem(STORAGE_KEYS.FORM_DRAFT);
+        const saved = localStorage.getItem(STORAGE_KEYS.BUDGET_FORM_DRAFT);
         setHasDraft(!!saved);
       } catch (error) {
         setHasDraft(false);
@@ -130,7 +157,9 @@ export function BudgetTrackingTable({
       }
 
       // Priority 2: Fallback to sessionStorage
-      const sessionYear = sessionStorage.getItem(STORAGE_KEYS.YEAR_PREFERENCE);
+      const sessionYear = sessionStorage.getItem(
+        STORAGE_KEYS.BUDGET_YEAR_PREFERENCE
+      );
       if (sessionYear) {
         const year = parseInt(sessionYear);
         if (!isNaN(year)) {
@@ -175,11 +204,11 @@ export function BudgetTrackingTable({
     try {
       const shouldOpenAdd =
         typeof window !== "undefined"
-          ? localStorage.getItem(STORAGE_KEYS.OPEN_ADD)
+          ? localStorage.getItem(STORAGE_KEYS.BUDGET_OPEN_ADD)
           : null;
       if (shouldOpenAdd === "true") {
         setShowAddModal(true);
-        localStorage.removeItem(STORAGE_KEYS.OPEN_ADD);
+        localStorage.removeItem(STORAGE_KEYS.BUDGET_OPEN_ADD);
       }
     } catch (_) {
       // storage unavailable
@@ -210,7 +239,10 @@ export function BudgetTrackingTable({
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowHeaderSkeleton(false), TIMEOUTS.HEADER_SKELETON);
+    const t = setTimeout(
+      () => setShowHeaderSkeleton(false),
+      TIMEOUTS.HEADER_SKELETON
+    );
     return () => clearTimeout(t);
   }, []);
 
@@ -228,15 +260,26 @@ export function BudgetTrackingTable({
     [budgetItems]
   );
 
-  const filteredAndSortedItems = useMemo(() => 
-    applyFilters(budgetItems, createBudgetFilterConfig(
+  const filteredAndSortedItems = useMemo(
+    () =>
+      applyFilters(
+        budgetItems,
+        createBudgetFilterConfig(
+          searchQuery,
+          statusFilter,
+          yearFilter,
+          sortField,
+          sortDirection
+        )
+      ),
+    [
+      budgetItems,
       searchQuery,
       statusFilter,
       yearFilter,
       sortField,
-      sortDirection
-    )),
-    [budgetItems, searchQuery, statusFilter, yearFilter, sortField, sortDirection]
+      sortDirection,
+    ]
   );
 
   const totals = useMemo(
@@ -252,11 +295,15 @@ export function BudgetTrackingTable({
   const isAllSelected =
     filteredAndSortedItems.length > 0 &&
     selectedIds.size === filteredAndSortedItems.length;
+
   const isIndeterminate =
     selectedIds.size > 0 && selectedIds.size < filteredAndSortedItems.length;
 
   const hasActiveFilters = Boolean(
-    searchQuery || statusFilter.length > 0 || yearFilter.length > 0 || sortField
+    searchQuery ||
+      statusFilter.length > 0 ||
+      yearFilter.length > 0 ||
+      sortField
   );
 
   // ============================================================================
@@ -350,7 +397,9 @@ export function BudgetTrackingTable({
 
   const toggleStatusFilter = (status: string) => {
     setStatusFilter((prev) =>
-      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
     );
   };
 
@@ -392,11 +441,11 @@ export function BudgetTrackingTable({
       toast.error("No items selected");
       return;
     }
-
     const success = await withMutationHandling(
-      () => bulkMoveToTrash({
-        ids: Array.from(selectedIds) as Id<"budgetItems">[],
-      }),
+      () =>
+        bulkMoveToTrash({
+          ids: Array.from(selectedIds) as Id<"budgetItems">[],
+        }),
       {
         loadingMessage: `Moving ${selectedIds.size} item(s) to trash...`,
         successMessage: `Successfully moved ${selectedIds.size} item(s) to trash`,
@@ -427,150 +476,38 @@ export function BudgetTrackingTable({
     <>
       <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 space-y-4 no-print">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-[200px]">
-              {selectedIds.size > 0 ? (
-                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                    {selectedIds.size} Selected
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedIds(new Set())}
-                    className="text-zinc-500 text-xs h-7 hover:text-zinc-900"
-                  >
-                    Clear
-                  </Button>
-                </div>
-              ) : (
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  Budget Items
-                </h3>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 flex-1 justify-end">
-              <DashboardToolbar
-                title=""
-                actions={
-                  <>
-                    <Button
-                      onClick={onOpenTrash}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-800"
-                      title="View Recycle Bin"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span className="hidden sm:inline">Recycle Bin</span>
-                    </Button>
-                    {isAdmin && (
-                      <Button
-                        onClick={() => setShowShareModal(true)}
-                        variant="secondary"
-                        size="sm"
-                        className="relative gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                        title="Share & Manage Access"
-                      >
-                        <Share2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Share</span>
-                        {pendingRequestsCount !== undefined &&
-                          pendingRequestsCount > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                              {pendingRequestsCount > 9
-                                ? "9+"
-                                : pendingRequestsCount}
-                            </span>
-                          )}
-                      </Button>
-                    )}
-                    {expandButton}
-                    <Button
-                      onClick={toggleSearch}
-                      variant="outline"
-                      size="sm"
-                      className={`${
-                        isSearchVisible
-                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
-                          : "bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                      } gap-2`}
-                      title={isSearchVisible ? "Hide Search" : "Show Search"}
-                    >
-                      <Search className="w-4 h-4" />
-                      <span className="hidden sm:inline">Search</span>
-                    </Button>
-                    <Button
-                      onClick={handlePrint}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                      title="Print"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                        />
-                      </svg>
-                      <span className="hidden sm:inline">Print</span>
-                    </Button>
-                    {selectedIds.size > 0 && (
-                      <Button
-                        onClick={handleBulkTrash}
-                        variant="destructive"
-                        size="sm"
-                        className="gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        To Trash ({selectedIds.size})
-                      </Button>
-                    )}
-                    {onAdd && (
-                      <Button
-                        onClick={() => setShowAddModal(true)}
-                        size="sm"
-                        className="flex-1 sm:flex-none text-white"
-                        style={{ backgroundColor: accentColorValue }}
-                      >
-                        <span className="hidden sm:inline">Add New Item</span>
-                        <span className="sm:hidden">Add</span>
-                      </Button>
-                    )}
-                  </>
-                }
-              />
-            </div>
-          </div>
-
-          {/* Search Filters */}
-          {isSearchVisible && (
-            <BudgetSearchFilters
-              searchQuery={searchQuery}
-              statusFilter={statusFilter}
-              yearFilter={yearFilter}
-              accentColorValue={accentColorValue}
-              hasActiveFilters={hasActiveFilters}
-              onSearchChange={setSearchQuery}
-              onClearFilters={clearAllFilters}
-              onToggleStatusFilter={toggleStatusFilter}
-              onToggleYearFilter={toggleYearFilter}
-            />
-          )}
-        </div>
-
+        <BudgetTableToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchInputRef={searchInputRef}
+          selectedCount={selectedIds.size}
+          onClearSelection={() => setSelectedIds(new Set())}
+          isAdmin={isAdmin}
+          pendingRequestsCount={pendingRequestsCount}
+          onOpenShare={() => setShowShareModal(true)}
+          onOpenTrash={onOpenTrash || (() => {})}
+          onBulkTrash={handleBulkTrash}
+          onAddNew={onAdd ? () => setShowAddModal(true) : undefined}
+          onToggleSearch={toggleSearch}
+          onPrint={handlePrint}
+          isSearchVisible={isSearchVisible}
+          expandButton={expandButton}
+          accentColor={accentColorValue}
+        />
+        {/* Search Filters */}
+        {isSearchVisible && (
+          <BudgetSearchFilters
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            yearFilter={yearFilter}
+            accentColorValue={accentColorValue}
+            hasActiveFilters={hasActiveFilters}
+            onSearchChange={setSearchQuery}
+            onClearFilters={clearAllFilters}
+            onToggleStatusFilter={toggleStatusFilter}
+            onToggleYearFilter={toggleYearFilter}
+          />
+        )}
         {/* Print Header */}
         <div className="hidden print-only p-4 border-b border-zinc-900">
           <h2 className="text-xl font-bold text-zinc-900 mb-2">
@@ -587,7 +524,6 @@ export function BudgetTrackingTable({
             })}
           </p>
         </div>
-
         {/* Table */}
         <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
           <table className="w-full">
@@ -633,7 +569,6 @@ export function BudgetTrackingTable({
           </table>
         </div>
       </div>
-
       {/* Context Menu */}
       {contextMenu && (
         <BudgetContextMenu
@@ -647,7 +582,6 @@ export function BudgetTrackingTable({
           onDelete={handleDelete}
         />
       )}
-
       {/* Modals */}
       {showAddModal && (
         <Modal
@@ -668,7 +602,6 @@ export function BudgetTrackingTable({
           />
         </Modal>
       )}
-
       {showEditModal && selectedItem && (
         <Modal
           isOpen={showEditModal}
@@ -689,7 +622,6 @@ export function BudgetTrackingTable({
           />
         </Modal>
       )}
-
       {showDeleteModal && selectedItem && (
         <ConfirmationModal
           isOpen={showDeleteModal}
@@ -705,7 +637,6 @@ export function BudgetTrackingTable({
           variant="danger"
         />
       )}
-
       {showShareModal && (
         <BudgetShareModal
           isOpen={showShareModal}

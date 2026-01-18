@@ -1,4 +1,5 @@
 // app/dashboard/project/budget/utils/index.ts
+// KEEP AS IS - Already migrated to shared utilities in Phase 1
 
 // Re-export shared utilities
 export {

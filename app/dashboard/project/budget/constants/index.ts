@@ -1,4 +1,5 @@
 // app/dashboard/project/budget/constants/index.ts
+// UPDATED FILE - Keep existing and add table columns
 
 // Re-export shared constants
 export {
@@ -33,50 +34,66 @@ export const ACCESS_LEVELS = [
   { value: "admin", label: "Admin" },
 ] as const;
 
+// ============================================================================
+// TABLE COLUMNS
+// ============================================================================
+
 export const TABLE_COLUMNS = [
-  { key: "particular", label: "Particulars", sortable: true, align: "left" },
-  { key: "year", label: "Year", sortable: false, align: "center" },
-  { key: "status", label: "Status", sortable: false, align: "center" },
+  { key: "particular", label: "Particulars", sortable: true, filterable: false, align: "left" as const },
+  { key: "year", label: "Year", sortable: false, filterable: true, align: "center" as const },
+  { key: "status", label: "Status", sortable: false, filterable: true, align: "center" as const },
   {
     key: "totalBudgetAllocated",
     label: "Budget Allocated",
     sortable: true,
-    align: "right",
+    filterable: false,
+    align: "right" as const,
   },
   {
     key: "obligatedBudget",
     label: "Obligated Budget",
     sortable: true,
-    align: "right",
+    filterable: false,
+    align: "right" as const,
   },
   {
     key: "totalBudgetUtilized",
     label: "Budget Utilized",
     sortable: true,
-    align: "right",
+    filterable: false,
+    align: "right" as const,
   },
   {
     key: "utilizationRate",
     label: "Utilization Rate",
     sortable: true,
-    align: "right",
+    filterable: false,
+    align: "right" as const,
   },
   {
     key: "projectCompleted",
     label: "Completed",
     sortable: true,
-    align: "right",
+    filterable: false,
+    align: "right" as const,
   },
   {
     key: "projectDelayed",
     label: "Delayed",
     sortable: true,
-    align: "right",
+    filterable: false,
+    align: "right" as const,
   },
   {
     key: "projectsOnTrack",
     label: "Ongoing",
     sortable: true,
-    align: "right",
+    filterable: false,
+    align: "right" as const,
   },
 ] as const;
+
+export const ANIMATION = {
+  NEW_ITEM_HIGHLIGHT_DURATION: 2000,
+  SCROLL_DELAY: 100,
+} as const;
