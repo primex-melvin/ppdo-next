@@ -4,7 +4,7 @@
 
 import { forwardRef } from "react";
 import { Pin, PinOff, Edit, Trash2 } from "lucide-react";
-import { BudgetItem } from "@/app/dashboard/project/budget/types";
+import { BudgetItem } from "@/app/dashboard/project/[year]/types";
 
 interface BudgetContextMenuProps {
   position: { x: number; y: number };

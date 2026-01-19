@@ -35,7 +35,7 @@ import {
   AccessRequest, 
   UserWithAccessInfo 
 } from "@/types/access.types";
-import { UserFromList } from "@/app/dashboard/project/budget/types";
+import { UserFromList } from "@/app/dashboard/project/[year]/types";
 
 // ============================================================================
 // TYPES

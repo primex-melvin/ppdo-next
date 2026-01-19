@@ -82,6 +82,30 @@ h6 {
   }
 }
 
+/* 🆕 Fiscal Year Card Animation */
+@keyframes fadeInSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🆕 Modal Form Slide Animation */
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes spinAndScale {
   from {
     opacity: 0;

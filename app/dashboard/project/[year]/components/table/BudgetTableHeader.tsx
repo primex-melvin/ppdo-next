@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { SortDirection, SortField } from "@/app/dashboard/project/budget/types";
+import { SortDirection, SortField } from "@/app/dashboard/project/[year]/types";
 
 interface BudgetTableHeaderProps {
   isAdmin: boolean;

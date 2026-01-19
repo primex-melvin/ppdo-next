@@ -149,7 +149,6 @@ export default function YearBudgetPage({ params }: PageProps) {
       <ExpandModal
         isOpen={isExpandModalOpen}
         onClose={() => setIsExpandModalOpen(false)}
-        year={year}
       />
     </>
   );
