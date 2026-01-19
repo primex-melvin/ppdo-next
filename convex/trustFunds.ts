@@ -103,7 +103,7 @@ export const create = mutation({
   args: {
     projectTitle: v.string(),
     officeInCharge: v.string(),
-    dateReceived: v.number(),
+    dateReceived: v.optional(v.number()), // ✅ CHANGED: Made optional
     received: v.number(),
     obligatedPR: v.optional(v.number()),
     utilized: v.number(),
@@ -148,7 +148,7 @@ export const create = mutation({
       projectTitle: args.projectTitle,
       officeInCharge: args.officeInCharge,
       departmentId: departmentId,
-      dateReceived: args.dateReceived,
+      dateReceived: args.dateReceived, // ✅ Can now be undefined
       received: args.received,
       obligatedPR: args.obligatedPR,
       utilized: args.utilized,
@@ -186,7 +186,7 @@ export const update = mutation({
     id: v.id("trustFunds"),
     projectTitle: v.string(),
     officeInCharge: v.string(),
-    dateReceived: v.number(),
+    dateReceived: v.optional(v.number()), // ✅ CHANGED: Made optional
     received: v.number(),
     obligatedPR: v.optional(v.number()),
     utilized: v.number(),
@@ -242,7 +242,7 @@ export const update = mutation({
       projectTitle: args.projectTitle,
       officeInCharge: args.officeInCharge,
       departmentId: departmentId,
-      dateReceived: args.dateReceived,
+      dateReceived: args.dateReceived, // ✅ Can now be undefined
       received: args.received,
       obligatedPR: args.obligatedPR,
       utilized: args.utilized,

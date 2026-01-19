@@ -117,6 +117,7 @@ export default function YearTrustFundsPage({ params }: PageProps) {
 
       <TrustFundsTable
         data={yearFilteredFunds}
+        year={year} // ✅ ADDED: Pass year from URL
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}

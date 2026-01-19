@@ -7,7 +7,7 @@ export interface TrustFund {
   projectTitle: string;
   officeInCharge: string;
   departmentId?: string;
-  dateReceived: number;
+  dateReceived?: number; // ✅ CHANGED: Made optional to match schema
   received: number;
   obligatedPR?: number;
   utilized: number;
@@ -36,7 +36,7 @@ export interface TrustFundFromDB {
   projectTitle: string;
   officeInCharge: string;
   departmentId?: Id<"departments">;
-  dateReceived: number;
+  dateReceived?: number; // ✅ CHANGED: Made optional to match schema
   received: number;
   obligatedPR?: number;
   utilized: number;
@@ -62,7 +62,7 @@ export interface TrustFundFromDB {
 export interface TrustFundFormData {
   projectTitle: string;
   officeInCharge: string;
-  dateReceived: number;
+  dateReceived?: number; // ✅ CHANGED: Made optional to match schema
   received: number;
   obligatedPR?: number;
   utilized: number;
@@ -101,14 +101,15 @@ export interface TrustFundContextMenuState {
   entity: TrustFund;
 }
 
-// Helper function to convert DB format to frontend format
+// ✅ FIXED: Helper function to convert DB format to frontend format
+// Now handles optional dateReceived field properly
 export function convertTrustFundFromDB(dbFund: TrustFundFromDB): TrustFund {
   return {
     id: dbFund._id,
     projectTitle: dbFund.projectTitle,
     officeInCharge: dbFund.officeInCharge,
     departmentId: dbFund.departmentId,
-    dateReceived: dbFund.dateReceived,
+    dateReceived: dbFund.dateReceived, // ✅ Now properly optional
     received: dbFund.received,
     obligatedPR: dbFund.obligatedPR,
     utilized: dbFund.utilized,

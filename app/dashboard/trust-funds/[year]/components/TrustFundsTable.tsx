@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useAccentColor } from "@/contexts/AccentColorContext";
+import { TrustFundTableToolbar } from "./TrustFundTableToolbar";
 import {
   Table,
   TableBody,
@@ -50,12 +51,13 @@ type Props = {
   onEdit?: (id: string, data: any) => void;
   onDelete?: (id: string) => void;
   onOpenTrash?: () => void;
+  year?: number; // ✅ ADDED: Accept year prop
 };
 
 type SortField = "projectTitle" | "officeInCharge" | "dateReceived" | "received" | "utilized" | "balance" | null;
 type SortDirection = "asc" | "desc" | null;
 
-export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: Props) {
+export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, year }: Props) {
   const { accentColorValue } = useAccentColor();
   
   // Mutations
@@ -75,10 +77,11 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   
-  // 🆕 ADDED: Activity Log State
+  // Activity Log State
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   const [selectedLogItem, setSelectedLogItem] = useState<TrustFund | null>(null);
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const isAdmin = currentUser?.role === "admin" || currentUser?.role === "super_admin";
 
   // Filter and sort data
@@ -188,10 +191,47 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
     setShowDeleteModal(true);
   };
 
-  // 🆕 ADDED: View Activity Log Handler
   const handleViewLog = (item: TrustFund) => {
     setSelectedLogItem(item);
     setLogSheetOpen(true);
+  };
+
+  const handleExportCSV = () => {
+    try {
+      // Simple CSV export
+      const headers = ["Project Title", "Office In-Charge", "Date Received", "Received", "Obligated PR", "Utilized", "Balance", "Remarks"];
+      const rows = filteredAndSortedData.map(item => [
+        item.projectTitle,
+        item.officeInCharge,
+        formatDate(item.dateReceived),
+        item.received,
+        item.obligatedPR || 0,
+        item.utilized,
+        item.balance,
+        item.remarks || ""
+      ]);
+      
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+      ].join("\n");
+      
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `trust-funds-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("CSV exported successfully");
+    } catch (error) {
+      toast.error("Failed to export CSV");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const formatCurrency = (amount: number) => {
@@ -203,7 +243,9 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
     }).format(amount);
   };
 
-  const formatDate = (timestamp: number) => {
+  // ✅ FIXED: Handle optional dateReceived
+  const formatDate = (timestamp?: number) => {
+    if (!timestamp) return "—"; // Return dash if no date
     return new Date(timestamp).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -241,9 +283,9 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
                 </Button>
               )}
 
-              <Button variant="outline" size="icon">
+              {/* <Button variant="outline" size="icon">
                 <Search className="h-4 w-4" />
-              </Button>
+              </Button> */}
 
               <Button variant="outline" size="icon" onClick={() => window.print()}>
                 <Printer className="h-4 w-4" />
@@ -413,7 +455,6 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {/* 🆕 ADDED: View Activity Log */}
                               <DropdownMenuItem onClick={() => handleViewLog(item)}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Activity Log
@@ -488,6 +529,7 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
           size="xl"
         >
           <TrustFundForm
+            year={year} // ✅ ADDED: Pass year to form
             onSave={(data) => {
               if (onAdd) onAdd(data);
               setShowAddModal(false);
@@ -509,6 +551,7 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
         >
           <TrustFundForm
             trustFund={selectedItem}
+            year={year} // ✅ ADDED: Pass year to form
             onSave={(data) => {
               if (onEdit) onEdit(selectedItem.id, data);
               setShowEditModal(false);
@@ -541,7 +584,7 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash }: 
         />
       )}
 
-      {/* 🆕 ADDED: Activity Log Sheet */}
+      {/* Activity Log Sheet */}
       {selectedLogItem && (
         <ActivityLogSheet
           type="trustFund"

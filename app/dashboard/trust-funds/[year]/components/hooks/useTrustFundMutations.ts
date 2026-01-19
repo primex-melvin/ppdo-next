@@ -15,10 +15,11 @@ export function useTrustFundMutations() {
     try {
       const toastId = toast.loading("Creating trust fund...");
       
+      // ✅ dateReceived is now optional in both TrustFundFormData and the mutation
       await createTrustFund({
         projectTitle: data.projectTitle,
         officeInCharge: data.officeInCharge,
-        dateReceived: data.dateReceived,
+        dateReceived: data.dateReceived, // Can be undefined
         received: data.received,
         obligatedPR: data.obligatedPR,
         utilized: data.utilized,
@@ -40,11 +41,12 @@ export function useTrustFundMutations() {
     try {
       const toastId = toast.loading("Updating trust fund...");
       
+      // ✅ dateReceived is now optional in both TrustFundFormData and the mutation
       await updateTrustFund({
         id: id as Id<"trustFunds">,
         projectTitle: data.projectTitle,
         officeInCharge: data.officeInCharge,
-        dateReceived: data.dateReceived,
+        dateReceived: data.dateReceived, // Can be undefined
         received: data.received,
         obligatedPR: data.obligatedPR,
         utilized: data.utilized,
