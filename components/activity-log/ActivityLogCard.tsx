@@ -1,3 +1,5 @@
+// components/ActivityLogSheet/ActivityLogCard.tsx - COMPLETE UPDATED FILE
+
 import { formatDistanceToNow } from "date-fns";
 import { ArrowRight, FileSpreadsheet } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,10 +13,12 @@ type ActivityLogCardProps = {
   accentColorValue: string;
 };
 
+// 🆕 UPDATED: Added trustFund tracked fields
 const trackedFieldsByType: Record<ActivityLogType, string[]> = {
   breakdown: ["allocatedBudget", "status", "projectAccomplishment", "remarks"],
   project: ["totalBudgetAllocated", "targetDateCompletion", "remarks", "implementingOffice"],
   budget: ["totalBudgetAllocated", "particulars", "year", "notes"],
+  trustFund: ["received", "utilized", "balance", "officeInCharge", "remarks"], // 🆕 ADDED
 };
 
 export function ActivityLogCard({
@@ -72,10 +76,13 @@ export function ActivityLogCard({
           ) : (
             <>
               <p>
+                {/* 🆕 UPDATED: Added trustFund case */}
                 {type === "breakdown" ? (
                   <>Processed breakdown for <strong>{implementingOffice}</strong></>
                 ) : type === "project" ? (
                   <>Processed project <strong>{activity.particulars}</strong></>
+                ) : type === "trustFund" ? (
+                  <>Processed trust fund <strong>{activity.projectTitle}</strong></>
                 ) : (
                   <>Processed budget item <strong>{activity.particulars}</strong></>
                 )}
@@ -168,7 +175,7 @@ function buildChangeRows(activity: UnifiedActivityLog, type: ActivityLogType) {
       key,
       label: key.replace(/([A-Z])/g, " $1").trim(),
       value:
-        typeof current[key] === "number" && (key.includes("Budget") || key.includes("Allocated"))
+        typeof current[key] === "number" && (key.includes("Budget") || key.includes("Allocated") || key.includes("received") || key.includes("utilized") || key.includes("balance"))
           ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(current[key])
           : String(current[key] || "Empty"),
     }));

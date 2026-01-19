@@ -43,6 +43,7 @@ import type * as lib_projectActivityLogger from "../lib/projectActivityLogger.js
 import type * as lib_projectAggregation from "../lib/projectAggregation.js";
 import type * as lib_rbac from "../lib/rbac.js";
 import type * as lib_statusValidation from "../lib/statusValidation.js";
+import type * as lib_trustFundActivityLogger from "../lib/trustFundActivityLogger.js";
 import type * as loginTrail from "../loginTrail.js";
 import type * as media from "../media.js";
 import type * as myFunctions from "../myFunctions.js";
@@ -80,8 +81,11 @@ import type * as schema_projectParticulars from "../schema/projectParticulars.js
 import type * as schema_projects from "../schema/projects.js";
 import type * as schema_security from "../schema/security.js";
 import type * as schema_tableSettings from "../schema/tableSettings.js";
+import type * as schema_trustFunds from "../schema/trustFunds.js";
 import type * as schema_users from "../schema/users.js";
 import type * as tableSettings from "../tableSettings.js";
+import type * as trustFundActivities from "../trustFundActivities.js";
+import type * as trustFunds from "../trustFunds.js";
 import type * as userManagement from "../userManagement.js";
 import type * as users from "../users.js";
 
@@ -127,6 +131,7 @@ declare const fullApi: ApiFromModules<{
   "lib/projectAggregation": typeof lib_projectAggregation;
   "lib/rbac": typeof lib_rbac;
   "lib/statusValidation": typeof lib_statusValidation;
+  "lib/trustFundActivityLogger": typeof lib_trustFundActivityLogger;
   loginTrail: typeof loginTrail;
   media: typeof media;
   myFunctions: typeof myFunctions;
@@ -164,8 +169,11 @@ declare const fullApi: ApiFromModules<{
   "schema/projects": typeof schema_projects;
   "schema/security": typeof schema_security;
   "schema/tableSettings": typeof schema_tableSettings;
+  "schema/trustFunds": typeof schema_trustFunds;
   "schema/users": typeof schema_users;
   tableSettings: typeof tableSettings;
+  trustFundActivities: typeof trustFundActivities;
+  trustFunds: typeof trustFunds;
   userManagement: typeof userManagement;
   users: typeof users;
 }>;

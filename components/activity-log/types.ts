@@ -1,6 +1,9 @@
+// components/activity-log/types.ts
+
 import { ReactNode } from "react";
 
-export type ActivityLogType = "breakdown" | "project" | "budget";
+// 🆕 UPDATED: Added "trustFund" to type union
+export type ActivityLogType = "breakdown" | "project" | "budget" | "trustFund";
 
 export type UnifiedActivityLog = {
   _id: string;
@@ -14,6 +17,9 @@ export type UnifiedActivityLog = {
   projectName?: string;
   municipality?: string;
   particulars?: string;
+  // 🆕 ADDED: Trust fund specific fields
+  projectTitle?: string;
+  officeInCharge?: string;
 };
 
 export interface ActivityLogSheetProps {

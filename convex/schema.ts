@@ -27,6 +27,7 @@ import { implementingAgencyTables } from "./schema/implementingAgencies";
 import { projectCategoryTables } from "./schema/projectCategories"; // 🆕 ADDED
 import { budgetParticularSharedAccessTables } from "./schema/budgetParticularSharedAccess";
 import { fiscalYearTables } from "./schema/fiscalYears";
+import { trustFundTables } from "./schema/trustFunds";
 
 export default defineSchema({
   ...authTables,
@@ -55,4 +56,5 @@ export default defineSchema({
   ...projectCategoryTables,
   ...budgetParticularSharedAccessTables,
   ...fiscalYearTables,
+  ...trustFundTables,
 });

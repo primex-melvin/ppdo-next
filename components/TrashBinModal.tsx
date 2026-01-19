@@ -1,3 +1,5 @@
+// components/TrashBinModal.tsx - COMPLETE UPDATED FILE
+
 "use client";
 
 import { useState } from "react";
@@ -23,7 +25,8 @@ import {
 import { toast } from "sonner";
 import { useAccentColor } from "../contexts/AccentColorContext";
 
-type EntityType = "budget" | "project" | "breakdown";
+// 🆕 UPDATED: Added "trustFund" to type union
+type EntityType = "budget" | "project" | "breakdown" | "trustFund";
 
 interface TrashBinModalProps {
   isOpen: boolean;
@@ -37,31 +40,35 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 1. Dynamic Queries
+  // 🆕 UPDATED: Dynamic Queries with Trust Fund support
   const trashItems = useQuery(
     type === "budget" ? api.budgetItems.getTrash :
     type === "project" ? api.projects.getTrash :
+    type === "trustFund" ? api.trustFunds.getTrash :
     api.govtProjects.getTrash
   );
 
-  // 2. Dynamic Mutations
+  // 🆕 UPDATED: Dynamic Mutations with Trust Fund support
   const restoreMutation = useMutation(
     type === "budget" ? api.budgetItems.restoreFromTrash :
     type === "project" ? api.projects.restoreFromTrash :
+    type === "trustFund" ? api.trustFunds.restoreFromTrash :
     api.govtProjects.restoreFromTrash
   );
 
   const deleteMutation = useMutation(
     type === "budget" ? api.budgetItems.remove :
     type === "project" ? api.projects.remove :
+    type === "trustFund" ? api.trustFunds.remove :
     api.govtProjects.deleteProjectBreakdown
   );
 
-  // 3. Filter items based on search
+  // 🆕 UPDATED: Filter items with Trust Fund support
   const filteredItems = trashItems?.filter((item: any) => {
     const term = searchQuery.toLowerCase();
     if (type === "budget") return item.particulars.toLowerCase().includes(term);
     if (type === "project") return item.particulars.toLowerCase().includes(term) || item.implementingOffice.toLowerCase().includes(term);
+    if (type === "trustFund") return item.projectTitle.toLowerCase().includes(term) || item.officeInCharge.toLowerCase().includes(term);
     if (type === "breakdown") return item.projectName.toLowerCase().includes(term) || item.implementingOffice.toLowerCase().includes(term);
     return false;
   }) || [];
@@ -89,20 +96,19 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
   const formatDate = (ts?: number) => 
     ts ? new Date(ts).toLocaleDateString() : "N/A";
 
-  // --- ACTIONS (FIXED) ---
-
+  // 🆕 UPDATED: ACTIONS with Trust Fund support
   const handleRestore = async (ids: string[]) => {
     if (!ids.length) return;
     setIsProcessing(true);
     try {
-      // Execute restore one by one with CORRECT arguments per type
       await Promise.all(ids.map(id => {
         if (type === "budget") {
           return restoreMutation({ id: id as Id<"budgetItems"> });
         } else if (type === "project") {
           return restoreMutation({ id: id as Id<"projects"> });
+        } else if (type === "trustFund") {
+          return restoreMutation({ id: id as Id<"trustFunds"> });
         } else {
-          // Breakdown usually uses breakdownId, ensure backend matches this key
           return restoreMutation({ breakdownId: id as Id<"govtProjectBreakdowns"> });
         }
       }));
@@ -123,12 +129,13 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
     
     setIsProcessing(true);
     try {
-      // Execute delete one by one with CORRECT arguments per type
       await Promise.all(ids.map(id => {
         if (type === "budget") {
           return deleteMutation({ id: id as Id<"budgetItems"> });
         } else if (type === "project") {
           return deleteMutation({ id: id as Id<"projects"> });
+        } else if (type === "trustFund") {
+          return deleteMutation({ id: id as Id<"trustFunds"> });
         } else {
           return deleteMutation({ breakdownId: id as Id<"govtProjectBreakdowns"> });
         }
@@ -144,16 +151,27 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
     }
   };
 
+  // 🆕 UPDATED: Title with Trust Fund support
+  const getTitle = () => {
+    switch (type) {
+      case "budget": return "Budget Items";
+      case "project": return "Projects";
+      case "trustFund": return "Trust Funds";
+      case "breakdown": return "Breakdowns";
+      default: return "Items";
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-  className="w-[95vw] h-[90vh] flex flex-col bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-  style={{ maxWidth: '1200px', maxHeight: '900px' }}
->
+        className="w-[95vw] h-[90vh] flex flex-col bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+        style={{ maxWidth: '1200px', maxHeight: '900px' }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Trash2 className="w-5 h-5 text-zinc-500" />
-            Trash Bin: {type === "budget" ? "Budget Items" : type === "project" ? "Projects" : "Breakdowns"}
+            Trash Bin: {getTitle()}
           </DialogTitle>
           <DialogDescription>
             Items in the trash can be restored or permanently deleted. 
@@ -245,8 +263,10 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {/* 🆕 UPDATED: Display trust fund title */}
                         {type === "budget" ? item.particulars : 
                          type === "project" ? item.particulars : 
+                         type === "trustFund" ? item.projectTitle :
                          item.projectName || item.projectTitle || "Untitled"}
                       </div>
                       <div className="text-xs text-zinc-500">
@@ -254,16 +274,20 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                      {item.implementingOffice || "-"}
+                      {/* 🆕 UPDATED: Display trust fund office */}
+                      {type === "trustFund" ? item.officeInCharge : item.implementingOffice || "-"}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                      {formatCurrency(item.totalBudgetAllocated || item.allocatedBudget)}
+                      {/* 🆕 UPDATED: Display trust fund received amount */}
+                      {formatCurrency(
+                        type === "trustFund" ? item.received : 
+                        item.totalBudgetAllocated || item.allocatedBudget
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right text-zinc-500 text-xs">
                       {formatDate(item.deletedAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {/* REMOVED opacity-0 logic so buttons are always visible */}
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => handleRestore([item._id])}

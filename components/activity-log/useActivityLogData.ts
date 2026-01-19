@@ -1,3 +1,5 @@
+// components/ActivityLogSheet/useActivityLogData.ts - COMPLETE UPDATED FILE
+
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -64,6 +66,19 @@ export function useActivityLogData({
     type === "budget" && !entityId ? { limit: loadedCount } : "skip"
   );
 
+  // 🆕 ADDED: Trust Fund logs
+  const trustFundLogs = useQuery(
+    api.trustFundActivities.getByTrustFundId,
+    type === "trustFund" && entityId
+      ? { trustFundId: entityId as Id<"trustFunds">, limit: loadedCount }
+      : "skip"
+  );
+
+  const allTrustFundLogs = useQuery(
+    api.trustFundActivities.list,
+    type === "trustFund" && !entityId ? { limit: loadedCount } : "skip"
+  );
+
   let activities: UnifiedActivityLog[] = [];
   let isLoading = false;
 
@@ -80,6 +95,16 @@ export function useActivityLogData({
     } else {
       activities = (allBudgetLogs || []) as UnifiedActivityLog[];
       isLoading = allBudgetLogs === undefined;
+    }
+  } 
+  // 🆕 ADDED: Trust Fund case
+  else if (type === "trustFund") {
+    if (entityId) {
+      activities = (trustFundLogs || []) as UnifiedActivityLog[];
+      isLoading = trustFundLogs === undefined;
+    } else {
+      activities = (allTrustFundLogs || []) as UnifiedActivityLog[];
+      isLoading = allTrustFundLogs === undefined;
     }
   }
 

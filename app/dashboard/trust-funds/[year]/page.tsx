@@ -1,0 +1,156 @@
+// follow this reference for the new dynamic trust-funds, we ned main landing page to display all by years
+// old codes ofapp/dashboard/project/[year]/page.tsx
+
+"use client";
+
+import { use } from "react";
+import { useState, useMemo } from "react";
+import { Expand } from "lucide-react";
+import AccessDeniedPage from "@/components/AccessDeniedPage";
+import { TrashBinModal } from "@/components/TrashBinModal";
+import BudgetStatistics from "./components/BudgetStatistics";
+import { BudgetTrackingTable } from "./components/BudgetTrackingTable";
+import { 
+  ExpandModal, 
+  LoadingState, 
+  useBudgetAccess, 
+  useBudgetData, 
+  useBudgetMutations 
+} from "./components";
+import { Button } from "@/components/ui/button";
+import { YearBudgetPageHeader } from "./components/YearBudgetPageHeader";
+import { BudgetItem } from "./types";
+
+interface PageProps {
+  params: Promise<{ year: string }>;
+}
+
+export default function YearBudgetPage({ params }: PageProps) {
+  const { year: yearParam } = use(params);
+  const year = parseInt(yearParam);
+
+  const { accessCheck, isLoading: isLoadingAccess, canAccess } = useBudgetAccess();
+  const { budgetItems, statistics, isLoading: isLoadingData } = useBudgetData();
+  const { handleAdd, handleEdit, handleDelete } = useBudgetMutations();
+  
+  const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
+  const [showTrashModal, setShowTrashModal] = useState(false);
+
+  // Filter budget items by year
+  const yearFilteredItems = useMemo(() => {
+    if (isNaN(year)) return budgetItems;
+    return budgetItems.filter((item: BudgetItem) => item.year === year);
+  }, [budgetItems, year]);
+
+  // Calculate statistics for filtered items
+  const yearStatistics = useMemo(() => {
+    if (yearFilteredItems.length === 0) {
+      return {
+        totalAllocated: 0,
+        totalUtilized: 0,
+        averageUtilizationRate: 0,
+        totalProjects: 0,
+      };
+    }
+
+    const totalAllocated = yearFilteredItems.reduce(
+      (sum, item) => sum + item.totalBudgetAllocated, 
+      0
+    );
+    const totalUtilized = yearFilteredItems.reduce(
+      (sum, item) => sum + item.totalBudgetUtilized, 
+      0
+    );
+    const averageUtilizationRate = yearFilteredItems.reduce(
+      (sum, item) => sum + item.utilizationRate, 
+      0
+    ) / yearFilteredItems.length;
+
+    return {
+      totalAllocated,
+      totalUtilized,
+      averageUtilizationRate,
+      totalProjects: yearFilteredItems.length,
+    };
+  }, [yearFilteredItems]);
+
+  if (isLoadingAccess) {
+    return <LoadingState message="Checking access permissions..." />;
+  }
+
+  if (!canAccess) {
+    return (
+      <AccessDeniedPage
+        userName={accessCheck?.user?.name || ""}
+        userEmail={accessCheck?.user?.email || ""}
+        departmentName={accessCheck?.department?.name || "Not Assigned"}
+        pageRequested={`Budget Tracking ${year}`}
+      />
+    );
+  }
+
+  if (isLoadingData) {
+    return <LoadingState message={`Loading budget data for ${year}...`} />;
+  }
+
+  // Validate year
+  if (isNaN(year)) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl font-semibold text-red-600 dark:text-red-400 mb-2">
+            Invalid Year
+          </p>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            The year parameter "{yearParam}" is not valid.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <YearBudgetPageHeader year={year} />
+
+      <BudgetStatistics
+        totalAllocated={yearStatistics.totalAllocated}
+        totalUtilized={yearStatistics.totalUtilized}
+        averageUtilizationRate={yearStatistics.averageUtilizationRate}
+        totalProjects={yearStatistics.totalProjects}
+      />
+
+      <div className="mb-6">
+        <BudgetTrackingTable
+          budgetItems={yearFilteredItems}
+          onAdd={handleAdd}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onOpenTrash={() => setShowTrashModal(true)}
+          expandButton={
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Expand table"
+              onClick={() => setIsExpandModalOpen(true)}
+            >
+              <Expand className="w-4 h-4" />
+            </Button>
+          }
+        />
+      </div>
+
+      <TrashBinModal
+        isOpen={showTrashModal}
+        onClose={() => setShowTrashModal(false)}
+        type="budget"
+      />
+
+      <ExpandModal
+        isOpen={isExpandModalOpen}
+        onClose={() => setIsExpandModalOpen(false)}
+      />
+    </>
+  );
+}

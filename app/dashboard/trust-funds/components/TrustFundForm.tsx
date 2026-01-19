@@ -1,0 +1,382 @@
+// app/dashboard/trust-funds/components/TrustFundForm.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useAccentColor } from "@/contexts/AccentColorContext";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { TrustFund } from "@/types/trustFund.types";
+import { ImplementingOfficeSelector } from "../../project/[year]/[particularId]/components/ImplementingOfficeSelector";
+
+const trustFundSchema = z.object({
+  projectTitle: z.string().min(1, { message: "Project title is required" }),
+  officeInCharge: z.string().min(1, { message: "Office in charge is required" }),
+  dateReceived: z.string().min(1, { message: "Date received is required" }),
+  received: z.number().min(0, { message: "Must be 0 or greater" }),
+  obligatedPR: z.number().min(0).optional(),
+  utilized: z.number().min(0),
+  remarks: z.string().optional(),
+  year: z.number().int().min(2000).max(2100).optional(),
+});
+
+type TrustFundFormValues = z.infer<typeof trustFundSchema>;
+
+interface TrustFundFormProps {
+  trustFund?: TrustFund | null;
+  onSave: (data: any) => void;
+  onCancel: () => void;
+}
+
+const formatNumberWithCommas = (value: string): string => {
+  const cleaned = value.replace(/[^\d.]/g, '');
+  const parts = cleaned.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (parts.length > 1) return parts[0] + '.' + parts[1].slice(0, 2);
+  return parts[0];
+};
+
+const parseFormattedNumber = (value: string): number => {
+  const cleaned = value.replace(/,/g, '');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+const formatNumberForDisplay = (value: number): string => {
+  if (value === 0) return '';
+  return new Intl.NumberFormat('en-PH', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+export function TrustFundForm({ trustFund, onSave, onCancel }: TrustFundFormProps) {
+  const { accentColorValue } = useAccentColor();
+  
+  const [displayReceived, setDisplayReceived] = useState("");
+  const [displayObligated, setDisplayObligated] = useState("");
+  const [displayUtilized, setDisplayUtilized] = useState("");
+
+  const form = useForm<TrustFundFormValues>({
+    resolver: zodResolver(trustFundSchema),
+    defaultValues: {
+      projectTitle: trustFund?.projectTitle || "",
+      officeInCharge: trustFund?.officeInCharge || "",
+      dateReceived: trustFund?.dateReceived 
+        ? new Date(trustFund.dateReceived).toISOString().split('T')[0] 
+        : "",
+      received: trustFund?.received || 0,
+      obligatedPR: trustFund?.obligatedPR || undefined,
+      utilized: trustFund?.utilized || 0,
+      remarks: trustFund?.remarks || "",
+      year: trustFund?.year || new Date().getFullYear(),
+    },
+  });
+
+  useEffect(() => {
+    const received = form.getValues("received");
+    const obligated = form.getValues("obligatedPR");
+    const utilized = form.getValues("utilized");
+
+    if (received > 0) setDisplayReceived(formatNumberForDisplay(received));
+    if (obligated && obligated > 0) setDisplayObligated(formatNumberForDisplay(obligated));
+    if (utilized && utilized > 0) setDisplayUtilized(formatNumberForDisplay(utilized));
+  }, []);
+
+  const received = form.watch("received");
+  const utilized = form.watch("utilized");
+  const balance = received - utilized;
+  const utilizationRate = received > 0 ? (utilized / received) * 100 : 0;
+
+  function onSubmit(values: TrustFundFormValues) {
+    const dateReceivedTimestamp = new Date(values.dateReceived).getTime();
+    
+    onSave({
+      projectTitle: values.projectTitle,
+      officeInCharge: values.officeInCharge,
+      dateReceived: dateReceivedTimestamp,
+      received: values.received,
+      obligatedPR: values.obligatedPR && values.obligatedPR > 0 ? values.obligatedPR : undefined,
+      utilized: values.utilized,
+      remarks: values.remarks || undefined,
+      year: values.year || undefined,
+    });
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          name="projectTitle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                Project Title
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Enter project title..."
+                  className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          name="officeInCharge"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                Office In-Charge
+              </FormLabel>
+              <FormControl>
+                <ImplementingOfficeSelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={false}
+                  error={form.formState.errors.officeInCharge?.message}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            name="dateReceived"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                  Date Received
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name="year"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                  Year <span className="text-xs text-zinc-500">(Optional)</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 2024"
+                    min="2000"
+                    max="2100"
+                    className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+                    {...field}
+                    value={field.value || ""}
+                    onChange={(e) => {
+                      const value = e.target.value.trim();
+                      field.onChange(value ? parseInt(value) : undefined);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          name="received"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                Total Received
+              </FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500">
+                    ₱
+                  </span>
+                  <Input
+                    placeholder="0"
+                    className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 pl-8"
+                    value={displayReceived}
+                    onChange={(e) => {
+                      const formatted = formatNumberWithCommas(e.target.value);
+                      setDisplayReceived(formatted);
+                      field.onChange(parseFormattedNumber(formatted));
+                    }}
+                    onBlur={() => {
+                      const numericValue = parseFormattedNumber(displayReceived);
+                      if (numericValue > 0) {
+                        setDisplayReceived(formatNumberForDisplay(numericValue));
+                      } else {
+                        setDisplayReceived("");
+                      }
+                      field.onChange(numericValue);
+                    }}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            name="obligatedPR"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                  Obligated PR <span className="text-xs text-zinc-500">(Optional)</span>
+                </FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500">
+                      ₱
+                    </span>
+                    <Input
+                      placeholder="0"
+                      className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 pl-8"
+                      value={displayObligated}
+                      onChange={(e) => {
+                        const formatted = formatNumberWithCommas(e.target.value);
+                        setDisplayObligated(formatted);
+                        const numericValue = parseFormattedNumber(formatted);
+                        field.onChange(numericValue > 0 ? numericValue : undefined);
+                      }}
+                      onBlur={() => {
+                        const numericValue = parseFormattedNumber(displayObligated);
+                        if (numericValue > 0) {
+                          setDisplayObligated(formatNumberForDisplay(numericValue));
+                        } else {
+                          setDisplayObligated("");
+                        }
+                        field.onChange(numericValue > 0 ? numericValue : undefined);
+                      }}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name="utilized"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                  Utilized
+                </FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500">
+                      ₱
+                    </span>
+                    <Input
+                      placeholder="0"
+                      className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 pl-8"
+                      value={displayUtilized}
+                      onChange={(e) => {
+                        const formatted = formatNumberWithCommas(e.target.value);
+                        setDisplayUtilized(formatted);
+                        field.onChange(parseFormattedNumber(formatted));
+                      }}
+                      onBlur={() => {
+                        const numericValue = parseFormattedNumber(displayUtilized);
+                        if (numericValue > 0) {
+                          setDisplayUtilized(formatNumberForDisplay(numericValue));
+                        } else {
+                          setDisplayUtilized("");
+                        }
+                        field.onChange(numericValue);
+                      }}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Calculated Fields Display */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border">
+          <div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Balance</p>
+            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              ₱{formatNumberForDisplay(balance)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Utilization Rate</p>
+            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              {utilizationRate.toFixed(2)}%
+            </p>
+          </div>
+        </div>
+
+        <FormField
+          name="remarks"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                Remarks <span className="text-xs text-zinc-500">(Optional)</span>
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Add any notes or comments..."
+                  className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 resize-none"
+                  rows={3}
+                  {...field}
+                  value={field.value || ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <Button
+            type="button"
+            onClick={onCancel}
+            variant="ghost"
+            className="text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="text-white"
+            style={{ backgroundColor: accentColorValue }}
+          >
+            {trustFund ? "Update" : "Create"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
