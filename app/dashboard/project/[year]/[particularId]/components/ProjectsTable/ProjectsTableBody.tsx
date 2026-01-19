@@ -8,7 +8,7 @@ interface ProjectsTableBodyProps {
   groupedProjects: [string, GroupedProjects][];
   hiddenColumns: Set<string>;
   selectedIds: Set<string>;
-  newlyAddedProjectId: string | null | undefined; // ✅ FIXED: Allow undefined
+  newlyAddedProjectId: string | null | undefined;
   canManageBulkActions: boolean;
   totalVisibleColumns: number;
   onSelectCategory: (projects: Project[], checked: boolean) => void;
@@ -16,6 +16,8 @@ interface ProjectsTableBodyProps {
   onRowClick: (project: Project, e: React.MouseEvent) => void;
   onContextMenu: (project: Project, e: React.MouseEvent) => void;
   accentColor: string;
+  expandedRemarks: Set<string>; // 🆕 NEW PROP
+  onToggleRemarks: (projectId: string, e: React.MouseEvent) => void; // 🆕 NEW PROP
 }
 
 /**
@@ -33,6 +35,8 @@ export function ProjectsTableBody({
   onRowClick,
   onContextMenu,
   accentColor,
+  expandedRemarks, // 🆕 NEW PROP
+  onToggleRemarks, // 🆕 NEW PROP
 }: ProjectsTableBodyProps) {
   
   // Empty state
@@ -69,6 +73,8 @@ export function ProjectsTableBody({
           onRowClick={onRowClick}
           onContextMenu={onContextMenu}
           accentColor={accentColor}
+          expandedRemarks={expandedRemarks} // 🆕 PASS DOWN
+          onToggleRemarks={onToggleRemarks} // 🆕 PASS DOWN
         />
       ))}
     </tbody>

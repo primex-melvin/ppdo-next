@@ -3,10 +3,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-
 
 import { Header } from "../../components/header/Header";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
@@ -17,15 +16,20 @@ import { AccentColorProvider } from "../../contexts/AccentColorContext";
 import { BreadcrumbProvider } from "../../contexts/BreadcrumbContext";
 import { OnboardingModal } from "@/components/modals/OnboardingModal";
 import { Sidebar } from "../../components/sidebar/Sidebar";
+import { BetaBanner } from "@/components/ui/beta-banner";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const currentUser = useQuery(api.auth.getCurrentUser);
 
   // Get environment variable
   const env = process.env.NEXT_PUBLIC_APP_ENV;
   const shouldShowOnboarding = env === "production";
+
+  // Check if current page should show beta banner
+  const shouldShowBetaBanner = pathname === "/dashboard/particulars";
 
   useEffect(() => {
     if (isLoading) return;
@@ -67,6 +71,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <Header />
+
+        {/* Beta Banner - Only on specific pages */}
+        {shouldShowBetaBanner && (
+          <BetaBanner
+            featureName="Particulars Management"
+            variant="danger"
+            dismissible={false}
+            message="We're actively refining the Particulars Management interface to provide you with the best experience. Your feedback helps us improve!"
+          />
+        )}
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">

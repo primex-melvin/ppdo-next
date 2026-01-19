@@ -1,6 +1,6 @@
 // app/dashboard/project/budget/[particularId]/components/ProjectsTable/ProjectCategoryGroup.tsx
 
-import React, { useRef } from "react";
+import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { Project, ProjectCategory } from "../../types";
@@ -21,6 +21,8 @@ interface ProjectCategoryGroupProps {
   onRowClick: (project: Project, e: React.MouseEvent) => void;
   onContextMenu: (project: Project, e: React.MouseEvent) => void;
   accentColor: string;
+  expandedRemarks: Set<string>; // 🆕 NEW PROP
+  onToggleRemarks: (projectId: string, e: React.MouseEvent) => void; // 🆕 NEW PROP
 }
 
 /**
@@ -40,6 +42,8 @@ export function ProjectCategoryGroup({
   onRowClick,
   onContextMenu,
   accentColor,
+  expandedRemarks, // 🆕 NEW PROP
+  onToggleRemarks, // 🆕 NEW PROP
 }: ProjectCategoryGroupProps) {
   
   // Calculate selection state for this category
@@ -89,6 +93,7 @@ export function ProjectCategoryGroup({
         const isNewProject = project.id === newlyAddedProjectId;
         const isSelected = selectedIds.has(project.id);
         const rowRef = isNewProject ? React.createRef<HTMLTableRowElement>() : undefined;
+        const isExpanded = expandedRemarks.has(project.id); // 🆕 CHECK IF EXPANDED
 
         return (
           <ProjectsTableRow
@@ -103,6 +108,8 @@ export function ProjectCategoryGroup({
             onContextMenu={(e) => onContextMenu(project, e)}
             accentColor={accentColor}
             rowRef={rowRef}
+            isRemarksExpanded={isExpanded} // 🆕 PASS EXPANDED STATE
+            onToggleRemarks={onToggleRemarks} // 🆕 PASS TOGGLE HANDLER
           />
         );
       })}

@@ -86,7 +86,7 @@ export function ParticularPageHeader({
 
           {budgetItemId && (
             <ActivityLogSheet
-              type="budget"
+              type="budgetItem"
               budgetItemId={budgetItemId}
               title={`${particularFullName} History`}
             />

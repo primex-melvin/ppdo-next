@@ -18,10 +18,14 @@ export default function Header() {
     <header className="w-full">
       {/* TOP GOVPH BAR */}
       <div className="w-full bg-[#0a1a0a] text-white text-xs py-2">
-        <div className="max-w-7xl mx-auto px-5 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-5 flex items-center">
           {/* LEFT */}
-          <div className="hidden sm:flex items-center gap-6">
+          <div className="flex-1 flex items-center">
             <span className="font-extrabold text-lg tracking-wide">GOVPH</span>
+          </div>
+
+          {/* RIGHT */}
+          <div className="flex items-center">
             <Link
               href="/signin"
               className="flex items-center gap-1 px-3 hover:underline"
@@ -31,6 +35,7 @@ export default function Header() {
           </div>
         </div>
       </div>
+
 
       {/* GREEN HEADER */}
       <section className="relative w-full bg-[#30ad20] py-6 lg:py-10">

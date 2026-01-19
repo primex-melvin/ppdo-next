@@ -25,7 +25,7 @@ interface Breakdown {
   _id: string;
   projectName: string;
   implementingOffice: string;
-  projectId?: string; // 🔧 CRITICAL: This must be present in data
+  projectId?: string;
   projectTitle?: string;
   allocatedBudget?: number;
   obligatedBudget?: number;
@@ -103,7 +103,6 @@ export function BreakdownHistoryTable({
   const settings = useQuery(api.tableSettings.getSettings, { tableIdentifier });
   const saveSettings = useMutation(api.tableSettings.saveSettings);
 
-  // Get current user to check permissions
   const currentUser = useQuery(api.users.current);
   const canEditLayout = currentUser?.role === "super_admin" || currentUser?.role === "admin";
 
@@ -117,16 +116,13 @@ export function BreakdownHistoryTable({
 
   /* =======================
      NAVIGATION HANDLER
-     🔧 SIMPLIFIED: Just use the projectId from URL params
   ======================= */
   const handleRowClick = (breakdown: Breakdown, event: React.MouseEvent) => {
-    // Prevent navigation if clicking on action buttons
     const target = event.target as HTMLElement;
     if (target.closest('button') || target.closest('[role="menuitem"]')) {
       return;
     }
 
-    // 🔧 DEBUG: Log the breakdown to see if projectId exists
     console.log('Breakdown clicked:', {
       _id: breakdown._id,
       projectId: breakdown.projectId,
@@ -134,12 +130,9 @@ export function BreakdownHistoryTable({
       allKeys: Object.keys(breakdown)
     });
 
-    // Get current URL params - we're already on the project page!
     const particularId = params.particularId as string;
     const projectbreakdownId = params.projectbreakdownId as string;
 
-    // 🔧 CRITICAL: The projectbreakdownId IS the projectId
-    // We need to extract the actual ID from it
     const extractProjectId = (slug: string): string => {
       const parts = slug.split('-');
       for (let i = parts.length - 1; i >= 0; i--) {
@@ -153,13 +146,11 @@ export function BreakdownHistoryTable({
 
     const currentProjectId = extractProjectId(projectbreakdownId);
 
-    // Create slug for the breakdown to use as the new "projectId" segment
     const breakdownSlug = `${(breakdown.projectTitle || breakdown.projectName || 'breakdown')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')}-${breakdown._id}`;
 
-    // Navigate to breakdown detail page (3rd level)
     router.push(`/dashboard/project/budget/${particularId}/${projectbreakdownId}/${breakdownSlug}`);
   };
 
@@ -327,6 +318,26 @@ export function BreakdownHistoryTable({
   }, [breakdowns, search]);
 
   /* =======================
+     CALCULATE TOTALS
+  ======================= */
+
+  const totals = useMemo(() => {
+    const sums: Record<string, number> = {};
+    
+    columns.forEach(col => {
+      if (col.type === "currency" || col.type === "number") {
+        const sum = rows.reduce((acc, row) => {
+          const value = row[col.key];
+          return acc + (typeof value === "number" ? value : 0);
+        }, 0);
+        sums[col.key] = sum;
+      }
+    });
+
+    return sums;
+  }, [rows, columns]);
+
+  /* =======================
      FORMAT
   ======================= */
 
@@ -447,117 +458,159 @@ export function BreakdownHistoryTable({
             No breakdown records found
           </div>
         ) : (
-          rows.map((r, idx) => {
-            const height = rowHeights[r._id] ?? defaultRowHeight;
+          <>
+            {rows.map((r, idx) => {
+              const height = rowHeights[r._id] ?? defaultRowHeight;
 
-            return (
-              <ContextMenu key={r._id}>
-                <ContextMenuTrigger asChild>
-                  <div
-                    className="grid border-b hover:bg-zinc-50 dark:hover:bg-zinc-800 relative bg-white dark:bg-zinc-900 cursor-pointer transition-colors"
-                    style={{ gridTemplateColumns, height }}
-                    onClick={(e) => handleRowClick(r, e)}
-                  >
-                    <div className="text-center border-r text-xs py-2 text-zinc-600 dark:text-zinc-400 relative">
-                      {idx + 1}
-                      {canEditLayout && (
-                        <div
-                          className="absolute bottom-0 left-0 right-0 h-1 cursor-row-resize"
-                          onMouseDown={e => startResizeRow(e, r._id)}
-                        />
-                      )}
-                    </div>
-
-                    {columns.map(c => (
-                      <div
-                        key={c.key}
-                        className={`px-3 py-2 truncate border-r text-zinc-700 dark:text-zinc-300 ${c.align === 'right' ? 'text-right' :
-                            c.align === 'center' ? 'text-center' : 'text-left'
-                          }`}
-                      >
-                        {format(r[c.key], c, r)}
+              return (
+                <ContextMenu key={r._id}>
+                  <ContextMenuTrigger asChild>
+                    <div
+                      className="grid border-b hover:bg-zinc-50 dark:hover:bg-zinc-800 relative bg-white dark:bg-zinc-900 cursor-pointer transition-colors"
+                      style={{ gridTemplateColumns, height }}
+                      onClick={(e) => handleRowClick(r, e)}
+                    >
+                      <div className="text-center border-r text-xs py-2 text-zinc-600 dark:text-zinc-400 relative">
+                        {idx + 1}
+                        {canEditLayout && (
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-1 cursor-row-resize"
+                            onMouseDown={e => startResizeRow(e, r._id)}
+                          />
+                        )}
                       </div>
-                    ))}
 
-                    <div className="flex items-center justify-center gap-2">
-                      {onEdit && (
-                        <button
+                      {columns.map(c => (
+                        <div
+                          key={c.key}
+                          className={`px-3 py-2 truncate border-r text-zinc-700 dark:text-zinc-300 ${c.align === 'right' ? 'text-right' :
+                              c.align === 'center' ? 'text-center' : 'text-left'
+                            }`}
+                        >
+                          {format(r[c.key], c, r)}
+                        </div>
+                      ))}
+
+                      <div className="flex items-center justify-center gap-2">
+                        {onEdit && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(r);
+                            }}
+                            className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded transition-colors"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(r._id);
+                            }}
+                            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </ContextMenuTrigger>
+
+                  <ContextMenuContent className="w-56">
+                    <ContextMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRowClick(r, e as any);
+                      }}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span>View Details</span>
+                    </ContextMenuItem>
+
+                    {onEdit && (
+                      <>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
                             onEdit(r);
                           }}
-                          className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded transition-colors"
-                          title="Edit"
+                          className="flex items-center gap-2 cursor-pointer"
                         >
                           <Edit className="w-4 h-4" />
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button
+                          <span>Edit Breakdown</span>
+                        </ContextMenuItem>
+                      </>
+                    )}
+
+                    {onDelete && (
+                      <>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
                             onDelete(r._id);
                           }}
-                          className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400 transition-colors"
-                          title="Delete"
+                          className="flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </ContextMenuTrigger>
+                          <span>Move to Trash</span>
+                        </ContextMenuItem>
+                      </>
+                    )}
+                  </ContextMenuContent>
+                </ContextMenu>
+              );
+            })}
 
-                <ContextMenuContent className="w-56">
-                  <ContextMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRowClick(r, e as any);
-                    }}
-                    className="flex items-center gap-2 cursor-pointer"
+            {/* TOTALS ROW */}
+            <div
+              className="grid border-t-2 border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 sticky bottom-0"
+              style={{ gridTemplateColumns }}
+            >
+              <div className="text-center border-r text-xs py-3 font-bold text-zinc-700 dark:text-zinc-300">
+                
+              </div>
+
+              {columns.map(c => {
+                let cellContent = "";
+                
+                if (c.type === "currency" && totals[c.key] !== undefined) {
+                  cellContent = new Intl.NumberFormat("en-PH", {
+                    style: "currency",
+                    currency: "PHP",
+                    minimumFractionDigits: 0,
+                  }).format(totals[c.key]);
+                } else if (c.type === "number" && totals[c.key] !== undefined) {
+                  cellContent = `${totals[c.key].toFixed(1)}%`;
+                }
+
+                return (
+                  <div
+                    key={c.key}
+                    className={`px-3 py-3 border-r font-bold text-zinc-700 dark:text-zinc-300 ${
+                      c.align === 'right' ? 'text-right' :
+                      c.align === 'center' ? 'text-center' : 'text-left'
+                    }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span>View Details</span>
-                  </ContextMenuItem>
+                    {cellContent}
+                  </div>
+                );
+              })}
 
-                  {onEdit && (
-                    <>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(r);
-                        }}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>Edit Breakdown</span>
-                      </ContextMenuItem>
-                    </>
-                  )}
-
-                  {onDelete && (
-                    <>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(r._id);
-                        }}
-                        className="flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Move to Trash</span>
-                      </ContextMenuItem>
-                    </>
-                  )}
-                </ContextMenuContent>
-              </ContextMenu>
-            );
-          })
+              <div className="flex items-center justify-center font-bold text-zinc-700 dark:text-zinc-300">
+                TOTAL
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

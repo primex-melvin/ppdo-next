@@ -1,7 +1,7 @@
 // app/dashboard/project/budget/[particularId]/components/ProjectsTable/ProjectsTableRow.tsx
 
-import React from "react";
-import { Pin } from "lucide-react";
+import React, { useState } from "react";
+import { Pin, MoreHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Project } from "../../types";
@@ -18,7 +18,9 @@ interface ProjectsTableRowProps {
   onClick: (e: React.MouseEvent) => void;
   onContextMenu: (e: React.MouseEvent) => void;
   accentColor: string;
-  rowRef?: React.RefObject<HTMLTableRowElement | null>; // ✅ FIXED: Allow null in RefObject
+  rowRef?: React.RefObject<HTMLTableRowElement | null>;
+  isRemarksExpanded?: boolean; // 🆕 NEW PROP
+  onToggleRemarks?: (projectId: string, e: React.MouseEvent) => void; // 🆕 NEW PROP
 }
 
 /**
@@ -36,7 +38,11 @@ export function ProjectsTableRow({
   onContextMenu,
   accentColor,
   rowRef,
+  isRemarksExpanded = false, // 🆕 DEFAULT FALSE
+  onToggleRemarks, // 🆕 NEW PROP
 }: ProjectsTableRowProps) {
+  
+  const [isHoveringRemarks, setIsHoveringRemarks] = useState(false); // 🆕 HOVER STATE
   
   const rowClassName = `
     hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-colors
@@ -166,10 +172,44 @@ export function ProjectsTableRow({
         </td>
       )}
 
-      {/* Remarks */}
+      {/* 🆕 Remarks - WITH EXPAND BUTTON */}
       {!hiddenColumns.has('remarks') && (
-        <td className="px-3 py-3 text-sm text-zinc-500 truncate max-w-[150px]">
-          {project.remarks || "-"}
+        <td 
+          className="px-3 py-3 text-sm text-zinc-500 relative group"
+          onMouseEnter={() => setIsHoveringRemarks(true)}
+          onMouseLeave={() => setIsHoveringRemarks(false)}
+        >
+          <div className="flex items-center gap-2">
+            <span 
+              className={`${
+                isRemarksExpanded 
+                  ? 'whitespace-normal break-words' 
+                  : 'truncate max-w-[150px]'
+              }`}
+              title={!isRemarksExpanded && project.remarks ? project.remarks : undefined}
+            >
+              {project.remarks || "-"}
+            </span>
+            
+            {/* 🆕 ELLIPSIS BUTTON - Shows on hover if there's text */}
+            {project.remarks && project.remarks !== "-" && (
+              <button
+                onClick={(e) => {
+                  if (onToggleRemarks) {
+                    onToggleRemarks(project.id, e);
+                  }
+                }}
+                className={`
+                  no-click flex-shrink-0 p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 
+                  transition-opacity duration-200
+                  ${isHoveringRemarks || isRemarksExpanded ? 'opacity-100' : 'opacity-0'}
+                `}
+                title={isRemarksExpanded ? "Collapse remarks" : "Expand remarks"}
+              >
+                <MoreHorizontal className="w-3.5 h-3.5 text-zinc-400" />
+              </button>
+            )}
+          </div>
         </td>
       )}
     </motion.tr>

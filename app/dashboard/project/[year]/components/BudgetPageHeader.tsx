@@ -13,7 +13,7 @@ export function BudgetPageHeader() {
           Budget Tracking
         </h1>
 
-        <ActivityLogSheet type="budget" title="Global Budget History" />
+        <ActivityLogSheet type="budgetItem" title="Global Budget History" />
       </div>
 
       <p className="text-zinc-600 dark:text-zinc-400">

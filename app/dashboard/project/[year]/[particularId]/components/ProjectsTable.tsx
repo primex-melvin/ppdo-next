@@ -107,6 +107,9 @@ export function ProjectsTable({
   const [contextMenu, setContextMenu] = useState<ProjectContextMenuState | null>(null);
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   const [selectedLogProject, setSelectedLogProject] = useState<Project | null>(null);
+  
+  // 🆕 NEW STATE: Expanded remarks
+  const [expandedRemarks, setExpandedRemarks] = useState<Set<string>>(new Set());
 
   // ==================== COMPUTED VALUES ====================
   const canManageBulkActions = useMemo(() => {
@@ -447,6 +450,18 @@ export function ProjectsTable({
     setShowDeleteModal(true);
   };
 
+  // 🆕 NEW HANDLER: Toggle remarks expansion
+  const handleToggleRemarks = (projectId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click navigation
+    const newExpanded = new Set(expandedRemarks);
+    if (newExpanded.has(projectId)) {
+      newExpanded.delete(projectId);
+    } else {
+      newExpanded.add(projectId);
+    }
+    setExpandedRemarks(newExpanded);
+  };
+
   // ==================== RENDER ====================
 
   return (
@@ -510,6 +525,8 @@ export function ProjectsTable({
               onRowClick={handleRowClick}
               onContextMenu={handleContextMenu}
               accentColor={accentColorValue}
+              expandedRemarks={expandedRemarks}
+              onToggleRemarks={handleToggleRemarks}
             />
 
             {/* Footer */}
