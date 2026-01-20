@@ -161,7 +161,7 @@ export default function ProjectDashboardLanding() {
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-            Fiscal Years
+            Years
           </h1>
           <div className="flex items-center gap-2">
             {sortedYears.length > 0 && (

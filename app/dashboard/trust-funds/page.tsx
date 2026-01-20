@@ -154,7 +154,7 @@ export default function TrustFundsLanding() {
               Trust Funds
             </h1>
             <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-              Select a fiscal year to manage trust funds
+              Select a year to manage trust funds
             </p>
           </div>
           <div className="flex items-center gap-2">
