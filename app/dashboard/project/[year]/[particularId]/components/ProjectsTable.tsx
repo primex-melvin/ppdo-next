@@ -1,9 +1,9 @@
-// app/dashboard/project/budget/[particularId]/components/ProjectsTable.tsx
+// app/dashboard/project/[year]/[particularId]/components/ProjectsTable.tsx
 
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -19,6 +19,7 @@ import { ActivityLogSheet } from "@/components/ActivityLogSheet";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectCategoryCombobox } from "./ProjectCategoryCombobox";
 import { ProjectShareModal } from "./ProjectShareModal";
+import { ProjectCategoryFilter } from "./ProjectsTable/ProjectCategoryFilter";
 import { ProjectsTableToolbar } from "./ProjectsTable/ProjectsTableToolbar";
 import { ProjectsTableHeader } from "./ProjectsTable/ProjectsTableHeader";
 import { ProjectsTableBody } from "./ProjectsTable/ProjectsTableBody";
@@ -62,6 +63,8 @@ export function ProjectsTable({
 }: ProjectsTableProps) {
   const { accentColorValue } = useAccentColor();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // ==================== QUERIES & MUTATIONS ====================
@@ -76,8 +79,6 @@ export function ProjectsTable({
   const bulkMoveToTrash = useMutation(api.projects.bulkMoveToTrash);
   const bulkUpdateCategory = useMutation(api.projects.bulkUpdateCategory);
   const updateProject = useMutation(api.projects.update);
-  
-  // 🆕 NEW MUTATIONS: Auto-Calculate Toggle
   const toggleAutoCalculate = useMutation(api.projects.toggleAutoCalculate);
   const bulkToggleAutoCalculate = useMutation(api.projects.bulkToggleAutoCalculate);
 
@@ -90,8 +91,6 @@ export function ProjectsTable({
   const [showSingleCategoryModal, setShowSingleCategoryModal] = useState(false);
   const [showSearchWarningModal, setShowSearchWarningModal] = useState(false);
   const [showHideAllWarning, setShowHideAllWarning] = useState(false);
-  
-  // 🆕 NEW MODAL STATE: Bulk Auto-Calculate Toggle Dialog
   const [showBulkToggleDialog, setShowBulkToggleDialog] = useState(false);
   const [isBulkToggling, setIsBulkToggling] = useState(false);
 
@@ -109,6 +108,7 @@ export function ProjectsTable({
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [officeFilter, setOfficeFilter] = useState<string[]>([]);
   const [yearFilter, setYearFilter] = useState<number[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]); // 🆕 NEW: Category filter state
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(null);
 
   // ==================== STATE: UI ====================
@@ -117,8 +117,6 @@ export function ProjectsTable({
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   const [selectedLogProject, setSelectedLogProject] = useState<Project | null>(null);
   const [expandedRemarks, setExpandedRemarks] = useState<Set<string>>(new Set());
-  
-  // 🆕 NEW STATE: Track if currently toggling auto-calculate in context menu
   const [isTogglingAutoCalculate, setIsTogglingAutoCalculate] = useState(false);
 
   // ==================== COMPUTED VALUES ====================
@@ -126,9 +124,17 @@ export function ProjectsTable({
     return currentUser?.role === "admin" || currentUser?.role === "super_admin";
   }, [currentUser]);
 
-  // Filter and sort projects
+  // 🆕 Filter by category first
+  const categoryFilteredProjects = useMemo(() => {
+    if (categoryFilter.length === 0) return projects;
+    return projects.filter((project) => 
+      categoryFilter.includes(project.categoryId || "uncategorized")
+    );
+  }, [projects, categoryFilter]);
+
+  // Apply remaining filters and sorting
   const filteredAndSortedProjects = useMemo(() => 
-    applyFilters(projects, createProjectFilterConfig(
+    applyFilters(categoryFilteredProjects, createProjectFilterConfig(
       searchQuery,
       statusFilter,
       yearFilter,
@@ -136,7 +142,7 @@ export function ProjectsTable({
       sortField,
       sortDirection
     )),
-    [projects, searchQuery, statusFilter, yearFilter, officeFilter, sortField, sortDirection]
+    [categoryFilteredProjects, searchQuery, statusFilter, yearFilter, officeFilter, sortField, sortDirection]
   );
 
   // Group projects by category
@@ -160,59 +166,88 @@ export function ProjectsTable({
     col => !hiddenColumns.has(col.id)
   ).length;
 
+  // ==================== URL SYNC HELPER ====================
+  const updateURL = (key: string, values: string[]) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // Remove existing params with this key
+    params.delete(key);
+    
+    // Add new values
+    if (values.length > 0) {
+      values.forEach(value => params.append(key, value));
+    }
+    
+    const newURL = params.toString() 
+      ? `${pathname}?${params.toString()}`
+      : pathname;
+    
+    router.replace(newURL, { scroll: false });
+  };
+
   // ==================== EFFECTS ====================
   
-  // Initialize year filter from URL
+  // 🆕 Initialize category filter from URL (ONLY ON MOUNT)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const yearParam = urlParams.get("year");
+    const categoryParams = searchParams.getAll("category");
+    if (categoryParams.length > 0) {
+      setCategoryFilter(categoryParams);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
-      if (yearParam) {
-        const year = parseInt(yearParam);
-        if (!isNaN(year)) {
-          setYearFilter([year]);
-          return;
-        }
-      }
-
-      const sessionYear = sessionStorage.getItem("budget_year_preference");
-      if (sessionYear) {
-        const year = parseInt(sessionYear);
-        if (!isNaN(year)) {
-          setYearFilter([year]);
-        }
+  // Initialize year filter from URL (ONLY ON MOUNT)
+  useEffect(() => {
+    const yearParams = searchParams.getAll("year");
+    if (yearParams.length > 0) {
+      const years = yearParams.map(y => parseInt(y)).filter(y => !isNaN(y));
+      if (years.length > 0) {
+        setYearFilter(years);
+        return;
       }
     }
-  }, []);
 
-  // Sync year filter to URL
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (yearFilter.length > 0) {
-        const params = new URLSearchParams();
-        yearFilter.forEach(year => params.append("year", String(year)));
-
-        const currentParams = new URLSearchParams(window.location.search);
-        currentParams.forEach((value, key) => {
-          if (key !== "year") {
-            params.append(key, value);
-          }
-        });
-
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        window.history.replaceState(null, "", newUrl);
-      } else {
-        const currentParams = new URLSearchParams(window.location.search);
-        currentParams.delete("year");
-
-        const newUrl = currentParams.toString()
-          ? `${window.location.pathname}?${currentParams.toString()}`
-          : window.location.pathname;
-        window.history.replaceState(null, "", newUrl);
+    const sessionYear = typeof window !== "undefined" 
+      ? sessionStorage.getItem("budget_year_preference")
+      : null;
+    if (sessionYear) {
+      const year = parseInt(sessionYear);
+      if (!isNaN(year)) {
+        setYearFilter([year]);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+
+  // 🆕 Sync category filter to URL (skip if matching URL)
+  useEffect(() => {
+    const currentParams = searchParams.getAll("category");
+    const isSame = currentParams.length === categoryFilter.length &&
+      currentParams.every(p => categoryFilter.includes(p));
+    
+    if (!isSame) {
+      updateURL("category", categoryFilter);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryFilter]);
+
+  // Sync year filter to URL (skip if matching URL)
+  useEffect(() => {
+    const currentParams = searchParams.getAll("year");
+    const currentYears = yearFilter.map(String);
+    const isSame = currentParams.length === currentYears.length &&
+      currentParams.every(p => currentYears.includes(p));
+    
+    if (!isSame) {
+      updateURL("year", yearFilter.map(String));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [yearFilter]);
+
+  // 🆕 Handle category filter change
+  const handleCategoryFilterChange = (categoryIds: string[]) => {
+    setCategoryFilter(categoryIds);
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -268,8 +303,7 @@ export function ProjectsTable({
       return;
     }
     
-    // Get year from URL params
-    const pathSegments = window.location.pathname.split('/');
+    const pathSegments = pathname.split('/');
     const projectIndex = pathSegments.findIndex(seg => seg === 'project');
     const year = pathSegments[projectIndex + 1];
     
@@ -293,12 +327,9 @@ export function ProjectsTable({
       });
       
       toast.dismiss(toastId);
-      
-      const processed = (result as any)?.processed || 0;
-      const failed = (result as any)?.failed || 0;
-      
       toast.success(`Successfully moved ${selectedIds.size} project(s) to trash`);
       
+      const failed = (result as any)?.failed || 0;
       if (failed > 0) {
         toast.info(`Note: ${failed} project(s) failed to move`);
       }
@@ -340,7 +371,6 @@ export function ProjectsTable({
     }
   };
 
-  // 🆕 NEW HANDLER: Toggle Auto-Calculate from Context Menu
   const handleToggleAutoCalculate = async (newValue: boolean) => {
     if (!contextMenu) return;
     
@@ -370,7 +400,6 @@ export function ProjectsTable({
     }
   };
 
-  // 🆕 NEW HANDLER: Open Bulk Toggle Dialog
   const handleOpenBulkToggleDialog = () => {
     if (selectedIds.size === 0) {
       toast.error("No items selected");
@@ -379,7 +408,6 @@ export function ProjectsTable({
     setShowBulkToggleDialog(true);
   };
 
-  // 🆕 NEW HANDLER: Bulk Toggle Auto-Calculate
   const handleBulkToggleAutoCalculate = async (autoCalculate: boolean, reason?: string) => {
     setIsBulkToggling(true);
     
@@ -541,7 +569,7 @@ export function ProjectsTable({
     <>
       <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-visible transition-all duration-300 shadow-sm">
         
-        {/* Toolbar - Now with Bulk Auto-Calculate Toggle */}
+        {/* Toolbar */}
         <ProjectsTableToolbar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -565,6 +593,14 @@ export function ProjectsTable({
           onBulkToggleAutoCalculate={handleOpenBulkToggleDialog}
           onAddProject={onAdd ? () => setShowAddModal(true) : undefined}
           expandButton={expandButton}
+          accentColor={accentColorValue}
+        />
+
+        {/* 🆕 Category Filter - YouTube Style */}
+        <ProjectCategoryFilter
+          categories={allCategories}
+          selectedCategoryIds={categoryFilter}
+          onSelectionChange={handleCategoryFilterChange}
           accentColor={accentColorValue}
         />
 
@@ -617,7 +653,7 @@ export function ProjectsTable({
         </div>
       </div>
 
-      {/* Context Menu - Now with Auto-Calculate Toggle */}
+      {/* Context Menu */}
       <ProjectContextMenu
         contextMenu={contextMenu}
         onClose={() => setContextMenu(null)}
@@ -632,7 +668,7 @@ export function ProjectsTable({
         isTogglingAutoCalculate={isTogglingAutoCalculate}
       />
 
-      {/* 🆕 NEW MODAL: Bulk Auto-Calculate Toggle Dialog */}
+      {/* Bulk Auto-Calculate Toggle Dialog */}
       <ProjectBulkToggleDialog
         isOpen={showBulkToggleDialog}
         onClose={() => setShowBulkToggleDialog(false)}
