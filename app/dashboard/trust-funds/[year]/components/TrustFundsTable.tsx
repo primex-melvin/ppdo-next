@@ -19,7 +19,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { 
   ArrowUpDown, 
   Pin,
@@ -36,14 +35,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Modal } from "@/app/dashboard/project/[year]/components/Modal";
-import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/ConfirmationModal";
-import { TrustFundForm } from "./TrustFundForm";
-import { TrustFund } from "@/types/trustFund.types";
-import { ActivityLogSheet } from "@/components/ActivityLogSheet";
-import { TrustFundTableToolbar } from "./TrustFundTableToolbar";
-import { TrustFundContextMenu } from "./TrustFundContextMenu";
-import { PrintOrientationModal } from "./PrintOrientationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,39 +42,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Modal } from "@/app/dashboard/project/[year]/components/Modal";
+import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/ConfirmationModal";
+import { TrustFundForm } from "./TrustFundForm";
+import { ActivityLogSheet } from "@/components/ActivityLogSheet";
+import { TrustFundTableToolbar } from "./TrustFundTableToolbar";
+import { TrustFundContextMenu } from "./TrustFundContextMenu";
+import { PrintOrientationModal } from "./PrintOrientationModal";
 
-type Props = {
-  data: TrustFund[];
-  onAdd?: (data: any) => void;
-  onEdit?: (id: string, data: any) => void;
-  onDelete?: (id: string) => void;
-  onOpenTrash?: () => void;
-  year?: number;
-};
+// Import TrustFund from global types
+import { TrustFund } from "@/types/trustFund.types";
+// Import table-specific types from local types
+import { TrustFundsTableProps, ContextMenuState } from "../../types";
+import { AVAILABLE_COLUMNS } from "../../constants";
+import { 
+  formatCurrency, 
+  formatDate, 
+  getStatusClassName, 
+  truncateText,
+  exportToCSV,
+  printTable,
+  calculateTotals
+} from "../../utils";
+import { useColumnWidths } from "../../hooks/useColumnWidths";
+import { useColumnResize } from "../../hooks/useColumnResize";
+import { useTableSort } from "../../hooks/useTableSort";
+import { useTableFilter } from "../../hooks/useTableFilter";
+import { useTableSelection } from "../../hooks/useTableSelection";
 
-type SortField = "projectTitle" | "officeInCharge" | "status" | "dateReceived" | "received" | "utilized" | "balance" | null;
-type SortDirection = "asc" | "desc" | null;
-
-interface ContextMenuState {
-  x: number;
-  y: number;
-  entity: TrustFund;
-}
-
-// Available columns configuration
-const AVAILABLE_COLUMNS = [
-  { id: "projectTitle", label: "Project Title", expandable: true },
-  { id: "officeInCharge", label: "Office In-Charge" },
-  { id: "status", label: "Status" },
-  { id: "dateReceived", label: "Date Received" },
-  { id: "received", label: "Received" },
-  { id: "obligatedPR", label: "Obligated PR" },
-  { id: "utilized", label: "Utilized" },
-  { id: "balance", label: "Balance" },
-  { id: "remarks", label: "Remarks", expandable: true },
-];
-
-export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, year }: Props) {
+export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, year }: TrustFundsTableProps) {
   const { accentColorValue } = useAccentColor();
   
   // Mutations
@@ -94,16 +81,16 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
   // Current user for permissions
   const currentUser = useQuery(api.users.current);
   
-  // State
-  const [selected, setSelected] = useState<string[]>([]);
+  // Modal States
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TrustFund | null>(null);
+  
+  // Search State
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Activity Log State
   const [logSheetOpen, setLogSheetOpen] = useState(false);
@@ -115,89 +102,19 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
   // Column Visibility State
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
 
-  // Expandable Columns State
-  const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
+  // Custom Hooks
+  const { columnWidths, setColumnWidths } = useColumnWidths();
+  const { handleResizeStart } = useColumnResize(columnWidths, setColumnWidths);
+  const { sortField, sortDirection, handleSort } = useTableSort();
+  const filteredAndSortedData = useTableFilter(data as TrustFund[], searchQuery, sortField, sortDirection);
+  const { selected, allSelected, toggleAll, toggleOne, clearSelection } = useTableSelection(filteredAndSortedData);
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const isAdmin = currentUser?.role === "admin" || currentUser?.role === "super_admin";
 
-  // Filter and sort data
-  const filteredAndSortedData = useMemo(() => {
-    let result = [...data];
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.projectTitle.toLowerCase().includes(query) ||
-          item.officeInCharge.toLowerCase().includes(query) ||
-          (item.status && item.status.toLowerCase().includes(query)) ||
-          (item.remarks && item.remarks.toLowerCase().includes(query))
-      );
-    }
-
-    // Sort
-    if (sortField && sortDirection) {
-      result.sort((a, b) => {
-        let aVal: any = a[sortField];
-        let bVal: any = b[sortField];
-
-        // Handle null/undefined
-        if (aVal === null || aVal === undefined) aVal = "";
-        if (bVal === null || bVal === undefined) bVal = "";
-
-        // String comparison
-        if (typeof aVal === "string" && typeof bVal === "string") {
-          return sortDirection === "asc"
-            ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal);
-        }
-
-        // Number comparison
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-      });
-    }
-
-    return result;
-  }, [data, searchQuery, sortField, sortDirection]);
-
   // Calculate totals
-  const totals = useMemo(() => {
-    return filteredAndSortedData.reduce(
-      (acc, item) => {
-        acc.received += item.received;
-        acc.obligatedPR += item.obligatedPR || 0;
-        acc.utilized += item.utilized;
-        acc.balance += item.balance;
-        return acc;
-      },
-      { received: 0, obligatedPR: 0, utilized: 0, balance: 0 }
-    );
-  }, [filteredAndSortedData]);
+  const totals = useMemo(() => calculateTotals(filteredAndSortedData), [filteredAndSortedData]);
 
-  const allSelected = selected.length === filteredAndSortedData.length && filteredAndSortedData.length > 0;
-
-  const toggleAll = () =>
-    setSelected(allSelected ? [] : filteredAndSortedData.map((item) => item.id));
-
-  const toggleOne = (id: string) =>
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(
-        sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc"
-      );
-      if (sortDirection === "desc") setSortField(null);
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
+  // Handlers
   const handlePin = async (item: TrustFund) => {
     try {
       await togglePin({ id: item.id as Id<"trustFunds"> });
@@ -213,7 +130,7 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
     try {
       await bulkMoveToTrash({ ids: selected as Id<"trustFunds">[] });
       toast.success(`Moved ${selected.length} item(s) to trash`);
-      setSelected([]);
+      clearSelection();
     } catch (error) {
       toast.error("Failed to move items to trash");
     }
@@ -263,51 +180,9 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
     setHiddenColumns(newHidden);
   };
 
-  const handleToggleExpandColumn = (columnId: string) => {
-    const newExpanded = new Set(expandedColumns);
-    if (newExpanded.has(columnId)) {
-      newExpanded.delete(columnId);
-    } else {
-      newExpanded.add(columnId);
-    }
-    setExpandedColumns(newExpanded);
-  };
-
   const handleExportCSV = () => {
     try {
-      const headers = AVAILABLE_COLUMNS.filter(col => !hiddenColumns.has(col.id)).map(col => col.label);
-      const rows = filteredAndSortedData.map(item => 
-        AVAILABLE_COLUMNS
-          .filter(col => !hiddenColumns.has(col.id))
-          .map(col => {
-            switch(col.id) {
-              case "projectTitle": return item.projectTitle;
-              case "officeInCharge": return item.officeInCharge;
-              case "status": return formatStatus(item.status);
-              case "dateReceived": return formatDate(item.dateReceived);
-              case "received": return item.received;
-              case "obligatedPR": return item.obligatedPR || 0;
-              case "utilized": return item.utilized;
-              case "balance": return item.balance;
-              case "remarks": return item.remarks || "";
-              default: return "";
-            }
-          })
-      );
-      
-      const csvContent = [
-        headers.join(","),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
-      ].join("\n");
-      
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `trust-funds-${year || 'all'}-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      
+      exportToCSV(filteredAndSortedData, hiddenColumns, year);
       toast.success("CSV exported successfully");
     } catch (error) {
       toast.error("Failed to export CSV");
@@ -315,78 +190,11 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
   };
 
   const handlePrint = (orientation: 'portrait' | 'landscape') => {
-    // Set print orientation via CSS
-    const style = document.createElement('style');
-    style.textContent = `
-      @page {
-        size: ${orientation === 'portrait' ? 'A4 portrait' : 'A4 landscape'};
-        margin: 0.5in;
-      }
-      @media print {
-        .no-print { display: none !important; }
-        .print-area { break-inside: avoid; }
-        body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    setTimeout(() => {
-      window.print();
-      document.head.removeChild(style);
-    }, 100);
-    
+    printTable(orientation);
     setShowPrintModal(false);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (timestamp?: number) => {
-    if (!timestamp) return "—";
-    return new Date(timestamp).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const formatStatus = (status?: string) => {
-    if (!status) return "—";
-    
-    const statusConfig: Record<string, { label: string; className: string }> = {
-      not_available: { label: "Not Available", className: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" },
-      not_yet_started: { label: "Not Yet Started", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
-      ongoing: { label: "Ongoing", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
-      completed: { label: "Completed", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
-      active: { label: "Active", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
-    };
-
-    const config = statusConfig[status] || statusConfig.not_available;
-    return config.label;
-  };
-
-  const getStatusClassName = (status?: string) => {
-    if (!status) return "bg-zinc-100/50 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300";
-    
-    const statusClasses: Record<string, string> = {
-      not_available: "bg-zinc-100/50 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300",
-      not_yet_started: "bg-zinc-100/50 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300",
-      ongoing: "bg-zinc-200/50 text-zinc-800 dark:bg-zinc-700/50 dark:text-zinc-200",
-      completed: "bg-zinc-300/50 text-zinc-900 dark:bg-zinc-600/50 dark:text-zinc-100",
-      active: "bg-zinc-400/50 text-zinc-900 dark:bg-zinc-500/50 dark:text-zinc-100",
-    };
-
-    return statusClasses[status] || statusClasses.not_available;
-  };
-
   const isColumnVisible = (columnId: string) => !hiddenColumns.has(columnId);
-  const isColumnExpanded = (columnId: string) => expandedColumns.has(columnId);
 
   return (
     <>
@@ -397,7 +205,7 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
           onSearchChange={setSearchQuery}
           searchInputRef={searchInputRef}
           selectedCount={selected.length}
-          onClearSelection={() => setSelected([])}
+          onClearSelection={clearSelection}
           hiddenColumns={hiddenColumns}
           onToggleColumn={handleToggleColumn}
           onShowAllColumns={() => setHiddenColumns(new Set())}
@@ -414,19 +222,19 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
         {/* Table */}
         <CardContent className="p-0">
           <div className="relative max-h-[600px] overflow-auto">
-            <Table className="w-full table-fixed text-sm">
+            <Table className="w-full text-sm" style={{ tableLayout: 'auto' }}>
               <colgroup>
-                {isAdmin && <col className="w-[44px]" />}
-                {isColumnVisible("projectTitle") && <col className={isColumnExpanded("projectTitle") ? "w-[400px]" : "w-[260px]"} />}
-                {isColumnVisible("officeInCharge") && <col className="w-[200px]" />}
-                {isColumnVisible("status") && <col className="w-[180px]" />}
-                {isColumnVisible("dateReceived") && <col className="w-[130px]" />}
-                {isColumnVisible("received") && <col className="w-[150px]" />}
-                {isColumnVisible("obligatedPR") && <col className="w-[150px]" />}
-                {isColumnVisible("utilized") && <col className="w-[150px]" />}
-                {isColumnVisible("balance") && <col className="w-[150px]" />}
-                {isColumnVisible("remarks") && <col className={isColumnExpanded("remarks") ? "w-[400px]" : "w-[200px]"} />}
-                <col className="w-[80px]" />
+                {isAdmin && <col style={{ width: '44px' }} />}
+                {isColumnVisible("projectTitle") && <col style={{ width: `${columnWidths.projectTitle}px` }} />}
+                {isColumnVisible("officeInCharge") && <col style={{ width: '200px' }} />}
+                {isColumnVisible("status") && <col style={{ width: '180px' }} />}
+                {isColumnVisible("dateReceived") && <col style={{ width: '130px' }} />}
+                {isColumnVisible("received") && <col style={{ width: '150px' }} />}
+                {isColumnVisible("obligatedPR") && <col style={{ width: '150px' }} />}
+                {isColumnVisible("utilized") && <col style={{ width: '150px' }} />}
+                {isColumnVisible("balance") && <col style={{ width: '150px' }} />}
+                {isColumnVisible("remarks") && <col style={{ width: `${columnWidths.remarks}px` }} />}
+                <col style={{ width: '80px' }} />
               </colgroup>
 
               <TableHeader className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-950">
@@ -442,20 +250,16 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
                       className="px-3 uppercase text-[11px] tracking-wide text-muted-foreground font-medium cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       onClick={() => handleSort("projectTitle")}
                     >
-                      <div className="flex items-center gap-1">
-                        {AVAILABLE_COLUMNS.find(c => c.id === "projectTitle")?.expandable && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleExpandColumn("projectTitle");
-                            }}
-                            className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                          >
-                            <GripVertical className="h-3 w-3" />
-                          </button>
-                        )}
+                      <div className="relative flex items-center gap-1 pr-4">
                         PROJECT TITLE
                         <ArrowUpDown className="h-3 w-3 opacity-40" />
+                        <button
+                          className="absolute right-0 cursor-col-resize text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 p-0.5"
+                          onMouseDown={(e) => handleResizeStart('projectTitle', e)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <GripVertical className="h-3 w-3" />
+                        </button>
                       </div>
                     </TableHead>
                   )}
@@ -540,19 +344,15 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
 
                   {isColumnVisible("remarks") && (
                     <TableHead className="px-3 uppercase text-[11px] tracking-wide text-muted-foreground font-medium">
-                      <div className="flex items-center gap-1">
-                        {AVAILABLE_COLUMNS.find(c => c.id === "remarks")?.expandable && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleExpandColumn("remarks");
-                            }}
-                            className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                          >
-                            <GripVertical className="h-3 w-3" />
-                          </button>
-                        )}
+                      <div className="relative flex items-center gap-1 pr-4">
                         REMARKS
+                        <button
+                          className="absolute right-0 cursor-col-resize text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 p-0.5"
+                          onMouseDown={(e) => handleResizeStart('remarks', e)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <GripVertical className="h-3 w-3" />
+                        </button>
                       </div>
                     </TableHead>
                   )}
@@ -593,8 +393,8 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
                               {item.isPinned && (
                                 <Pin className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
                               )}
-                              <span className={isColumnExpanded("projectTitle") ? "" : "truncate"}>
-                                {item.projectTitle}
+                              <span className="truncate" title={item.projectTitle}>
+                                {truncateText(item.projectTitle, Math.floor(columnWidths.projectTitle / 8))}
                               </span>
                             </div>
                           </TableCell>
@@ -685,13 +485,12 @@ export function TrustFundsTable({ data, onAdd, onEdit, onDelete, onOpenTrash, ye
 
                         {isColumnVisible("remarks") && (
                           <TableCell className="px-3 text-muted-foreground">
-                            <span className={isColumnExpanded("remarks") ? "" : "truncate block"}>
-                              {item.remarks || "—"}
+                            <span className="truncate block" title={item.remarks || ""}>
+                              {item.remarks ? truncateText(item.remarks, Math.floor(columnWidths.remarks / 8)) : "—"}
                             </span>
                           </TableCell>
                         )}
 
-                        {/* FIXED ACTIONS COLUMN SYNTAX AND DROPDOWN */}
                         <TableCell className="px-3 text-center no-print">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>

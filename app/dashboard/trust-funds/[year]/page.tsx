@@ -3,8 +3,8 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { useTrustFundData } from "./components/hooks/useTrustFundData";
-import { useTrustFundMutations } from "./components/hooks/useTrustFundMutations";
+import { useTrustFundData } from "../hooks/useTrustFundData";
+import { useTrustFundMutations } from "../hooks/useTrustFundMutations";
 import { YearTrustFundsPageHeader } from "./components/YearTrustFundsPageHeader";
 import TrustFundStatistics from "./components/TrustFundStatistics";
 import { TrustFundsTable } from "./components/TrustFundsTable";
