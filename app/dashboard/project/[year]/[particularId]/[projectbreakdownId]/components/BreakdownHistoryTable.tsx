@@ -39,6 +39,10 @@ import { TableHeader } from "./TableHeader";
 import { TableRow } from "./TableRow";
 import { TableTotalsRow } from "./TableTotalsRow";
 import { EmptyState } from "./EmptyState";
+import { GenericPrintPreviewModal } from "@/app/dashboard/components/print/GenericPrintPreviewModal";
+
+// Import print adapter
+import { BreakdownPrintAdapter } from "../lib/print-adapters/BreakdownPrintAdapter";
 
 /* =======================
    MAIN COMPONENT
@@ -61,6 +65,10 @@ export function BreakdownHistoryTable({
   
   // 🆕 Column visibility state
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+
+  // 🆕 Print preview state
+  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [printAdapter, setPrintAdapter] = useState<BreakdownPrintAdapter | null>(null);
 
   // Custom hooks
   const {
@@ -111,6 +119,24 @@ export function BreakdownHistoryTable({
     const allColIds = columns.map((c) => c.key);
     setHiddenColumns(new Set(allColIds));
   };
+
+  /* =======================
+     🆕 PRINT HANDLER
+  ======================= */
+  
+  const handlePrint = useCallback(() => {
+    try {
+      const adapter = new BreakdownPrintAdapter(
+        breakdowns,
+        params.projectbreakdownId as string,
+        columns
+      );
+      setPrintAdapter(adapter);
+      setIsPrintPreviewOpen(true);
+    } catch (error) {
+      console.error('Failed to open print preview:', error);
+    }
+  }, [breakdowns, params.projectbreakdownId, columns]);
 
   /* =======================
      NAVIGATION HANDLER
@@ -172,7 +198,7 @@ export function BreakdownHistoryTable({
       <TableToolbar
         search={search}
         onSearchChange={setSearch}
-        onPrint={onPrint}
+        onPrint={handlePrint}
         onAdd={onAdd}
         onOpenTrash={onOpenTrash}
         accentColor={accentColorValue}
@@ -252,6 +278,26 @@ export function BreakdownHistoryTable({
           )}
         </table>
       </div>
+
+      {/* 🆕 PRINT PREVIEW MODAL */}
+      {printAdapter && (
+        <GenericPrintPreviewModal
+          isOpen={isPrintPreviewOpen}
+          onClose={() => {
+            setIsPrintPreviewOpen(false);
+            setPrintAdapter(null);
+          }}
+          adapter={printAdapter}
+          hiddenColumns={hiddenColumns}
+          filterState={{
+            searchQuery: search,
+            statusFilter: [],
+            yearFilter: [],
+            sortField: null,
+            sortDirection: null,
+          }}
+        />
+      )}
     </div>
   );
 }
