@@ -27,7 +27,7 @@ const HEADER_ROW_HEIGHT = 28;
  * Converts budget table data into canvas pages
  */
 export function convertTableToCanvas(config: ConversionConfig): ConversionResult {
-  console.group('📍 STEP 5: Table to Canvas Conversion - Started');
+  console.group('🔄 STEP 5: Table to Canvas Conversion - Started');
   console.log('🔧 Config received:', config);
   console.log('📊 Items to convert:', config.items?.length || 0);
   console.log('📊 First item:', config.items?.[0]);
@@ -66,10 +66,10 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   } = config;
 
   const size = PAGE_SIZES[pageSize];
-  console.log('📐 Page dimensions:', size);
+  console.log('📏 Page dimensions:', size);
   
   const availableHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT - (MARGIN * 2);
-  console.log('📐 Available height for content:', availableHeight);
+  console.log('📏 Available height for content:', availableHeight);
   
   // Filter visible columns
   const visibleColumns = columns.filter(col => !hiddenColumns.has(col.key));
@@ -263,7 +263,8 @@ function createTitlePage(pageSize: string, title: string, subtitle?: string): Pa
 
   return {
     id: `page-title-${Date.now()}`,
-    size: pageSize as any,
+    size: pageSize as 'A4' | 'Short' | 'Long',
+    orientation: 'portrait',
     elements,
     backgroundColor: '#ffffff',
   };
@@ -299,7 +300,8 @@ function createDataPage(
 
   return {
     id: `page-data-${Date.now()}-${globalRowIndex}`,
-    size: pageSize as any,
+    size: pageSize as 'A4' | 'Short' | 'Long',
+    orientation: 'portrait',
     elements,
     backgroundColor: '#ffffff',
   };
@@ -425,7 +427,8 @@ function createTotalsPage(
   
   return {
     id: `page-totals-${Date.now()}`,
-    size: pageSize as any,
+    size: pageSize as 'A4' | 'Short' | 'Long',
+    orientation: 'portrait',
     elements,
     backgroundColor: '#ffffff',
   };
