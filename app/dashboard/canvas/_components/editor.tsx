@@ -93,7 +93,7 @@ export default function Editor() {
       </div>
 
       <div className="flex-1 overflow-y-auto no-print" style={{ marginRight: '192px' }}>
-        <div className="sticky top-0 z-40 bg-stone-100 border-b border-stone-300 shadow-sm">
+        <div className="sticky top-0 z-1 bg-stone-100 border-b border-stone-300 shadow-sm">
           <Toolbar
             selectedElement={selectedElement}
             onUpdateElement={selectedElement ? (updates) => updateElement(selectedElement.id, updates) : undefined}
@@ -108,6 +108,9 @@ export default function Editor() {
             onHeaderBackgroundChange={updateHeaderBackground}
             onFooterBackgroundChange={updateFooterBackground}
             onPageBackgroundChange={updatePageBackground}
+            pages={pages}
+            header={header}
+            footer={footer}
           />
         </div>
         

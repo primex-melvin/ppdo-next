@@ -4,6 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { loadGoogleFont } from '@/lib/fonts';
+import { exportAsPDF } from '@/lib/export-pdf';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -13,8 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Bold, Italic, Underline, Plus, Printer } from 'lucide-react';
-import { CanvasElement } from './types';
+import { Bold, Italic, Underline, Plus, Printer, FileDown } from 'lucide-react';
+import { CanvasElement, Page, HeaderFooter } from './types';
 
 type ActiveSection = 'header' | 'page' | 'footer';
 
@@ -32,6 +33,9 @@ interface ToolbarProps {
   onHeaderBackgroundChange: (color: string) => void;
   onFooterBackgroundChange: (color: string) => void;
   onPageBackgroundChange: (color: string) => void;
+  pages: Page[];
+  header: HeaderFooter;
+  footer: HeaderFooter;
 }
 
 const FONT_FAMILIES = [
@@ -72,11 +76,15 @@ export default function Toolbar({
   onHeaderBackgroundChange,
   onFooterBackgroundChange,
   onPageBackgroundChange,
+  pages,
+  header,
+  footer,
 }: ToolbarProps) {
   const isDisabled = !selectedElement || !onUpdateElement;
   const isTextElement = selectedElement?.type === 'text';
   const [hexInput, setHexInput] = useState('');
   const [showHexInput, setShowHexInput] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleFontFamilyChange = (value: string) => {
     loadGoogleFont(value);
@@ -184,6 +192,15 @@ export default function Toolbar({
     }
   };
 
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      await exportAsPDF(pages, header, footer);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="w-full bg-stone-100">
       <div className="flex items-center gap-2 px-4 py-2">
@@ -213,7 +230,7 @@ export default function Toolbar({
               #
             </Button>
             {showHexInput && (
-              <div className="absolute top-full mt-1 left-0 z-50 bg-white border border-stone-300 rounded shadow-lg p-2 flex items-center gap-1">
+              <div className="absolute top-full mt-1 left-0 bg-white border border-stone-300 rounded shadow-lg p-2 flex items-center gap-1">
                 <span className="text-xs text-stone-600">#</span>
                 <input
                   type="text"
@@ -367,6 +384,17 @@ export default function Toolbar({
         )}
 
         <Separator orientation="vertical" className="h-5 ml-auto" />
+
+        <Button
+          onClick={handleExportPDF}
+          size="sm"
+          variant="outline"
+          disabled={isExporting}
+          className="gap-1.5 h-8 text-xs bg-white"
+        >
+          <FileDown className="w-3.5 h-3.5" />
+          {isExporting ? 'Exporting...' : 'Export as PDF'}
+        </Button>
 
         <Button
           onClick={onPrint}
