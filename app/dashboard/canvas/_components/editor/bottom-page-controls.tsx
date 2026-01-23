@@ -14,7 +14,8 @@ interface BottomPageControlsProps {
   onAddPage: () => void;
   onDuplicatePage: () => void;
   onDeletePage: () => void;
-  elements: CanvasElement[];
+  // UPDATED TYPE: explicitly include the section property to satisfy LayerPanel requirements
+  elements: (CanvasElement & { section: 'header' | 'page' | 'footer' })[];
   selectedElementId: string | null;
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;

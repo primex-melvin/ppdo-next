@@ -36,10 +36,16 @@ export interface ImageElement {
 
 export type CanvasElement = TextElement | ImageElement;
 
+export interface HeaderFooter {
+  elements: CanvasElement[];
+  backgroundColor?: string;
+}
+
 export interface Page {
   id: string;
   size: 'A4' | 'Short' | 'Long';
   elements: CanvasElement[];
+  backgroundColor?: string;
 }
 
 export interface EditorState {
@@ -47,4 +53,6 @@ export interface EditorState {
   currentPageIndex: number;
   selectedElementId: string | null;
   isEditingElementId: string | null;
+  header: HeaderFooter;
+  footer: HeaderFooter;
 }

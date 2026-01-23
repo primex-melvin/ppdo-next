@@ -2,11 +2,11 @@
 
 'use client';
 
+import { useState } from 'react';
 import { Toaster } from 'sonner';
 import { printAllPages } from '@/lib/print';
 import Toolbar from './editor/toolbar';
 import Canvas from './editor/canvas';
-import PageNavigator from './editor/page-navigator';
 import PagePanel from './editor/page-panel';
 import BottomPageControls from './editor/bottom-page-controls';
 import { useEditorState } from './editor/hooks/useEditorState';
@@ -14,15 +14,18 @@ import { useClipboard } from './editor/hooks/useClipboard';
 import { useKeyboard } from './editor/hooks/useKeyboard';
 import { useStorage, useSaveStorage } from './editor/hooks/useStorage';
 import { createNewPage } from './editor/utils';
-
-// Re-export types for backward compatibility
 export type { TextElement, ImageElement, CanvasElement, Page } from './editor/types';
 
+export type ActiveSection = 'header' | 'page' | 'footer';
+
 export default function Editor() {
-  const { isHydrated, savedPages, savedIndex } = useStorage();
-  
+  const { isHydrated, savedPages, savedIndex, savedHeader, savedFooter } = useStorage();
   const initialPages = savedPages || [createNewPage()];
   const initialIndex = savedIndex ?? 0;
+  const initialHeader = savedHeader || { elements: [] };
+  const initialFooter = savedFooter || { elements: [] };
+
+  const [activeSection, setActiveSection] = useState<ActiveSection>('page');
 
   const {
     pages,
@@ -31,6 +34,8 @@ export default function Editor() {
     selectedElementId,
     selectedElement,
     isEditingElementId,
+    header,
+    footer,
     setSelectedElementId,
     setIsEditingElementId,
     addPage,
@@ -46,15 +51,21 @@ export default function Editor() {
     updateElement,
     deleteElement,
     reorderElements,
-  } = useEditorState(initialPages, initialIndex);
+    updateHeaderBackground,
+    updateFooterBackground,
+    updatePageBackground,
+  } = useEditorState(initialPages, initialIndex, initialHeader, initialFooter);
 
-  useSaveStorage(pages, currentPageIndex, isHydrated);
+  useSaveStorage(pages, currentPageIndex, header, footer, isHydrated);
 
   useClipboard({
     currentPage,
     selectedElementId,
     isEditingElementId,
-    onAddImage: addImage,
+    onAddImage: (src) => addImage(src, activeSection),
+    activeSection,
+    header,
+    footer,
   });
 
   useKeyboard({
@@ -62,6 +73,12 @@ export default function Editor() {
     isEditingElementId,
     onDeleteElement: deleteElement,
   });
+
+  const allElements = [
+    ...header.elements.map(el => ({ ...el, section: 'header' as const })),
+    ...currentPage.elements.map(el => ({ ...el, section: 'page' as const })),
+    ...footer.elements.map(el => ({ ...el, section: 'footer' as const })),
+  ];
 
   return (
     <div className="flex flex-col h-screen bg-stone-50">
@@ -80,14 +97,21 @@ export default function Editor() {
           <Toolbar
             selectedElement={selectedElement}
             onUpdateElement={selectedElement ? (updates) => updateElement(selectedElement.id, updates) : undefined}
-            onAddText={addText}
+            onAddText={() => addText(activeSection)}
             pageSize={currentPage.size}
             onPageSizeChange={changePageSize}
-            onPrint={() => printAllPages(pages)}
+            onPrint={() => printAllPages(pages, header, footer)}
+            activeSection={activeSection}
+            headerBackgroundColor={header.backgroundColor || '#ffffff'}
+            footerBackgroundColor={footer.backgroundColor || '#ffffff'}
+            pageBackgroundColor={currentPage.backgroundColor || '#ffffff'}
+            onHeaderBackgroundChange={updateHeaderBackground}
+            onFooterBackgroundChange={updateFooterBackground}
+            onPageBackgroundChange={updatePageBackground}
           />
         </div>
         
-        <div className="flex items-center justify-center pt-8 pb-40 px-8 min-h-full">
+        <div className="flex items-center justify-center pt-4 pb-16 px-8 min-h-full">
           <Canvas
             page={currentPage}
             selectedElementId={selectedElementId}
@@ -96,6 +120,12 @@ export default function Editor() {
             onDeleteElement={deleteElement}
             isEditingElementId={isEditingElementId}
             onEditingChange={setIsEditingElementId}
+            header={header}
+            footer={footer}
+            pageNumber={currentPageIndex + 1}
+            totalPages={pages.length}
+            activeSection={activeSection}
+            onActiveSectionChange={setActiveSection}
           />
         </div>
       </div>
@@ -107,7 +137,7 @@ export default function Editor() {
           onAddPage={addPage}
           onDuplicatePage={duplicatePage}
           onDeletePage={deletePage}
-          elements={currentPage.elements}
+          elements={allElements}
           selectedElementId={selectedElementId}
           onSelectElement={setSelectedElementId}
           onUpdateElement={updateElement}

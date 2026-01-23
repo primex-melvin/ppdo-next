@@ -1,3 +1,5 @@
+// lib/fonts.ts
+
 // Load a single Google Font
 export function loadGoogleFont(fontFamily: string) {
   const googleFonts = ['Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat'];

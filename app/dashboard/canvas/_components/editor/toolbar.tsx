@@ -2,6 +2,7 @@
 
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { loadGoogleFont } from '@/lib/fonts';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { Bold, Italic, Underline, Plus, Printer } from 'lucide-react';
 import { CanvasElement } from './types';
 
+type ActiveSection = 'header' | 'page' | 'footer';
+
 interface ToolbarProps {
   selectedElement?: CanvasElement;
   onUpdateElement?: (updates: Partial<CanvasElement>) => void;
@@ -22,6 +25,13 @@ interface ToolbarProps {
   pageSize?: 'A4' | 'Short' | 'Long';
   onPageSizeChange?: (size: 'A4' | 'Short' | 'Long') => void;
   onPrint?: () => void;
+  activeSection: ActiveSection;
+  headerBackgroundColor: string;
+  footerBackgroundColor: string;
+  pageBackgroundColor: string;
+  onHeaderBackgroundChange: (color: string) => void;
+  onFooterBackgroundChange: (color: string) => void;
+  onPageBackgroundChange: (color: string) => void;
 }
 
 const FONT_FAMILIES = [
@@ -48,9 +58,25 @@ const FONT_SIZES = [
   { value: '48', label: '48px' },
 ];
 
-export default function Toolbar({ selectedElement, onUpdateElement, onAddText, pageSize = 'A4', onPageSizeChange, onPrint }: ToolbarProps) {
+export default function Toolbar({ 
+  selectedElement, 
+  onUpdateElement, 
+  onAddText, 
+  pageSize = 'A4', 
+  onPageSizeChange, 
+  onPrint,
+  activeSection,
+  headerBackgroundColor,
+  footerBackgroundColor,
+  pageBackgroundColor,
+  onHeaderBackgroundChange,
+  onFooterBackgroundChange,
+  onPageBackgroundChange,
+}: ToolbarProps) {
   const isDisabled = !selectedElement || !onUpdateElement;
   const isTextElement = selectedElement?.type === 'text';
+  const [hexInput, setHexInput] = useState('');
+  const [showHexInput, setShowHexInput] = useState(false);
 
   const handleFontFamilyChange = (value: string) => {
     loadGoogleFont(value);
@@ -98,9 +124,121 @@ export default function Toolbar({ selectedElement, onUpdateElement, onAddText, p
     }
   };
 
+  const getSectionLabel = () => {
+    switch (activeSection) {
+      case 'header': return 'Header';
+      case 'footer': return 'Footer';
+      default: return 'Page';
+    }
+  };
+
+  const getSectionColor = () => {
+    switch (activeSection) {
+      case 'header': return 'bg-blue-100 text-blue-700 border-blue-300';
+      case 'footer': return 'bg-purple-100 text-purple-700 border-purple-300';
+      default: return 'bg-green-100 text-green-700 border-green-300';
+    }
+  };
+
+  const getCurrentBackgroundColor = () => {
+    switch (activeSection) {
+      case 'header': return headerBackgroundColor;
+      case 'footer': return footerBackgroundColor;
+      default: return pageBackgroundColor;
+    }
+  };
+
+  const handleBackgroundColorChange = (color: string) => {
+    switch (activeSection) {
+      case 'header': 
+        onHeaderBackgroundChange(color);
+        break;
+      case 'footer': 
+        onFooterBackgroundChange(color);
+        break;
+      default: 
+        onPageBackgroundChange(color);
+        break;
+    }
+  };
+
+  const handleHexSubmit = () => {
+    let color = hexInput.trim();
+    if (!color.startsWith('#')) {
+      color = '#' + color;
+    }
+    // Validate hex color
+    if (/^#[0-9A-F]{6}$/i.test(color)) {
+      handleBackgroundColorChange(color);
+      setShowHexInput(false);
+      setHexInput('');
+    }
+  };
+
+  const handleHexKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleHexSubmit();
+    } else if (e.key === 'Escape') {
+      setShowHexInput(false);
+      setHexInput('');
+    }
+  };
+
   return (
     <div className="w-full bg-stone-100">
       <div className="flex items-center gap-2 px-4 py-2">
+        <div className={`px-2 py-1 rounded text-xs font-semibold border ${getSectionColor()}`}>
+          Editing: {getSectionLabel()}
+        </div>
+
+        <Separator orientation="vertical" className="h-5" />
+
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs text-stone-600 whitespace-nowrap">Background:</label>
+          <input
+            type="color"
+            value={getCurrentBackgroundColor()}
+            onChange={(e) => handleBackgroundColorChange(e.target.value)}
+            className="w-7 h-7 border border-stone-300 rounded cursor-pointer bg-white"
+            title="Background color"
+          />
+          <div className="relative">
+            <Button
+              onClick={() => setShowHexInput(!showHexInput)}
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs bg-white"
+              title="Enter hex code"
+            >
+              #
+            </Button>
+            {showHexInput && (
+              <div className="absolute top-full mt-1 left-0 z-50 bg-white border border-stone-300 rounded shadow-lg p-2 flex items-center gap-1">
+                <span className="text-xs text-stone-600">#</span>
+                <input
+                  type="text"
+                  value={hexInput}
+                  onChange={(e) => setHexInput(e.target.value)}
+                  onKeyDown={handleHexKeyDown}
+                  placeholder="FFFFFF"
+                  maxLength={6}
+                  className="w-20 px-1 py-0.5 text-xs border border-stone-300 rounded uppercase"
+                  autoFocus
+                />
+                <Button
+                  onClick={handleHexSubmit}
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                >
+                  OK
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator orientation="vertical" className="h-5" />
+
         <Button
           onClick={onAddText}
           size="sm"

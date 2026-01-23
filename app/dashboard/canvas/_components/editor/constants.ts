@@ -7,3 +7,6 @@ export const PAGE_SIZES = {
 } as const;
 
 export const STORAGE_KEY = 'canvas-editor-state';
+
+export const HEADER_HEIGHT = 80;
+export const FOOTER_HEIGHT = 60;

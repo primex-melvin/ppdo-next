@@ -9,7 +9,7 @@ import { X, Eye, EyeOff, Lock, Unlock, GripVertical, Type, ImageIcon } from 'luc
 interface LayerPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  elements: CanvasElement[];
+  elements: (CanvasElement & { section: 'header' | 'page' | 'footer' })[];
   selectedElementId: string | null;
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
@@ -33,7 +33,6 @@ export default function LayerPanel({
   const [isPositioned, setIsPositioned] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Set initial position on mount (client-side only)
   useEffect(() => {
     if (isOpen && !isPositioned && typeof window !== 'undefined') {
       setPosition({
@@ -44,10 +43,8 @@ export default function LayerPanel({
     }
   }, [isOpen, isPositioned]);
 
-  // Reverse the elements array so top of list = topmost element (last in array)
   const reversedElements = [...elements].reverse();
 
-  // Handle panel dragging
   const handleHeaderMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
     setIsDragging(true);
@@ -80,7 +77,6 @@ export default function LayerPanel({
     }
   }, [isDragging, dragOffset]);
 
-  // Handle layer drag and drop reordering
   const handleLayerDragStart = (e: React.DragEvent, reversedIndex: number) => {
     setDraggedLayerIndex(reversedIndex);
     e.dataTransfer.effectAllowed = 'move';
@@ -102,7 +98,6 @@ export default function LayerPanel({
   const handleLayerDrop = (e: React.DragEvent, toReversedIndex: number) => {
     e.preventDefault();
     if (draggedLayerIndex !== null && draggedLayerIndex !== toReversedIndex) {
-      // Convert reversed indices back to original indices
       const fromOriginalIndex = elements.length - 1 - draggedLayerIndex;
       const toOriginalIndex = elements.length - 1 - toReversedIndex;
       onReorderElements(fromOriginalIndex, toOriginalIndex);
@@ -127,33 +122,37 @@ export default function LayerPanel({
   };
 
   const handleLayerClick = (elementId: string, element: CanvasElement) => {
-    // Don't select if hidden
     if (element.visible === false) return;
     onSelectElement(elementId);
   };
 
-  const getElementLabel = (element: CanvasElement, index: number): string => {
+  const getElementLabel = (element: CanvasElement & { section: string }, index: number): string => {
+    const sectionLabel = element.section === 'header' ? '[H] ' : element.section === 'footer' ? '[F] ' : '';
     if (element.type === 'text') {
       const text = element.text;
-      return text.length > 15 ? text.substring(0, 15) + '...' : text;
+      const shortText = text.length > 12 ? text.substring(0, 12) + '...' : text;
+      return `${sectionLabel}${shortText}`;
     } else if (element.type === 'image') {
-      return element.name || `Image ${index + 1}`;
+      return `${sectionLabel}${element.name || 'Image'}`;
     }
-    return `Element ${index + 1}`;
+    return `${sectionLabel}Element ${index + 1}`;
   };
 
   if (!isOpen) return null;
 
+  const headerElements = reversedElements.filter(el => el.section === 'header');
+  const pageElements = reversedElements.filter(el => el.section === 'page');
+  const footerElements = reversedElements.filter(el => el.section === 'footer');
+
   return (
     <div
       ref={panelRef}
-      className="fixed bg-white border border-stone-200 rounded-lg shadow-lg z-50 w-64 max-h-80 flex flex-col"
+      className="fixed bg-white border border-stone-200 rounded-lg shadow-lg z-50 w-64 max-h-96 flex flex-col"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
       }}
     >
-      {/* Header - Draggable */}
       <div
         className="flex items-center justify-between px-3 py-2 border-b border-stone-200 cursor-move select-none bg-stone-50 rounded-t-lg"
         onMouseDown={handleHeaderMouseDown}
@@ -168,84 +167,212 @@ export default function LayerPanel({
         </button>
       </div>
 
-      {/* Layer List */}
       <div className="flex-1 overflow-y-auto p-1">
-        {reversedElements.length === 0 ? (
+        {elements.length === 0 ? (
           <div className="text-center text-stone-400 text-sm py-4">
-            No elements on this page
+            No elements
           </div>
         ) : (
-          <div className="space-y-1">
-            {reversedElements.map((element, reversedIndex) => {
-              const isSelected = element.id === selectedElementId;
-              const isHidden = element.visible === false;
-              const isLocked = element.locked === true;
-              const isDraggingThis = draggedLayerIndex === reversedIndex;
-              const isDropTarget = dragOverLayerIndex === reversedIndex;
-              const originalIndex = elements.length - 1 - reversedIndex;
-
-              return (
-                <div
-                  key={element.id}
-                  draggable
-                  onDragStart={(e) => handleLayerDragStart(e, reversedIndex)}
-                  onDragOver={(e) => handleLayerDragOver(e, reversedIndex)}
-                  onDragLeave={handleLayerDragLeave}
-                  onDrop={(e) => handleLayerDrop(e, reversedIndex)}
-                  onDragEnd={handleLayerDragEnd}
-                  onClick={() => handleLayerClick(element.id, element)}
-                  className={`
-                    flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer transition-all
-                    ${isSelected ? 'bg-blue-100 border border-blue-300' : 'hover:bg-stone-100 border border-transparent'}
-                    ${isDraggingThis ? 'opacity-50' : ''}
-                    ${isDropTarget ? 'ring-2 ring-blue-400' : ''}
-                    ${isHidden ? 'opacity-50' : ''}
-                    ${isLocked && !isHidden ? 'bg-stone-50' : ''}
-                  `}
-                >
-                  {/* Drag Handle */}
-                  <GripVertical className="w-3 h-3 text-stone-400 cursor-grab flex-shrink-0" />
-
-                  {/* Element Type Icon */}
-                  {element.type === 'text' ? (
-                    <Type className="w-4 h-4 text-stone-500 flex-shrink-0" />
-                  ) : (
-                    <ImageIcon className="w-4 h-4 text-stone-500 flex-shrink-0" />
-                  )}
-
-                  {/* Element Label */}
-                  <span className={`flex-1 truncate ${isHidden ? 'text-stone-400' : 'text-stone-700'}`}>
-                    {getElementLabel(element, originalIndex)}
-                  </span>
-
-                  {/* Visibility Toggle */}
-                  <button
-                    onClick={(e) => toggleVisibility(e, element.id, element.visible)}
-                    className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
-                    title={isHidden ? 'Show' : 'Hide'}
-                  >
-                    {isHidden ? (
-                      <EyeOff className="w-3.5 h-3.5 text-stone-400" />
-                    ) : (
-                      <Eye className="w-3.5 h-3.5 text-stone-500" />
-                    )}
-                  </button>
-
-                  {/* Lock Toggle */}
-                  <button
-                    onClick={(e) => toggleLock(e, element.id, element.locked)}
-                    className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
-                    title={isLocked ? 'Unlock' : 'Lock'}
-                  >
-                    {isLocked ? (
-                      <Lock className="w-3.5 h-3.5 text-stone-500" />
-                    ) : (
-                      <Unlock className="w-3.5 h-3.5 text-stone-400" />
-                    )}
-                  </button>
+          <div className="space-y-2">
+            {headerElements.length > 0 && (
+              <div>
+                <div className="px-2 py-1 text-[10px] font-semibold text-stone-500 uppercase tracking-wide">
+                  Header
                 </div>
-              );
-            })}
+                <div className="space-y-1">
+                  {headerElements.map((element, reversedIndex) => {
+                    const isSelected = element.id === selectedElementId;
+                    const isHidden = element.visible === false;
+                    const isLocked = element.locked === true;
+                    const actualIndex = reversedElements.findIndex(el => el.id === element.id);
+                    return (
+                      <div
+                        key={element.id}
+                        draggable
+                        onDragStart={(e) => handleLayerDragStart(e, actualIndex)}
+                        onDragOver={(e) => handleLayerDragOver(e, actualIndex)}
+                        onDragLeave={handleLayerDragLeave}
+                        onDrop={(e) => handleLayerDrop(e, actualIndex)}
+                        onDragEnd={handleLayerDragEnd}
+                        onClick={() => handleLayerClick(element.id, element)}
+                        className={`
+                          flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer transition-all
+                          ${isSelected ? 'bg-blue-100 border border-blue-300' : 'hover:bg-stone-100 border border-transparent'}
+                          ${isHidden ? 'opacity-50' : ''}
+                          ${isLocked && !isHidden ? 'bg-stone-50' : ''}
+                        `}
+                      >
+                        <GripVertical className="w-3 h-3 text-stone-400 cursor-grab flex-shrink-0" />
+                        {element.type === 'text' ? (
+                          <Type className="w-4 h-4 text-stone-500 flex-shrink-0" />
+                        ) : (
+                          <ImageIcon className="w-4 h-4 text-stone-500 flex-shrink-0" />
+                        )}
+                        <span className={`flex-1 truncate text-xs ${isHidden ? 'text-stone-400' : 'text-stone-700'}`}>
+                          {getElementLabel(element, reversedIndex)}
+                        </span>
+                        <button
+                          onClick={(e) => toggleVisibility(e, element.id, element.visible)}
+                          className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
+                          title={isHidden ? 'Show' : 'Hide'}
+                        >
+                          {isHidden ? (
+                            <EyeOff className="w-3.5 h-3.5 text-stone-400" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5 text-stone-500" />
+                          )}
+                        </button>
+                        <button
+                          onClick={(e) => toggleLock(e, element.id, element.locked)}
+                          className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
+                          title={isLocked ? 'Unlock' : 'Lock'}
+                        >
+                          {isLocked ? (
+                            <Lock className="w-3.5 h-3.5 text-stone-500" />
+                          ) : (
+                            <Unlock className="w-3.5 h-3.5 text-stone-400" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {pageElements.length > 0 && (
+              <div>
+                <div className="px-2 py-1 text-[10px] font-semibold text-stone-500 uppercase tracking-wide">
+                  Page Content
+                </div>
+                <div className="space-y-1">
+                  {pageElements.map((element, reversedIndex) => {
+                    const isSelected = element.id === selectedElementId;
+                    const isHidden = element.visible === false;
+                    const isLocked = element.locked === true;
+                    const actualIndex = reversedElements.findIndex(el => el.id === element.id);
+
+                    return (
+                      <div
+                        key={element.id}
+                        draggable
+                        onDragStart={(e) => handleLayerDragStart(e, actualIndex)}
+                        onDragOver={(e) => handleLayerDragOver(e, actualIndex)}
+                        onDragLeave={handleLayerDragLeave}
+                        onDrop={(e) => handleLayerDrop(e, actualIndex)}
+                        onDragEnd={handleLayerDragEnd}
+                        onClick={() => handleLayerClick(element.id, element)}
+                        className={`
+                          flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer transition-all
+                          ${isSelected ? 'bg-blue-100 border border-blue-300' : 'hover:bg-stone-100 border border-transparent'}
+                          ${isHidden ? 'opacity-50' : ''}
+                          ${isLocked && !isHidden ? 'bg-stone-50' : ''}
+                        `}
+                      >
+                        <GripVertical className="w-3 h-3 text-stone-400 cursor-grab flex-shrink-0" />
+                        {element.type === 'text' ? (
+                          <Type className="w-4 h-4 text-stone-500 flex-shrink-0" />
+                        ) : (
+                          <ImageIcon className="w-4 h-4 text-stone-500 flex-shrink-0" />
+                        )}
+                        <span className={`flex-1 truncate text-xs ${isHidden ? 'text-stone-400' : 'text-stone-700'}`}>
+                          {getElementLabel(element, reversedIndex)}
+                        </span>
+                        <button
+                          onClick={(e) => toggleVisibility(e, element.id, element.visible)}
+                          className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
+                          title={isHidden ? 'Show' : 'Hide'}
+                        >
+                          {isHidden ? (
+                            <EyeOff className="w-3.5 h-3.5 text-stone-400" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5 text-stone-500" />
+                          )}
+                        </button>
+                        <button
+                          onClick={(e) => toggleLock(e, element.id, element.locked)}
+                          className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
+                          title={isLocked ? 'Unlock' : 'Lock'}
+                        >
+                          {isLocked ? (
+                            <Lock className="w-3.5 h-3.5 text-stone-500" />
+                          ) : (
+                            <Unlock className="w-3.5 h-3.5 text-stone-400" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {footerElements.length > 0 && (
+              <div>
+                <div className="px-2 py-1 text-[10px] font-semibold text-stone-500 uppercase tracking-wide">
+                  Footer
+                </div>
+                <div className="space-y-1">
+                  {footerElements.map((element, reversedIndex) => {
+                    const isSelected = element.id === selectedElementId;
+                    const isHidden = element.visible === false;
+                    const isLocked = element.locked === true;
+                    const actualIndex = reversedElements.findIndex(el => el.id === element.id);
+
+                    return (
+                      <div
+                        key={element.id}
+                        draggable
+                        onDragStart={(e) => handleLayerDragStart(e, actualIndex)}
+                        onDragOver={(e) => handleLayerDragOver(e, actualIndex)}
+                        onDragLeave={handleLayerDragLeave}
+                        onDrop={(e) => handleLayerDrop(e, actualIndex)}
+                        onDragEnd={handleLayerDragEnd}
+                        onClick={() => handleLayerClick(element.id, element)}
+                        className={`
+                          flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer transition-all
+                          ${isSelected ? 'bg-blue-100 border border-blue-300' : 'hover:bg-stone-100 border border-transparent'}
+                          ${isHidden ? 'opacity-50' : ''}
+                          ${isLocked && !isHidden ? 'bg-stone-50' : ''}
+                        `}
+                      >
+                        <GripVertical className="w-3 h-3 text-stone-400 cursor-grab flex-shrink-0" />
+                        {element.type === 'text' ? (
+                          <Type className="w-4 h-4 text-stone-500 flex-shrink-0" />
+                        ) : (
+                          <ImageIcon className="w-4 h-4 text-stone-500 flex-shrink-0" />
+                        )}
+                        <span className={`flex-1 truncate text-xs ${isHidden ? 'text-stone-400' : 'text-stone-700'}`}>
+                          {getElementLabel(element, reversedIndex)}
+                        </span>
+                        <button
+                          onClick={(e) => toggleVisibility(e, element.id, element.visible)}
+                          className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
+                          title={isHidden ? 'Show' : 'Hide'}
+                        >
+                          {isHidden ? (
+                            <EyeOff className="w-3.5 h-3.5 text-stone-400" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5 text-stone-500" />
+                          )}
+                        </button>
+                        <button
+                          onClick={(e) => toggleLock(e, element.id, element.locked)}
+                          className="p-1 hover:bg-stone-200 rounded transition-colors flex-shrink-0"
+                          title={isLocked ? 'Unlock' : 'Lock'}
+                        >
+                          {isLocked ? (
+                            <Lock className="w-3.5 h-3.5 text-stone-500" />
+                          ) : (
+                            <Unlock className="w-3.5 h-3.5 text-stone-400" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

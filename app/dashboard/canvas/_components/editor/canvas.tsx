@@ -2,12 +2,14 @@
 
 'use client';
 
-import React from "react"
-import { useRef, useState } from 'react';
-import { Page, CanvasElement, ImageElement } from './types';
-import { PAGE_SIZES } from './constants';
+import React, { useRef, useState, useEffect } from 'react';
+import { Page, CanvasElement, ImageElement, HeaderFooter } from './types';
+import { PAGE_SIZES, HEADER_HEIGHT, FOOTER_HEIGHT } from './constants';
 import TextElementComponent from './text-element';
 import ImageElementComponent from './image-element';
+import HeaderFooterSection from './header-footer-section';
+
+type ActiveSection = 'header' | 'page' | 'footer';
 
 interface CanvasProps {
   page: Page;
@@ -17,6 +19,12 @@ interface CanvasProps {
   onDeleteElement: (id: string) => void;
   isEditingElementId?: string | null;
   onEditingChange?: (id: string | null) => void;
+  header: HeaderFooter;
+  footer: HeaderFooter;
+  pageNumber: number;
+  totalPages: number;
+  activeSection: ActiveSection;
+  onActiveSectionChange: (section: ActiveSection) => void;
 }
 
 export default function Canvas({
@@ -27,6 +35,12 @@ export default function Canvas({
   onDeleteElement,
   isEditingElementId: externalIsEditingElementId = null,
   onEditingChange,
+  header,
+  footer,
+  pageNumber,
+  totalPages,
+  activeSection,
+  onActiveSectionChange,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [draggedElementId, setDraggedElementId] = useState<string | null>(null);
@@ -54,17 +68,14 @@ export default function Canvas({
 
     const element = page.elements.find((el) => el.id === elementId);
     
-    // Check if element is locked or hidden
     if (element?.locked || element?.visible === false) {
       return;
     }
 
-    // If already editing, don't drag
     if (isEditingElementId === elementId) {
       return;
     }
 
-    // Start dragging
     onSelectElement(elementId);
     if (element && canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
@@ -94,20 +105,19 @@ export default function Canvas({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    // Handle dragging
     if (draggedElementId && canvasRef.current && isEditingElementId !== draggedElementId && !croppingElementId) {
       const element = page.elements.find((el) => el.id === draggedElementId);
       if (element?.locked) return;
       
       const rect = canvasRef.current.getBoundingClientRect();
       if (element) {
+        const bodyHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
         const newX = Math.max(0, Math.min(e.clientX - rect.left - dragOffset.x, size.width - element.width));
-        const newY = Math.max(0, Math.min(e.clientY - rect.top - dragOffset.y, size.height - element.height));
+        const newY = Math.max(0, Math.min(e.clientY - rect.top - dragOffset.y, bodyHeight - element.height));
         onUpdateElement(draggedElementId, { x: newX, y: newY });
       }
     }
 
-    // Handle resizing
     if (resizing) {
       const deltaX = e.clientX - resizing.startX;
       const deltaY = e.clientY - resizing.startY;
@@ -182,14 +192,15 @@ export default function Canvas({
           break;
       }
 
+      const bodyHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
       if (updates.x !== undefined && updates.width !== undefined) {
         if (updates.x + updates.width > size.width) {
           updates.x = size.width - updates.width;
         }
       }
       if (updates.y !== undefined && updates.height !== undefined) {
-        if (updates.y + updates.height > size.height) {
-          updates.y = size.height - updates.height;
+        if (updates.y + updates.height > bodyHeight) {
+          updates.y = bodyHeight - updates.height;
         }
       }
 
@@ -206,6 +217,12 @@ export default function Canvas({
     if (e.target === canvasRef.current) {
       onSelectElement(null);
       setContextMenu(null);
+    }
+  };
+
+  const handleCanvasDoubleClick = (e: React.MouseEvent) => {
+    if (e.target === canvasRef.current) {
+      onActiveSectionChange('page');
     }
   };
 
@@ -241,7 +258,7 @@ export default function Canvas({
     setCroppingElementId(null);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setContextMenu(null);
@@ -252,7 +269,7 @@ export default function Canvas({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClick = () => setContextMenu(null);
     if (contextMenu) {
       window.addEventListener('click', handleClick);
@@ -260,22 +277,43 @@ export default function Canvas({
     }
   }, [contextMenu]);
 
+  const bodyHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
+
   return (
-    <>
+    <div className="-mb-(320px) relative bg-white shadow-lg transition-all duration-300">
+      <HeaderFooterSection
+        type="header"
+        section={header}
+        pageSize={page.size}
+        selectedElementId={selectedElementId}
+        onSelectElement={onSelectElement}
+        onUpdateElement={onUpdateElement}
+        onDeleteElement={onDeleteElement}
+        isEditingElementId={isEditingElementId}
+        onEditingChange={onEditingChange}
+        pageNumber={pageNumber}
+        totalPages={totalPages}
+        isActive={activeSection === 'header'}
+        onActivate={() => onActiveSectionChange('header')}
+      />
+
       <div
         ref={canvasRef}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onClick={handleCanvasClick}
-        className="relative bg-white shadow-lg transition-all duration-300 overflow-hidden"
+        onDoubleClick={handleCanvasDoubleClick}
+        className={`relative overflow-hidden transition-all ${
+          activeSection === 'page' ? 'ring-2 ring-blue-400 ring-inset' : ''
+        }`}
         style={{
           width: `${size.width}px`,
-          height: `${size.height}px`,
+          height: `${bodyHeight}px`,
+          backgroundColor: page.backgroundColor || '#ffffff',
         }}
       >
         {page.elements.map((element) => {
-          // Skip hidden elements
           if (element.visible === false) {
             return null;
           }
@@ -319,6 +357,22 @@ export default function Canvas({
         })}
       </div>
 
+      <HeaderFooterSection
+        type="footer"
+        section={footer}
+        pageSize={page.size}
+        selectedElementId={selectedElementId}
+        onSelectElement={onSelectElement}
+        onUpdateElement={onUpdateElement}
+        onDeleteElement={onDeleteElement}
+        isEditingElementId={isEditingElementId}
+        onEditingChange={onEditingChange}
+        pageNumber={pageNumber}
+        totalPages={totalPages}
+        isActive={activeSection === 'footer'}
+        onActivate={() => onActiveSectionChange('footer')}
+      />
+
       {contextMenu && (
         <div
           className="fixed bg-white border border-gray-200 shadow-lg rounded-md py-1 z-50"
@@ -335,6 +389,6 @@ export default function Canvas({
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }

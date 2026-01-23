@@ -3,18 +3,30 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { loadGoogleFont } from '@/lib/fonts';
-import { Page, CanvasElement, TextElement, ImageElement } from '../types';
+import { Page, CanvasElement, TextElement, ImageElement, HeaderFooter } from '../types';
 import { createNewPage, generateId } from '../utils';
-import { PAGE_SIZES } from '../constants';
+import { PAGE_SIZES, HEADER_HEIGHT, FOOTER_HEIGHT } from '../constants';
 
-export const useEditorState = (initialPages: Page[], initialIndex: number) => {
+type SectionType = 'header' | 'page' | 'footer';
+
+export const useEditorState = (
+  initialPages: Page[], 
+  initialIndex: number,
+  initialHeader?: HeaderFooter,
+  initialFooter?: HeaderFooter
+) => {
   const [pages, setPages] = useState<Page[]>(initialPages);
   const [currentPageIndex, setCurrentPageIndex] = useState(initialIndex);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isEditingElementId, setIsEditingElementId] = useState<string | null>(null);
+  const [header, setHeader] = useState<HeaderFooter>(initialHeader || { elements: [] });
+  const [footer, setFooter] = useState<HeaderFooter>(initialFooter || { elements: [] });
 
   const currentPage = pages[currentPageIndex];
-  const selectedElement = currentPage?.elements.find((el) => el.id === selectedElementId);
+  
+  const selectedElement = currentPage?.elements.find((el) => el.id === selectedElementId) ||
+                          header.elements.find((el) => el.id === selectedElementId) ||
+                          footer.elements.find((el) => el.id === selectedElementId);
 
   const updateCurrentPage = useCallback((updater: (page: Page) => Page) => {
     setPages((prevPages) => {
@@ -33,7 +45,7 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
     setSelectedElementId(null);
     setIsEditingElementId(null);
     toast.success('Page added');
-  }, [pages, currentPage, currentPageIndex]);
+  }, [pages, currentPage]);
 
   const duplicatePage = useCallback(() => {
     const newPage: Page = {
@@ -43,6 +55,7 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
         ...el,
         id: generateId(),
       })),
+      backgroundColor: currentPage.backgroundColor,
     };
     const newPages = [...pages.slice(0, currentPageIndex + 1), newPage, ...pages.slice(currentPageIndex + 1)];
     setPages(newPages);
@@ -65,12 +78,13 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
 
     const newPages = pages.filter((_, i) => i !== currentPageIndex);
     const newIndex = currentPageIndex > 0 ? currentPageIndex - 1 : 0;
+    
     setPages(newPages);
     setCurrentPageIndex(newIndex);
     setSelectedElementId(null);
     setIsEditingElementId(null);
     toast.success('Page deleted');
-  }, [pages, currentPage, currentPageIndex]);
+  }, [pages, currentPageIndex, currentPage]);
 
   const reorderPages = useCallback((fromIndex: number, toIndex: number) => {
     const newPages = [...pages];
@@ -107,26 +121,46 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
     }
   }, [currentPageIndex, pages.length]);
 
-  // Element operations
-  const addText = useCallback(() => {
+  // Element operations - now with section support
+  const addText = useCallback((section: SectionType = 'page') => {
     const size = PAGE_SIZES[currentPage.size];
     const elementWidth = 200;
-    const elementHeight = 30;
-    const centerX = Math.max(0, (size.width - elementWidth) / 2);
-    const centerY = Math.max(0, (size.height - elementHeight) / 2);
+    const elementHeight = section === 'footer' ? 20 : section === 'header' ? 24 : 30;
+    const fontSize = section === 'footer' ? 12 : section === 'header' ? 14 : 16;
+    const color = section === 'footer' ? '#666666' : '#000000';
+    
+    let centerX: number;
+    let centerY: number;
+    let sectionHeight: number;
+
+    if (section === 'header') {
+      sectionHeight = HEADER_HEIGHT;
+      centerX = Math.max(0, (size.width - elementWidth) / 2);
+      centerY = Math.max(0, (sectionHeight - elementHeight) / 2);
+    } else if (section === 'footer') {
+      sectionHeight = FOOTER_HEIGHT;
+      centerX = Math.max(0, (size.width - elementWidth) / 2);
+      centerY = Math.max(0, (sectionHeight - elementHeight) / 2);
+    } else {
+      sectionHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
+      centerX = Math.max(0, (size.width - elementWidth) / 2);
+      centerY = Math.max(0, (sectionHeight - elementHeight) / 2);
+    }
+
+    const defaultText = section === 'header' ? 'Header Text' : section === 'footer' ? 'Footer Text' : 'Edit text';
 
     const newElement: TextElement = {
       id: generateId(),
       type: 'text',
-      text: 'Edit text',
+      text: defaultText,
       x: centerX,
       y: centerY,
-      fontSize: 16,
+      fontSize: fontSize,
       fontFamily: 'font-sans',
       bold: false,
       italic: false,
       underline: false,
-      color: '#000000',
+      color: color,
       shadow: false,
       outline: false,
       width: elementWidth,
@@ -134,26 +168,62 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
       locked: false,
       visible: true,
     };
-    updateCurrentPage((page) => ({
-      ...page,
-      elements: [...page.elements, newElement],
-    }));
+
+    if (section === 'header') {
+      setHeader(prev => ({
+        ...prev,
+        elements: [...prev.elements, newElement]
+      }));
+    } else if (section === 'footer') {
+      setFooter(prev => ({
+        ...prev,
+        elements: [...prev.elements, newElement]
+      }));
+    } else {
+      updateCurrentPage((page) => ({
+        ...page,
+        elements: [...page.elements, newElement],
+      }));
+    }
+    
     setSelectedElementId(newElement.id);
   }, [currentPage, updateCurrentPage]);
 
-  const addImage = useCallback((src: string) => {
+  const addImage = useCallback((src: string, section: SectionType = 'page') => {
     const size = PAGE_SIZES[currentPage.size];
 
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      const maxWidth = 300;
+      let maxWidth: number;
+      let maxHeight: number;
+      let sectionHeight: number;
+
+      if (section === 'header') {
+        maxWidth = 120;
+        maxHeight = HEADER_HEIGHT - 20;
+        sectionHeight = HEADER_HEIGHT;
+      } else if (section === 'footer') {
+        maxWidth = 100;
+        maxHeight = FOOTER_HEIGHT - 20;
+        sectionHeight = FOOTER_HEIGHT;
+      } else {
+        maxWidth = 300;
+        maxHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT - 40;
+        sectionHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
+      }
+
       const aspectRatio = img.height / img.width;
-      const elementWidth = Math.min(maxWidth, size.width - 40);
-      const elementHeight = elementWidth * aspectRatio;
+      let elementWidth = Math.min(maxWidth, size.width - 40);
+      let elementHeight = elementWidth * aspectRatio;
+      
+      if (elementHeight > maxHeight) {
+        elementHeight = maxHeight;
+        elementWidth = elementHeight / aspectRatio;
+      }
       
       const centerX = Math.max(0, (size.width - elementWidth) / 2);
-      const centerY = Math.max(0, (size.height - elementHeight) / 2);
+      const centerY = Math.max(0, (sectionHeight - elementHeight) / 2);
 
       const newElement: ImageElement = {
         id: generateId(),
@@ -167,10 +237,23 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
         visible: true,
       };
       
-      updateCurrentPage((page) => ({
-        ...page,
-        elements: [...page.elements, newElement],
-      }));
+      if (section === 'header') {
+        setHeader(prev => ({
+          ...prev,
+          elements: [...prev.elements, newElement]
+        }));
+      } else if (section === 'footer') {
+        setFooter(prev => ({
+          ...prev,
+          elements: [...prev.elements, newElement]
+        }));
+      } else {
+        updateCurrentPage((page) => ({
+          ...page,
+          elements: [...page.elements, newElement],
+        }));
+      }
+      
       setSelectedElementId(newElement.id);
       setIsEditingElementId(null);
       toast.success('Image added');
@@ -183,12 +266,42 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
       loadGoogleFont(updates.fontFamily);
     }
 
+    const isInHeader = header.elements.some(el => el.id === id);
+    if (isInHeader) {
+      setHeader(prev => ({
+        ...prev,
+        elements: prev.elements.map(el => {
+          if (el.id !== id) return el;
+          if (el.type === 'text') {
+            return { ...el, ...updates } as TextElement;
+          } else {
+            return { ...el, ...updates } as ImageElement;
+          }
+        })
+      }));
+      return;
+    }
+
+    const isInFooter = footer.elements.some(el => el.id === id);
+    if (isInFooter) {
+      setFooter(prev => ({
+        ...prev,
+        elements: prev.elements.map(el => {
+          if (el.id !== id) return el;
+          if (el.type === 'text') {
+            return { ...el, ...updates } as TextElement;
+          } else {
+            return { ...el, ...updates } as ImageElement;
+          }
+        })
+      }));
+      return;
+    }
+
     updateCurrentPage((page) => ({
       ...page,
       elements: page.elements.map((el) => {
         if (el.id !== id) return el;
-        
-        // Type-safe merging based on element type
         if (el.type === 'text') {
           return { ...el, ...updates } as TextElement;
         } else {
@@ -196,15 +309,35 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
         }
       }),
     }));
-  }, [updateCurrentPage]);
+  }, [updateCurrentPage, header, footer]);
 
   const deleteElement = useCallback((id: string) => {
+    const isInHeader = header.elements.some(el => el.id === id);
+    if (isInHeader) {
+      setHeader(prev => ({
+        ...prev,
+        elements: prev.elements.filter(el => el.id !== id)
+      }));
+      setSelectedElementId(null);
+      return;
+    }
+
+    const isInFooter = footer.elements.some(el => el.id === id);
+    if (isInFooter) {
+      setFooter(prev => ({
+        ...prev,
+        elements: prev.elements.filter(el => el.id !== id)
+      }));
+      setSelectedElementId(null);
+      return;
+    }
+
     updateCurrentPage((page) => ({
       ...page,
       elements: page.elements.filter((el) => el.id !== id),
     }));
     setSelectedElementId(null);
-  }, [updateCurrentPage]);
+  }, [updateCurrentPage, header, footer]);
 
   const reorderElements = useCallback((fromIndex: number, toIndex: number) => {
     updateCurrentPage((page) => {
@@ -221,6 +354,19 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
     setIsEditingElementId(null);
   }, []);
 
+  // Background color operations
+  const updateHeaderBackground = useCallback((color: string) => {
+    setHeader(prev => ({ ...prev, backgroundColor: color }));
+  }, []);
+
+  const updateFooterBackground = useCallback((color: string) => {
+    setFooter(prev => ({ ...prev, backgroundColor: color }));
+  }, []);
+
+  const updatePageBackground = useCallback((color: string) => {
+    updateCurrentPage((page) => ({ ...page, backgroundColor: color }));
+  }, [updateCurrentPage]);
+
   return {
     pages,
     currentPageIndex,
@@ -228,6 +374,8 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
     selectedElementId,
     selectedElement,
     isEditingElementId,
+    header,
+    footer,
     setSelectedElementId,
     setIsEditingElementId,
     addPage,
@@ -243,5 +391,8 @@ export const useEditorState = (initialPages: Page[], initialIndex: number) => {
     updateElement,
     deleteElement,
     reorderElements,
+    updateHeaderBackground,
+    updateFooterBackground,
+    updatePageBackground,
   };
 };
