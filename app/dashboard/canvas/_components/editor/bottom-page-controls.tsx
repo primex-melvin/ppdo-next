@@ -4,9 +4,9 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Copy, Trash2, Layers } from 'lucide-react';
+import { Plus, Copy, Trash2, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 import LayerPanel from './layer-panel';
-import { CanvasElement } from '../editor';
+import { CanvasElement } from './types';
 
 interface BottomPageControlsProps {
   currentPageIndex: number;
@@ -19,6 +19,8 @@ interface BottomPageControlsProps {
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onReorderElements: (fromIndex: number, toIndex: number) => void;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
 }
 
 export default function BottomPageControls({
@@ -32,13 +34,18 @@ export default function BottomPageControls({
   onSelectElement,
   onUpdateElement,
   onReorderElements,
+  onPreviousPage,
+  onNextPage,
 }: BottomPageControlsProps) {
   const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
 
+  const isFirst = currentPageIndex === 0;
+  const isLast = currentPageIndex === totalPages - 1;
+
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-sm">
-        <div className="flex items-center justify-center gap-4 px-6 py-3">
+      <div className="fixed ml-18 bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-sm">
+        <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
             <Button
               onClick={() => setIsLayerPanelOpen(true)}
@@ -78,8 +85,32 @@ export default function BottomPageControls({
             </Button>
           </div>
 
-          <div className="text-sm text-stone-600 font-medium">
-            Page {currentPageIndex + 1} of {totalPages}
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={onPreviousPage}
+              size="sm"
+              variant="outline"
+              disabled={isFirst}
+              className="gap-2 bg-transparent"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </Button>
+
+            <div className="text-sm text-stone-600 font-medium">
+              Page {currentPageIndex + 1} of {totalPages}
+            </div>
+
+            <Button
+              onClick={onNextPage}
+              size="sm"
+              variant="outline"
+              disabled={isLast}
+              className="gap-2 bg-transparent"
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </div>

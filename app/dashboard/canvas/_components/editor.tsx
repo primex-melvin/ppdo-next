@@ -101,15 +101,6 @@ export default function Editor() {
       </div>
 
       <div className="no-print">
-        <PageNavigator
-          currentPageIndex={currentPageIndex}
-          totalPages={pages.length}
-          onPreviousPage={goToPreviousPage}
-          onNextPage={goToNextPage}
-        />
-      </div>
-
-      <div className="no-print">
         <BottomPageControls
           currentPageIndex={currentPageIndex}
           totalPages={pages.length}
@@ -121,6 +112,8 @@ export default function Editor() {
           onSelectElement={setSelectedElementId}
           onUpdateElement={updateElement}
           onReorderElements={reorderElements}
+          onPreviousPage={goToPreviousPage}
+          onNextPage={goToNextPage}
         />
       </div>
 

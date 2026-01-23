@@ -22,7 +22,7 @@ export default function PageNavigator({
   const isLast = currentPageIndex === totalPages - 1;
 
   return (
-    <div className="flex items-center justify-center gap-4 px-6 py-2">
+    <div className="flex bg-red-500 items-center justify-center gap-4 px-6 py-2">
       <Button
         onClick={onPreviousPage}
         size="sm"
