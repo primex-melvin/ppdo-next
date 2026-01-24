@@ -110,6 +110,39 @@
       "dismissed": false,
       "featureId": "feature-1769282828760-4q0wwfnr3",
       "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "ece05870-cbd5-44f2-a2e7-784c0832b8fa",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769285982783-q5najesen\" is ready for your review and approval.",
+      "createdAt": "2026-01-24T23:19:38.312Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769285982783-q5najesen",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "9c491bf7-c98b-4072-aaf8-34569646bd5f",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769285982783-q5najesen\" is ready for your review and approval.",
+      "createdAt": "2026-01-24T23:29:38.754Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769285982783-q5najesen",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "4fc8333c-bc01-4020-9ac4-1dd073b4b1af",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769285982783-q5najesen\" is ready for your review and approval.",
+      "createdAt": "2026-01-24T23:49:01.386Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769285982783-q5najesen",
+      "projectPath": "C:\\ppdo\\ppdo-next"
     }
   ]
 }

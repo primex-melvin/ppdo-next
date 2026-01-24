@@ -581,6 +581,8 @@ export function PrintPreviewModal({
                 activeSection={state.activeSection}
                 onActiveSectionChange={isEditorMode ? state.setActiveSection : () => {}}
                 selectedGroupId={state.selectedGroupId}
+                isEditorMode={isEditorMode}
+                onSetDirty={state.setIsDirty}
               />
             </div>
 

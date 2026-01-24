@@ -2,6 +2,33 @@
   "version": 1,
   "events": [
     {
+      "id": "evt-1769298541390-10f88b0d",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T23:49:01.390Z",
+      "featureName": "Implement Google Docs-style table resizing in PrintPreviewModal",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
+      "id": "evt-1769297378759-27e1cf28",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T23:29:38.759Z",
+      "featureName": "Implement Google Docs-style table resizing in PrintPreviewModal",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
+      "id": "evt-1769296778360-20d1abae",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T23:19:38.360Z",
+      "featureName": "Implement Google Docs-style table resizing in PrintPreviewModal",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
+      "id": "evt-1769285983108-2fa8e2d0",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T20:19:43.108Z",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
       "id": "evt-1769284703320-775a5d45",
       "trigger": "feature_success",
       "timestamp": "2026-01-24T19:58:23.320Z",
