@@ -12,6 +12,7 @@ export interface TextElement {
   italic: boolean;
   underline: boolean;
   color: string;
+  backgroundColor?: string;
   shadow: boolean;
   outline: boolean;
   width: number;
