@@ -6,6 +6,7 @@ import { useCallback, useState, useEffect } from 'react';
 import { PrintPreviewToolbar } from './PrintPreviewToolbar';
 import { ConfirmationModal } from './ConfirmationModal';
 import { TemplateSelector } from './TemplateSelector';
+import { TemplateApplicationModal } from './TemplateApplicationModal';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
 import { BudgetItem } from '@/app/dashboard/project/[year]/types';
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
@@ -22,6 +23,7 @@ import { usePrintPreviewActions } from './hooks/usePrintPreviewActions';
 import { usePrintPreviewDraft } from './hooks/usePrintPreviewDraft';
 import { convertTableToCanvas } from '@/lib/print-canvas/tableToCanvas';
 import { applyTemplateToPages } from '@/lib/canvas-utils';
+import { mergeTemplateWithCanvas } from '@/lib/canvas-utils/mergeTemplate';
 import { toast } from 'sonner';
 
 interface PrintPreviewModalProps {
@@ -61,10 +63,17 @@ export function PrintPreviewModal({
 }: PrintPreviewModalProps) {
   // State management
   const state = usePrintPreviewState();
-  
+
   // Loading state for template application
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const [templateToApply, setTemplateToApply] = useState<CanvasTemplate | null | undefined>(null);
+
+  // Template application confirmation state
+  const [showTemplateApplicationModal, setShowTemplateApplicationModal] = useState(false);
+  const [savedTemplate, setSavedTemplate] = useState<CanvasTemplate | null>(null);
+
+  // Live template application state (for "Apply Template" button)
+  const [showLiveTemplateSelector, setShowLiveTemplateSelector] = useState(false);
 
   // Initialize from table data with optional template
   const initializeFromTableData = useCallback(
@@ -171,11 +180,87 @@ export function PrintPreviewModal({
     [state]
   );
 
+  // Handle applying saved template to fresh data
+  const handleApplySavedTemplate = useCallback(() => {
+    if (!savedTemplate) return;
+
+    console.log('🎯 Applying saved template to fresh data:', savedTemplate.name);
+    setIsLoadingTemplate(true);
+
+    // Small delay for smooth UI transition
+    setTimeout(() => {
+      // Regenerate canvas with fresh data + saved template
+      initializeFromTableData(savedTemplate);
+
+      // Store timestamp from existing draft if available
+      if (existingDraft) {
+        state.setLastSavedTime(existingDraft.timestamp);
+      }
+
+      setIsLoadingTemplate(false);
+      setSavedTemplate(null);
+    }, 500);
+  }, [savedTemplate, initializeFromTableData, existingDraft, state]);
+
+  // Handle skipping template application (load old canvas state)
+  const handleSkipTemplate = useCallback(() => {
+    if (!existingDraft) return;
+
+    console.log('📄 Skipping template - loading saved canvas state...');
+    state.setPages(existingDraft.canvasState.pages);
+    state.setHeader(existingDraft.canvasState.header);
+    state.setFooter(existingDraft.canvasState.footer);
+    state.setCurrentPageIndex(existingDraft.canvasState.currentPageIndex);
+    state.setLastSavedTime(existingDraft.timestamp);
+
+    // Still restore the template reference for future saves
+    if (existingDraft.appliedTemplate) {
+      state.setAppliedTemplate(existingDraft.appliedTemplate);
+    }
+
+    state.setIsDirty(false);
+    setSavedTemplate(null);
+  }, [existingDraft, state]);
+
+  // Handle applying template to live canvas (from toolbar button)
+  const handleApplyLiveTemplate = useCallback(
+    (template: CanvasTemplate | null) => {
+      if (!template) {
+        console.log('❌ No template selected');
+        return;
+      }
+
+      console.log('🎨 Applying template to live canvas:', template.name);
+
+      // Merge template with existing canvas content
+      const merged = mergeTemplateWithCanvas(
+        state.pages,
+        state.header,
+        state.footer,
+        template
+      );
+
+      // Update state with merged content
+      state.setPages(merged.pages);
+      state.setHeader(merged.header);
+      state.setFooter(merged.footer);
+      state.setAppliedTemplate(template);
+      state.setIsDirty(true);
+
+      toast.success(`Applied template "${template.name}" to canvas`);
+      setShowLiveTemplateSelector(false);
+    },
+    [state]
+  );
+
   // Initialize when modal opens or template is selected
   useEffect(() => {
     if (!isOpen) {
       state.setHasInitialized(false);
       setTemplateToApply(null);
+      setSavedTemplate(null);
+      setShowTemplateApplicationModal(false);
+      setShowLiveTemplateSelector(false);
       return;
     }
 
@@ -195,6 +280,19 @@ export function PrintPreviewModal({
     // Initialize from existing draft
     if (existingDraft && !state.hasInitialized) {
       console.log('📂 Loading from existing draft...');
+
+      // Check if draft has a saved template
+      if (existingDraft.appliedTemplate) {
+        console.log('🎨 Draft has saved template:', existingDraft.appliedTemplate.name);
+        // Show template application modal
+        setSavedTemplate(existingDraft.appliedTemplate);
+        setShowTemplateApplicationModal(true);
+        state.setHasInitialized(true);
+        return;
+      }
+
+      // No template - just load the saved canvas state
+      console.log('📄 Loading saved canvas state without template...');
       state.setPages(existingDraft.canvasState.pages);
       state.setHeader(existingDraft.canvasState.header);
       state.setFooter(existingDraft.canvasState.footer);
@@ -260,6 +358,7 @@ export function PrintPreviewModal({
     setLastSavedTime: state.setLastSavedTime,
     setShowCloseConfirm: state.setShowCloseConfirm,
     onClose,
+    appliedTemplate: state.appliedTemplate,
   });
 
   const formattedLastSaved = state.lastSavedTime ? formatTimestamp(state.lastSavedTime) : '';
@@ -310,6 +409,7 @@ export function PrintPreviewModal({
           onBack={handleClose}
           onClose={handleClose}
           onSaveDraft={handleSaveDraft}
+          onApplyTemplate={() => setShowLiveTemplateSelector(true)}
         />
 
         {/* Main Layout */}
@@ -430,6 +530,24 @@ export function PrintPreviewModal({
         confirmText="Save & Close"
         cancelText="Discard & Close"
         variant="default"
+      />
+
+      {/* Template Application Confirmation */}
+      <TemplateApplicationModal
+        isOpen={showTemplateApplicationModal}
+        onClose={() => {
+          setShowTemplateApplicationModal(false);
+          handleSkipTemplate();
+        }}
+        onProceed={handleApplySavedTemplate}
+        template={savedTemplate}
+      />
+
+      {/* Live Template Selector (from toolbar button) */}
+      <TemplateSelector
+        isOpen={showLiveTemplateSelector}
+        onClose={() => setShowLiveTemplateSelector(false)}
+        onSelectTemplate={handleApplyLiveTemplate}
       />
     </>
   );

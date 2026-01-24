@@ -3,7 +3,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, X, Save } from 'lucide-react';
+import { ArrowLeft, X, Save, Palette } from 'lucide-react';
 
 interface PrintPreviewToolbarProps {
   isDirty: boolean;
@@ -12,6 +12,7 @@ interface PrintPreviewToolbarProps {
   onBack: () => void;
   onClose: () => void;
   onSaveDraft?: () => void;
+  onApplyTemplate?: () => void;
 }
 
 export function PrintPreviewToolbar({
@@ -21,6 +22,7 @@ export function PrintPreviewToolbar({
   onBack,
   onClose,
   onSaveDraft,
+  onApplyTemplate,
 }: PrintPreviewToolbarProps) {
 
   return (
@@ -59,6 +61,19 @@ export function PrintPreviewToolbar({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
+        {/* Apply Template Button */}
+        {onApplyTemplate && (
+          <Button
+            onClick={onApplyTemplate}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Palette className="w-4 h-4" />
+            Apply Template
+          </Button>
+        )}
+
         {/* Save Draft Button */}
         {onSaveDraft && (
           <Button

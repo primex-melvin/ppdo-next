@@ -1,6 +1,7 @@
 // lib/print-canvas/types.ts
 
 import { Page, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
+import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
 import { BudgetItem } from '@/app/dashboard/project/[year]/types';
 
 /**
@@ -115,6 +116,9 @@ export interface PrintDraft {
     totals: BudgetTotals;
     columns: ColumnDefinition[];
   };
+
+  // Template that was applied when draft was created
+  appliedTemplate?: CanvasTemplate;
 }
 
 /**

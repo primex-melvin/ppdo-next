@@ -34,6 +34,7 @@ interface UsePrintPreviewDraftProps {
   setLastSavedTime: (time: number) => void;
   setShowCloseConfirm: (show: boolean) => void;
   onClose: () => void;
+  appliedTemplate?: CanvasTemplate | null;
 }
 
 export function usePrintPreviewDraft({
@@ -56,6 +57,7 @@ export function usePrintPreviewDraft({
   setLastSavedTime,
   setShowCloseConfirm,
   onClose,
+  appliedTemplate,
 }: UsePrintPreviewDraftProps) {
   
   const handleSaveDraft = useCallback(() => {
@@ -83,6 +85,7 @@ export function usePrintPreviewDraft({
         totals,
         columns,
       },
+      appliedTemplate: appliedTemplate || undefined,
     };
 
     try {
@@ -112,6 +115,7 @@ export function usePrintPreviewDraft({
     setLastSavedTime,
     setIsDirty,
     setIsSaving,
+    appliedTemplate,
   ]);
 
   const handlePrint = useCallback(() => {
