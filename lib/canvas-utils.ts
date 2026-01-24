@@ -1,8 +1,18 @@
-// lib/canvas-utils.ts (ROBUST VERSION - Using dom-to-image-more)
+// lib/canvas-utils.ts (CLIENT-SIDE ONLY - Fixed SSR error)
 
-import domtoimage from 'dom-to-image-more';
 import { Page, HeaderFooter, CanvasElement } from '@/app/(extra)/canvas/_components/editor/types';
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
+
+/**
+ * Dynamically import dom-to-image-more only on client side
+ */
+async function getDomToImage() {
+  if (typeof window === 'undefined') {
+    throw new Error('dom-to-image-more can only be used in the browser');
+  }
+  const domtoimage = await import('dom-to-image-more');
+  return domtoimage.default;
+}
 
 /**
  * Capture canvas as thumbnail using dom-to-image-more (more reliable)
@@ -13,6 +23,12 @@ export async function captureCanvasAsThumbnail(
   width: number = 300,
   height: number = 400
 ): Promise<string> {
+  // Ensure we're in browser environment
+  if (typeof window === 'undefined') {
+    console.warn('captureCanvasAsThumbnail called on server side');
+    return generatePlaceholderThumbnail(width, height);
+  }
+
   console.group('📸 THUMBNAIL CAPTURE');
   console.log('Container ID:', containerId);
   console.log('Target size:', width, 'x', height);
@@ -26,6 +42,9 @@ export async function captureCanvasAsThumbnail(
 
   try {
     console.log('✅ Container found, attempting dom-to-image capture...');
+    
+    // Dynamically import dom-to-image-more
+    const domtoimage = await getDomToImage();
     
     // Use dom-to-image-more for better CSS support
     const dataUrl = await domtoimage.toPng(container, {
@@ -233,6 +252,12 @@ async function drawImageElement(
  * Generate a high-quality placeholder thumbnail
  */
 function generatePlaceholderThumbnail(width: number, height: number): string {
+  // Check if we're in browser
+  if (typeof window === 'undefined') {
+    // Return a tiny base64 PNG for SSR
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  }
+
   console.log('🎨 Generating placeholder thumbnail');
   
   const canvas = document.createElement('canvas');
