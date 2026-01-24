@@ -1,5 +1,4 @@
 // app/dashboard/project/[year]/components/PrintPreviewModal.tsx
-// 🔧 FIXED VERSION - Properly injects converted table data into canvas
 
 'use client';
 
@@ -11,13 +10,13 @@ import { convertTableToCanvas } from '@/lib/print-canvas/tableToCanvas';
 import { printAllPages } from '@/lib/print';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
 import { BudgetItem } from '@/app/dashboard/project/[year]/types';
-import { Page, HeaderFooter } from '@/app/dashboard/canvas/_components/editor/types';
+import { Page, HeaderFooter, CanvasElement } from '@/app/(extra)/canvas/_components/editor/types';
 
-// ✅ Import the actual canvas components we need
-import Toolbar from '@/app/dashboard/canvas/_components/editor/toolbar';
-import Canvas from '@/app/dashboard/canvas/_components/editor/canvas';
-import PagePanel from '@/app/dashboard/canvas/_components/editor/page-panel';
-import BottomPageControls from '@/app/dashboard/canvas/_components/editor/bottom-page-controls';
+// ✅ Import canvas components
+import Toolbar from '@/app/(extra)/canvas/_components/editor/toolbar';
+import Canvas from '@/app/(extra)/canvas/_components/editor/canvas';
+import PagePanel from '@/app/(extra)/canvas/_components/editor/page-panel';
+import BottomPageControls from '@/app/(extra)/canvas/_components/editor/bottom-page-controls';
 
 interface PrintPreviewModalProps {
   isOpen: boolean;
@@ -37,7 +36,7 @@ interface PrintPreviewModalProps {
   particular?: string;
   existingDraft?: PrintDraft | null;
   onDraftSaved?: (draft: PrintDraft) => void;
-  rowMarkers?: RowMarker[]; // Optional: for category/group headers
+  rowMarkers?: RowMarker[];
 }
 
 type ActiveSection = 'header' | 'page' | 'footer';
@@ -56,9 +55,7 @@ export function PrintPreviewModal({
   onDraftSaved,
   rowMarkers,
 }: PrintPreviewModalProps) {
-
-
-  // ✅ Canvas state - initialized in useEffect
+  // Canvas state
   const [pages, setPages] = useState<Page[]>([]);
   const [header, setHeader] = useState<HeaderFooter>({ elements: [] });
   const [footer, setFooter] = useState<HeaderFooter>({ elements: [] });
@@ -73,11 +70,9 @@ export function PrintPreviewModal({
   const [lastSavedTime, setLastSavedTime] = useState<number | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
-  // 🔧 FIX: Initialize canvas from table data or existing draft
+  // Initialize canvas from table data or existing draft
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
+    if (!isOpen) return;
 
     if (existingDraft) {
       setPages(existingDraft.canvasState.pages);
@@ -87,7 +82,6 @@ export function PrintPreviewModal({
       setLastSavedTime(existingDraft.timestamp);
       setIsDirty(false);
     } else {
-
       try {
         const result = convertTableToCanvas({
           items: budgetItems,
@@ -103,7 +97,6 @@ export function PrintPreviewModal({
           rowMarkers,
         });
 
-        // ✅ Set the converted pages to state
         setPages(result.pages);
         setHeader(result.header);
         setFooter(result.footer);
@@ -157,7 +150,7 @@ export function PrintPreviewModal({
     }
   }, [pages, header, footer, currentPageIndex, budgetItems, totals, columns, hiddenColumns, filterState, year, particular, onDraftSaved]);
 
-  // Print handler (used by canvas toolbar)
+  // Print handler
   const handlePrint = useCallback(() => {
     try {
       printAllPages(pages, header, footer);
@@ -175,13 +168,13 @@ export function PrintPreviewModal({
     }
   }, [isDirty, onClose]);
 
-  // Canvas handlers
-  const updateElement = useCallback((id: string, updates: any) => {
+  // Canvas update handlers
+  const updateElement = useCallback((id: string, updates: Partial<CanvasElement>) => {
     const isInHeader = header.elements.some(el => el.id === id);
     if (isInHeader) {
       setHeader(prev => ({
         ...prev,
-        elements: prev.elements.map(el => el.id === id ? { ...el, ...updates } : el)
+        elements: prev.elements.map(el => el.id === id ? { ...el, ...updates } as any : el)
       }));
       setIsDirty(true);
       return;
@@ -191,7 +184,7 @@ export function PrintPreviewModal({
     if (isInFooter) {
       setFooter(prev => ({
         ...prev,
-        elements: prev.elements.map(el => el.id === id ? { ...el, ...updates } : el)
+        elements: prev.elements.map(el => el.id === id ? { ...el, ...updates } as any : el)
       }));
       setIsDirty(true);
       return;
@@ -199,7 +192,7 @@ export function PrintPreviewModal({
 
     setPages(prev => prev.map((page, idx) =>
       idx === currentPageIndex
-        ? { ...page, elements: page.elements.map(el => el.id === id ? { ...el, ...updates } : el) }
+        ? { ...page, elements: page.elements.map(el => el.id === id ? { ...el, ...updates } as any : el) }
         : page
     ));
     setIsDirty(true);
@@ -237,7 +230,6 @@ export function PrintPreviewModal({
     setIsDirty(true);
   }, [currentPageIndex, header, footer]);
 
-  // Element operations
   const changePageSize = useCallback((size: 'A4' | 'Short' | 'Long') => {
     setPages(prev => prev.map(page => ({ ...page, size })));
     setIsDirty(true);
@@ -248,16 +240,26 @@ export function PrintPreviewModal({
     setIsDirty(true);
   }, []);
 
-  // Format last saved time
-  const formattedLastSaved = lastSavedTime
-    ? formatTimestamp(lastSavedTime)
-    : '';
+  const reorderElements = useCallback((fromIndex: number, toIndex: number) => {
+    setPages(prev => prev.map((page, idx) => {
+      if (idx !== currentPageIndex) return page;
+      const newElements = [...page.elements];
+      const [movedElement] = newElements.splice(fromIndex, 1);
+      newElements.splice(toIndex, 0, movedElement);
+      return { ...page, elements: newElements };
+    }));
+    setIsDirty(true);
+  }, [currentPageIndex]);
+
+  const formattedLastSaved = lastSavedTime ? formatTimestamp(lastSavedTime) : '';
 
   if (!isOpen) return null;
 
-  const currentPage = pages[currentPageIndex] || { id: 'empty', size: 'A4', elements: [] };
+  const currentPage = pages[currentPageIndex] || { id: 'empty', size: 'A4', orientation: 'portrait', elements: [], backgroundColor: '#ffffff' };
+  const selectedElement = currentPage.elements.find(el => el.id === selectedElementId) ||
+    header.elements.find(el => el.id === selectedElementId) ||
+    footer.elements.find(el => el.id === selectedElementId);
 
-  // Combine all elements for layer panel
   const allElements = [
     ...header.elements.map(el => ({ ...el, section: 'header' as const })),
     ...currentPage.elements.map(el => ({ ...el, section: 'page' as const })),
@@ -267,7 +269,7 @@ export function PrintPreviewModal({
   return (
     <>
       <div className="fixed inset-0 z-50 bg-white dark:bg-zinc-900 flex flex-col">
-        {/* Toolbar */}
+        {/* Custom Toolbar */}
         <PrintPreviewToolbar
           isDirty={isDirty}
           isSaving={isSaving}
@@ -277,78 +279,92 @@ export function PrintPreviewModal({
           onSaveDraft={handleSaveDraft}
         />
 
-        {/* Canvas Editor Area */}
-        <div className="flex-1 overflow-y-auto bg-stone-50" style={{ marginRight: '192px' }}>
-          {/* Toolbar for canvas editing */}
-          <div className="sticky top-0 z-10 bg-stone-100 border-b border-stone-300 shadow-sm">
-            <Toolbar
-              selectedElement={currentPage.elements.find(el => el.id === selectedElementId)}
-              onUpdateElement={selectedElementId ? (updates) => updateElement(selectedElementId, updates) : undefined}
-              onAddText={() => {/* Add text logic */ }}
-              pageSize={currentPage.size}
-              orientation={currentPage.orientation}
-              onPageSizeChange={changePageSize}
-              onOrientationChange={changeOrientation}
-              onPrint={handlePrint}
-              activeSection={activeSection}
-              headerBackgroundColor={header.backgroundColor || '#ffffff'}
-              footerBackgroundColor={footer.backgroundColor || '#ffffff'}
-              pageBackgroundColor={currentPage.backgroundColor || '#ffffff'}
-              onHeaderBackgroundChange={(color) => setHeader(prev => ({ ...prev, backgroundColor: color }))}
-              onFooterBackgroundChange={(color) => setFooter(prev => ({ ...prev, backgroundColor: color }))}
-              onPageBackgroundChange={(color) => setPages(prev => prev.map((p, i) => i === currentPageIndex ? { ...p, backgroundColor: color } : p))}
+        {/* Main Layout - Canvas + Right Sidebar */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Canvas Area */}
+          <div className="flex-1 flex flex-col overflow-hidden bg-stone-50 min-w-0">
+            {/* Canvas Toolbar */}
+            <div className="sticky top-0 z-10 bg-stone-100 border-b border-stone-300 shadow-sm">
+              <Toolbar
+                selectedElement={selectedElement}
+                onUpdateElement={selectedElementId ? (updates) => updateElement(selectedElementId, updates) : undefined}
+                onAddText={() => { }}
+                pageSize={currentPage.size}
+                orientation={currentPage.orientation}
+                onPageSizeChange={changePageSize}
+                onOrientationChange={changeOrientation}
+                onPrint={handlePrint}
+                activeSection={activeSection}
+                headerBackgroundColor={header.backgroundColor || '#ffffff'}
+                footerBackgroundColor={footer.backgroundColor || '#ffffff'}
+                pageBackgroundColor={currentPage.backgroundColor || '#ffffff'}
+                onHeaderBackgroundChange={(color) => {
+                  setHeader(prev => ({ ...prev, backgroundColor: color }));
+                  setIsDirty(true);
+                }}
+                onFooterBackgroundChange={(color) => {
+                  setFooter(prev => ({ ...prev, backgroundColor: color }));
+                  setIsDirty(true);
+                }}
+                onPageBackgroundChange={(color) => {
+                  setPages(prev => prev.map((p, i) => i === currentPageIndex ? { ...p, backgroundColor: color } : p));
+                  setIsDirty(true);
+                }}
+                pages={pages}
+                header={header}
+                footer={footer}
+              />
+            </div>
+
+            {/* Canvas Scroll Area */}
+            <div className="flex-1 overflow-y-auto overflow-x-auto flex items-start justify-center pt-4 pb-16 px-8">
+              <Canvas
+                page={currentPage}
+                selectedElementId={selectedElementId}
+                onSelectElement={setSelectedElementId}
+                onUpdateElement={updateElement}
+                onDeleteElement={deleteElement}
+                isEditingElementId={isEditingElementId}
+                onEditingChange={setIsEditingElementId}
+                header={header}
+                footer={footer}
+                pageNumber={currentPageIndex + 1}
+                totalPages={pages.length}
+                activeSection={activeSection}
+                onActiveSectionChange={setActiveSection}
+              />
+            </div>
+
+            {/* Bottom Controls */}
+            <div className="border-t border-stone-200 bg-white flex-shrink-0">
+              <BottomPageControls
+                currentPageIndex={currentPageIndex}
+                totalPages={pages.length}
+                onAddPage={() => { }}
+                onDuplicatePage={() => { }}
+                onDeletePage={() => { }}
+                elements={allElements}
+                selectedElementId={selectedElementId}
+                onSelectElement={setSelectedElementId}
+                onUpdateElement={updateElement}
+                onReorderElements={reorderElements}
+                onPreviousPage={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
+                onNextPage={() => setCurrentPageIndex(prev => Math.min(pages.length - 1, prev + 1))}
+              />
+            </div>
+          </div>
+
+          {/* Right Sidebar - Page Panel */}
+          <div className="w-64 border-l border-stone-200 bg-zinc-50 flex-shrink-0 overflow-y-auto">
+            <PagePanel
               pages={pages}
-              header={header}
-              footer={footer}
-            />
-          </div>
-
-          {/* Canvas */}
-          <div className="flex items-center justify-center pt-4 pb-16 px-8 min-h-full">
-            <Canvas
-              page={currentPage}
-              selectedElementId={selectedElementId}
-              onSelectElement={setSelectedElementId}
-              onUpdateElement={updateElement}
-              onDeleteElement={deleteElement}
-              isEditingElementId={isEditingElementId}
-              onEditingChange={setIsEditingElementId}
-              header={header}
-              footer={footer}
-              pageNumber={currentPageIndex + 1}
-              totalPages={pages.length}
-              activeSection={activeSection}
-              onActiveSectionChange={setActiveSection}
+              currentPageIndex={currentPageIndex}
+              onPageSelect={setCurrentPageIndex}
+              onAddPage={() => { }}
+              onReorderPages={(from, to) => { }}
             />
           </div>
         </div>
-
-        {/* Page Panel (right side) */}
-        <div className="fixed right-0 top-0 bottom-0 w-48">
-          <PagePanel
-            pages={pages}
-            currentPageIndex={currentPageIndex}
-            onPageSelect={setCurrentPageIndex}
-            onAddPage={() => {/* Add page logic */ }}
-            onReorderPages={(from, to) => {/* Reorder logic */ }}
-          />
-        </div>
-
-        {/* Bottom Controls */}
-        <BottomPageControls
-          currentPageIndex={currentPageIndex}
-          totalPages={pages.length}
-          onAddPage={() => {/* Add page logic */ }}
-          onDuplicatePage={() => {/* Duplicate logic */ }}
-          onDeletePage={() => {/* Delete logic */ }}
-          elements={allElements}
-          selectedElementId={selectedElementId}
-          onSelectElement={setSelectedElementId}
-          onUpdateElement={updateElement}
-          onReorderElements={(from, to) => {/* Reorder elements */ }}
-          onPreviousPage={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
-          onNextPage={() => setCurrentPageIndex(prev => Math.min(pages.length - 1, prev + 1))}
-        />
       </div>
 
       {/* Close Confirmation */}

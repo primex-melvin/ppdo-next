@@ -1,6 +1,6 @@
 // lib/print-canvas/types.ts
 
-import { Page, HeaderFooter } from '@/app/dashboard/canvas/_components/editor/types';
+import { Page, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
 import { BudgetItem } from '@/app/dashboard/project/[year]/types';
 
 /**

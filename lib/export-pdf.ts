@@ -1,8 +1,8 @@
 // lib/export-pdf.ts (Canvas-based alternative - requires jspdf@latest)
 
 import { toast } from 'sonner';
-import { Page, CanvasElement, HeaderFooter } from '@/app/dashboard/canvas/_components/editor/types';
-import { HEADER_HEIGHT, FOOTER_HEIGHT } from '@/app/dashboard/canvas/_components/editor/constants';
+import { Page, CanvasElement, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
+import { HEADER_HEIGHT, FOOTER_HEIGHT } from '@/app/(extra)/canvas/_components/editor/constants';
 
 const PAGE_SIZES: Record<string, { width: number; height: number }> = {
   A4: { width: 595, height: 842 },

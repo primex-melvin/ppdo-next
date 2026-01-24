@@ -1,6 +1,6 @@
 // lib/print-canvas/tableToCanvas.ts
 
-import { Page, HeaderFooter, TextElement } from '@/app/dashboard/canvas/_components/editor/types';
+import { Page, HeaderFooter, TextElement } from '@/app/(extra)/canvas/_components/editor/types';
 import {
   ConversionConfig,
   ConversionResult,

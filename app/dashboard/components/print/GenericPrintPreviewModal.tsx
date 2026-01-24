@@ -13,16 +13,16 @@ import { ConfirmationModal } from '@/app/dashboard/project/[year]/components/Con
 import { convertTableToCanvas } from '@/lib/print-canvas/tableToCanvas';
 import { printAllPages } from '@/lib/print';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
-import { Page, HeaderFooter, ImageElement, CanvasElement } from '@/app/dashboard/canvas/_components/editor/types';
+import { Page, HeaderFooter, ImageElement, CanvasElement } from '@/app/(extra)/canvas/_components/editor/types';
 import { PrintDataAdapter } from '@/lib/print/adapters/types';
-import { usePrintClipboard } from '@/app/dashboard/canvas/_components/editor/hooks/usePrintClipboard';
-import { getPageDimensions } from '@/app/dashboard/canvas/_components/editor/constants';
+import { usePrintClipboard } from '@/app/(extra)/canvas/_components/editor/hooks/usePrintClipboard';
+import { getPageDimensions } from '@/app/(extra)/canvas/_components/editor/constants';
 
 // ✅ Import the actual canvas components we need
-import Toolbar from '@/app/dashboard/canvas/_components/editor/toolbar';
-import Canvas from '@/app/dashboard/canvas/_components/editor/canvas';
-import PagePanel from '@/app/dashboard/canvas/_components/editor/page-panel';
-import BottomPageControls from '@/app/dashboard/canvas/_components/editor/bottom-page-controls';
+import Toolbar from '@/app/(extra)/canvas/_components/editor/toolbar';
+import Canvas from '@/app/(extra)/canvas/_components/editor/canvas';
+import PagePanel from '@/app/(extra)/canvas/_components/editor/page-panel';
+import BottomPageControls from '@/app/(extra)/canvas/_components/editor/bottom-page-controls';
 
 interface GenericPrintPreviewModalProps {
   isOpen: boolean;
