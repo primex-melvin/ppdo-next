@@ -106,6 +106,14 @@ export default function Editor() {
           onPageSelect={selectPage}
           onAddPage={addPage}
           onReorderPages={reorderPages}
+          onDuplicatePage={(index) => {
+            selectPage(index);
+            duplicatePage();
+          }}
+          onDeletePage={(index) => {
+            selectPage(index);
+            deletePage();
+          }}
         />
       </div>
 
@@ -168,8 +176,6 @@ export default function Editor() {
           onNextPage={goToNextPage}
         />
       </div>
-
-      <Toaster position="bottom-center" />
     </div>
   );
 }
