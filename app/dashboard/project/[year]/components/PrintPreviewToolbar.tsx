@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, X, Save, Palette, Ruler, FileText } from 'lucide-react';
+import { ArrowLeft, X, Save, Palette, Ruler } from 'lucide-react';
 import { DocumentTitleEditor } from './DocumentTitleEditor';
 
 interface PrintPreviewToolbarProps {
@@ -79,20 +79,6 @@ export function PrintPreviewToolbar({
               )}
             </span>
           )}
-        </div>
-
-        {/* Page Orientation & Size Indicator */}
-        <div className="flex items-center gap-2 ml-4 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
-          <FileText className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 capitalize">
-              {pageOrientation}
-            </span>
-            <span className="text-xs text-zinc-400 dark:text-zinc-600">•</span>
-            <span className="text-xs text-zinc-600 dark:text-zinc-400">
-              {pageSize}
-            </span>
-          </div>
         </div>
       </div>
 

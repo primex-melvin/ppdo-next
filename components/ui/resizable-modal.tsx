@@ -236,7 +236,6 @@ export {
   ResizableModalDescription,
   ResizableModalBody,
 };
-
 export type {
   ResizableModalProps,
   ResizableModalContentProps,

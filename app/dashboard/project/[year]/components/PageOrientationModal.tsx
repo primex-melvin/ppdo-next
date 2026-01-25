@@ -28,7 +28,8 @@ export function PageOrientationModal({
   onSelectOrientation,
   defaultOrientation = 'portrait',
 }: PageOrientationModalProps) {
-  const [selectedOrientation, setSelectedOrientation] = useState<'portrait' | 'landscape'>(defaultOrientation);
+  const [selectedOrientation, setSelectedOrientation] = useState<'portrait' |
+    'landscape'>(defaultOrientation);
 
   const handleConfirm = () => {
     console.log('✅ Orientation selected:', selectedOrientation);
