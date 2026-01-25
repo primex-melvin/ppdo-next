@@ -23,6 +23,9 @@ const MARGIN = 20;
 const ROW_HEIGHT = 24;
 const HEADER_ROW_HEIGHT = 28;
 
+// ✅ Internal padding for text inside cells (NOT cell spacing)
+const CELL_TEXT_PADDING = 4; // Small padding so text doesn't touch borders
+
 /**
  * Converts budget table data into canvas pages
  * Supports row markers for category/group headers
@@ -273,7 +276,7 @@ function createDataPage(
     if (markerAtThisIndex) {
       // Render category header
       elements.push(...createCategoryHeaderRow(markerAtThisIndex.label, columnWidths, currentY, groupId, groupName));
-      currentY += ROW_HEIGHT + 4; // Extra spacing after category
+      currentY += ROW_HEIGHT;
     }
 
     // Render data row
@@ -291,7 +294,7 @@ function createDataPage(
 }
 
 /**
- * Create table headers
+ * Create table headers - ZERO PADDING, text has small internal padding
  */
 function createTableHeaders(
   columns: ColumnDefinition[],
@@ -308,10 +311,10 @@ function createTableHeaders(
       id: `header-${col.key}-${Date.now()}`,
       type: 'text',
       text: col.label,
-      x: currentX + DEFAULT_TABLE_STYLE.cellPadding,
-      y: y + DEFAULT_TABLE_STYLE.cellPadding,
-      width: columnWidths[index] - (DEFAULT_TABLE_STYLE.cellPadding * 2),
-      height: HEADER_ROW_HEIGHT - (DEFAULT_TABLE_STYLE.cellPadding * 2),
+      x: currentX + CELL_TEXT_PADDING, // ✅ Text padding, NOT cell spacing
+      y: y + CELL_TEXT_PADDING,
+      width: columnWidths[index] - (CELL_TEXT_PADDING * 2),
+      height: HEADER_ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
       fontSize: DEFAULT_TABLE_STYLE.headerFontSize,
       fontFamily: 'Inter',
       bold: true,
@@ -325,7 +328,7 @@ function createTableHeaders(
       groupName,
     });
 
-    currentX += columnWidths[index];
+    currentX += columnWidths[index]; // ✅ NO GAP between columns
   });
 
   return elements;
@@ -347,10 +350,10 @@ function createCategoryHeaderRow(
     id: `category-header-${categoryLabel}-${Date.now()}`,
     type: 'text',
     text: categoryLabel,
-    x: MARGIN,
-    y: y + 4,
-    width: totalWidth,
-    height: ROW_HEIGHT - 8,
+    x: MARGIN + CELL_TEXT_PADDING,
+    y: y + CELL_TEXT_PADDING,
+    width: totalWidth - (CELL_TEXT_PADDING * 2),
+    height: ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
     fontSize: 11,
     fontFamily: 'Inter',
     bold: true,
@@ -366,7 +369,7 @@ function createCategoryHeaderRow(
 }
 
 /**
- * Create a single table row
+ * Create a single table row - ZERO PADDING between cells
  */
 function createTableRow(
   item: BudgetItem,
@@ -387,10 +390,10 @@ function createTableRow(
       id: `cell-${item.id}-${col.key}-${Date.now()}`,
       type: 'text',
       text: value,
-      x: currentX + DEFAULT_TABLE_STYLE.cellPadding,
-      y: y + DEFAULT_TABLE_STYLE.cellPadding,
-      width: columnWidths[index] - (DEFAULT_TABLE_STYLE.cellPadding * 2),
-      height: ROW_HEIGHT - (DEFAULT_TABLE_STYLE.cellPadding * 2),
+      x: currentX + CELL_TEXT_PADDING, // ✅ Text padding, NOT cell spacing
+      y: y + CELL_TEXT_PADDING,
+      width: columnWidths[index] - (CELL_TEXT_PADDING * 2),
+      height: ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
       fontSize: DEFAULT_TABLE_STYLE.dataFontSize,
       fontFamily: 'Inter',
       bold: false,
@@ -404,7 +407,7 @@ function createTableRow(
       groupName,
     });
 
-    currentX += columnWidths[index];
+    currentX += columnWidths[index]; // ✅ NO GAP between columns
   });
 
   return elements;
@@ -474,7 +477,7 @@ function addTotalsToPage(
   columnWidths: number[]
 ): void {
   const lastElement = page.elements[page.elements.length - 1];
-  const y = lastElement ? lastElement.y + ROW_HEIGHT + 10 : MARGIN;
+  const y = lastElement ? lastElement.y + ROW_HEIGHT : MARGIN;
 
   // Use the same groupId as other elements on this page
   const existingGroupId = lastElement?.groupId;
@@ -485,7 +488,7 @@ function addTotalsToPage(
 }
 
 /**
- * Create totals row
+ * Create totals row - ZERO PADDING
  */
 function createTotalsRow(
   totals: BudgetTotals,
@@ -513,10 +516,10 @@ function createTotalsRow(
         id: `total-${col.key}-${Date.now()}`,
         type: 'text',
         text: value,
-        x: currentX + DEFAULT_TABLE_STYLE.cellPadding,
-        y: y + DEFAULT_TABLE_STYLE.cellPadding,
-        width: columnWidths[index] - (DEFAULT_TABLE_STYLE.cellPadding * 2),
-        height: ROW_HEIGHT - (DEFAULT_TABLE_STYLE.cellPadding * 2),
+        x: currentX + CELL_TEXT_PADDING, // ✅ Text padding, NOT cell spacing
+        y: y + CELL_TEXT_PADDING,
+        width: columnWidths[index] - (CELL_TEXT_PADDING * 2),
+        height: ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
         fontSize: DEFAULT_TABLE_STYLE.totalsFontSize,
         fontFamily: 'Inter',
         bold: true,
@@ -531,7 +534,7 @@ function createTotalsRow(
       });
     }
 
-    currentX += columnWidths[index];
+    currentX += columnWidths[index]; // ✅ NO GAP between columns
   });
 
   return elements;

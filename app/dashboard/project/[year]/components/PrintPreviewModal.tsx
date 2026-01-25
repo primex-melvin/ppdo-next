@@ -83,12 +83,12 @@ export function PrintPreviewModal({
   const [showTemplateApplicationModal, setShowTemplateApplicationModal] = useState(false);
   const [savedTemplate, setSavedTemplate] = useState<CanvasTemplate | null>(null);
 
-  // --- Simplified Setup State ---
-  // Controls the "Setup Wizard" (Template Selection -> Orientation)
+  // --- Setup State ---
   const [showSetupModal, setShowSetupModal] = useState(false);
-  
-  // Independent control for live template application from toolbar
   const [showLiveTemplateSelector, setShowLiveTemplateSelector] = useState(false);
+
+  // Track initialization to prevent re-triggering
+  const initializationStartedRef = useRef(false);
 
   // Initialize from table data with template and orientation
   const initializeFromTableData = useCallback(
@@ -151,8 +151,9 @@ export function PrintPreviewModal({
     [budgetItems, totals, columns, hiddenColumns, year, particular, rowMarkers, state]
   );
 
-  // ✅ New Handler: Called when user finishes the Setup Wizard
+  // ✅ Handler: Called when user finishes the Setup Wizard
   const handleSetupComplete = useCallback((result: { template: CanvasTemplate | null, orientation: 'portrait' | 'landscape' }) => {
+    console.log('🎯 Setup complete, closing modal and initializing...');
     setShowSetupModal(false);
     
     // Defer slightly to allow modal unmount animation to start cleanly
@@ -163,7 +164,10 @@ export function PrintPreviewModal({
 
   const handleApplySavedTemplate = useCallback(() => {
     if (!savedTemplate) return;
+    console.log('📋 Applying saved template from existing draft...');
     setIsLoadingTemplate(true);
+    setShowTemplateApplicationModal(false);
+    
     setTimeout(() => {
       initializeFromTableData(savedTemplate, savedTemplate.page.orientation);
       if (existingDraft) state.setLastSavedTime(existingDraft.timestamp);
@@ -174,6 +178,9 @@ export function PrintPreviewModal({
 
   const handleSkipTemplate = useCallback(() => {
     if (!existingDraft) return;
+    console.log('⏭️ Skipping template application, loading existing draft as-is...');
+    setShowTemplateApplicationModal(false);
+    
     state.setPages(existingDraft.canvasState.pages);
     state.setHeader(existingDraft.canvasState.header);
     state.setFooter(existingDraft.canvasState.footer);
@@ -181,11 +188,11 @@ export function PrintPreviewModal({
     state.setLastSavedTime(existingDraft.timestamp);
     if (existingDraft.appliedTemplate) state.setAppliedTemplate(existingDraft.appliedTemplate);
     state.setIsDirty(false);
+    state.setHasInitialized(true);
     setSavedTemplate(null);
   }, [existingDraft, state]);
 
   // Handle applying template to live canvas (from toolbar button)
-  // This uses a different callback structure since it doesn't need orientation
   const handleApplyLiveTemplate = useCallback(
     (result: { template: CanvasTemplate | null }) => {
       const template = result.template;
@@ -224,26 +231,51 @@ export function PrintPreviewModal({
 
   // Main Initialization Logic
   useEffect(() => {
+    console.log('🔄 Main initialization effect triggered', {
+      isOpen,
+      hasInitialized: state.hasInitialized,
+      initializationStarted: initializationStartedRef.current,
+      existingDraft: !!existingDraft,
+    });
+
+    // Reset when modal closes
     if (!isOpen) {
+      console.log('🚪 Modal closed, resetting all state...');
       state.setHasInitialized(false);
       state.setDocumentTitle('');
       setSavedTemplate(null);
       setShowTemplateApplicationModal(false);
       setShowLiveTemplateSelector(false);
       setShowSetupModal(false);
+      initializationStartedRef.current = false;
       return;
     }
 
-    if (existingDraft && !state.hasInitialized) {
+    // Prevent re-initialization if already started or completed
+    if (state.hasInitialized || initializationStartedRef.current) {
+      console.log('⏸️ Initialization already started or completed, skipping...');
+      return;
+    }
+
+    // Mark initialization as started
+    initializationStartedRef.current = true;
+
+    // Case 1: Existing draft with template
+    if (existingDraft) {
+      console.log('📦 Existing draft detected');
       const draftTitle = existingDraft.documentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
       state.setDocumentTitle(draftTitle);
 
       if (existingDraft.appliedTemplate) {
+        console.log('🎨 Existing draft has template, showing template application modal...');
         setSavedTemplate(existingDraft.appliedTemplate);
         setShowTemplateApplicationModal(true);
-        state.setHasInitialized(true);
+        // Don't set hasInitialized yet - wait for user choice
         return;
       }
+
+      // No template in draft, load as-is
+      console.log('📄 Loading existing draft without template...');
       state.setPages(existingDraft.canvasState.pages);
       state.setHeader(existingDraft.canvasState.header);
       state.setFooter(existingDraft.canvasState.footer);
@@ -254,13 +286,13 @@ export function PrintPreviewModal({
       return;
     }
 
-    if (!existingDraft && !state.hasInitialized) {
-      const defaultTitle = particular ? `Budget ${year} - ${particular}` : `Budget ${year}`;
-      state.setDocumentTitle(defaultTitle);
-      // Trigger the Setup Wizard
-      setShowSetupModal(true);
-    }
-  }, [isOpen, existingDraft, state.hasInitialized, particular, year, state]);
+    // Case 2: No existing draft - show setup wizard
+    console.log('🆕 New draft, showing setup wizard...');
+    const defaultTitle = particular ? `Budget ${year} - ${particular}` : `Budget ${year}`;
+    state.setDocumentTitle(defaultTitle);
+    setShowSetupModal(true);
+    // Don't set hasInitialized yet - wait for wizard completion
+  }, [isOpen, existingDraft, particular, year, state]);
 
   const actions = usePrintPreviewActions({
     currentPageIndex: state.currentPageIndex,

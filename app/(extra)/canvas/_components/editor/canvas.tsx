@@ -9,6 +9,7 @@ import TextElementComponent from './text-element';
 import ImageElementComponent from './image-element';
 import HeaderFooterSection from './header-footer-section';
 import { TableResizeOverlay } from '@/app/dashboard/project/[year]/components/table-resize/TableResizeOverlay';
+import { TableBorderOverlay } from '@/app/dashboard/project/[year]/components/table-borders/TableBorderOverlay';
 
 type ActiveSection = 'header' | 'page' | 'footer';
 
@@ -466,6 +467,9 @@ export default function Canvas({
           }
           return null;
         })}
+
+        {/* ✅ DEFAULT TABLE BORDERS - Always visible */}
+        <TableBorderOverlay elements={page.elements} />
 
         {/* Group outline */}
         {selectedGroupId && activeSection === 'page' && (() => {
