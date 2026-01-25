@@ -1,10 +1,10 @@
-// app/dashboard/project/[year]/components/PrintPreviewModal.tsx
+// components/ppdo/table/print-preview/PrintPreviewModal.tsx
 
 'use client';
 
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { PrintPreviewToolbar } from './PrintPreviewToolbar';
-import { ConfirmationModal } from './ConfirmationModal';
+import { ConfirmationModal } from '../../../../app/dashboard/project/[year]/components/BudgetConfirmationModal';
 import { TemplateSelector } from './TemplateSelector';
 import { TemplateApplicationModal } from './TemplateApplicationModal';
 import { ColumnVisibilityPanel } from './ColumnVisibilityPanel';
@@ -21,9 +21,9 @@ import { HorizontalRuler, VerticalRuler } from '@/app/(extra)/canvas/_components
 import { useRulerState } from '@/app/(extra)/canvas/_components/editor/hooks/useRulerState';
 import { getPageDimensions, RULER_WIDTH, RULER_HEIGHT } from '@/app/(extra)/canvas/_components/editor/constants';
 // Custom hooks
-import { usePrintPreviewState } from './hooks/usePrintPreviewState';
-import { usePrintPreviewActions } from './hooks/usePrintPreviewActions';
-import { usePrintPreviewDraft } from './hooks/usePrintPreviewDraft';
+import { usePrintPreviewState } from '../../../../app/dashboard/project/[year]/components/hooks/usePrintPreviewState';
+import { usePrintPreviewActions } from '../../../../app/dashboard/project/[year]/components/hooks/usePrintPreviewActions';
+import { usePrintPreviewDraft } from '../../../../app/dashboard/project/[year]/components/hooks/usePrintPreviewDraft';
 import { convertTableToCanvas } from '@/lib/print-canvas/tableToCanvas';
 import { mergeTemplateWithCanvas } from '@/lib/canvas-utils/mergeTemplate';
 import { toast } from 'sonner';

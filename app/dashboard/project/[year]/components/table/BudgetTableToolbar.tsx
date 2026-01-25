@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BudgetColumnVisibilityMenu } from "./table/BudgetColumnVisibilityMenu";
+import { BudgetColumnVisibilityMenu } from "./BudgetColumnVisibilityMenu";
 
 interface BudgetTableToolbarProps {
   // Search

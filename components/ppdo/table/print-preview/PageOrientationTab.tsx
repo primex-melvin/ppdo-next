@@ -1,4 +1,4 @@
-// app/dashboard/project/[year]/components/PageOrientationTab.tsx
+// components/ppdo/table/print-preview/PageOrientationTab.tsx
 
 'use client';
 

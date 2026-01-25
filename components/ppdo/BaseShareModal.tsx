@@ -1,4 +1,4 @@
-// app/dashboard/project/[year]/components/BaseShareModal.tsx
+// components/ppdo/BaseShareModal.tsx
 
 "use client";
 

@@ -1,4 +1,4 @@
-// app/dashboard/project/[year]/components/TemplateSelector.tsx
+// components/ppdo/table/print-preview/TemplateSelector.tsx
 
 'use client';
 
