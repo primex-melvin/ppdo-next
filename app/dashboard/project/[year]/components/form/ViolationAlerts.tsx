@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
-import { formatNumberForDisplay } from "./utils/formHelpers";
+import { formatNumberForDisplay } from "@/lib/shared/utils/form-helpers";
 
 interface ViolationAlertsProps {
   isObligatedExceeded: boolean;

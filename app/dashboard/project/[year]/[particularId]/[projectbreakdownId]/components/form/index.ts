@@ -19,7 +19,6 @@ export { FormActions } from "./FormActions";
 
 // Utils - all already exported in Part 1
 export * from "./utils/formValidation";
-export * from "./utils/formHelpers";
-export * from "./utils/formStorage";
+export * from "@/lib/shared/utils/form-helpers";
 export * from "./utils/budgetCalculations";
 export * from "./utils/budgetValidation";

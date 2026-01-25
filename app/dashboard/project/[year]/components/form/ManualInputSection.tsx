@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, MinusCircle, AlertTriangle } from "lucide-react";
 import { BudgetItemFormValues } from "./utils/formValidation";
-import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay } from "./utils/formHelpers";
+import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay } from "@/lib/shared/utils/form-helpers";
 
 interface ManualInputSectionProps {
   form: UseFormReturn<BudgetItemFormValues>;

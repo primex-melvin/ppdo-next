@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Info, AlertTriangle } from "lucide-react";
 import { ProjectFormValues } from "./utils/formValidation";
-import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay, formatCurrency } from "./utils/formHelpers";
+import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay, formatCurrency } from "@/lib/shared/utils/form-helpers";
 import { BudgetAvailabilityResult } from "./utils/budgetCalculations";
 
 interface AllocatedBudgetFieldProps {

@@ -3,7 +3,7 @@
 "use client";
 
 import { BudgetAllocationStatus } from "./utils/budgetCalculations";
-import { formatCurrency, calculatePercentageUsed } from "./utils/formHelpers";
+import { formatCurrency, calculatePercentageUsed } from "@/lib/shared/utils/form-helpers";
 
 interface BudgetStatusBarProps {
   budgetAllocationStatus: BudgetAllocationStatus;

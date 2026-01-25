@@ -30,12 +30,10 @@ import {
 import {
   projectSchema,
   ProjectFormValues,
-  getSavedDraft,
-  saveDraft,
-  clearDraft,
   formatNumberForDisplay,
   calculateBudgetAvailability,
 } from "./form";
+import { useFormDraft } from "@/lib/shared/hooks/useFormDraft";
 
 interface ProjectFormProps {
   project?: Project | null;
@@ -80,7 +78,8 @@ export function ProjectForm({
   const [displayObligated, setDisplayObligated] = useState("");
   const [displayUtilized, setDisplayUtilized] = useState("");
 
-  const savedDraft = project ? null : getSavedDraft();
+  const { loadDraft, saveDraft, clearDraft } = useFormDraft("project_form_draft");
+  const savedDraft = project ? null : loadDraft();
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),

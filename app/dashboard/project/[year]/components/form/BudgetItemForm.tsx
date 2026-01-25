@@ -21,8 +21,8 @@ import { FormActions } from "./FormActions";
 
 // Utils
 import { budgetItemSchema, BudgetItemFormValues } from "./utils/formValidation";
-import { formatNumberForDisplay } from "./utils/formHelpers";
-import { getSavedDraft, saveDraft, clearDraft } from "./utils/formStorage";
+import { formatNumberForDisplay } from "@/lib/shared/utils/form-helpers";
+import { useFormDraft } from "@/lib/shared/hooks/useFormDraft";
 
 interface BudgetItemFormProps {
   item?: BudgetItem | null;
@@ -61,7 +61,8 @@ export function BudgetItemForm({
   const [displayObligated, setDisplayObligated] = useState("");
   const [displayUtilized, setDisplayUtilized] = useState("");
 
-  const savedDraft = item ? null : getSavedDraft();
+  const { loadDraft, saveDraft, clearDraft } = useFormDraft("budget_item_form_draft");
+  const savedDraft = item ? null : loadDraft();
 
   const form = useForm<BudgetItemFormValues>({
     resolver: zodResolver(budgetItemSchema),

@@ -32,7 +32,7 @@ export interface ColumnVisibilityMenuProps<T extends BaseColumn> {
   onToggleColumn: (columnId: string, isChecked: boolean) => void;
   onShowAll: () => void;
   onHideAll: () => void;
-  
+
   // Customization props (with defaults from config)
   triggerClassName?: string;
   triggerStyle?: React.CSSProperties;
@@ -43,7 +43,15 @@ export interface ColumnVisibilityMenuProps<T extends BaseColumn> {
   showAllText?: string;
   hideAllText?: string;
   hideAllButtonClass?: string;
-  
+
+  /**
+   * Variant style for the trigger button
+   * - 'default': Uses Button component with outline variant
+   * - 'table': Uses custom styled button matching table toolbar design
+   * @default 'default'
+   */
+  variant?: 'default' | 'table';
+
   // Custom render props (optional)
   renderTrigger?: (props: {
     hiddenCount: number;
@@ -87,6 +95,7 @@ export function ColumnVisibilityMenu<T extends BaseColumn>({
   showAllText = COLUMN_VISIBILITY_CONFIG.showAllText,
   hideAllText = COLUMN_VISIBILITY_CONFIG.hideAllText,
   hideAllButtonClass = COLUMN_VISIBILITY_CONFIG.hideAllButtonClass,
+  variant = 'default',
   renderTrigger,
 }: ColumnVisibilityMenuProps<T>) {
   const [open, setOpen] = useState(false);
@@ -108,6 +117,38 @@ export function ColumnVisibilityMenu<T extends BaseColumn>({
 
   const hiddenCount = hiddenColumns.size;
 
+  // Table variant trigger: matches breakdown table toolbar styling
+  const tableTrigger = (
+    <button
+      className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+      style={{
+        border: '1px solid rgb(228 228 231 / 1)',
+        borderRadius: '6px',
+      }}
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect width="18" height="7" x="3" y="3" rx="1" />
+        <rect width="9" height="7" x="3" y="14" rx="1" />
+        <rect width="5" height="7" x="16" y="14" rx="1" />
+      </svg>
+      <span className="hidden sm:inline">Columns</span>
+      {showCount && hiddenCount > 0 && (
+        <span className="ml-0.5 text-xs text-zinc-500">
+          ({hiddenCount} hidden)
+        </span>
+      )}
+    </button>
+  );
+
   // Default trigger button
   const defaultTrigger = (
     <Button
@@ -126,12 +167,15 @@ export function ColumnVisibilityMenu<T extends BaseColumn>({
     </Button>
   );
 
+  // Select the appropriate trigger based on variant
+  const trigger = variant === 'table' ? tableTrigger : defaultTrigger;
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        {renderTrigger 
-          ? renderTrigger({ hiddenCount, isOpen: open, defaultTrigger })
-          : defaultTrigger
+        {renderTrigger
+          ? renderTrigger({ hiddenCount, isOpen: open, defaultTrigger: trigger })
+          : trigger
         }
       </DropdownMenuTrigger>
       <DropdownMenuContent 

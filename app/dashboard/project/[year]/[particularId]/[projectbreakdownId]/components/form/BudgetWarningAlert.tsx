@@ -4,7 +4,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import { BudgetWarning } from "./utils/budgetCalculations";
-import { formatCurrency } from "./utils/formHelpers";
+import { formatCurrency } from "@/lib/shared/utils/form-helpers";
 
 interface BudgetWarningAlertProps {
   warning: BudgetWarning;

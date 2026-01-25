@@ -187,6 +187,61 @@
       "dismissed": false,
       "featureId": "feature-1769283733574-hq0n7u1ml",
       "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "e7681d71-b97f-4418-b3d0-6ef2ddc1ca08",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769335337311-muwaalyuj\" is ready for your review and approval.",
+      "createdAt": "2026-01-25T10:19:02.051Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769335337311-muwaalyuj",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "9bfe2724-2628-410c-9e0e-a30e7d75dd0c",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769335776811-9s1zelbue\" is ready for your review and approval.",
+      "createdAt": "2026-01-25T10:29:59.755Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769335776811-9s1zelbue",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "9545170d-a84f-4209-8f53-c4fb48c008a4",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769335906281-ubv5abws9\" is ready for your review and approval.",
+      "createdAt": "2026-01-25T10:41:07.953Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769335906281-ubv5abws9",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "c2ed0742-5e6b-4b50-b3e3-7785b3734fac",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769336027435-rs66uq7wr\" is ready for your review and approval.",
+      "createdAt": "2026-01-25T10:55:39.182Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769336027435-rs66uq7wr",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "4c466ec5-faba-4340-8dac-875f91297300",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1769338208900-xtlfvtp6g\" is ready for your review and approval.",
+      "createdAt": "2026-01-25T11:11:49.619Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1769338208900-xtlfvtp6g",
+      "projectPath": "C:\\ppdo\\ppdo-next"
     }
   ]
 }

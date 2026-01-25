@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { BreakdownFormValues } from "./utils/formValidation";
-import { timestampToDate, dateToTimestamp } from "./utils/formHelpers";
+import { timestampToDate, dateToTimestamp } from "@/lib/shared/utils/form-helpers";
 
 interface DateFieldsProps {
   form: UseFormReturn<BreakdownFormValues>;

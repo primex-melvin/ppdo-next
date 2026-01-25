@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { BudgetItemFormValues } from "./utils/formValidation";
-import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay } from "./utils/formHelpers";
+import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay } from "@/lib/shared/utils/form-helpers";
 
 interface AllocatedBudgetFieldProps {
   form: UseFormReturn<BudgetItemFormValues>;

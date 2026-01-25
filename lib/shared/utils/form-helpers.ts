@@ -1,4 +1,4 @@
-// app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/components/form/utils/formHelpers.ts
+// lib/shared/utils/form-helpers.ts
 
 /**
  * Format number with thousands separators
@@ -94,4 +94,16 @@ export const timestampToDate = (timestamp: number | undefined): string => {
 export const dateToTimestamp = (dateString: string): number | undefined => {
   if (!dateString) return undefined;
   return new Date(dateString).getTime();
+};
+
+/**
+ * Get utilization color based on rate
+ * @param utilizationRate - Utilization rate percentage
+ * @returns Color class name
+ */
+export const getUtilizationColor = (utilizationRate: number): string => {
+  if (utilizationRate >= 100) return "text-red-600 dark:text-red-400";
+  if (utilizationRate >= 75) return "text-orange-600 dark:text-orange-400";
+  if (utilizationRate >= 50) return "text-yellow-600 dark:text-yellow-400";
+  return "text-green-600 dark:text-green-400";
 };

@@ -4,7 +4,7 @@
  * Result of budget availability calculation
  */
 
-import { formatCurrency } from "./formHelpers";
+import { formatCurrency } from "@/lib/shared/utils/form-helpers";
 
 export interface BudgetAllocationStatus {
   isLoading: boolean;

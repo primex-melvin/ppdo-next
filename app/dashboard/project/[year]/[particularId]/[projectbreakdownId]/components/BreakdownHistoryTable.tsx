@@ -4,11 +4,12 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { Trash2, Printer, Plus } from "lucide-react";
 import { useAccentColor } from "../../../../../../../contexts/AccentColorContext";
 
 // Import types
-import { 
-  Breakdown, 
+import {
+  Breakdown,
   BreakdownHistoryTableProps,
 } from "../types/breakdown.types";
 
@@ -23,9 +24,9 @@ import {
   isInteractiveElement,
 } from "../utils/helpers";
 
-import { 
-  buildBreakdownDetailPath, 
-  logBreakdownNavigation 
+import {
+  buildBreakdownDetailPath,
+  logBreakdownNavigation
 } from "../utils/navigation.utils";
 
 // Import hooks
@@ -33,8 +34,15 @@ import { useTableSettings } from "../hooks/useTableSettings";
 import { useTableResize } from "../hooks/useTableResize";
 import { useColumnDragDrop } from "../hooks/useColumnDragDrop";
 
+// Import shared table components
+import {
+  GenericTableToolbar,
+  TableSearchInput,
+  TableActionButton,
+} from "@/components/shared/table";
+import { ColumnVisibilityMenu } from "@/components/ColumnVisibilityMenu";
+
 // Import components
-import { TableToolbar } from "./TableToolbar";
 import { TableHeader } from "./TableHeader";
 import { TableRow } from "./TableRow";
 import { TableTotalsRow } from "./TableTotalsRow";
@@ -195,19 +203,49 @@ export function BreakdownHistoryTable({
       }}
     >
       {/* TOOLBAR */}
-      <TableToolbar
-        search={search}
-        onSearchChange={setSearch}
-        onPrint={handlePrint}
-        onAdd={onAdd}
-        onOpenTrash={onOpenTrash}
-        accentColor={accentColorValue}
-        columns={columns}
-        hiddenColumns={hiddenColumns}
-        onToggleColumn={handleToggleColumn}
-        onShowAll={handleShowAllColumns}
-        onHideAll={handleHideAllColumns}
-      />
+      <GenericTableToolbar
+        actions={
+          <>
+            <ColumnVisibilityMenu
+              columns={columns.map(col => ({ key: col.key, label: col.label }))}
+              hiddenColumns={hiddenColumns}
+              onToggleColumn={handleToggleColumn}
+              onShowAll={handleShowAllColumns}
+              onHideAll={handleHideAllColumns}
+              variant="table"
+            />
+            {onOpenTrash && (
+              <TableActionButton
+                icon={Trash2}
+                label="Recycle Bin"
+                onClick={onOpenTrash}
+                title="View Recycle Bin"
+              />
+            )}
+            <TableActionButton
+              icon={Printer}
+              label="Print"
+              onClick={handlePrint}
+              title="Print"
+            />
+            {onAdd && (
+              <TableActionButton
+                icon={Plus}
+                label="Add Record"
+                onClick={onAdd}
+                variant="primary"
+                accentColor={accentColorValue}
+              />
+            )}
+          </>
+        }
+      >
+        <TableSearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search..."
+        />
+      </GenericTableToolbar>
 
       {/* TABLE WRAPPER - CRITICAL: Contains the border grid */}
       <div 

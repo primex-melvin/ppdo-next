@@ -25,7 +25,7 @@ import {
   parseFormattedNumber,
   formatNumberForDisplay,
   formatCurrency,
-} from "./utils/formHelpers";
+} from "@/lib/shared/utils/form-helpers";
 
 interface AllocatedBudgetFieldProps {
   form: UseFormReturn<BreakdownFormValues>;

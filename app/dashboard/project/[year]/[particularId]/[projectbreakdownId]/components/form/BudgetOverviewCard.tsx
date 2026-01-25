@@ -4,7 +4,7 @@
 
 import { Package, TrendingUp, Info } from "lucide-react";
 import { BudgetAllocationStatus } from "./utils/budgetCalculations";
-import { formatCurrency } from "./utils/formHelpers";
+import { formatCurrency } from "@/lib/shared/utils/form-helpers";
 
 interface BudgetOverviewCardProps {
   budgetAllocationStatus: BudgetAllocationStatus;

@@ -9,7 +9,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Calculator } from "lucide-react";
-import { formatNumberForDisplay, getUtilizationColor } from "./utils/formHelpers";
+import { formatNumberForDisplay, getUtilizationColor } from "@/lib/shared/utils/form-helpers";
 
 interface UtilizationDisplayProps {
   totalBudgetAllocated: number;

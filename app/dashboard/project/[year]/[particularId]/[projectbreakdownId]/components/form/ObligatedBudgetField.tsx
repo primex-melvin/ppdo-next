@@ -17,7 +17,7 @@ import {
   formatNumberWithCommas,
   parseFormattedNumber,
   formatNumberForDisplay,
-} from "./utils/formHelpers";
+} from "@/lib/shared/utils/form-helpers";
 
 interface ObligatedBudgetFieldProps {
   form: UseFormReturn<BreakdownFormValues>;
