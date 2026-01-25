@@ -11,6 +11,152 @@ const PAGE_SIZES: Record<string, { width: number; height: number }> = {
   Long: { width: 612, height: 936 },
 };
 
+// ============================================================================
+// TABLE STRUCTURE DETECTION & BORDER RENDERING
+// ============================================================================
+
+interface TableStructure {
+  columns: { x: number; width: number }[];
+  rows: { y: number; height: number }[];
+  tableLeft: number;
+  tableTop: number;
+  tableWidth: number;
+  tableHeight: number;
+}
+
+/**
+ * Detect table structure from canvas elements
+ * Groups elements by groupId and analyzes their layout
+ * Only considers visible elements to support column hiding
+ */
+function detectTableStructure(elements: CanvasElement[]): TableStructure | null {
+  // Find visible table elements (filter out hidden columns)
+  const tableElements = elements.filter(
+    (el) => el.groupId && el.groupName?.toLowerCase().includes('table') && el.visible !== false
+  );
+
+  if (tableElements.length === 0) return null;
+
+  // Get unique X positions (columns) and Y positions (rows)
+  const uniqueX = Array.from(new Set(tableElements.map((el) => el.x))).sort((a, b) => a - b);
+  const uniqueY = Array.from(new Set(tableElements.map((el) => el.y))).sort((a, b) => a - b);
+
+  if (uniqueX.length === 0 || uniqueY.length === 0) return null;
+
+  // Build column structure
+  const columns = uniqueX.map((x) => {
+    const cellsInColumn = tableElements.filter((el) => el.x === x);
+    const width = cellsInColumn.length > 0 ? cellsInColumn[0].width : 0;
+    return { x, width };
+  });
+
+  // Build row structure
+  const rows = uniqueY.map((y) => {
+    const cellsInRow = tableElements.filter((el) => el.y === y);
+    const height = cellsInRow.length > 0 ? cellsInRow[0].height : 0;
+    return { y, height };
+  });
+
+  // Calculate table bounds
+  const tableLeft = Math.min(...tableElements.map((el) => el.x));
+  const tableTop = Math.min(...tableElements.map((el) => el.y));
+  const tableRight = Math.max(...tableElements.map((el) => el.x + el.width));
+  const tableBottom = Math.max(...tableElements.map((el) => el.y + el.height));
+  const tableWidth = tableRight - tableLeft;
+  const tableHeight = tableBottom - tableTop;
+
+  return {
+    columns,
+    rows,
+    tableLeft,
+    tableTop,
+    tableWidth,
+    tableHeight,
+  };
+}
+
+/**
+ * Create SVG element with table borders
+ * Renders Google Docs-style table borders (1px solid black, edge-to-edge)
+ *
+ * This function is designed to be WYSIWYG - the borders you see in the preview
+ * will be exactly what appears in the PDF.
+ *
+ * @param structure - The detected table structure
+ * @param containerWidth - Width of the container
+ * @param containerHeight - Height of the container
+ * @param borderColor - Color of the border (default: black) - for future colored layouts
+ * @param borderWidth - Width of the border in pixels (default: 1)
+ */
+/**
+ * Create an image element with table borders rendered as an inline SVG data URL.
+ *
+ * IMPORTANT: This returns an <img> element instead of an <svg> element to completely
+ * isolate the SVG from the document's CSS cascade. html2canvas cannot parse modern
+ * CSS color functions like lab(), oklch(), etc. that may be inherited from parent
+ * elements. By converting the SVG to a data URL, we ensure html2canvas treats it
+ * as a regular image and doesn't attempt to parse any CSS properties.
+ */
+function createTableBordersImage(
+  structure: TableStructure,
+  containerWidth: number,
+  containerHeight: number,
+  borderColor: string = '#000000',
+  borderWidth: number = 1
+): HTMLImageElement {
+  // Build SVG as a string - completely isolated from document CSS
+  const lines: string[] = [];
+
+  // Outer table border (rectangle)
+  lines.push(
+    `<rect x="${structure.tableLeft}" y="${structure.tableTop}" ` +
+    `width="${structure.tableWidth}" height="${structure.tableHeight}" ` +
+    `fill="none" stroke="${borderColor}" stroke-width="${borderWidth}" ` +
+    `vector-effect="non-scaling-stroke"/>`
+  );
+
+  // Vertical column borders (skip the last column - outer border handles it)
+  structure.columns.slice(0, -1).forEach((col) => {
+    const x = col.x + col.width;
+    lines.push(
+      `<line x1="${x}" y1="${structure.tableTop}" ` +
+      `x2="${x}" y2="${structure.tableTop + structure.tableHeight}" ` +
+      `stroke="${borderColor}" stroke-width="${borderWidth}" ` +
+      `vector-effect="non-scaling-stroke"/>`
+    );
+  });
+
+  // Horizontal row borders (skip the last row - outer border handles it)
+  structure.rows.slice(0, -1).forEach((row) => {
+    const y = row.y + row.height;
+    lines.push(
+      `<line x1="${structure.tableLeft}" y1="${y}" ` +
+      `x2="${structure.tableLeft + structure.tableWidth}" y2="${y}" ` +
+      `stroke="${borderColor}" stroke-width="${borderWidth}" ` +
+      `vector-effect="non-scaling-stroke"/>`
+    );
+  });
+
+  // Build complete SVG string with explicit xmlns for data URL compatibility
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${containerWidth}" height="${containerHeight}">${lines.join('')}</svg>`;
+
+  // Convert to data URL - this completely isolates SVG from document CSS
+  const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+
+  // Create image element
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.style.position = 'absolute';
+  img.style.left = '0';
+  img.style.top = '0';
+  img.style.width = `${containerWidth}px`;
+  img.style.height = `${containerHeight}px`;
+  img.style.pointerEvents = 'none';
+  img.style.zIndex = '1';
+
+  return img;
+}
+
 /**
  * Color properties that html2canvas needs to process
  * These are all CSS properties that can contain color values
@@ -479,6 +625,7 @@ const generateFilename = (title?: string): string => {
 
 /**
  * Create a temporary DOM container with all elements for a section
+ * WYSIWYG: Includes table borders as SVG overlay for accurate PDF rendering
  */
 const createSectionDOM = (
   elements: CanvasElement[],
@@ -510,7 +657,15 @@ const createSectionDOM = (
       textEl.style.position = 'absolute';
       textEl.style.left = `${element.x}px`;
       textEl.style.top = `${element.y}px`;
-      textEl.style.fontFamily = element.fontFamily;
+      // Set width and height to match the element dimensions
+      if (element.width) {
+        textEl.style.width = `${element.width}px`;
+      }
+      if (element.height) {
+        textEl.style.height = `${element.height}px`;
+      }
+      // Font family with safe fallbacks for html2canvas
+      textEl.style.fontFamily = `${element.fontFamily}, Arial, sans-serif`;
       textEl.style.fontSize = `${element.fontSize}px`;
       textEl.style.fontWeight = element.bold ? 'bold' : 'normal';
       textEl.style.fontStyle = element.italic ? 'italic' : 'normal';
@@ -519,8 +674,14 @@ const createSectionDOM = (
       const textColor = convertColorToRGB(element.color, '#000000', false);
       textEl.style.setProperty('color', textColor, 'important');
       textEl.style.color = textColor;
+      // CRITICAL: Preserve whitespace and spacing - prevents space collapse in html2canvas
       textEl.style.whiteSpace = 'pre-wrap';
       textEl.style.wordBreak = 'break-word';
+      textEl.style.wordSpacing = 'normal';
+      textEl.style.letterSpacing = 'normal';
+      textEl.style.textRendering = 'auto';
+      // Ensure line height is set for proper text rendering
+      textEl.style.lineHeight = '1.2';
 
       if (element.backgroundColor) {
         const bgColor = convertColorToRGB(element.backgroundColor, 'transparent', true);
@@ -556,6 +717,26 @@ const createSectionDOM = (
       container.appendChild(imgEl);
     }
   });
+
+  // ✅ WYSIWYG: Add table borders as image (SVG data URL)
+  // Uses an <img> with SVG data URL to avoid html2canvas CSS parsing issues
+  // This matches the TableBorderOverlay component in the canvas preview
+  const tableStructure = detectTableStructure(elements);
+  if (tableStructure) {
+    // Default border styling - can be made configurable in the future
+    // for colored layouts and custom styling
+    const borderColor = '#000000';
+    const borderWidth = 1;
+
+    const bordersImg = createTableBordersImage(
+      tableStructure,
+      width,
+      height,
+      borderColor,
+      borderWidth
+    );
+    container.appendChild(bordersImg);
+  }
 
   return container;
 };
@@ -679,49 +860,103 @@ const captureElement = async (
     // This is the optimal point for color normalization
     onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
       try {
-        // FIRST: Add a global style rule to force color-scheme to sRGB
-        // This prevents the browser from computing colors in modern color spaces
-        const style = clonedDoc.createElement('style');
-        style.textContent = `
-          * {
+        // STEP 1: Remove ALL stylesheets from the cloned document
+        // This eliminates any CSS that might define lab(), oklch(), etc. colors
+        // We rely solely on inline styles which we control completely
+        const stylesheets = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+        stylesheets.forEach((sheet) => sheet.remove());
+
+        // STEP 2: Add a minimal reset stylesheet with only safe colors and text spacing
+        const resetStyle = clonedDoc.createElement('style');
+        resetStyle.textContent = `
+          *, *::before, *::after {
             color-scheme: light !important;
             forced-color-adjust: none !important;
           }
+          :root, html, body {
+            color: #000000 !important;
+            background-color: #ffffff !important;
+          }
+          /* CRITICAL: Preserve text spacing - prevents html2canvas from collapsing spaces */
+          div, span, p, h1, h2, h3, h4, h5, h6 {
+            word-spacing: normal !important;
+            letter-spacing: normal !important;
+            white-space: pre-wrap !important;
+          }
         `;
-        clonedDoc.head?.appendChild(style);
+        clonedDoc.head?.appendChild(resetStyle);
 
-        // Deep normalize all colors in the cloned document
-        // This ensures html2canvas sees only rgb/rgba colors
-        deepNormalizeColors(clonedElement, clonedDoc);
+        // STEP 3: Set explicit safe colors on html and body
+        if (clonedDoc.documentElement) {
+          clonedDoc.documentElement.style.setProperty('color', '#000000', 'important');
+          clonedDoc.documentElement.style.setProperty('background-color', '#ffffff', 'important');
+          clonedDoc.documentElement.style.setProperty('color-scheme', 'light', 'important');
+        }
+        if (clonedDoc.body) {
+          clonedDoc.body.style.setProperty('color', '#000000', 'important');
+          clonedDoc.body.style.setProperty('background-color', '#ffffff', 'important');
+          clonedDoc.body.style.setProperty('color-scheme', 'light', 'important');
+        }
 
-        // AGGRESSIVE: Process every single element and force safe color values
+        // STEP 4: Process ALL elements and force safe color values
         const allElements = clonedDoc.querySelectorAll('*');
         allElements.forEach((el) => {
           if (el instanceof HTMLElement) {
-            const style = clonedDoc.defaultView?.getComputedStyle(el);
-            if (style) {
-              // Force convert EVERY color property, even if it looks safe
-              // This prevents the browser from computing colors in modern color spaces
+            // Force all color properties to safe values
+            // Use getComputedStyle from the cloned document's window
+            const computedStyle = clonedDoc.defaultView?.getComputedStyle(el);
+            if (computedStyle) {
               for (const prop of COLOR_STYLE_PROPERTIES) {
                 const cssProp = toKebabCase(prop);
-                const value = style.getPropertyValue(cssProp);
+                const value = computedStyle.getPropertyValue(cssProp);
 
                 if (value && value !== 'initial' && value !== 'inherit' && value !== 'unset') {
                   const isBackground = BACKGROUND_COLOR_PROPERTIES.has(prop) || BACKGROUND_COLOR_PROPERTIES.has(cssProp);
-
-                  // ALWAYS convert, even if it looks safe, to prevent browser color space conversions
                   const converted = convertColorToRGB(value, isBackground ? 'transparent' : 'rgb(0,0,0)', isBackground);
 
-                  // Verify the converted value is safe
                   if (!isModernColorFunction(converted)) {
                     el.style.setProperty(cssProp, converted, 'important');
                   } else {
-                    // If conversion somehow still produced a modern color, use hard fallback
-                    console.error(`[PDF Export] Element has unconvertible ${cssProp}: "${value}", using fallback`);
                     el.style.setProperty(cssProp, isBackground ? 'transparent' : 'rgb(0,0,0)', 'important');
                   }
                 }
               }
+
+              // Also handle box-shadow and text-shadow
+              for (const prop of COMPLEX_COLOR_PROPERTIES) {
+                const cssProp = toKebabCase(prop);
+                const value = computedStyle.getPropertyValue(cssProp);
+                if (value && value !== 'none' && isModernColorFunction(value)) {
+                  el.style.setProperty(cssProp, 'none', 'important');
+                }
+              }
+
+              // CRITICAL: Preserve text spacing to prevent html2canvas from collapsing spaces
+              // This fixes the issue where "Budget Tracking 2026" becomes "BudgetTracking2026"
+              el.style.setProperty('word-spacing', 'normal', 'important');
+              el.style.setProperty('letter-spacing', 'normal', 'important');
+            }
+          }
+
+          // Handle SVG elements
+          if (el instanceof SVGElement) {
+            el.style.setProperty('color', '#000000', 'important');
+            el.style.setProperty('color-scheme', 'light', 'important');
+
+            if (el.tagName.toLowerCase() === 'svg') {
+              el.style.setProperty('background-color', 'transparent', 'important');
+              el.style.setProperty('fill', 'none', 'important');
+              el.style.setProperty('stroke', '#000000', 'important');
+            }
+
+            const stroke = el.getAttribute('stroke');
+            const fill = el.getAttribute('fill');
+
+            if (stroke && isModernColorFunction(stroke)) {
+              el.setAttribute('stroke', convertColorToRGB(stroke, '#000000', false));
+            }
+            if (fill && isModernColorFunction(fill)) {
+              el.setAttribute('fill', convertColorToRGB(fill, 'none', true));
             }
           }
         });
@@ -808,7 +1043,7 @@ export async function exportAsWYSIWYGPDF(
         pageContainer.style.height = `${pageSize.height}px`;
         pageContainer.style.backgroundColor = '#ffffff'; // Always use safe explicit white
 
-        // Create and append header
+        // Create and append header (absolute positioning for precise layout)
         const headerDOM = createSectionDOM(
           header.elements,
           pageSize.width,
@@ -817,9 +1052,12 @@ export async function exportAsWYSIWYGPDF(
           pageIndex + 1,
           pages.length
         );
+        headerDOM.style.position = 'absolute';
+        headerDOM.style.left = '0';
+        headerDOM.style.top = '0';
         pageContainer.appendChild(headerDOM);
 
-        // Create and append page body
+        // Create and append page body (absolute positioning for precise layout)
         const bodyHeight = pageSize.height - HEADER_HEIGHT - FOOTER_HEIGHT;
         const bodyDOM = createSectionDOM(
           page.elements,
@@ -827,10 +1065,12 @@ export async function exportAsWYSIWYGPDF(
           bodyHeight,
           page.backgroundColor || '#ffffff'
         );
+        bodyDOM.style.position = 'absolute';
+        bodyDOM.style.left = '0';
         bodyDOM.style.top = `${HEADER_HEIGHT}px`;
         pageContainer.appendChild(bodyDOM);
 
-        // Create and append footer
+        // Create and append footer (absolute positioning for precise layout)
         const footerDOM = createSectionDOM(
           footer.elements,
           pageSize.width,
@@ -839,6 +1079,8 @@ export async function exportAsWYSIWYGPDF(
           pageIndex + 1,
           pages.length
         );
+        footerDOM.style.position = 'absolute';
+        footerDOM.style.left = '0';
         footerDOM.style.top = `${HEADER_HEIGHT + bodyHeight}px`;
         pageContainer.appendChild(footerDOM);
 

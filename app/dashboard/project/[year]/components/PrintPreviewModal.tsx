@@ -92,6 +92,9 @@ export function PrintPreviewModal({
   const [hiddenCanvasColumns, setHiddenCanvasColumns] = useState<Set<string>>(new Set());
   // Version counter to force React re-renders when Set changes (React doesn't detect Set mutations)
   const [hiddenColumnsVersion, setHiddenColumnsVersion] = useState(0);
+
+  // --- Column Label Overrides (for inline renaming) ---
+  const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('printPreview.panelCollapsed') === 'true';
@@ -109,16 +112,16 @@ export function PrintPreviewModal({
     }
   }, [isPanelCollapsed]);
 
-  // Prepare table data for ColumnVisibilityPanel
+  // Prepare table data for ColumnVisibilityPanel (with label overrides)
   const tables = useMemo(() => [{
     tableId: 'main-table',
     tableName: 'Budget Table',
     columns: columns.map(col => ({
       key: col.key,
-      label: col.label,
+      label: columnLabelOverrides.get(col.key) || col.label,
       required: col.key === 'particular'
     }))
-  }], [columns]);
+  }], [columns, columnLabelOverrides]);
 
   // Filter and redistribute canvas elements based on hidden columns
   const visibleElements = useMemo(() => {
@@ -353,6 +356,33 @@ export function PrintPreviewModal({
     state.setIsDirty(true);
   }, [tables, state]);
 
+  // Handle column rename (inline editing)
+  const handleRenameColumn = useCallback((tableId: string, columnKey: string, newLabel: string) => {
+    // Update the label overrides map
+    setColumnLabelOverrides(prev => {
+      const next = new Map(prev);
+      next.set(columnKey, newLabel);
+      return next;
+    });
+
+    // Update canvas elements - find header elements that match this column and update their text
+    state.setPages(prevPages =>
+      prevPages.map(page => ({
+        ...page,
+        elements: page.elements.map(el => {
+          // Check if this is a header element for this column
+          // Pattern: header-{columnKey}-xxx
+          if (el.type === 'text' && el.id.startsWith(`header-${columnKey}-`)) {
+            return { ...el, text: newLabel };
+          }
+          return el;
+        })
+      }))
+    );
+
+    state.setIsDirty(true);
+  }, [state]);
+
   // Initialize from table data with template and orientation
   const initializeFromTableData = useCallback(
     (template?: CanvasTemplate | null, orientation: 'portrait' | 'landscape' = 'portrait') => {
@@ -513,6 +543,7 @@ export function PrintPreviewModal({
       initializationStartedRef.current = false;
       setHiddenCanvasColumns(new Set());
       setHiddenColumnsVersion(0);
+      setColumnLabelOverrides(new Map());
       return;
     }
 
@@ -663,6 +694,7 @@ export function PrintPreviewModal({
             onToggleColumn={handleToggleCanvasColumn}
             onShowAll={handleShowAllColumns}
             onHideAll={handleHideAllColumns}
+            onRenameColumn={handleRenameColumn}
             isCollapsed={isPanelCollapsed}
             onToggleCollapse={() => setIsPanelCollapsed(!isPanelCollapsed)}
           />
