@@ -37,6 +37,8 @@ import { specialEducationFundActivityTables } from "./schema/specialEducationFun
 import { specialEducationFundSharedAccessTables } from "./schema/specialEducationFundSharedAccess";
 import { specialEducationFundBreakdownTables } from "./schema/specialEducationFundBreakdowns";
 import { specialEducationFundBreakdownActivityTables } from "./schema/specialEducationFundBreakdownActivities";
+import { specialHealthFundTables } from "./schema/specialHealthFunds";
+import { specialHealthFundActivityTables } from "./schema/specialHealthFundActivities";
 
 export default defineSchema({
   ...authTables,
@@ -75,4 +77,6 @@ export default defineSchema({
   ...specialEducationFundSharedAccessTables,
   ...specialEducationFundBreakdownTables,
   ...specialEducationFundBreakdownActivityTables,
+  ...specialHealthFundTables,
+  ...specialHealthFundActivityTables,
 });

@@ -45,6 +45,7 @@ import type * as lib_projectAggregation from "../lib/projectAggregation.js";
 import type * as lib_rbac from "../lib/rbac.js";
 import type * as lib_specialEducationFundActivityLogger from "../lib/specialEducationFundActivityLogger.js";
 import type * as lib_specialEducationFundBreakdownActivityLogger from "../lib/specialEducationFundBreakdownActivityLogger.js";
+import type * as lib_specialHealthFundActivityLogger from "../lib/specialHealthFundActivityLogger.js";
 import type * as lib_statusValidation from "../lib/statusValidation.js";
 import type * as lib_trustFundActivityLogger from "../lib/trustFundActivityLogger.js";
 import type * as lib_trustFundBreakdownActivityLogger from "../lib/trustFundBreakdownActivityLogger.js";
@@ -90,6 +91,8 @@ import type * as schema_specialEducationFundBreakdownActivities from "../schema/
 import type * as schema_specialEducationFundBreakdowns from "../schema/specialEducationFundBreakdowns.js";
 import type * as schema_specialEducationFundSharedAccess from "../schema/specialEducationFundSharedAccess.js";
 import type * as schema_specialEducationFunds from "../schema/specialEducationFunds.js";
+import type * as schema_specialHealthFundActivities from "../schema/specialHealthFundActivities.js";
+import type * as schema_specialHealthFunds from "../schema/specialHealthFunds.js";
 import type * as schema_tableSettings from "../schema/tableSettings.js";
 import type * as schema_trustFundActivities from "../schema/trustFundActivities.js";
 import type * as schema_trustFundBreakdownActivities from "../schema/trustFundBreakdownActivities.js";
@@ -102,6 +105,7 @@ import type * as specialEducationFundActivities from "../specialEducationFundAct
 import type * as specialEducationFundBreakdowns from "../specialEducationFundBreakdowns.js";
 import type * as specialEducationFundSharedAccess from "../specialEducationFundSharedAccess.js";
 import type * as specialEducationFunds from "../specialEducationFunds.js";
+import type * as specialHealthFunds from "../specialHealthFunds.js";
 import type * as tableSettings from "../tableSettings.js";
 import type * as trustFundAccess from "../trustFundAccess.js";
 import type * as trustFundActivities from "../trustFundActivities.js";
@@ -155,6 +159,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rbac": typeof lib_rbac;
   "lib/specialEducationFundActivityLogger": typeof lib_specialEducationFundActivityLogger;
   "lib/specialEducationFundBreakdownActivityLogger": typeof lib_specialEducationFundBreakdownActivityLogger;
+  "lib/specialHealthFundActivityLogger": typeof lib_specialHealthFundActivityLogger;
   "lib/statusValidation": typeof lib_statusValidation;
   "lib/trustFundActivityLogger": typeof lib_trustFundActivityLogger;
   "lib/trustFundBreakdownActivityLogger": typeof lib_trustFundBreakdownActivityLogger;
@@ -200,6 +205,8 @@ declare const fullApi: ApiFromModules<{
   "schema/specialEducationFundBreakdowns": typeof schema_specialEducationFundBreakdowns;
   "schema/specialEducationFundSharedAccess": typeof schema_specialEducationFundSharedAccess;
   "schema/specialEducationFunds": typeof schema_specialEducationFunds;
+  "schema/specialHealthFundActivities": typeof schema_specialHealthFundActivities;
+  "schema/specialHealthFunds": typeof schema_specialHealthFunds;
   "schema/tableSettings": typeof schema_tableSettings;
   "schema/trustFundActivities": typeof schema_trustFundActivities;
   "schema/trustFundBreakdownActivities": typeof schema_trustFundBreakdownActivities;
@@ -212,6 +219,7 @@ declare const fullApi: ApiFromModules<{
   specialEducationFundBreakdowns: typeof specialEducationFundBreakdowns;
   specialEducationFundSharedAccess: typeof specialEducationFundSharedAccess;
   specialEducationFunds: typeof specialEducationFunds;
+  specialHealthFunds: typeof specialHealthFunds;
   tableSettings: typeof tableSettings;
   trustFundAccess: typeof trustFundAccess;
   trustFundActivities: typeof trustFundActivities;
