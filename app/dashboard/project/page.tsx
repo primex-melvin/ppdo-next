@@ -175,27 +175,27 @@ export default function ProjectDashboardLanding() {
                   accentColor="#15803D"
                   statsContent={
                     <>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                      <div className="text-center min-w-[70px]">
+                        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                           {fiscalYear.stats.budgetItemCount}
                         </div>
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                          Budget Items
+                        <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400">
+                          Items
                         </div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                      <div className="text-center min-w-[70px]">
+                        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                           {fiscalYear.stats.projectCount}
                         </div>
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400">
                           Projects
                         </div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                      <div className="text-center min-w-[70px]">
+                        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                           {fiscalYear.stats.breakdownCount}
                         </div>
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400">
                           Breakdowns
                         </div>
                       </div>

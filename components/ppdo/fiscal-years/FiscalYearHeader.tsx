@@ -22,7 +22,7 @@ export function FiscalYearHeader({
     className
 }: FiscalYearHeaderProps) {
     return (
-        <div className={cn("flex items-center justify-between gap-3", className)}>
+        <div className={cn("flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-3", className)}>
             <div>
                 <h1
                     className="text-3xl sm:text-4xl font-semibold text-zinc-900 dark:text-zinc-100"
@@ -36,12 +36,13 @@ export function FiscalYearHeader({
                     </p>
                 )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
                 {hasYears && onOpenLatest && (
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={onOpenLatest}
+                        className="flex-1 sm:flex-none"
                     >
                         Open Latest
                     </Button>
@@ -49,10 +50,10 @@ export function FiscalYearHeader({
                 <Button
                     size="sm"
                     onClick={onAddYear}
-                    className="text-white"
+                    className="text-white flex-1 sm:flex-none"
                     style={{ backgroundColor: accentColor }}
                 >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 mr-2" />
                     Add Year
                 </Button>
             </div>
