@@ -23,14 +23,15 @@ import { Id } from "@/convex/_generated/dataModel";
 // Contexts
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 
-// Shared Breakdown Components
-import { BreakdownHeader } from "@/components/ppdo/breakdown/shared/BreakdownHeader";
-import { EntityOverviewCards } from "@/components/ppdo/breakdown/shared/EntityOverviewCards";
-import { BreakdownStatsAccordion } from "@/components/ppdo/breakdown/shared/BreakdownStatsAccordion";
-
-// Reusable Project Components (Table & Form work with IBaseBreakdown)
-import { BreakdownHistoryTable } from "@/app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/components/BreakdownHistoryTable";
-import { BreakdownForm } from "@/app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/components/BreakdownForm";
+// Centralized Breakdown Components
+import {
+  BreakdownHeader,
+  EntityOverviewCards,
+  BreakdownStatsAccordion,
+  BreakdownHistoryTable,
+  BreakdownForm,
+  Breakdown,
+} from "@/components/ppdo/breakdown";
 
 // Shared Components
 import { TrashBinModal } from "@/components/TrashBinModal";
@@ -39,9 +40,6 @@ import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/Bud
 
 // Shared Hooks
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";
-
-// Types
-import { Breakdown } from "@/app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/types/breakdown.types";
 
 // Utility function to extract Trust Fund ID from slug
 function extractTrustFundId(slug: string): string {
@@ -257,6 +255,7 @@ export default function TrustFundBreakdownPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onOpenTrash={() => setShowTrashModal(true)}
+            entityType="trustfund"
           />
         )}
       </div>
@@ -272,9 +271,10 @@ export default function TrustFundBreakdownPage() {
           <BreakdownForm
             defaultProjectName={trustFund.projectTitle}
             defaultImplementingOffice={trustFund.officeInCharge}
-            projectId={trustFundId} // Using same prop name for compatibility
+            projectId={trustFundId}
             onSave={handleAdd}
             onCancel={() => setShowAddModal(false)}
+            entityType="trustfund"
           />
         </Modal>
       )}
@@ -297,6 +297,7 @@ export default function TrustFundBreakdownPage() {
               setShowEditModal(false);
               setSelectedBreakdown(null);
             }}
+            entityType="trustfund"
           />
         </Modal>
       )}

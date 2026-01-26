@@ -14,14 +14,17 @@ import { Id } from "@/convex/_generated/dataModel";
 // Contexts
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 
-// Shared Breakdown Components
-import { BreakdownHeader } from "@/components/ppdo/breakdown/shared/BreakdownHeader";
-import { EntityOverviewCards } from "@/components/ppdo/breakdown/shared/EntityOverviewCards";
-import { BreakdownStatsAccordion } from "@/components/ppdo/breakdown/shared/BreakdownStatsAccordion";
+// Centralized Breakdown Components
+import {
+  BreakdownHeader,
+  EntityOverviewCards,
+  BreakdownStatsAccordion,
+  BreakdownHistoryTable,
+  BreakdownForm,
+  Breakdown,
+} from "@/components/ppdo/breakdown";
 
-// Local Components
-import { BreakdownHistoryTable } from "./components/BreakdownHistoryTable";
-import { BreakdownForm } from "./components/BreakdownForm";
+// Local Components (Project-specific)
 import { StatusChainCard } from "./components/StatusChainCard";
 
 // Shared Components
@@ -32,9 +35,8 @@ import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/Bud
 // Shared Hooks
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";
 
-// Utils & Hooks
+// Utils
 import { extractProjectId, getParticularFullName, getStatusColor } from "./utils/page-helpers";
-import { Breakdown } from "./types/breakdown.types";
 
 export default function ProjectBreakdownPage() {
   const params = useParams();
