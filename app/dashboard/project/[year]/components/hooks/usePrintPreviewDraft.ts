@@ -9,6 +9,7 @@ import { Page, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/type
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
 
 interface UsePrintPreviewDraftProps {
+  documentTitle: string;
   pages: Page[];
   header: HeaderFooter;
   footer: HeaderFooter;
@@ -38,6 +39,7 @@ interface UsePrintPreviewDraftProps {
 }
 
 export function usePrintPreviewDraft({
+  documentTitle,
   pages,
   header,
   footer,
@@ -67,7 +69,9 @@ export function usePrintPreviewDraft({
 
     const draft: PrintDraft = {
       id: existingDraft?.id || `draft-${year}-${particular || 'all'}-${Date.now()}`,
-      timestamp: Date.now(),
+      timestamp: existingDraft?.timestamp || Date.now(),
+      lastModified: Date.now(),
+      documentTitle: documentTitle || particular ? `Budget ${year} - ${particular}` : `Budget ${year}`,
       budgetYear: year,
       budgetParticular: particular,
       filterState: {
@@ -99,6 +103,7 @@ export function usePrintPreviewDraft({
       setIsSaving(false);
     }
   }, [
+    documentTitle,
     pages,
     header,
     footer,

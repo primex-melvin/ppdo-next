@@ -73,6 +73,7 @@ export interface ConversionMetadata {
   totalRows: number;
   createdAt: number;
   pageSize: string;
+  orientation: 'portrait' | 'landscape';
   columnCount: number;
 }
 
@@ -92,6 +93,8 @@ export interface PageMetadata {
 export interface PrintDraft {
   id: string;
   timestamp: number;
+  lastModified?: number; // Track separate modification time (optional for backward compatibility)
+  documentTitle?: string; // User-defined document name (optional for backward compatibility)
   budgetYear: number;
   budgetParticular?: string;
 
@@ -136,6 +139,8 @@ export interface DraftInfo {
   year: number;
   particular?: string;
   timestamp: number;
+  lastModified?: number; // Last modification time (optional for backward compatibility)
+  documentTitle?: string; // Document title (optional for backward compatibility)
   pageCount: number;
 }
 
@@ -167,18 +172,18 @@ export interface TableStyle {
 }
 
 /**
- * Default table styling
+ * Default table styling - Google Docs style (ZERO padding, borders handled separately)
  */
 export const DEFAULT_TABLE_STYLE: TableStyle = {
   headerFontSize: 10,
   dataFontSize: 9,
   totalsFontSize: 10,
-  cellPadding: 6,
+  cellPadding: 0, // ✅ CHANGED: Zero padding for edge-to-edge cells
   borderWidth: 1,
   headerColor: '#18181b',
   dataColor: '#27272a',
   totalsColor: '#18181b',
-  borderColor: '#e4e4e7',
+  borderColor: '#000000', // ✅ CHANGED: Black borders like Google Docs
   headerBgColor: '#f4f4f5',
   totalsBgColor: '#e4e4e7',
 };

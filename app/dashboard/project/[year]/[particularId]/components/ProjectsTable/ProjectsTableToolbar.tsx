@@ -1,16 +1,17 @@
 // app/dashboard/project/budget/[particularId]/components/ProjectsTable/ProjectsTableToolbar.tsx
 
 import React from "react";
-import { 
-  Search, 
-  X, 
-  Trash2, 
-  Download, 
-  Printer, 
+import {
+  Search,
+  X,
+  Trash2,
+  Download,
+  Printer,
   FileSpreadsheet,
   CheckCircle2,
   Share2,
-  Calculator
+  Calculator,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +50,10 @@ interface ProjectsTableToolbarProps {
   
   // Export/Print
   onExportCSV: () => void;
-  onPrint: () => void;
-  
+  onPrint?: () => void;
+  onOpenPrintPreview?: () => void;
+  hasPrintDraft?: boolean;
+
   // Trash
   onOpenTrash?: () => void;
   onBulkTrash: () => void;
@@ -91,6 +94,8 @@ export function ProjectsTableToolbar({
   onHideAllColumns,
   onExportCSV,
   onPrint,
+  onOpenPrintPreview,
+  hasPrintDraft,
   onOpenTrash,
   onBulkTrash,
   isAdmin,
@@ -202,21 +207,32 @@ export function ProjectsTableToolbar({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
               <Download className="w-4 h-4" />
-              Export / Print
+              <span className="hidden sm:inline">Export</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
-              <Printer className="w-4 h-4 mr-2" /> Print PDF
-            </DropdownMenuItem>
+            <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+            {onOpenPrintPreview && (
+              <DropdownMenuItem onClick={onOpenPrintPreview} className="cursor-pointer">
+                <Eye className="w-4 h-4 mr-2" />
+                Print Preview
+                {hasPrintDraft && (
+                  <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                )}
+              </DropdownMenuItem>
+            )}
+            {onPrint && (
+              <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
+                <Printer className="w-4 h-4 mr-2" /> Print PDF
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onExportCSV} className="cursor-pointer">
               <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <div className="p-2">
               <span className="text-[10px] text-zinc-500 leading-tight block">
-                Note: Exports and prints are based on the currently shown/hidden columns.
+                Note: Exports are based on currently shown/hidden columns.
               </span>
             </div>
           </DropdownMenuContent>

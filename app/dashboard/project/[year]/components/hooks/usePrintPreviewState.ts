@@ -13,6 +13,7 @@ export function usePrintPreviewState() {
   const [footer, setFooter] = useState<HeaderFooter>({ elements: [] });
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isEditingElementId, setIsEditingElementId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('page');
 
@@ -26,6 +27,9 @@ export function usePrintPreviewState() {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState<number | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+
+  // Document metadata
+  const [documentTitle, setDocumentTitle] = useState<string>('');
 
   const currentPage = pages[currentPageIndex] || {
     id: 'empty',
@@ -58,6 +62,8 @@ export function usePrintPreviewState() {
     setCurrentPageIndex,
     selectedElementId,
     setSelectedElementId,
+    selectedGroupId,
+    setSelectedGroupId,
     isEditingElementId,
     setIsEditingElementId,
     activeSection,
@@ -80,7 +86,11 @@ export function usePrintPreviewState() {
     setLastSavedTime,
     showCloseConfirm,
     setShowCloseConfirm,
-    
+
+    // Document metadata
+    documentTitle,
+    setDocumentTitle,
+
     // Computed values
     currentPage,
     selectedElement,

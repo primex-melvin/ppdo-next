@@ -23,6 +23,9 @@ const MARGIN = 20;
 const ROW_HEIGHT = 24;
 const HEADER_ROW_HEIGHT = 28;
 
+// ✅ Internal padding for text inside cells (NOT cell spacing)
+const CELL_TEXT_PADDING = 4; // Small padding so text doesn't touch borders
+
 /**
  * Converts budget table data into canvas pages
  * Supports row markers for category/group headers
@@ -255,9 +258,13 @@ function createDataPage(
   const elements: TextElement[] = [];
   let currentY = MARGIN;
 
+  // Create unique group ID for this page's table data
+  const groupId = `table-group-${Date.now()}-${globalRowIndex}`;
+  const groupName = `Table (Page Data ${globalRowIndex + 1})`;
+
   // Add headers if requested
   if (includeHeaders) {
-    elements.push(...createTableHeaders(columns, columnWidths, currentY));
+    elements.push(...createTableHeaders(columns, columnWidths, currentY, groupId, groupName));
     currentY += HEADER_ROW_HEIGHT;
   }
 
@@ -265,15 +272,15 @@ function createDataPage(
   items.forEach((item, index) => {
     // Check if there's a category marker at this position
     const markerAtThisIndex = rowMarkers.find(m => m.index === globalRowIndex + index);
-    
+
     if (markerAtThisIndex) {
       // Render category header
-      elements.push(...createCategoryHeaderRow(markerAtThisIndex.label, columnWidths, currentY));
-      currentY += ROW_HEIGHT + 4; // Extra spacing after category
+      elements.push(...createCategoryHeaderRow(markerAtThisIndex.label, columnWidths, currentY, groupId, groupName));
+      currentY += ROW_HEIGHT;
     }
 
     // Render data row
-    elements.push(...createTableRow(item, columns, columnWidths, currentY, index % 2 === 0));
+    elements.push(...createTableRow(item, columns, columnWidths, currentY, index % 2 === 0, groupId, groupName));
     currentY += ROW_HEIGHT;
   });
 
@@ -287,12 +294,14 @@ function createDataPage(
 }
 
 /**
- * Create table headers
+ * Create table headers - ZERO PADDING, text has small internal padding
  */
 function createTableHeaders(
   columns: ColumnDefinition[],
   columnWidths: number[],
-  y: number
+  y: number,
+  groupId?: string,
+  groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
   let currentX = MARGIN;
@@ -302,10 +311,10 @@ function createTableHeaders(
       id: `header-${col.key}-${Date.now()}`,
       type: 'text',
       text: col.label,
-      x: currentX + DEFAULT_TABLE_STYLE.cellPadding,
-      y: y + DEFAULT_TABLE_STYLE.cellPadding,
-      width: columnWidths[index] - (DEFAULT_TABLE_STYLE.cellPadding * 2),
-      height: HEADER_ROW_HEIGHT - (DEFAULT_TABLE_STYLE.cellPadding * 2),
+      x: currentX + CELL_TEXT_PADDING, // ✅ Text padding, NOT cell spacing
+      y: y + CELL_TEXT_PADDING,
+      width: columnWidths[index] - (CELL_TEXT_PADDING * 2),
+      height: HEADER_ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
       fontSize: DEFAULT_TABLE_STYLE.headerFontSize,
       fontFamily: 'Inter',
       bold: true,
@@ -315,9 +324,11 @@ function createTableHeaders(
       shadow: false,
       outline: false,
       visible: true,
+      groupId,
+      groupName,
     });
 
-    currentX += columnWidths[index];
+    currentX += columnWidths[index]; // ✅ NO GAP between columns
   });
 
   return elements;
@@ -329,18 +340,20 @@ function createTableHeaders(
 function createCategoryHeaderRow(
   categoryLabel: string,
   columnWidths: number[],
-  y: number
+  y: number,
+  groupId?: string,
+  groupName?: string
 ): TextElement[] {
   const totalWidth = columnWidths.reduce((sum, w) => sum + w, 0);
-  
+
   return [{
     id: `category-header-${categoryLabel}-${Date.now()}`,
     type: 'text',
     text: categoryLabel,
-    x: MARGIN,
-    y: y + 4,
-    width: totalWidth,
-    height: ROW_HEIGHT - 8,
+    x: MARGIN + CELL_TEXT_PADDING,
+    y: y + CELL_TEXT_PADDING,
+    width: totalWidth - (CELL_TEXT_PADDING * 2),
+    height: ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
     fontSize: 11,
     fontFamily: 'Inter',
     bold: true,
@@ -350,18 +363,22 @@ function createCategoryHeaderRow(
     shadow: false,
     outline: false,
     visible: true,
+    groupId,
+    groupName,
   }];
 }
 
 /**
- * Create a single table row
+ * Create a single table row - ZERO PADDING between cells
  */
 function createTableRow(
   item: BudgetItem,
   columns: ColumnDefinition[],
   columnWidths: number[],
   y: number,
-  isEven: boolean
+  isEven: boolean,
+  groupId?: string,
+  groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
   let currentX = MARGIN;
@@ -373,10 +390,10 @@ function createTableRow(
       id: `cell-${item.id}-${col.key}-${Date.now()}`,
       type: 'text',
       text: value,
-      x: currentX + DEFAULT_TABLE_STYLE.cellPadding,
-      y: y + DEFAULT_TABLE_STYLE.cellPadding,
-      width: columnWidths[index] - (DEFAULT_TABLE_STYLE.cellPadding * 2),
-      height: ROW_HEIGHT - (DEFAULT_TABLE_STYLE.cellPadding * 2),
+      x: currentX + CELL_TEXT_PADDING, // ✅ Text padding, NOT cell spacing
+      y: y + CELL_TEXT_PADDING,
+      width: columnWidths[index] - (CELL_TEXT_PADDING * 2),
+      height: ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
       fontSize: DEFAULT_TABLE_STYLE.dataFontSize,
       fontFamily: 'Inter',
       bold: false,
@@ -386,9 +403,11 @@ function createTableRow(
       shadow: false,
       outline: false,
       visible: true,
+      groupId,
+      groupName,
     });
 
-    currentX += columnWidths[index];
+    currentX += columnWidths[index]; // ✅ NO GAP between columns
   });
 
   return elements;
@@ -433,7 +452,11 @@ function createTotalsPage(
   const elements: TextElement[] = [];
   const y = MARGIN;
 
-  elements.push(...createTotalsRow(totals, columns, columnWidths, y));
+  // Create unique group ID for totals page
+  const groupId = `table-group-totals-${Date.now()}`;
+  const groupName = 'Table (Totals)';
+
+  elements.push(...createTotalsRow(totals, columns, columnWidths, y, groupId, groupName));
 
   return {
     id: `page-totals-${Date.now()}`,
@@ -454,20 +477,26 @@ function addTotalsToPage(
   columnWidths: number[]
 ): void {
   const lastElement = page.elements[page.elements.length - 1];
-  const y = lastElement ? lastElement.y + ROW_HEIGHT + 10 : MARGIN;
+  const y = lastElement ? lastElement.y + ROW_HEIGHT : MARGIN;
 
-  const totalsElements = createTotalsRow(totals, columns, columnWidths, y);
+  // Use the same groupId as other elements on this page
+  const existingGroupId = lastElement?.groupId;
+  const existingGroupName = lastElement?.groupName;
+
+  const totalsElements = createTotalsRow(totals, columns, columnWidths, y, existingGroupId, existingGroupName);
   page.elements.push(...totalsElements);
 }
 
 /**
- * Create totals row
+ * Create totals row - ZERO PADDING
  */
 function createTotalsRow(
   totals: BudgetTotals,
   columns: ColumnDefinition[],
   columnWidths: number[],
-  y: number
+  y: number,
+  groupId?: string,
+  groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
   let currentX = MARGIN;
@@ -487,10 +516,10 @@ function createTotalsRow(
         id: `total-${col.key}-${Date.now()}`,
         type: 'text',
         text: value,
-        x: currentX + DEFAULT_TABLE_STYLE.cellPadding,
-        y: y + DEFAULT_TABLE_STYLE.cellPadding,
-        width: columnWidths[index] - (DEFAULT_TABLE_STYLE.cellPadding * 2),
-        height: ROW_HEIGHT - (DEFAULT_TABLE_STYLE.cellPadding * 2),
+        x: currentX + CELL_TEXT_PADDING, // ✅ Text padding, NOT cell spacing
+        y: y + CELL_TEXT_PADDING,
+        width: columnWidths[index] - (CELL_TEXT_PADDING * 2),
+        height: ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
         fontSize: DEFAULT_TABLE_STYLE.totalsFontSize,
         fontFamily: 'Inter',
         bold: true,
@@ -500,10 +529,12 @@ function createTotalsRow(
         shadow: false,
         outline: false,
         visible: true,
+        groupId,
+        groupName,
       });
     }
 
-    currentX += columnWidths[index];
+    currentX += columnWidths[index]; // ✅ NO GAP between columns
   });
 
   return elements;

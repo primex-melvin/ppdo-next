@@ -29,6 +29,18 @@ import { budgetParticularSharedAccessTables } from "./schema/budgetParticularSha
 import { fiscalYearTables } from "./schema/fiscalYears";
 import { trustFundTables } from "./schema/trustFunds";
 import { trustFundActivityTables } from "./schema/trustFundActivities";
+import { trustFundSharedAccessTables } from "./schema/trustFundSharedAccess";
+import { trustFundBreakdownTables } from "./schema/trustFundBreakdowns";
+import { trustFundBreakdownActivityTables } from "./schema/trustFundBreakdownActivities";
+import { specialEducationFundTables } from "./schema/specialEducationFunds";
+import { specialEducationFundActivityTables } from "./schema/specialEducationFundActivities";
+import { specialEducationFundSharedAccessTables } from "./schema/specialEducationFundSharedAccess";
+import { specialEducationFundBreakdownTables } from "./schema/specialEducationFundBreakdowns";
+import { specialEducationFundBreakdownActivityTables } from "./schema/specialEducationFundBreakdownActivities";
+import { specialHealthFundTables } from "./schema/specialHealthFunds";
+import { specialHealthFundActivityTables } from "./schema/specialHealthFundActivities";
+import { specialHealthFundBreakdownTables } from "./schema/specialHealthFundBreakdowns";
+import { specialHealthFundBreakdownActivityTables } from "./schema/specialHealthFundBreakdownActivities";
 
 export default defineSchema({
   ...authTables,
@@ -59,4 +71,16 @@ export default defineSchema({
   ...fiscalYearTables,
   ...trustFundTables,
   ...trustFundActivityTables,
+  ...trustFundSharedAccessTables,
+  ...trustFundBreakdownTables,
+  ...trustFundBreakdownActivityTables,
+  ...specialEducationFundTables,
+  ...specialEducationFundActivityTables,
+  ...specialEducationFundSharedAccessTables,
+  ...specialEducationFundBreakdownTables,
+  ...specialEducationFundBreakdownActivityTables,
+  ...specialHealthFundTables,
+  ...specialHealthFundActivityTables,
+  ...specialHealthFundBreakdownTables,
+  ...specialHealthFundBreakdownActivityTables,
 });

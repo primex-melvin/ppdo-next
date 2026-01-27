@@ -1,0 +1,319 @@
+{
+  "version": 1,
+  "events": [
+    {
+      "id": "evt-1769390033680-24efb064",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-26T01:13:53.680Z",
+      "featureName": "Implement Special Education Funds schema system",
+      "featureId": "feature-1769389031510-kohqm4k92"
+    },
+    {
+      "id": "evt-1769389031712-e7f75ad9",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-26T00:57:11.712Z",
+      "featureId": "feature-1769389031510-kohqm4k92"
+    },
+    {
+      "id": "evt-1769355204604-5170ea19",
+      "trigger": "auto_mode_complete",
+      "timestamp": "2026-01-25T15:33:24.604Z"
+    },
+    {
+      "id": "evt-1769355204429-38024dcc",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T15:33:24.429Z",
+      "featureName": "Implement container/presenter architecture with shared breakdown components",
+      "featureId": "feature-1769349314023-evjc9f78q"
+    },
+    {
+      "id": "evt-1769354437982-82b2e165",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T15:20:37.982Z",
+      "featureName": "Refactor breakdown architecture into shared framework",
+      "featureId": "feature-1769349214297-pyl7z7ghx"
+    },
+    {
+      "id": "evt-1769349314245-1d9b852b",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T13:55:14.245Z",
+      "featureId": "feature-1769349314023-evjc9f78q"
+    },
+    {
+      "id": "evt-1769349214514-aa74094d",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T13:53:34.514Z",
+      "featureId": "feature-1769349214297-pyl7z7ghx"
+    },
+    {
+      "id": "evt-1769339509654-eade4105",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T11:11:49.654Z",
+      "featureName": "Create reusable form field wrapper component",
+      "featureId": "feature-1769338208900-xtlfvtp6g"
+    },
+    {
+      "id": "evt-1769338683125-ef42ecb9",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T10:58:03.125Z",
+      "featureId": "feature-1769338682597-4hin42kec"
+    },
+    {
+      "id": "evt-1769338539223-08881d92",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T10:55:39.224Z",
+      "featureName": "Create reusable table column definitions library",
+      "featureId": "feature-1769336027435-rs66uq7wr"
+    },
+    {
+      "id": "evt-1769338209280-a65f4bb0",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T10:50:09.280Z",
+      "featureId": "feature-1769338208900-xtlfvtp6g"
+    },
+    {
+      "id": "evt-1769337668017-e5fed673",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T10:41:08.017Z",
+      "featureName": "Create useFilteredQuery hook and mutation wrapper utilities",
+      "featureId": "feature-1769335906281-ubv5abws9"
+    },
+    {
+      "id": "evt-1769336999804-e635dc16",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T10:29:59.804Z",
+      "featureName": "Extract reusable table UI components",
+      "featureId": "feature-1769335776811-9s1zelbue"
+    },
+    {
+      "id": "evt-1769336342108-014cc3b5",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T10:19:02.108Z",
+      "featureName": "Consolidate duplicate utilities and components across forms",
+      "featureId": "feature-1769335337311-muwaalyuj"
+    },
+    {
+      "id": "evt-1769336027677-f25fdb8e",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T10:13:47.677Z",
+      "featureId": "feature-1769336027435-rs66uq7wr"
+    },
+    {
+      "id": "evt-1769335906589-9f567216",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T10:11:46.589Z",
+      "featureId": "feature-1769335906281-ubv5abws9"
+    },
+    {
+      "id": "evt-1769335777002-665a9232",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T10:09:37.002Z",
+      "featureId": "feature-1769335776811-9s1zelbue"
+    },
+    {
+      "id": "evt-1769335337466-abb2f931",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T10:02:17.466Z",
+      "featureId": "feature-1769335337311-muwaalyuj"
+    },
+    {
+      "id": "evt-1769301875062-e20398e1",
+      "trigger": "feature_error",
+      "timestamp": "2026-01-25T00:44:35.062Z",
+      "featureName": "Fix resizable modal orientation selector blocking",
+      "featureId": "feature-1769301804138-3x0x4qwca"
+    },
+    {
+      "id": "evt-1769301804411-f4ad3f23",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-25T00:43:24.411Z",
+      "featureId": "feature-1769301804138-3x0x4qwca"
+    },
+    {
+      "id": "evt-1769301573605-e7820282",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T00:39:33.605Z",
+      "featureName": "Add page orientation selection to template modal",
+      "featureId": "feature-1769283733574-hq0n7u1ml"
+    },
+    {
+      "id": "evt-1769301091941-412b8fed",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T00:31:31.942Z",
+      "featureName": "Add page orientation selection to template modal",
+      "featureId": "feature-1769283733574-hq0n7u1ml"
+    },
+    {
+      "id": "evt-1769300171626-de5541b5",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T00:16:11.626Z",
+      "featureName": "Add page orientation selection to template modal",
+      "featureId": "feature-1769283733574-hq0n7u1ml"
+    },
+    {
+      "id": "evt-1769299309650-ad2d31cf",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-25T00:01:49.650Z",
+      "featureName": "Add page orientation selection to template modal",
+      "featureId": "feature-1769283733574-hq0n7u1ml"
+    },
+    {
+      "id": "evt-1769298541390-10f88b0d",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T23:49:01.390Z",
+      "featureName": "Implement Google Docs-style table resizing in PrintPreviewModal",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
+      "id": "evt-1769297378759-27e1cf28",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T23:29:38.759Z",
+      "featureName": "Implement Google Docs-style table resizing in PrintPreviewModal",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
+      "id": "evt-1769296778360-20d1abae",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T23:19:38.360Z",
+      "featureName": "Implement Google Docs-style table resizing in PrintPreviewModal",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
+      "id": "evt-1769285983108-2fa8e2d0",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T20:19:43.108Z",
+      "featureId": "feature-1769285982783-q5najesen"
+    },
+    {
+      "id": "evt-1769284703320-775a5d45",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T19:58:23.320Z",
+      "featureName": "Implement Google Docs-style draft management system",
+      "featureId": "feature-1769282828760-4q0wwfnr3"
+    },
+    {
+      "id": "evt-1769284522588-056d0e6e",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T19:55:22.589Z",
+      "featureId": "feature-1769284522268-kf64ak388"
+    },
+    {
+      "id": "evt-1769283868465-1720aa04",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T19:44:28.465Z",
+      "featureName": "Implement Google Docs-style draft management system",
+      "featureId": "feature-1769282828760-4q0wwfnr3"
+    },
+    {
+      "id": "evt-1769283733925-c2056b4d",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T19:42:13.925Z",
+      "featureId": "feature-1769283733574-hq0n7u1ml"
+    },
+    {
+      "id": "evt-1769283423246-4f96872f",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T19:37:03.246Z",
+      "featureId": "feature-1769283422382-7j7qm2ji0"
+    },
+    {
+      "id": "evt-1769283165681-00f0d207",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T19:32:45.681Z",
+      "featureName": "Update Table Styling Panel with Auto-Show on Selection",
+      "featureId": "feature-1769259774187-bt4z5tpot"
+    },
+    {
+      "id": "evt-1769282829094-5ffe7be4",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T19:27:09.094Z",
+      "featureId": "feature-1769282828760-4q0wwfnr3"
+    },
+    {
+      "id": "evt-1769282192962-8f4c6910",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T19:16:32.962Z",
+      "featureName": "Fix PDF export crash from unsupported CSS color functions",
+      "featureId": "feature-1769281359271-88qlgrgg1"
+    },
+    {
+      "id": "evt-1769281668653-07b39a00",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T19:07:48.653Z",
+      "featureName": "Fix PDF export crash from unsupported CSS color functions",
+      "featureId": "feature-1769281359271-88qlgrgg1"
+    },
+    {
+      "id": "evt-1769281359666-c8e2ea1b",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T19:02:39.666Z",
+      "featureId": "feature-1769281359271-88qlgrgg1"
+    },
+    {
+      "id": "evt-1769281010307-1b6ef10e",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T18:56:50.307Z",
+      "featureName": "Implement WYSIWYG PDF export with quality options",
+      "featureId": "feature-1769260868567-jjjf4i7z4"
+    },
+    {
+      "id": "evt-1769280382966-09ea4c6d",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T18:46:22.966Z",
+      "featureName": "Implement WYSIWYG PDF export with quality options",
+      "featureId": "feature-1769260868567-jjjf4i7z4"
+    },
+    {
+      "id": "evt-1769261426353-aaa2c7a4",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T13:30:26.353Z",
+      "featureId": "feature-1769261426116-523lraro3"
+    },
+    {
+      "id": "evt-1769261304404-37fed358",
+      "trigger": "feature_error",
+      "timestamp": "2026-01-24T13:28:24.404Z",
+      "featureName": "Implement WYSIWYG PDF export with quality options",
+      "featureId": "feature-1769260868567-jjjf4i7z4"
+    },
+    {
+      "id": "evt-1769260868795-c187c74c",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T13:21:08.795Z",
+      "featureId": "feature-1769260868567-jjjf4i7z4"
+    },
+    {
+      "id": "evt-1769260399852-1bb58e56",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T13:13:19.852Z",
+      "featureName": "Update Table Styling Panel with Auto-Show on Selection",
+      "featureId": "feature-1769259774187-bt4z5tpot"
+    },
+    {
+      "id": "evt-1769259774480-904a5aed",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T13:02:54.480Z",
+      "featureId": "feature-1769259774187-bt4z5tpot"
+    },
+    {
+      "id": "evt-1769259462191-7aafb27a",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T12:57:42.191Z",
+      "featureName": "Add dynamic document ruler with draggable margins and tab stops",
+      "featureId": "feature-1769257986116-u0hvodzbh"
+    },
+    {
+      "id": "evt-1769258589758-4159963d",
+      "trigger": "feature_success",
+      "timestamp": "2026-01-24T12:43:09.758Z",
+      "featureName": "",
+      "featureId": "feature-1769257986116-u0hvodzbh"
+    },
+    {
+      "id": "evt-1769257986275-b3f58ce5",
+      "trigger": "feature_created",
+      "timestamp": "2026-01-24T12:33:06.275Z",
+      "featureId": "feature-1769257986116-u0hvodzbh"
+    }
+  ]
+}

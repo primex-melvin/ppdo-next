@@ -8,8 +8,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { PrintPreviewToolbar } from '@/app/dashboard/project/[year]/components/PrintPreviewToolbar';
-import { ConfirmationModal } from '@/app/dashboard/project/[year]/components/ConfirmationModal';
+import { PrintPreviewToolbar } from '@/components/ppdo/table/print-preview/PrintPreviewToolbar';
+import { ConfirmationModal } from '@/app/dashboard/project/[year]/components/BudgetConfirmationModal';
 import { convertTableToCanvas } from '@/lib/print-canvas/tableToCanvas';
 import { printAllPages } from '@/lib/print';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
@@ -72,6 +72,10 @@ export function GenericPrintPreviewModal({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState<number | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [isEditorMode, setIsEditorMode] = useState(true);
+
+  // Document metadata
+  const [documentTitle, setDocumentTitle] = useState<string>('');
 
   // 🔧 Initialize canvas from adapter data or existing draft
   useEffect(() => {
@@ -85,6 +89,7 @@ export function GenericPrintPreviewModal({
       setFooter(existingDraft.canvasState.footer);
       setCurrentPageIndex(existingDraft.canvasState.currentPageIndex);
       setLastSavedTime(existingDraft.timestamp);
+      setDocumentTitle(existingDraft.documentTitle || 'Untitled Document');
       setIsDirty(false);
     } else {
       try {
@@ -120,6 +125,7 @@ export function GenericPrintPreviewModal({
         setHeader(result.header);
         setFooter(result.footer);
         setCurrentPageIndex(0);
+        setDocumentTitle(printableData.metadata?.title || 'Untitled Document');
         setIsDirty(false);
 
         toast.success(`Generated ${result.metadata.totalPages} page(s) from ${result.metadata.totalRows} row(s)`);
@@ -140,7 +146,9 @@ export function GenericPrintPreviewModal({
 
     const draft: PrintDraft = {
       id: `draft-${dataIdentifier}-${Date.now()}`,
-      timestamp: Date.now(),
+      timestamp: existingDraft?.timestamp || Date.now(),
+      lastModified: Date.now(),
+      documentTitle: documentTitle || 'Untitled Document',
       budgetYear: 0, // Generic - can be overridden by adapter if needed
       budgetParticular: undefined,
       filterState: {
@@ -177,7 +185,7 @@ export function GenericPrintPreviewModal({
     } finally {
       setIsSaving(false);
     }
-  }, [adapter, pages, header, footer, currentPageIndex, hiddenColumns, filterState, onDraftSaved]);
+  }, [adapter, pages, header, footer, currentPageIndex, hiddenColumns, filterState, onDraftSaved, existingDraft, documentTitle]);
 
   // 🆕 Handler to add pasted image to canvas
   const handleAddImage = useCallback((
@@ -320,6 +328,15 @@ export function GenericPrintPreviewModal({
     ? formatTimestamp(lastSavedTime)
     : '';
 
+  // Handle document title change
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      setDocumentTitle(newTitle);
+      setIsDirty(true);
+    },
+    []
+  );
+
   if (!isOpen) return null;
 
   // Combine all elements for layer panel
@@ -334,12 +351,16 @@ export function GenericPrintPreviewModal({
       <div className="fixed inset-0 z-50 bg-white dark:bg-zinc-900 flex flex-col">
         {/* Toolbar */}
         <PrintPreviewToolbar
+          documentTitle={documentTitle}
+          onTitleChange={handleTitleChange}
           isDirty={isDirty}
           isSaving={isSaving}
           lastSavedTime={formattedLastSaved}
           onBack={handleClose}
           onClose={handleClose}
           onSaveDraft={handleSaveDraft}
+          isEditorMode={isEditorMode}
+          onEditorModeChange={setIsEditorMode}
         />
 
         {/* Canvas Editor Area */}

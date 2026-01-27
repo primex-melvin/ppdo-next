@@ -41,8 +41,8 @@ export function mergeTemplateWithCanvas(
   // Merge header - combine template elements with existing elements
   const mergedHeader: HeaderFooter = {
     elements: [
-      // Add template header elements first
-      ...template.header.elements.map((el) => ({
+      // Add template header elements first (if header exists)
+      ...(template.header?.elements || []).map((el) => ({
         ...el,
         // Generate new IDs to avoid conflicts
         id: `template-header-${el.id}-${Date.now()}`,
@@ -50,16 +50,16 @@ export function mergeTemplateWithCanvas(
       // Keep existing header elements
       ...existingHeader.elements,
     ],
-    backgroundColor: template.header.backgroundColor || existingHeader.backgroundColor || '#ffffff',
+    backgroundColor: template.header?.backgroundColor || existingHeader.backgroundColor || '#ffffff',
   };
 
-  console.log(`📋 Header merged: ${template.header.elements.length} template + ${existingHeader.elements.length} existing = ${mergedHeader.elements.length} total`);
+  console.log(`📋 Header merged: ${template.header?.elements?.length || 0} template + ${existingHeader.elements.length} existing = ${mergedHeader.elements.length} total`);
 
   // Merge footer - combine template elements with existing elements
   const mergedFooter: HeaderFooter = {
     elements: [
-      // Add template footer elements first
-      ...template.footer.elements.map((el) => ({
+      // Add template footer elements first (if footer exists)
+      ...(template.footer?.elements || []).map((el) => ({
         ...el,
         // Generate new IDs to avoid conflicts
         id: `template-footer-${el.id}-${Date.now()}`,
@@ -67,10 +67,10 @@ export function mergeTemplateWithCanvas(
       // Keep existing footer elements
       ...existingFooter.elements,
     ],
-    backgroundColor: template.footer.backgroundColor || existingFooter.backgroundColor || '#ffffff',
+    backgroundColor: template.footer?.backgroundColor || existingFooter.backgroundColor || '#ffffff',
   };
 
-  console.log(`📋 Footer merged: ${template.footer.elements.length} template + ${existingFooter.elements.length} existing = ${mergedFooter.elements.length} total`);
+  console.log(`📋 Footer merged: ${template.footer?.elements?.length || 0} template + ${existingFooter.elements.length} existing = ${mergedFooter.elements.length} total`);
 
   console.log('✅ Template merge complete');
   console.groupEnd();
