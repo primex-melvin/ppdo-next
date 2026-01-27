@@ -93,3 +93,20 @@ export interface DashboardSummaryData {
     values: number[];
   }>;
 }
+
+export interface PieChartCategory {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface DashboardPieChartData {
+  sector: PieChartCategory[];
+  finance: PieChartCategory[];
+  status: PieChartCategory[];
+  department: PieChartCategory[];
+}
+
+export interface TimelineData {
+  [year: string]: number[];
+}

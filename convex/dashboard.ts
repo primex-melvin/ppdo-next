@@ -48,6 +48,7 @@ export const getSummaryData = query({
     // Fetch all projects and budget items at once (more efficient than per-year queries)
     const allProjects = await ctx.db.query("projects").collect();
     const allBudgetItems = await ctx.db.query("budgetItems").collect();
+    const allDepartments = await ctx.db.query("departments").collect(); // 🆕 Fetch departments
     const allBreakdowns = await ctx.db
       .query("govtProjectBreakdowns")
       .collect();
@@ -113,10 +114,19 @@ export const getSummaryData = query({
         breakdownCount,
       };
 
-      // Calculate utilization by department/particular
+      // Calculate utilization by department (using departmentId)
       const grouped = yearBudgets.reduce(
         (acc, item) => {
-          const label = item.particulars || "Uncategorized";
+          let label = "Unassigned";
+          if (item.departmentId) {
+            const dept = allDepartments.find(d => d._id === item.departmentId);
+            // Use Code (e.g. "GAD") if available, else Name, else "Unknown"
+            label = dept ? (dept.code || dept.name) : "Unknown Dept";
+          } else if (item.particulars) {
+            // Fallback for old data
+            label = item.particulars;
+          }
+
           if (!acc[label]) acc[label] = { allocated: 0, utilized: 0 };
           acc[label].allocated += item.totalBudgetAllocated || 0;
           acc[label].utilized += item.totalBudgetUtilized || 0;
@@ -149,10 +159,17 @@ export const getSummaryData = query({
           0
         );
 
+        // Format amount for subValue
+        const formattedAmount = new Intl.NumberFormat("en-PH", {
+          style: "currency",
+          currency: "PHP",
+          notation: "compact"
+        }).format(allocated);
+
         return {
           label: cat || "Uncategorized",
           value: allocated,
-          subValue: `${items.length} items`,
+          subValue: formattedAmount, // 🆕 Show amount instead of item count
           percentage: allocated > 0 ? (utilized / allocated) * 100 : 0,
         };
       });
@@ -174,6 +191,56 @@ export const getSummaryData = query({
       });
     }
 
+    // 🆕 TIMELINE DATA (Archive.org style)
+    // Aggregate project creation by Year -> Month
+    const timelineData: Record<string, number[]> = {};
+    for (const p of allProjects) {
+      const date = new Date(p.createdAt);
+      const y = date.getFullYear().toString();
+      const m = date.getMonth(); // 0-11
+      if (!timelineData[y]) timelineData[y] = Array(12).fill(0);
+      timelineData[y][m]++;
+    }
+
+    // 🆕 TABBED PIE CHART DATA
+    // 1. Sector Distribution (by Category)
+    const allCategories = await ctx.db.query("projectCategories").collect();
+    const sectorMap = new Map<string, number>();
+    allProjects.forEach(p => {
+      if (p.categoryId) {
+        const cat = allCategories.find(c => c._id === p.categoryId);
+        const name = cat ? cat.fullName : "Uncategorized";
+        sectorMap.set(name, (sectorMap.get(name) || 0) + 1);
+      } else {
+        sectorMap.set("Uncategorized", (sectorMap.get("Uncategorized") || 0) + 1);
+      }
+    });
+
+    // 2. Finance (Budget vs Utilization)
+    const totalAlloc = allBudgetItems.reduce((acc, curr) => acc + curr.totalBudgetAllocated, 0);
+    const totalUtil = allBudgetItems.reduce((acc, curr) => acc + curr.totalBudgetUtilized, 0);
+    // Calculate remaining because pie chart usually shows parts of a whole
+    const totalRemaining = Math.max(0, totalAlloc - totalUtil);
+
+    // 3. Project Progress (Status)
+    const statusMap = {
+      ongoing: 0,
+      completed: 0,
+      delayed: 0
+    };
+    allProjects.forEach(p => {
+      if (p.status === "ongoing" || p.status === "completed" || p.status === "delayed") {
+        statusMap[p.status]++;
+      }
+    });
+
+    // 4. Department Distribution (Implementing Office) - using top 5 + Others
+    const deptMap = new Map<string, number>();
+    allProjects.forEach(p => {
+      const office = p.implementingOffice || "Unknown";
+      deptMap.set(office, (deptMap.get(office) || 0) + 1);
+    });
+
     return {
       fiscalYears: fiscalYears.map((fy) => ({
         _id: fy._id,
@@ -186,6 +253,24 @@ export const getSummaryData = query({
       utilizationByYear,
       budgetDistributionByYear,
       heatmapDataByYear,
+      // New Data
+      timelineData,
+      pieChartData: {
+        sector: Array.from(sectorMap.entries()).map(([name, value]) => ({ name, value, color: "#15803D" })), // Placeholder color, UI will handle palette
+        finance: [
+          { name: "Utilized", value: totalUtil, color: "#15803D" },
+          { name: "Remaining", value: totalRemaining, color: "#86EFAC" } // Lighter green
+        ],
+        status: [
+          { name: "Completed", value: statusMap.completed, color: "#15803D" },
+          { name: "Ongoing", value: statusMap.ongoing, color: "#22C55E" },
+          { name: "Delayed", value: statusMap.delayed, color: "#EF4444" } // Red still makes sense for delayed? Or maybe a dark green/grey? Keeping red for updated alerts.
+        ],
+        department: Array.from(deptMap.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5) // Top 5
+          .map(([name, value]) => ({ name, value, color: "#15803D" }))
+      }
     };
   },
 });

@@ -2,26 +2,16 @@
 "use client";
 
 import {
-  GovernmentTrendsAreaChart,
-  ActivityHeatmap,
   BudgetStatusProgressList,
-  ExecutiveFinancialPie,
-  StatusDistributionPie,
   DepartmentUtilizationHorizontalBar,
+  ProjectActivityTimeline,
+  TabbedPieChart,
 } from "@/components/ppdo/dashboard/charts";
-import { AnalyticsDataPoint } from "@/types/dashboard";
+import { TimelineData, DashboardPieChartData } from "@/types/dashboard";
 
 interface AnalyticsGridProps {
-  trendData: AnalyticsDataPoint[];
-  financialData: {
-    allocated: number;
-    utilized: number;
-    obligated: number;
-  };
-  statusData: Array<{
-    status: "ongoing" | "completed" | "delayed";
-    count: number;
-  }>;
+  timelineData: TimelineData;
+  pieChartData: DashboardPieChartData;
   utilizationData: Array<{
     department: string;
     rate: number;
@@ -32,66 +22,42 @@ interface AnalyticsGridProps {
     subValue: string;
     percentage: number;
   }>;
-  heatmapData: Array<{
-    label: string;
-    values: number[];
-  }>;
-  accentColor?: string;
 }
 
 export function AnalyticsGrid({
-  trendData,
-  financialData,
-  statusData,
+  timelineData,
+  pieChartData,
   utilizationData,
   budgetDistributionData,
-  heatmapData,
-  accentColor = "#15803D",
 }: AnalyticsGridProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Row 1: High Level Trends & Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Main Trend Chart - 2 columns on large screens */}
-        <div className="lg:col-span-2">
-          <GovernmentTrendsAreaChart
-            title="Budget Allocation vs. Utilization"
-            subtitle="Year comparison"
-            data={trendData}
-            isLoading={false}
-          />
-        </div>
-        {/* Financial Pie Chart - 1 column */}
-        <div>
-          <ExecutiveFinancialPie
-            data={financialData}
-            isLoading={false}
-          />
-        </div>
-      </div>
-
-      {/* Row 2: Operational Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <StatusDistributionPie
-          data={statusData}
+      {/* Row 1: Pie Chart & Utilization */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <TabbedPieChart
+          data={pieChartData}
           isLoading={false}
         />
         <DepartmentUtilizationHorizontalBar
           data={utilizationData}
           isLoading={false}
         />
-        <BudgetStatusProgressList
-          title="Sector Distribution"
-          subtitle="Budget allocation by sector"
-          data={budgetDistributionData}
+      </div>
+
+      {/* Row 2: Timeline (Full Width) */}
+      <div>
+        <ProjectActivityTimeline
+          data={timelineData}
           isLoading={false}
         />
       </div>
 
-      {/* Row 3: Activity Heatmap (Full Width) */}
+      {/* Row 3: Budget Status List (Full Width or distributed) */}
       <div>
-        <ActivityHeatmap
-          data={heatmapData}
+        <BudgetStatusProgressList
+          title="Sector Distribution"
+          subtitle="Budget allocation by sector"
+          data={budgetDistributionData}
           isLoading={false}
         />
       </div>

@@ -6,14 +6,12 @@
 
 // Charts
 export {
-  ActivityHeatmap,
   BudgetStatusProgressList,
   DashboardChartCard,
   DepartmentUtilizationHorizontalBar,
-  ExecutiveFinancialPie,
-  GovernmentTrendsAreaChart,
+  ProjectActivityTimeline,
   ProjectStatusVerticalBar,
-  StatusDistributionPie,
+  TabbedPieChart,
   TrustFundLineChart,
 } from './charts';
 

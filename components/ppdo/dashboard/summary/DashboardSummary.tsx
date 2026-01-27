@@ -47,12 +47,10 @@ export function DashboardSummary({ year }: DashboardSummaryProps) {
     if (!dashboardData) {
       return {
         kpiData: { totalProjects: 0, ongoing: 0, completed: 0, delayed: 0 },
-        trendData: [],
-        financialData: { allocated: 0, utilized: 0, obligated: 0 },
-        statusData: [],
+        timelineData: {},
+        pieChartData: { sector: [], finance: [], status: [], department: [] },
         utilizationData: [],
         budgetDistributionData: [],
-        heatmapData: [],
       };
     }
 
@@ -94,16 +92,10 @@ export function DashboardSummary({ year }: DashboardSummaryProps) {
         completed: yearStats.completedCount,
         delayed: yearStats.delayedCount,
       },
-      trendData,
-      financialData: {
-        allocated: yearStats.totalBudgetAllocated,
-        utilized: yearStats.totalBudgetUtilized,
-        obligated: 0,
-      },
-      statusData,
+      timelineData: dashboardData.timelineData || {},
+      pieChartData: dashboardData.pieChartData || { sector: [], finance: [], status: [], department: [] },
       utilizationData: yearUtilization,
       budgetDistributionData: budgetDistribution,
-      heatmapData,
     };
   }, [dashboardData, year]);
 
@@ -150,7 +142,7 @@ export function DashboardSummary({ year }: DashboardSummaryProps) {
                 style={{ color: accentColorValue }}
               />
               <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-                FY {year} Summary
+                {year} Summary
               </h1>
             </div>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
@@ -174,13 +166,10 @@ export function DashboardSummary({ year }: DashboardSummaryProps) {
 
       {/* Analytics Grid */}
       <AnalyticsGrid
-        trendData={analyticsData.trendData}
-        financialData={analyticsData.financialData}
-        statusData={analyticsData.statusData}
+        timelineData={analyticsData.timelineData}
+        pieChartData={analyticsData.pieChartData}
         utilizationData={analyticsData.utilizationData}
         budgetDistributionData={analyticsData.budgetDistributionData}
-        heatmapData={analyticsData.heatmapData}
-        accentColor={accentColorValue}
       />
     </div>
   );

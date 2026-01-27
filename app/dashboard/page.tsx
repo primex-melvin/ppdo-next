@@ -1,4 +1,6 @@
 // app/dashboard/page.tsx
+"use client";
+
 /**
  * Main Dashboard Landing Page
  *
@@ -8,8 +10,25 @@
  * This replaces the previous single analytics view with a year-selection view.
  */
 
-import { FiscalYearLanding } from "@/components/ppdo/dashboard/landing";
+import { FiscalYearLanding, DashboardFundSelection } from "@/components/ppdo/dashboard/landing";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function DashboardPage() {
-  return <FiscalYearLanding />;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const view = searchParams.get("view");
+
+  const handleSelectBudget = () => {
+    router.push("/dashboard?view=years");
+  };
+
+  const handleBackToSelection = () => {
+    router.push("/dashboard");
+  };
+
+  if (view === "years") {
+    return <FiscalYearLanding onBack={handleBackToSelection} />;
+  }
+
+  return <DashboardFundSelection onSelectBudget={handleSelectBudget} />;
 }

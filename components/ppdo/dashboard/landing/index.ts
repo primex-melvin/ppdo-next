@@ -5,3 +5,4 @@
 
 export { FiscalYearLanding } from './FiscalYearLanding';
 export { FiscalYearLandingCard } from './FiscalYearLandingCard';
+export { DashboardFundSelection } from './DashboardFundSelection';
