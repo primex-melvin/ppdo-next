@@ -7,61 +7,13 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ChevronLeft, Eye, EyeOff } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
+import { useState } from "react";
+import { useDashboardBreadcrumbs } from "@/lib/hooks/useDashboardBreadcrumbs";
+import { decodeLabel, extractIdFromSlug, extractCleanNameFromSlug, getParticularFullName, formatYearLabel } from "@/lib/utils/breadcrumb-utils";
 import { FinancialBreakdownCard } from "./components/FinancialBreakdownCard";
 import { FinancialBreakdownHeader, tabs } from "./components/FinancialBreakdownHeader";
 import { FinancialBreakdownMain } from "./components/FinancialBreakdownMain";
 import { Card } from "./components/Card";
-
-// 🔧 Helper: Extract actual ID from slug
-const extractId = (slugWithId: string): string => {
-  const parts = slugWithId.split('-');
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const part = parts[i];
-    if (part.length > 15 && /^[a-z0-9]+$/i.test(part)) {
-      return part;
-    }
-  }
-  return parts[parts.length - 1];
-};
-
-// 🔧 Helper: Extract clean name without ID suffix
-const extractCleanName = (slugWithId: string): string => {
-  const parts = slugWithId.split('-');
-  const cleanParts: string[] = [];
-
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    // Stop when we hit the ID (long alphanumeric segment >15 chars)
-    if (part.length > 15 && /^[a-z0-9]+$/i.test(part)) {
-      break;
-    }
-    cleanParts.push(part);
-  }
-
-  return cleanParts.join('-') || slugWithId;
-};
-
-// 🔧 Helper: Map particular ID to full name
-const getParticularFullName = (particular: string): string => {
-  const mapping: { [key: string]: string } = {
-    GAD: "Gender and Development (GAD)",
-    LDRRMP: "Local Disaster Risk Reduction and Management Plan",
-    LDRRMF: "Local Disaster Risk Reduction and Management Plan",
-    LCCAP: "Local Climate Change Action Plan",
-    LCPC: "Local Council for the Protection of Children",
-    SCPD: "Sectoral Committee for Persons with Disabilities",
-    POPS: "Provincial Operations",
-    CAIDS: "Community Affairs and Information Development Services",
-    LNP: "Local Nutrition Program",
-    PID: "Provincial Information Department",
-    ACDP: "Agricultural Competitiveness Development Program",
-    LYDP: "Local Youth Development Program",
-    "20%_DF": "20% Development Fund",
-  };
-  return mapping[particular] || particular;
-};
 
 export default function BreakdownDetailPage() {
   const params = useParams();
@@ -82,7 +34,7 @@ export default function BreakdownDetailPage() {
   });
 
   // Persist view mode
-  useEffect(() => {
+  useState(() => {
     try {
       if (typeof window !== "undefined") {
         localStorage.setItem("inspectionViewMode", viewMode);
@@ -90,17 +42,16 @@ export default function BreakdownDetailPage() {
     } catch (e) {
       // ignore storage errors
     }
-  }, [viewMode]);
-  const { setCustomBreadcrumbs } = useBreadcrumb();
+  });
 
-  // Extract IDs from URL
+  // Extract IDs from URL with decoding
   const year = params.year as string;
-  const particularId = params.particularId as string;
-  const projectbreakdownId = params.projectbreakdownId as string;
-  const breakdownSlug = params.projectId as string; // This is actually breakdown slug!
+  const particularId = decodeLabel(params.particularId as string);
+  const projectbreakdownId = decodeLabel(params.projectbreakdownId as string);
+  const breakdownSlug = decodeLabel(params.projectId as string); // This is actually breakdown slug!
 
   // 🔧 CRITICAL: Extract breakdown ID from the slug
-  const breakdownId = extractId(breakdownSlug) as Id<"govtProjectBreakdowns">;
+  const breakdownId = extractIdFromSlug(breakdownSlug) as Id<"govtProjectBreakdowns">;
 
   // Fetch the breakdown first
   const breakdown = useQuery(
@@ -114,27 +65,35 @@ export default function BreakdownDetailPage() {
     breakdown?.projectId ? { id: breakdown.projectId as Id<"projects"> } : "skip"
   );
 
-  // Set up breadcrumbs
-  useEffect(() => {
-    if (breakdown && project) {
-      const particularFullName = getParticularFullName(particularId);
-      const cleanProjectName = extractCleanName(projectbreakdownId);
-      const cleanBreakdownName = extractCleanName(breakdownSlug);
+  // Set up breadcrumbs with loading states using the hook
+  const particularFullName = getParticularFullName(particularId);
+  const cleanProjectName = extractCleanNameFromSlug(projectbreakdownId);
+  const cleanBreakdownName = extractCleanNameFromSlug(breakdownSlug);
+  const yearLabel = formatYearLabel(year);
 
-      setCustomBreadcrumbs([
-        { label: "Home", href: "/dashboard" },
-        { label: "Project", href: "/dashboard/project" },
-        { label: year, href: `/dashboard/project/${year}` },
-        { label: particularFullName, href: `/dashboard/project/${year}/${encodeURIComponent(particularId)}` },
-        { label: cleanProjectName, href: `/dashboard/project/${year}/${encodeURIComponent(particularId)}/${projectbreakdownId}` },
-        { label: cleanBreakdownName },
-      ]);
-    }
-    return () => setCustomBreadcrumbs(null);
-  }, [breakdown, project, year, particularId, projectbreakdownId, breakdownSlug, setCustomBreadcrumbs]);
+  useDashboardBreadcrumbs({
+    isDataLoaded: !!(breakdown && project),
+    loadingBreadcrumbs: [
+      { label: "Home", href: "/dashboard" },
+      { label: "Project", href: "/dashboard/project" },
+      { label: yearLabel, href: `/dashboard/project/${year}` },
+      { label: particularFullName, loading: true },
+      { label: cleanProjectName, loading: true },
+      { label: cleanBreakdownName, loading: true },
+    ],
+    loadedBreadcrumbs: [
+      { label: "Home", href: "/dashboard" },
+      { label: "Project", href: "/dashboard/project" },
+      { label: yearLabel, href: `/dashboard/project/${year}` },
+      { label: particularFullName, href: `/dashboard/project/${year}/${encodeURIComponent(particularId)}` },
+      { label: cleanProjectName, href: `/dashboard/project/${year}/${encodeURIComponent(particularId)}/${encodeURIComponent(projectbreakdownId)}` },
+      { label: cleanBreakdownName },
+    ],
+    dependencies: [breakdown, project, year, particularId, projectbreakdownId, breakdownSlug],
+  });
 
   const handleBack = () => {
-    router.push(`/dashboard/project/${year}/${particularId}/${projectbreakdownId}`);
+    router.push(`/dashboard/project/${year}/${encodeURIComponent(particularId)}/${encodeURIComponent(projectbreakdownId)}`);
   };
 
   if (!breakdown || !project) {

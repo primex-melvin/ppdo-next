@@ -36,17 +36,18 @@ import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/Bud
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";
 
 // Utils
-import { extractProjectId, getParticularFullName, getStatusColor, extractCleanName } from "./utils/page-helpers";
+import { extractIdFromSlug, getParticularFullName, extractCleanNameFromSlug, decodeLabel, formatYearLabel } from "@/lib/utils/breadcrumb-utils";
+import { getStatusColor } from "./utils/page-helpers";
+import { useDashboardBreadcrumbs } from "@/lib/hooks/useDashboardBreadcrumbs";
 
 export default function ProjectBreakdownPage() {
   const params = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumb();
 
-  // Extract Params
+  // Extract Params with decoding
   const year = params.year as string;
-  const particularId = decodeURIComponent(params.particularId as string);
+  const particularId = decodeLabel(params.particularId as string);
   const slugWithId = params.projectbreakdownId as string;
-  const projectId = extractProjectId(slugWithId);
+  const projectId = extractIdFromSlug(slugWithId);
 
   // Local State
   const [showTrashModal, setShowTrashModal] = useState(false);
@@ -78,22 +79,30 @@ export default function ProjectBreakdownPage() {
   // Hooks - Using shared hooks for statistics
   const stats = useEntityStats(breakdownHistory as Breakdown[] | undefined);
   const metadata = useEntityMetadata(breakdownHistory as Breakdown[] | undefined);
-  const particularFullName = getParticularFullName(particularId);
 
-  // Effects
-  useEffect(() => {
-    if (project) {
-      const cleanProjectName = extractCleanName(slugWithId);
-      setCustomBreadcrumbs([
-        { label: "Home", href: "/dashboard" },
-        { label: "Project", href: "/dashboard/project" },
-        { label: `${year}`, href: `/dashboard/project/${year}` },
-        { label: particularFullName, href: `/dashboard/project/${year}/${encodeURIComponent(particularId)}` },
-        { label: cleanProjectName },
-      ]);
-    }
-    return () => setCustomBreadcrumbs(null);
-  }, [project, particularFullName, particularId, year, slugWithId, setCustomBreadcrumbs]);
+  // Breadcrumbs with shared logic
+  const particularFullName = getParticularFullName(particularId);
+  const cleanProjectName = extractCleanNameFromSlug(slugWithId);
+  const yearLabel = formatYearLabel(year);
+
+  useDashboardBreadcrumbs({
+    isDataLoaded: !!project,
+    loadingBreadcrumbs: [
+      { label: "Home", href: "/dashboard" },
+      { label: "Project", href: "/dashboard/project" },
+      { label: yearLabel, href: `/dashboard/project/${year}` },
+      { label: particularFullName, loading: true },
+      { label: cleanProjectName, loading: true },
+    ],
+    loadedBreadcrumbs: [
+      { label: "Home", href: "/dashboard" },
+      { label: "Project", href: "/dashboard/project" },
+      { label: yearLabel, href: `/dashboard/project/${year}` },
+      { label: particularFullName, href: `/dashboard/project/${year}/${encodeURIComponent(particularId)}` },
+      { label: cleanProjectName },
+    ],
+    dependencies: [project, particularFullName, particularId, year, slugWithId],
+  });
 
   // Mutations
   const createBreakdown = useMutation(api.govtProjects.createProjectBreakdown);

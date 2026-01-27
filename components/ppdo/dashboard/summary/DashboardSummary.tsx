@@ -119,7 +119,7 @@ export function DashboardSummary({ year }: DashboardSummaryProps) {
       {/* Beta Banner */}
       <BetaBanner
         featureName="Dashboard"
-        message="The new dashboard with fiscal year filtering is in beta. We're actively improving the experience."
+        message="The new dashboard with year filtering is in beta. We're actively improving the experience."
         variant="info"
         storageKey="dashboard-beta-banner-dismissed"
         userRole={user?.role}

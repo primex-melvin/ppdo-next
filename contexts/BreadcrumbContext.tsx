@@ -7,6 +7,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 interface BreadcrumbItem {
   label: string;
   href?: string;
+  loading?: boolean; // Show skeleton loader for this item
 }
 
 interface BreadcrumbContextType {

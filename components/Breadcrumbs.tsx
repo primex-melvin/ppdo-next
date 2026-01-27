@@ -10,6 +10,7 @@ import { useBreadcrumb } from "../contexts/BreadcrumbContext";
 interface BreadcrumbItem {
   label: string;
   href?: string;
+  loading?: boolean;
 }
 
 interface BreadcrumbsProps {
@@ -97,7 +98,11 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
                   />
                 </svg>
               )}
-              {isLast ? (
+              {item.loading ? (
+                <div className="flex items-center">
+                  <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse w-20 sm:w-32"></div>
+                </div>
+              ) : isLast ? (
                 <span
                   className="font-medium truncate max-w-[150px] sm:max-w-none"
                   style={{ color: accentColorValue }}

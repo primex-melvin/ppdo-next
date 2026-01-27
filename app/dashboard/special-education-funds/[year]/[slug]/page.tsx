@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, use } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { toast } from "sonner";
 
@@ -10,8 +10,8 @@ import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
-// Contexts
-import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
+// Contexts & Hooks
+import { useDashboardBreadcrumbs } from "@/lib/hooks/useDashboardBreadcrumbs";
 
 // Centralized Breakdown Components
 import {
@@ -31,11 +31,8 @@ import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/Bud
 // Shared Hooks
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";
 
-// Utility function to extract Fund ID from slug
-function extractFundId(slug: string): string {
-    const parts = slug.split("-");
-    return parts[parts.length - 1];
-}
+// Utils
+import { extractIdFromSlug, formatYearLabel } from "@/lib/utils/breadcrumb-utils";
 
 // Utility function to get status color
 function getStatusColor(status?: string): string {
@@ -58,10 +55,9 @@ interface PageProps {
 
 export default function SpecialEducationFundBreakdownPage({ params }: PageProps) {
     const { year, slug } = use(params);
-    const { setCustomBreadcrumbs } = useBreadcrumb();
 
     // Extract ID
-    const fundId = extractFundId(slug);
+    const fundId = extractIdFromSlug(slug);
 
     // Local State
     const [showTrashModal, setShowTrashModal] = useState(false);
@@ -86,18 +82,25 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
     const stats = useEntityStats(breakdownHistory as Breakdown[] | undefined);
     const metadata = useEntityMetadata(breakdownHistory as Breakdown[] | undefined);
 
-    // Effects - Breadcrumbs
-    useEffect(() => {
-        if (fund) {
-            setCustomBreadcrumbs([
-                { label: "Home", href: "/dashboard" },
-                { label: "Special Education Funds", href: "/dashboard/special-education-funds" },
-                { label: `${year}`, href: `/dashboard/special-education-funds/${year}` },
-                { label: fund.projectTitle || "Loading..." },
-            ]);
-        }
-        return () => setCustomBreadcrumbs(null);
-    }, [fund, year, setCustomBreadcrumbs]);
+    // Breadcrumbs with shared logic
+    const yearLabel = formatYearLabel(year);
+
+    useDashboardBreadcrumbs({
+        isDataLoaded: !!fund,
+        loadingBreadcrumbs: [
+            { label: "Home", href: "/dashboard" },
+            { label: "Special Education Funds", href: "/dashboard/special-education-funds" },
+            { label: yearLabel, href: `/dashboard/special-education-funds/${year}` },
+            { label: "Loading...", loading: true },
+        ],
+        loadedBreadcrumbs: [
+            { label: "Home", href: "/dashboard" },
+            { label: "Special Education Funds", href: "/dashboard/special-education-funds" },
+            { label: yearLabel, href: `/dashboard/special-education-funds/${year}` },
+            { label: fund?.projectTitle || "Loading..." },
+        ],
+        dependencies: [fund, year],
+    });
 
     // Mutations
     const createBreakdown = useMutation(api.specialEducationFundBreakdowns.createBreakdown);

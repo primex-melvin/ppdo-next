@@ -11,7 +11,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { toast } from "sonner";
@@ -20,8 +20,8 @@ import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
-// Contexts
-import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
+// Contexts & Hooks
+import { useDashboardBreadcrumbs } from "@/lib/hooks/useDashboardBreadcrumbs";
 
 // Centralized Breakdown Components
 import {
@@ -41,11 +41,8 @@ import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/Bud
 // Shared Hooks
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";
 
-// Utility function to extract Trust Fund ID from slug
-function extractTrustFundId(slug: string): string {
-  const parts = slug.split("-");
-  return parts[parts.length - 1];
-}
+// Utils
+import { extractIdFromSlug, formatYearLabel } from "@/lib/utils/breadcrumb-utils";
 
 // Utility function to get status color
 function getStatusColor(status?: string): string {
@@ -64,12 +61,11 @@ function getStatusColor(status?: string): string {
 
 export default function TrustFundBreakdownPage() {
   const params = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumb();
 
   // Extract Params
   const year = params.year as string;
   const slugWithId = params.slug as string;
-  const trustFundId = extractTrustFundId(slugWithId);
+  const trustFundId = extractIdFromSlug(slugWithId);
 
   // Local State
   const [showTrashModal, setShowTrashModal] = useState(false);
@@ -96,18 +92,25 @@ export default function TrustFundBreakdownPage() {
   const stats = useEntityStats(breakdownHistory as Breakdown[] | undefined);
   const metadata = useEntityMetadata(breakdownHistory as Breakdown[] | undefined);
 
-  // Effects - Breadcrumbs
-  useEffect(() => {
-    if (trustFund) {
-      setCustomBreadcrumbs([
-        { label: "Home", href: "/dashboard" },
-        { label: "Trust Funds", href: "/dashboard/trust-funds" },
-        { label: `${year}`, href: `/dashboard/trust-funds/${year}` },
-        { label: trustFund.projectTitle || "Loading..." },
-      ]);
-    }
-    return () => setCustomBreadcrumbs(null);
-  }, [trustFund, year, setCustomBreadcrumbs]);
+  // Breadcrumbs with shared logic
+  const yearLabel = formatYearLabel(year);
+
+  useDashboardBreadcrumbs({
+    isDataLoaded: !!trustFund,
+    loadingBreadcrumbs: [
+      { label: "Home", href: "/dashboard" },
+      { label: "Trust Funds", href: "/dashboard/trust-funds" },
+      { label: yearLabel, href: `/dashboard/trust-funds/${year}` },
+      { label: "Loading...", loading: true },
+    ],
+    loadedBreadcrumbs: [
+      { label: "Home", href: "/dashboard" },
+      { label: "Trust Funds", href: "/dashboard/trust-funds" },
+      { label: yearLabel, href: `/dashboard/trust-funds/${year}` },
+      { label: trustFund?.projectTitle || "Loading..." },
+    ],
+    dependencies: [trustFund, year],
+  });
 
   // Mutations
   const createBreakdown = useMutation(api.trustFundBreakdowns.createBreakdown);

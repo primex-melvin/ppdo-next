@@ -2,19 +2,20 @@
 
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Expand } from "lucide-react";
 import AccessDeniedPage from "@/components/AccessDeniedPage";
 import { TrashBinModal } from "@/components/TrashBinModal";
 import BudgetStatistics from "./components/BudgetStatistics";
 import { BudgetTrackingTable } from "./components/BudgetTrackingTable";
-import { 
-  ExpandModal, 
-  LoadingState, 
-  useBudgetAccess, 
-  useBudgetData, 
-  useBudgetMutations 
+import {
+  ExpandModal,
+  LoadingState,
+  useBudgetAccess,
+  useBudgetData,
+  useBudgetMutations
 } from "./components";
 import { Button } from "@/components/ui/button";
 import { YearBudgetPageHeader } from "./components/YearBudgetPageHeader";
@@ -26,12 +27,21 @@ interface PageProps {
 
 export default function YearBudgetPage({ params }: PageProps) {
   const { year: yearParam } = use(params);
+  const router = useRouter();
+
+  // Handle "budget" as a special case - redirect to project landing
+  useEffect(() => {
+    if (yearParam.toLowerCase() === 'budget') {
+      router.replace('/dashboard/project');
+    }
+  }, [yearParam, router]);
+
   const year = parseInt(yearParam);
 
   const { accessCheck, isLoading: isLoadingAccess, canAccess } = useBudgetAccess();
   const { budgetItems, statistics, isLoading: isLoadingData } = useBudgetData();
   const { handleAdd, handleEdit, handleDelete } = useBudgetMutations();
-  
+
   const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
   const [showTrashModal, setShowTrashModal] = useState(false);
 
@@ -54,20 +64,20 @@ export default function YearBudgetPage({ params }: PageProps) {
     }
 
     const totalAllocated = yearFilteredItems.reduce(
-      (sum, item) => sum + item.totalBudgetAllocated, 
+      (sum, item) => sum + item.totalBudgetAllocated,
       0
     );
     const totalUtilized = yearFilteredItems.reduce(
-      (sum, item) => sum + item.totalBudgetUtilized, 
+      (sum, item) => sum + item.totalBudgetUtilized,
       0
     );
     // 🆕 NEW: Calculate total obligated budget
     const totalObligated = yearFilteredItems.reduce(
-      (sum, item) => sum + (item.obligatedBudget || 0), 
+      (sum, item) => sum + (item.obligatedBudget || 0),
       0
     );
     const averageUtilizationRate = yearFilteredItems.reduce(
-      (sum, item) => sum + item.utilizationRate, 
+      (sum, item) => sum + item.utilizationRate,
       0
     ) / yearFilteredItems.length;
 
