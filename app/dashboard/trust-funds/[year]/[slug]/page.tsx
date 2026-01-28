@@ -269,6 +269,7 @@ export default function TrustFundBreakdownPage() {
         <AutoCalcConfirmationModal
           isOpen={isConfirmationOpen}
           onClose={() => setIsConfirmationOpen(false)}
+          isAutoCalculate={trustFund.autoCalculateFinancials ?? false}
           data={{
             obligated: trustFund.obligatedPR ?? 0,
             utilized: trustFund.utilized ?? 0,

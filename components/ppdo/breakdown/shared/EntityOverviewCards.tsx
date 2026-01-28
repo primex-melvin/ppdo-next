@@ -102,13 +102,7 @@ export function EntityOverviewCards({
   }
   // ... (rest of the file)
 
-  // Breakdown Counts (if available)
-  if (breakdownCounts) {
-    cards.push({
-      title: "Breakdown Counts",
-      value: `${breakdownCounts.completed}C • ${breakdownCounts.delayed}D • ${breakdownCounts.ongoing}O`,
-    });
-  }
+
 
   // Status
   // Function to get readable status label
@@ -128,13 +122,7 @@ export function EntityOverviewCards({
     });
   }
 
-  // Year
-  if (year) {
-    cards.push({
-      title: "Year",
-      value: year,
-    });
-  }
+
 
   // Remarks
   if (remarks) {

@@ -56,7 +56,7 @@ export function BreakdownStatsAccordion({
 
   return (
     <div className="mb-4 no-print">
-      <Accordion type="single" collapsible>
+      <Accordion type="single" collapsible defaultValue="statistics">
         <AccordionItem value="statistics" className="border-none">
           <AccordionTrigger className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 px-6 py-4 hover:no-underline [&[data-state=open]]:rounded-b-none">
             <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">

@@ -257,6 +257,7 @@ export default function SpecialHealthFundBreakdownPage({ params }: PageProps) {
                 <AutoCalcConfirmationModal
                     isOpen={isConfirmationOpen}
                     onClose={() => setIsConfirmationOpen(false)}
+                    isAutoCalculate={fund.autoCalculateFinancials ?? false}
                     data={{
                         obligated: fund.obligatedPR ?? 0,
                         utilized: fund.utilized ?? 0,
