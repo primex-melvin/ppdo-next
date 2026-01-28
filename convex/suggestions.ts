@@ -20,13 +20,24 @@ export const create = mutation({
   args: {
     title: v.string(),
     description: v.string(),
+    multimedia: v.optional(
+      v.array(
+        v.object({
+          storageId: v.id("_storage"),
+          type: v.string(),
+          name: v.string(),
+        })
+      )
+    ),
   },
-  handler: async (ctx, { title, description }) => {
+  handler: async (ctx, { title, description, multimedia }) => {
     const userId = await requireUserId(ctx);
 
     const suggestionId = await ctx.db.insert("suggestions", {
       title,
+
       description,
+      multimedia: multimedia || [],
       submittedBy: userId,
       status: "pending",
       submittedAt: Date.now(),
@@ -170,8 +181,17 @@ export const update = mutation({
         v.literal("denied")
       )
     ),
+    multimedia: v.optional(
+      v.array(
+        v.object({
+          storageId: v.id("_storage"),
+          type: v.string(),
+          name: v.string(),
+        })
+      )
+    ),
   },
-  handler: async (ctx, { id, title, description, status }) => {
+  handler: async (ctx, { id, title, description, status, multimedia }) => {
     const userId = await requireUserId(ctx);
 
     const updateData: any = {
@@ -182,6 +202,7 @@ export const update = mutation({
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
+    if (multimedia !== undefined) updateData.multimedia = multimedia;
 
     await ctx.db.patch(id, updateData);
   },

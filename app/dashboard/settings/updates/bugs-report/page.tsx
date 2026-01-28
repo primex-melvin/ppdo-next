@@ -1,26 +1,32 @@
-// app/dashboard/settings/updates/bugs-report/page.tsx
-
 "use client";
 
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { Plus, AlertCircle, CheckCircle2, Clock, Search, Filter } from "lucide-react";
+import { Plus, CheckCircle2, AlertCircle, Clock, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  ResizableModal,
+  ResizableModalContent,
+  ResizableModalHeader,
+  ResizableModalTitle,
+  ResizableModalDescription,
+  ResizableModalBody,
+  ResizableModalFooter,
+  ResizableModalTrigger,
+} from "@/components/ui/resizable-modal";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ColumnDef } from "@tanstack/react-table";
+import { BugsSuggestionsDataTable, MediaThumbnails } from "@/components/ppdo/dashboard/BugsSuggestionsDataTable";
+import { Badge } from "@/components/ui/badge"; // You might need to import Badge or use the one in component
+import RichTextEditor from "@/components/ui/RichTextEditor";
 
 export default function BugReportsPage() {
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Fetch all bug reports
   const reports = useQuery(api.bugReports.getAll);
@@ -29,10 +35,11 @@ export default function BugReportsPage() {
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [stepsToReplicate, setStepsToReplicate] = useState("");
+  const [multimedia, setMultimedia] = useState<Array<{ storageId: string, type: "image" | "video", name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreateBugReport = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateBugReport = async () => {
     if (!title.trim() || !description.trim()) {
       toast.error("Validation Error", {
         description: "Please fill in all required fields",
@@ -42,7 +49,16 @@ export default function BugReportsPage() {
 
     setIsSubmitting(true);
     try {
-      const result = await createBugReport({ title, description });
+      const result = await createBugReport({
+        title,
+        description,
+        stepsToReplicate,
+        multimedia: multimedia.map(m => ({
+          storageId: m.storageId as any, // Cast to any to avoid Id<"_storage"> type issues in frontend
+          type: m.type,
+          name: m.name
+        }))
+      });
       console.log("✅ Bug report created:", result);
 
       toast.success("Bug Report Submitted", {
@@ -51,10 +67,11 @@ export default function BugReportsPage() {
       setIsCreateDialogOpen(false);
       setTitle("");
       setDescription("");
+      setStepsToReplicate("");
+      setMultimedia([]);
 
-      // ✅ Use ID-based routing
-      console.log("🔗 Navigating to:", `/dashboard/settings/updates/bugs-report/${result.reportId}`);
-      router.push(`/dashboard/settings/updates/bugs-report/${result.reportId}`);
+      // Navigating to detail page if needed, or just let the table update
+      // router.push(`/dashboard/settings/updates/bugs-report/${result.reportId}`);
     } catch (error) {
       console.error("❌ Error creating bug report:", error);
       toast.error("Error", {
@@ -65,54 +82,85 @@ export default function BugReportsPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "fixed":
-        return "bg-[#15803D]/10 text-[#15803D] border-[#15803D]/20";
-      case "not_fixed":
-        return "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800";
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "title",
+      header: "Title",
+      cell: ({ row }) => <span className="font-medium text-stone-900 dark:text-stone-100">{row.getValue("title")}</span>,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        let colorClass = "";
+        let icon = null;
+        let label = "";
+
+        switch (status) {
+          case "fixed":
+            colorClass = "bg-[#15803D]/10 text-[#15803D] border-[#15803D]/20";
+            icon = <CheckCircle2 className="w-3 h-3 mr-1" />;
+            label = "Fixed";
+            break;
+          case "not_fixed":
+            colorClass = "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800";
+            icon = <AlertCircle className="w-3 h-3 mr-1" />;
+            label = "Not Fixed";
+            break;
+          default:
+            colorClass = "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+            icon = <Clock className="w-3 h-3 mr-1" />;
+            label = "Pending";
+        }
+
+        return (
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${colorClass}`}>
+            {icon}
+            {label}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "submitter",
+      header: "Reported By",
+      cell: ({ row }) => {
+        const submitter = row.original.submitter;
+        if (!submitter) return <span className="text-muted-foreground text-xs">Unknown</span>;
+
+        let name = "Unknown";
+        if (submitter.firstName || submitter.lastName) {
+          name = [submitter.firstName, submitter.lastName].filter(Boolean).join(" ");
+        } else if (submitter.name) {
+          name = submitter.name;
+        } else if (submitter.email) {
+          name = submitter.email;
+        }
+        return <span className="text-sm text-stone-600 dark:text-stone-400">{name}</span>;
+      },
+    },
+    {
+      accessorKey: "submittedAt",
+      header: "Date",
+      cell: ({ row }) => {
+        return <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {new Date(row.getValue("submittedAt")).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+          })}
+        </span>
+      }
+    },
+    {
+      id: "multimedia",
+      header: "Media",
+      cell: ({ row }) => {
+        return <MediaThumbnails multimedia={row.original.multimedia} />
+      }
     }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "fixed":
-        return <CheckCircle2 className="w-4 h-4" />;
-      case "not_fixed":
-        return <AlertCircle className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "fixed":
-        return "Fixed";
-      case "not_fixed":
-        return "Not Fixed Yet";
-      default:
-        return "Pending";
-    }
-  };
-
-  // Filter reports
-  const filteredReports = reports?.filter((report) => {
-    const matchesSearch = report.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || report.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Debug logs
-  console.log("📋 Bug Reports Data:", reports);
-  console.log("🔍 Filtered Reports:", filteredReports);
-
-  if (reports === undefined) {
-    return <BugReportsPageSkeleton />;
-  }
+  ];
 
   return (
     <div className="space-y-6">
@@ -125,21 +173,21 @@ export default function BugReportsPage() {
           </p>
         </div>
 
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
+        <ResizableModal open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <ResizableModalTrigger asChild>
             <Button className="gap-2 bg-[#15803D] hover:bg-[#15803D]/90 text-white">
               <Plus className="w-4 h-4" />
               Report a Bug
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Report a Bug</DialogTitle>
-              <DialogDescription>
-                Describe the bug you encountered. We'll review it and work on a fix.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreateBugReport} className="space-y-4 mt-4">
+          </ResizableModalTrigger>
+          <ResizableModalContent className="sm:max-w-[800px] sm:max-h-[80vh] flex flex-col" allowOverflow>
+            <ResizableModalHeader>
+              <ResizableModalTitle>Report a Bug</ResizableModalTitle>
+              <ResizableModalDescription>
+                Describe the bug you encountered. You can upload images or videos.
+              </ResizableModalDescription>
+            </ResizableModalHeader>
+            <ResizableModalBody className="p-6 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Title *</Label>
                 <Input
@@ -147,186 +195,63 @@ export default function BugReportsPage() {
                   placeholder="Brief description of the bug"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  required
+                  className="w-full"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Detailed description of the bug, steps to reproduce, expected vs actual behavior..."
+                <Label>Description *</Label>
+                <RichTextEditor
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={6}
-                  required
+                  onChange={setDescription}
+                  placeholder="Describe the bug..."
+                  onMultimediaChange={(newMedia) => {
+                    setMultimedia(prev => [...prev, ...newMedia]);
+                  }}
+                  className="min-h-[300px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  You can paste images directly or upload videos using the toolbar.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Steps to Replicate (Optional)</Label>
+                <RichTextEditor
+                  value={stepsToReplicate}
+                  onChange={setStepsToReplicate}
+                  placeholder="List the steps to reproduce this bug..."
+                  className="min-h-[150px]"
+                  variant="ordered-list"
                 />
               </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#15803D] hover:bg-[#15803D]/90 text-white"
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Bug Report"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search bug reports..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="fixed">Fixed</SelectItem>
-            <SelectItem value="not_fixed">Not Fixed Yet</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Bug Reports List */}
-      <div className="space-y-3">
-        {filteredReports && filteredReports.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No bug reports found
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {searchQuery || statusFilter !== "all"
-                ? "Try adjusting your filters"
-                : "Be the first to report a bug"}
-            </p>
-            {!searchQuery && statusFilter === "all" && (
+            </ResizableModalBody>
+            <ResizableModalFooter>
               <Button
-                onClick={() => setIsCreateDialogOpen(true)}
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateBugReport}
+                disabled={isSubmitting}
                 className="bg-[#15803D] hover:bg-[#15803D]/90 text-white"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Report a Bug
+                {isSubmitting ? "Submitting..." : "Submit Bug Report"}
               </Button>
-            )}
-          </div>
-        ) : (
-          filteredReports?.map((report) => {
-            console.log("🔗 Report card:", { id: report._id, title: report.title });
-            return (
-              <div
-                key={report._id}
-                onClick={() => {
-                  // ✅ Use ID-based routing
-                  console.log("🖱️ Clicking report:", report._id);
-                  router.push(`/dashboard/settings/updates/bugs-report/${report._id}`);
-                }}
-                className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-5 hover:shadow-md transition-all cursor-pointer group"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#15803D] transition-colors">
-                        {report.title}
-                      </h3>
-                      <span
-                        className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                          report.status
-                        )}`}
-                      >
-                        {getStatusIcon(report.status)}
-                        {getStatusText(report.status)}
-                      </span>
-                    </div>
+            </ResizableModalFooter>
+          </ResizableModalContent>
+        </ResizableModal>
+      </div>
 
-                    <div
-                      className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3"
-                      dangerouslySetInnerHTML={{
-                        __html: report.description.substring(0, 200) + "...",
-                      }}
-                    />
-
-                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                      <span>
-                        Reported by{" "}
-                        {(() => {
-                          const submitter = report.submitter;
-                          if (submitter?.firstName || submitter?.lastName) {
-                            const parts = [
-                              submitter.firstName,
-                              submitter.middleName,
-                              submitter.lastName,
-                              submitter.nameExtension,
-                            ].filter(Boolean);
-                            return parts.join(" ");
-                          }
-                          if (submitter?.name) return submitter.name;
-                          if (submitter?.email) return submitter.email;
-                          return "Unknown";
-                        })()}
-                      </span>
-                      <span>•</span>
-                      <span>
-                        {new Date(report.submittedAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BugReportsPageSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-        <Skeleton className="h-10 w-40" />
-      </div>
-      <div className="flex gap-4">
-        <Skeleton className="h-10 flex-1" />
-        <Skeleton className="h-10 w-[180px]" />
-      </div>
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-32 w-full" />
-        ))}
-      </div>
+      <BugsSuggestionsDataTable
+        columns={columns}
+        data={reports || []}
+        loading={reports === undefined}
+        onRowClick={(row) => router.push(`/dashboard/settings/updates/bugs-report/${row._id}`)}
+      />
     </div>
   );
 }
