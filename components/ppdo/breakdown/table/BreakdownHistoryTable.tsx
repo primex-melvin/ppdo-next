@@ -9,10 +9,14 @@
 
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Trash2, Printer, Plus } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { Trash2, Printer, Plus, LayoutGrid, Table2 } from "lucide-react";
 import { useAccentColor } from "@/contexts/AccentColorContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BreakdownKanban } from "../kanban";
+import { StatusVisibilityMenu } from "../../shared/toolbar";
+import { KanbanFieldVisibilityMenu } from "../../shared/kanban/KanbanFieldVisibilityMenu";
 
 // Import types
 import {
@@ -69,9 +73,11 @@ export function BreakdownHistoryTable({
   onOpenTrash,
   entityType = "project",
   navigationParams,
+  onStatusChange,
 }: BreakdownHistoryTableProps) {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { accentColorValue } = useAccentColor();
 
   // Search state
@@ -83,6 +89,34 @@ export function BreakdownHistoryTable({
   // Print preview state
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
   const [printAdapter, setPrintAdapter] = useState<BreakdownPrintAdapter | null>(null);
+
+  // View state
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+
+  // Handle URL param for initial view mode
+  useEffect(() => {
+    const view = searchParams.get("view");
+    if (view === "kanban") {
+      setViewMode("kanban");
+    }
+  }, [searchParams]);
+
+  const [visibleStatuses, setVisibleStatuses] = useState<Set<string>>(new Set(["ongoing", "delayed", "completed"]));
+  const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set([
+    "allocatedBudget",
+    "balance",
+    "utilizationRate",
+  ]));
+
+  const handleToggleField = (fieldId: string, isChecked: boolean) => {
+    const newVisible = new Set(visibleFields);
+    if (isChecked) {
+      newVisible.add(fieldId);
+    } else {
+      newVisible.delete(fieldId);
+    }
+    setVisibleFields(newVisible);
+  };
 
   // Determine table identifier based on entity type
   const tableIdentifier =
@@ -139,6 +173,33 @@ export function BreakdownHistoryTable({
   const handleHideAllColumns = () => {
     const allColIds = columns.map((c) => c.key);
     setHiddenColumns(new Set(allColIds));
+  };
+
+  const handleToggleStatus = (statusId: string, isChecked: boolean) => {
+    const newVisible = new Set(visibleStatuses);
+    if (isChecked) {
+      newVisible.add(statusId);
+    } else {
+      newVisible.delete(statusId);
+    }
+    setVisibleStatuses(newVisible);
+  };
+
+  const handleStatusChange = (itemId: string, newStatus: string) => {
+    if (onStatusChange) {
+      onStatusChange(itemId, newStatus);
+      return;
+    }
+
+    // Find item
+    const item = breakdowns.find(b => b._id === itemId);
+    if (item && onEdit) {
+      const status = newStatus as "completed" | "ongoing" | "delayed";
+      onEdit({
+        ...item,
+        status
+      });
+    }
   };
 
   /* =======================
@@ -228,129 +289,215 @@ export function BreakdownHistoryTable({
   ======================= */
 
   return (
-    <div
-      className="flex flex-col bg-white dark:bg-zinc-900"
-      style={{
-        height: TABLE_HEIGHT,
-        border: '1px solid rgb(228 228 231 / 1)',
-        borderRadius: '8px',
-      }}
-    >
-      {/* TOOLBAR */}
-      <GenericTableToolbar
-        actions={
-          <>
-            <ColumnVisibilityMenu
-              columns={columns.map(col => ({ key: col.key, label: col.label }))}
-              hiddenColumns={hiddenColumns}
-              onToggleColumn={handleToggleColumn}
-              onShowAll={handleShowAllColumns}
-              onHideAll={handleHideAllColumns}
-              variant="table"
-            />
-            {onOpenTrash && (
-              <TableActionButton
-                icon={Trash2}
-                label="Recycle Bin"
-                onClick={onOpenTrash}
-                title="View Recycle Bin"
-              />
-            )}
-            <TableActionButton
-              icon={Printer}
-              label="Print"
-              onClick={handlePrint}
-              title="Print"
-            />
-            {onAdd && (
-              <TableActionButton
-                icon={Plus}
-                label="Add Record"
-                onClick={onAdd}
-                variant="primary"
-                accentColor={accentColorValue}
-              />
-            )}
-          </>
-        }
-      >
-        <TableSearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search..."
-        />
-      </GenericTableToolbar>
+    <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="space-y-4">
+      <div className="flex justify-end items-center">
+        <TabsList className="bg-zinc-100 dark:bg-zinc-800">
+          <TabsTrigger value="table" className="gap-2">
+            <Table2 className="w-4 h-4" />
+            Table
+          </TabsTrigger>
+          <TabsTrigger value="kanban" className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            Kanban
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
-      {/* TABLE WRAPPER - CRITICAL: Contains the border grid */}
-      <div
-        className="flex-1 overflow-auto"
-        style={{
-          borderTop: '1px solid rgb(228 228 231 / 1)',
-        }}
-      >
-        {/* TABLE CONTENT - Fixed width table with borders */}
-        <table
-          className="w-full"
+      <TabsContent value="table" className="mt-0">
+        <div
+          className="flex flex-col bg-white dark:bg-zinc-900"
           style={{
-            borderCollapse: 'collapse',
-            tableLayout: 'fixed',
-            minWidth: '100%',
+            height: TABLE_HEIGHT,
+            border: '1px solid rgb(228 228 231 / 1)',
+            borderRadius: '8px',
           }}
         >
-          {/* HEADER */}
-          <TableHeader
-            columns={visibleColumns}
-            gridTemplateColumns={gridTemplateColumns}
-            canEditLayout={canEditLayout}
-            onDragStart={onDragStart}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            onStartResize={startResizeColumn}
-          />
-
-          {/* BODY */}
-          {filteredRows.length === 0 ? (
-            <tbody>
-              <tr>
-                <td colSpan={visibleColumns.length + 2}>
-                  <EmptyState />
-                </td>
-              </tr>
-            </tbody>
-          ) : (
-            <tbody>
-              {/* ROWS */}
-              {filteredRows.map((breakdown, index) => {
-                const height = rowHeights[breakdown._id] ?? DEFAULT_ROW_HEIGHT;
-
-                return (
-                  <TableRow
-                    key={breakdown._id}
-                    breakdown={breakdown}
-                    index={index}
-                    columns={visibleColumns}
-                    gridTemplateColumns={gridTemplateColumns}
-                    rowHeight={height}
-                    canEditLayout={canEditLayout}
-                    onRowClick={handleRowClick}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onStartRowResize={startResizeRow}
-                    entityType={entityType}
+          {/* TOOLBAR */}
+          <GenericTableToolbar
+            actions={
+              <>
+                <ColumnVisibilityMenu
+                  columns={columns.map(col => ({ key: col.key, label: col.label }))}
+                  hiddenColumns={hiddenColumns}
+                  onToggleColumn={handleToggleColumn}
+                  onShowAll={handleShowAllColumns}
+                  onHideAll={handleHideAllColumns}
+                  variant="table"
+                />
+                {onOpenTrash && (
+                  <TableActionButton
+                    icon={Trash2}
+                    label="Recycle Bin"
+                    onClick={onOpenTrash}
+                    title="View Recycle Bin"
                   />
-                );
-              })}
+                )}
+                <TableActionButton
+                  icon={Printer}
+                  label="Print"
+                  onClick={handlePrint}
+                  title="Print"
+                />
+                {onAdd && (
+                  <TableActionButton
+                    icon={Plus}
+                    label="Add Record"
+                    onClick={onAdd}
+                    variant="primary"
+                    accentColor={accentColorValue}
+                  />
+                )}
+              </>
+            }
+          >
+            <TableSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Search..."
+            />
+          </GenericTableToolbar>
 
-              {/* TOTALS ROW */}
-              <TableTotalsRow
+          {/* TABLE WRAPPER - CRITICAL: Contains the border grid */}
+          <div
+            className="flex-1 overflow-auto"
+            style={{
+              borderTop: '1px solid rgb(228 228 231 / 1)',
+            }}
+          >
+            {/* TABLE CONTENT - Fixed width table with borders */}
+            <table
+              className="w-full"
+              style={{
+                borderCollapse: 'collapse',
+                tableLayout: 'fixed',
+                minWidth: '100%',
+              }}
+            >
+              {/* HEADER */}
+              <TableHeader
                 columns={visibleColumns}
-                totals={totals}
                 gridTemplateColumns={gridTemplateColumns}
+                canEditLayout={canEditLayout}
+                onDragStart={onDragStart}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                onStartResize={startResizeColumn}
               />
-            </tbody>
-          )}
-        </table>
-      </div>
+
+              {/* BODY */}
+              {filteredRows.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={visibleColumns.length + 2}>
+                      <EmptyState />
+                    </td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody>
+                  {/* ROWS */}
+                  {filteredRows.map((breakdown, index) => {
+                    const height = rowHeights[breakdown._id] ?? DEFAULT_ROW_HEIGHT;
+
+                    return (
+                      <TableRow
+                        key={breakdown._id}
+                        breakdown={breakdown}
+                        index={index}
+                        columns={visibleColumns}
+                        gridTemplateColumns={gridTemplateColumns}
+                        rowHeight={height}
+                        canEditLayout={canEditLayout}
+                        onRowClick={handleRowClick}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        onStartRowResize={startResizeRow}
+                        entityType={entityType}
+                      />
+                    );
+                  })}
+
+                  {/* TOTALS ROW */}
+                  <TableTotalsRow
+                    columns={visibleColumns}
+                    totals={totals}
+                    gridTemplateColumns={gridTemplateColumns}
+                  />
+                </tbody>
+              )}
+            </table>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="kanban" className="mt-0">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          {/* KANBAN TOOLBAR */}
+          <GenericTableToolbar
+            actions={
+              <>
+                <KanbanFieldVisibilityMenu
+                  visibleFields={visibleFields}
+                  onToggleField={handleToggleField}
+                  fields={[
+                    { id: "allocatedBudget", label: "Allocated Budget" },
+                    { id: "obligatedBudget", label: "Obligated Budget" },
+                    { id: "budgetUtilized", label: "Budget Utilized" },
+                    { id: "balance", label: "Balance" },
+                    { id: "utilizationRate", label: "Utilization Rate" },
+                    { id: "date", label: "Date" },
+                    { id: "remarks", label: "Remarks" },
+                  ]}
+                />
+                <StatusVisibilityMenu
+                  visibleStatuses={visibleStatuses}
+                  onToggleStatus={handleToggleStatus}
+                  statusOptions={[
+                    { id: "ongoing", label: "Ongoing" },
+                    { id: "delayed", label: "Delayed" },
+                    { id: "completed", label: "Completed" },
+                  ]}
+                />
+                {onOpenTrash && (
+                  <TableActionButton
+                    icon={Trash2}
+                    label="Recycle Bin"
+                    onClick={onOpenTrash}
+                    title="View Recycle Bin"
+                  />
+                )}
+                {onAdd && (
+                  <TableActionButton
+                    icon={Plus}
+                    label="Add Record"
+                    onClick={onAdd}
+                    variant="primary"
+                    accentColor={accentColorValue}
+                  />
+                )}
+              </>
+            }
+          >
+            <TableSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Search items..."
+            />
+          </GenericTableToolbar>
+
+          <div className="p-4 bg-zinc-50/50 dark:bg-zinc-950/50">
+            <BreakdownKanban
+              data={filteredRows}
+              onView={(item) => handleRowClick(item, { target: {} } as any)}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              visibleStatuses={visibleStatuses}
+              visibleFields={visibleFields}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
+        </div>
+      </TabsContent>
 
       {/* PRINT PREVIEW MODAL */}
       {printAdapter && (
@@ -371,6 +518,6 @@ export function BreakdownHistoryTable({
           }}
         />
       )}
-    </div>
+    </Tabs>
   );
 }

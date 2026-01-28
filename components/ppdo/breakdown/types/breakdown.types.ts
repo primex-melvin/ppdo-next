@@ -55,6 +55,7 @@ export interface BreakdownHistoryTableProps {
   onAdd?: () => void;
   onEdit?: (breakdown: Breakdown) => void;
   onDelete?: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: string) => void;
   onOpenTrash?: () => void;
   /** Entity type for navigation - determines URL structure */
   entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";

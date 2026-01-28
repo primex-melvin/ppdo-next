@@ -216,6 +216,20 @@ export default function TrustFundBreakdownPage() {
     }
   };
 
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      await updateBreakdown({
+        id: id as Id<"trustFundBreakdowns">,
+        status: newStatus as "ongoing" | "completed" | "delayed",
+      });
+      toast.success("Status updated successfully");
+    } catch (error: any) {
+      toast.error("Failed to update status", {
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <>
       {/* Shared Header Component - NO recalculate button for Trust Funds */}
@@ -241,7 +255,7 @@ export default function TrustFundBreakdownPage() {
       />
 
       {/* Shared Entity Overview Cards */}
-      {showHeader && trustFund && (
+      {trustFund && (
         <EntityOverviewCards
           entityType="trustfund"
           implementingOffice={trustFund.officeInCharge}
@@ -305,6 +319,7 @@ export default function TrustFundBreakdownPage() {
             onAdd={() => setShowAddModal(true)}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
             onOpenTrash={() => setShowTrashModal(true)}
             entityType="trustfund"
           />

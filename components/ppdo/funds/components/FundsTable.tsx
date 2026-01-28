@@ -18,6 +18,9 @@ import { FundsTableColgroup } from "./table/FundsTableColgroup";
 import { FundsTableHeader } from "./table/FundsTableHeader";
 import { FundsTableBody } from "./table/FundsTableBody";
 import { BaseFund, FundsTableProps, ContextMenuState } from "../types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LayoutGrid, Table as TableIcon } from "lucide-react";
+import { FundsKanban } from "./FundsKanban";
 import { exportToCSV, printTable, calculateTotals } from "../utils";
 import { useColumnWidths, useColumnResize, useTableSort, useTableFilter, useTableSelection } from "../";
 
@@ -58,6 +61,7 @@ export function FundsTable<T extends BaseFund>({
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [selectedItem, setSelectedItem] = useState<T | null>(null);
+    const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
     // Search State
     const [searchQuery, setSearchQuery] = useState("");
@@ -75,6 +79,20 @@ export function FundsTable<T extends BaseFund>({
 
     // Status update loading state
     const [updatingStatusIds, setUpdatingStatusIds] = useState<Set<string>>(new Set());
+
+    // Status Visibility State (Kanban)
+    const [visibleStatuses, setVisibleStatuses] = useState<Set<string>>(new Set(['on_process', 'ongoing', 'completed']));
+    const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(['received', 'balance', 'utilizationRate']));
+
+    const handleToggleField = (fieldId: string, isChecked: boolean) => {
+        const newVisible = new Set(visibleFields);
+        if (isChecked) {
+            newVisible.add(fieldId);
+        } else {
+            newVisible.delete(fieldId);
+        }
+        setVisibleFields(newVisible);
+    };
 
     // Custom Hooks
     const { columnWidths, setColumnWidths } = useColumnWidths();
@@ -176,6 +194,16 @@ export function FundsTable<T extends BaseFund>({
         setHiddenColumns(newHidden);
     };
 
+    const handleToggleStatus = (statusId: string, isChecked: boolean) => {
+        const newVisible = new Set(visibleStatuses);
+        if (isChecked) {
+            newVisible.add(statusId);
+        } else {
+            newVisible.delete(statusId);
+        }
+        setVisibleStatuses(newVisible);
+    };
+
     const handleExportCSV = () => {
         try {
             const fundTypeSlug = fundType === 'trust'
@@ -197,91 +225,154 @@ export function FundsTable<T extends BaseFund>({
 
     return (
         <>
-            {/* Main Table Container */}
-            <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-
-                {/* Toolbar */}
-                <FundsTableToolbar
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    searchInputRef={searchInputRef}
-                    selectedCount={selected.length}
-                    onClearSelection={clearSelection}
-                    hiddenColumns={hiddenColumns}
-                    onToggleColumn={handleToggleColumn}
-                    onShowAllColumns={() => setHiddenColumns(new Set())}
-                    onHideAllColumns={() => setHiddenColumns(new Set(['projectTitle', 'officeInCharge', 'status', 'dateReceived', 'received', 'obligatedPR', 'utilized', 'utilizationRate', 'balance', 'remarks']))}
-                    onExportCSV={handleExportCSV}
-                    onOpenPrintPreview={() => setShowPrintModal(true)}
-                    isAdmin={isAdmin}
-                    onOpenTrash={onOpenTrash}
-                    onBulkTrash={handleBulkTrash}
-                    onAddNew={onAdd ? () => setShowAddModal(true) : undefined}
-                    accentColor={accentColorValue}
-                    title={title}
-                    searchPlaceholder={searchPlaceholder}
-                />
-
-                {/* Print Header (hidden on screen, visible in print) */}
-                <div className="hidden print-only p-4 border-b border-zinc-900">
-                    <h2 className="text-xl font-bold text-zinc-900 mb-2">
-                        {title} {year}
-                    </h2>
-                    <p className="text-sm text-zinc-700">
-                        Generated on:{" "}
-                        {new Date().toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        })}
-                    </p>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="space-y-4">
+                <div className="flex items-center justify-end">
+                    <TabsList className="bg-zinc-100 dark:bg-zinc-800">
+                        <TabsTrigger value="table" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
+                            <TableIcon className="h-4 w-4" />
+                            Table
+                        </TabsTrigger>
+                        <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
+                            <LayoutGrid className="h-4 w-4" />
+                            Kanban
+                        </TabsTrigger>
+                    </TabsList>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
-                    <table className="w-full">
-                        <FundsTableColgroup
-                            isAdmin={isAdmin}
+                <TabsContent value="table" className="mt-0">
+                    {/* Main Table Container */}
+                    <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+
+                        {/* Toolbar */}
+                        <FundsTableToolbar
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            searchInputRef={searchInputRef}
+                            selectedCount={selected.length}
+                            onClearSelection={clearSelection}
                             hiddenColumns={hiddenColumns}
-                            columnWidths={columnWidths}
+                            onToggleColumn={handleToggleColumn}
+                            onShowAllColumns={() => setHiddenColumns(new Set())}
+                            onHideAllColumns={() => setHiddenColumns(new Set(['projectTitle', 'officeInCharge', 'status', 'dateReceived', 'received', 'obligatedPR', 'utilized', 'utilizationRate', 'balance', 'remarks']))}
+                            onExportCSV={handleExportCSV}
+                            onOpenPrintPreview={() => setShowPrintModal(true)}
+                            isAdmin={isAdmin}
+                            onOpenTrash={onOpenTrash}
+                            onBulkTrash={handleBulkTrash}
+                            onAddNew={onAdd ? () => setShowAddModal(true) : undefined}
+                            accentColor={accentColorValue}
+                            title={title}
+                            searchPlaceholder={searchPlaceholder}
                         />
 
-                        <FundsTableHeader
-                            isAdmin={isAdmin}
-                            hiddenColumns={hiddenColumns}
-                            columnWidths={columnWidths}
-                            allSelected={allSelected}
-                            onToggleAll={toggleAll}
-                            onSort={handleSort}
-                            onResizeStart={handleResizeStart}
-                        />
+                        {/* Print Header (hidden on screen, visible in print) */}
+                        <div className="hidden print-only p-4 border-b border-zinc-900">
+                            <h2 className="text-xl font-bold text-zinc-900 mb-2">
+                                {title} {year}
+                            </h2>
+                            <p className="text-sm text-zinc-700">
+                                Generated on:{" "}
+                                {new Date().toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                })}
+                            </p>
+                        </div>
 
-                        <FundsTableBody
-                            data={filteredAndSortedData}
-                            year={year}
-                            isAdmin={isAdmin}
-                            selected={selected}
+                        {/* Table */}
+                        <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
+                            <table className="w-full">
+                                <FundsTableColgroup
+                                    isAdmin={isAdmin}
+                                    hiddenColumns={hiddenColumns}
+                                    columnWidths={columnWidths}
+                                />
+
+                                <FundsTableHeader
+                                    isAdmin={isAdmin}
+                                    hiddenColumns={hiddenColumns}
+                                    columnWidths={columnWidths}
+                                    allSelected={allSelected}
+                                    onToggleAll={toggleAll}
+                                    onSort={handleSort}
+                                    onResizeStart={handleResizeStart}
+                                />
+
+                                <FundsTableBody
+                                    data={filteredAndSortedData}
+                                    year={year}
+                                    isAdmin={isAdmin}
+                                    selected={selected}
+                                    hiddenColumns={hiddenColumns}
+                                    columnWidths={columnWidths}
+                                    totals={totals}
+                                    updatingStatusIds={updatingStatusIds}
+                                    onToggleSelection={toggleOne}
+                                    onContextMenu={handleContextMenu}
+                                    onStatusChange={handleStatusChange}
+                                    onPin={handlePin}
+                                    onViewLog={handleViewLog}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    canEdit={!!onEdit}
+                                    canDelete={!!onDelete}
+                                    fundType={fundType}
+                                    emptyMessage={emptyMessage}
+                                />
+                            </table>
+                        </div>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="kanban" className="mt-0">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                        {/* Reuse Toolbar for functionality but with limited features if needed */}
+                        <FundsTableToolbar
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            searchInputRef={searchInputRef}
+                            selectedCount={0} // Selection not supported in Kanban yet
+                            onClearSelection={() => { }}
                             hiddenColumns={hiddenColumns}
-                            columnWidths={columnWidths}
-                            totals={totals}
-                            updatingStatusIds={updatingStatusIds}
-                            onToggleSelection={toggleOne}
-                            onContextMenu={handleContextMenu}
-                            onStatusChange={handleStatusChange}
-                            onPin={handlePin}
-                            onViewLog={handleViewLog}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            canEdit={!!onEdit}
-                            canDelete={!!onDelete}
-                            fundType={fundType}
-                            emptyMessage={emptyMessage}
+                            onToggleColumn={handleToggleColumn} // Still works even if filtered out visually
+                            onShowAllColumns={() => setHiddenColumns(new Set())}
+                            onHideAllColumns={() => { }}
+                            onExportCSV={handleExportCSV}
+                            onOpenPrintPreview={() => setShowPrintModal(true)}
+                            isAdmin={isAdmin}
+                            onOpenTrash={onOpenTrash}
+                            onBulkTrash={() => { }} // Bulk trash not supported in Kanban
+                            onAddNew={onAdd ? () => setShowAddModal(true) : undefined}
+                            accentColor={accentColorValue}
+                            title={title}
+                            searchPlaceholder={searchPlaceholder}
+                            showColumnToggle={false}
+                            showExport={false}
+                            visibleStatuses={visibleStatuses}
+                            onToggleStatus={handleToggleStatus}
+                            visibleFields={visibleFields}
+                            onToggleField={handleToggleField}
                         />
-                    </table>
-                </div>
-            </div>
+                        <div className="p-4 bg-zinc-50/50 dark:bg-zinc-950/50">
+                            <FundsKanban
+                                data={filteredAndSortedData}
+                                isAdmin={isAdmin}
+                                onViewLog={handleViewLog}
+                                onEdit={onEdit ? handleEdit : undefined}
+                                onDelete={onDelete ? handleDelete : undefined}
+                                onPin={handlePin}
+                                visibleStatuses={visibleStatuses}
+                                visibleFields={visibleFields}
+                                fundType={fundType}
+                                year={year}
+                            />
+                        </div>
+                    </div>
+                </TabsContent>
+            </Tabs>
 
             {/* Context Menu */}
             <FundsContextMenu

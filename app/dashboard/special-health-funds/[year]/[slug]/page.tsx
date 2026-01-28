@@ -206,6 +206,20 @@ export default function SpecialHealthFundBreakdownPage({ params }: PageProps) {
         }
     };
 
+    const handleStatusChange = async (id: string, newStatus: string) => {
+        try {
+            await updateBreakdown({
+                id: id as Id<"specialHealthFundBreakdowns">,
+                status: newStatus as "ongoing" | "completed" | "delayed",
+            });
+            toast.success("Status updated successfully");
+        } catch (error: any) {
+            toast.error("Failed to update status", {
+                description: error.message,
+            });
+        }
+    };
+
     return (
         <>
             <BreakdownHeader
@@ -229,7 +243,7 @@ export default function SpecialHealthFundBreakdownPage({ params }: PageProps) {
                 }}
             />
 
-            {showHeader && fund && (
+            {fund && (
                 <EntityOverviewCards
                     entityType="specialhealthfund"
                     implementingOffice={fund.officeInCharge}
@@ -291,6 +305,7 @@ export default function SpecialHealthFundBreakdownPage({ params }: PageProps) {
                         onAdd={() => setShowAddModal(true)}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        onStatusChange={handleStatusChange}
                         onOpenTrash={() => setShowTrashModal(true)}
                         entityType="specialhealthfund"
                     />

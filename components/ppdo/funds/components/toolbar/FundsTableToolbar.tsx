@@ -3,7 +3,7 @@
 "use client";
 
 import React from "react";
-import { Search, CheckCircle2, Trash2, X, Download, Printer, FileSpreadsheet, Eye } from "lucide-react";
+import { Search, CheckCircle2, Trash2, X, Download, Printer, FileSpreadsheet, Eye, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -16,7 +16,15 @@ import {
     DropdownMenuTrigger,
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { AVAILABLE_COLUMNS } from "../../constants";
+import { StatusVisibilityMenu } from "../../../shared/toolbar";
+import { KanbanFieldVisibilityMenu } from "../../../shared/kanban/KanbanFieldVisibilityMenu";
 
 interface FundsTableToolbarProps {
     searchQuery: string;
@@ -39,6 +47,12 @@ interface FundsTableToolbarProps {
     accentColor: string;
     title?: string;
     searchPlaceholder?: string;
+    showColumnToggle?: boolean;
+    showExport?: boolean;
+    visibleStatuses?: Set<string>;
+    onToggleStatus?: (statusId: string, isChecked: boolean) => void;
+    visibleFields?: Set<string>;
+    onToggleField?: (fieldId: string, isChecked: boolean) => void;
 }
 
 export function FundsTableToolbar({
@@ -62,6 +76,12 @@ export function FundsTableToolbar({
     accentColor,
     title = "Funds",
     searchPlaceholder = "Search funds...",
+    showColumnToggle = true,
+    showExport = true,
+    visibleStatuses,
+    onToggleStatus,
+    visibleFields,
+    onToggleField,
 }: FundsTableToolbarProps) {
     return (
         <div className="h-16 px-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-4 no-print">
@@ -120,36 +140,63 @@ export function FundsTableToolbar({
                 <Separator orientation="vertical" className="h-6 mx-1" />
 
                 {/* Column Visibility */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Eye className="w-4 h-4" />
-                            <span className="hidden sm:inline">Columns</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {AVAILABLE_COLUMNS.map((column) => (
-                            <DropdownMenuCheckboxItem
-                                key={column.id}
-                                checked={!hiddenColumns.has(column.id)}
-                                onCheckedChange={(checked) => onToggleColumn(column.id, checked)}
-                            >
-                                {column.label}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={onShowAllColumns}>
-                            Show All Columns
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={onHideAllColumns}>
-                            Hide All Columns
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {showColumnToggle && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2">
+                                <Eye className="w-4 h-4" />
+                                <span className="hidden sm:inline">Columns</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {AVAILABLE_COLUMNS.map((column) => (
+                                <DropdownMenuCheckboxItem
+                                    key={column.id}
+                                    checked={!hiddenColumns.has(column.id)}
+                                    onCheckedChange={(checked) => onToggleColumn(column.id, checked)}
+                                >
+                                    {column.label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={onShowAllColumns}>
+                                Show All Columns
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={onHideAllColumns}>
+                                Hide All Columns
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
 
-                <Separator orientation="vertical" className="h-6 mx-1" />
+                {showColumnToggle && <Separator orientation="vertical" className="h-6 mx-1" />}
+
+                {/* Field Visibility Toggle (Kanban Mode) */}
+                {visibleFields && onToggleField && (
+                    <KanbanFieldVisibilityMenu
+                        visibleFields={visibleFields}
+                        onToggleField={onToggleField}
+                        fields={[
+                            { id: "received", label: "Received" },
+                            { id: "obligatedPR", label: "Obligated/PR" },
+                            { id: "utilized", label: "Utilized" },
+                            { id: "balance", label: "Balance" },
+                            { id: "utilizationRate", label: "Utilization Rate" },
+                            { id: "date", label: "Date" },
+                            { id: "remarks", label: "Remarks" },
+                        ]}
+                    />
+                )}
+
+                {/* Status Visibility Toggle (Kanban Mode) */}
+                {visibleStatuses && onToggleStatus && (
+                    <StatusVisibilityMenu
+                        visibleStatuses={visibleStatuses}
+                        onToggleStatus={onToggleStatus}
+                    />
+                )}
 
                 {/* Recycle Bin */}
                 {onOpenTrash && (
@@ -169,42 +216,44 @@ export function FundsTableToolbar({
                 )}
 
                 {/* Export/Print Dropdown */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Download className="w-4 h-4" />
-                            <span className="hidden sm:inline">Export</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Export Options</DropdownMenuLabel>
-                        {onOpenPrintPreview && (
-                            <DropdownMenuItem onClick={onOpenPrintPreview} className="cursor-pointer">
-                                <Eye className="w-4 h-4 mr-2" />
-                                Print Preview
-                                {hasPrintDraft && (
-                                    <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
-                                )}
+                {showExport && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2">
+                                <Download className="w-4 h-4" />
+                                <span className="hidden sm:inline">Export</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                            {onOpenPrintPreview && (
+                                <DropdownMenuItem onClick={onOpenPrintPreview} className="cursor-pointer">
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Print Preview
+                                    {hasPrintDraft && (
+                                        <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                                    )}
+                                </DropdownMenuItem>
+                            )}
+                            {onPrint && (
+                                <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
+                                    <Printer className="w-4 h-4 mr-2" /> Print
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={onExportCSV} className="cursor-pointer">
+                                <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
                             </DropdownMenuItem>
-                        )}
-                        {onPrint && (
-                            <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
-                                <Printer className="w-4 h-4 mr-2" /> Print
-                            </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={onExportCSV} className="cursor-pointer">
-                            <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <div className="p-2">
-                            <span className="text-[10px] text-zinc-500 leading-tight block">
-                                Note: Exports are based on currently shown/hidden columns.
-                            </span>
-                        </div>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            <DropdownMenuSeparator />
+                            <div className="p-2">
+                                <span className="text-[10px] text-zinc-500 leading-tight block">
+                                    Note: Exports are based on currently shown/hidden columns.
+                                </span>
+                            </div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
 
-                <Separator orientation="vertical" className="h-6 mx-1" />
+                {showExport && <Separator orientation="vertical" className="h-6 mx-1" />}
 
                 {/* Add New Item Button */}
                 {onAddNew && (

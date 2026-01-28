@@ -66,6 +66,7 @@ h6 {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -77,6 +78,7 @@ h6 {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -89,6 +91,7 @@ h6 {
     opacity: 0;
     transform: translateY(-16px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -101,6 +104,7 @@ h6 {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -112,6 +116,7 @@ h6 {
     opacity: 0;
     transform: scale(0) rotate(-180deg);
   }
+
   to {
     opacity: 1;
     transform: scale(1) rotate(0deg);
@@ -122,6 +127,7 @@ h6 {
   from {
     clip-path: circle(0% at var(--toggle-x, 50%) var(--toggle-y, 50%));
   }
+
   to {
     clip-path: circle(150% at var(--toggle-x, 50%) var(--toggle-y, 50%));
   }
@@ -131,9 +137,11 @@ h6 {
   0% {
     width: 0%;
   }
+
   50% {
     width: 100%;
   }
+
   100% {
     width: 100%;
   }
@@ -147,46 +155,56 @@ h6 {
 }
 
 @keyframes float-slow {
+
   0%,
   100% {
     transform: translateY(0px) translateX(0px) rotate(0deg);
   }
+
   33% {
     transform: translateY(-20px) translateX(10px) rotate(2deg);
   }
+
   66% {
     transform: translateY(-10px) translateX(-10px) rotate(-2deg);
   }
 }
 
 @keyframes float-medium {
+
   0%,
   100% {
     transform: translateY(0px) translateX(0px) rotate(0deg);
   }
+
   50% {
     transform: translateY(-30px) translateX(15px) rotate(3deg);
   }
 }
 
 @keyframes float-slow-delayed {
+
   0%,
   100% {
     transform: translateY(0px) translateX(0px) rotate(0deg);
   }
+
   25% {
     transform: translateY(-25px) translateX(-15px) rotate(-2deg);
   }
+
   75% {
     transform: translateY(-15px) translateX(15px) rotate(2deg);
   }
 }
 
 @keyframes float-medium-delayed {
+
   0%,
   100% {
     transform: translateY(0px) translateX(0px) rotate(0deg);
   }
+
   50% {
     transform: translateY(-25px) translateX(-20px) rotate(-3deg);
   }
@@ -230,7 +248,7 @@ h6 {
 }
 
 /* Depth of field blur effect for floating elements */
-.depth-of-field-container:hover ~ .floating-elements-wrapper,
+.depth-of-field-container:hover~.floating-elements-wrapper,
 .floating-elements-wrapper:has(~ .depth-of-field-container:hover) {
   filter: blur(3px);
   opacity: 0.6;
@@ -238,7 +256,7 @@ h6 {
 }
 
 /* Alternative approach - blur floating elements when hovering over container */
-.depth-of-field-container:hover ~ .floating-elements-wrapper * {
+.depth-of-field-container:hover~.floating-elements-wrapper * {
   filter: blur(2px);
   opacity: 0.7;
   transition: filter 0.3s ease, opacity 0.3s ease;
@@ -249,7 +267,7 @@ h6 {
   z-index: 20;
 }
 
-.depth-of-field-container:hover ~ * {
+.depth-of-field-container:hover~* {
   filter: blur(2px);
   opacity: 0.75;
   transition: filter 0.3s ease, opacity 0.3s ease;
@@ -279,8 +297,9 @@ h6 {
 
 /* Print Styles */
 @media print {
+
   /* Hide everything by default */
-  body > * {
+  body>* {
     visibility: hidden !important;
   }
 
@@ -440,6 +459,7 @@ h6 {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -470,4 +490,31 @@ h6 {
 
 .dark .scrollbar-thin {
   scrollbar-color: rgb(68 64 60) transparent;
+}
+
+/* Kanban Specific Scrollbar - Green #15803D */
+.kanban-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.kanban-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb {
+  background-color: #15803D;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.kanban-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* For Firefox */
+.kanban-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #15803D transparent;
 }
