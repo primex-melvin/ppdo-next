@@ -1,27 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { Plus, CheckCircle2, Clock, XCircle, FileText } from "lucide-react";
+import { Plus, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  ResizableModal,
-  ResizableModalContent,
-  ResizableModalHeader,
-  ResizableModalTitle,
-  ResizableModalDescription,
-  ResizableModalBody,
-  ResizableModalFooter,
-  ResizableModalTrigger,
-} from "@/components/ui/resizable-modal";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
 import { BugsSuggestionsDataTable, MediaThumbnails } from "@/components/ppdo/dashboard/BugsSuggestionsDataTable";
-import RichTextEditor from "@/components/ui/RichTextEditor";
+import { SuggestionModal } from "@/components/maintenance/SuggestionModal";
 
 export default function SuggestionsPage() {
   const router = useRouter();
@@ -29,53 +16,6 @@ export default function SuggestionsPage() {
 
   // Fetch all suggestions
   const suggestions = useQuery(api.suggestions.getAll);
-  const createSuggestion = useMutation(api.suggestions.create);
-
-  // Form state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [multimedia, setMultimedia] = useState<Array<{ storageId: string, type: "image" | "video", name: string }>>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleCreateSuggestion = async () => {
-    if (!title.trim() || !description.trim()) {
-      toast.error("Validation Error", {
-        description: "Please fill in all required fields",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await createSuggestion({
-        title,
-        description,
-        multimedia: multimedia.map(m => ({
-          storageId: m.storageId as any,
-          type: m.type,
-          name: m.name
-        }))
-      });
-      console.log("✅ Suggestion created:", result);
-
-      toast.success("Suggestion Submitted", {
-        description: "Your suggestion has been successfully submitted",
-      });
-      setIsCreateDialogOpen(false);
-      setTitle("");
-      setDescription("");
-      setMultimedia([]);
-
-      // router.push(`/dashboard/settings/updates/suggestions/${result.suggestionId}`);
-    } catch (error) {
-      console.error("❌ Error creating suggestion:", error);
-      toast.error("Error", {
-        description: "Failed to submit suggestion. Please try again.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const columns: ColumnDef<any>[] = [
     {
@@ -97,7 +37,7 @@ export default function SuggestionsPage() {
             colorClass = "bg-[#15803D]/10 text-[#15803D] border-[#15803D]/20";
             icon = <CheckCircle2 className="w-3 h-3 mr-1" />;
             label = "Acknowledged";
-            break;
+            break; // Added break
           case "to_review":
             colorClass = "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800";
             icon = <Clock className="w-3 h-3 mr-1" />;
@@ -173,66 +113,18 @@ export default function SuggestionsPage() {
           </p>
         </div>
 
-        <ResizableModal open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <ResizableModalTrigger asChild>
-            <Button className="gap-2 bg-[#15803D] hover:bg-[#15803D]/90 text-white">
-              <Plus className="w-4 h-4" />
-              Submit Suggestion
-            </Button>
-          </ResizableModalTrigger>
-          <ResizableModalContent className="sm:max-w-[800px] sm:max-h-[80vh] flex flex-col" allowOverflow>
-            <ResizableModalHeader>
-              <ResizableModalTitle>Submit a Suggestion</ResizableModalTitle>
-              <ResizableModalDescription>
-                Share your ideas. You can include images or videos to illustrate your suggestion.
-              </ResizableModalDescription>
-            </ResizableModalHeader>
-            <ResizableModalBody className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Brief summary of your suggestion"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full"
-                />
-              </div>
+        <Button
+          className="gap-2 bg-[#15803D] hover:bg-[#15803D]/90 text-white"
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <Plus className="w-4 h-4" />
+          Submit Suggestion
+        </Button>
 
-              <div className="space-y-2">
-                <Label>Description *</Label>
-                <RichTextEditor
-                  value={description}
-                  onChange={setDescription}
-                  placeholder="Describe your suggestion..."
-                  onMultimediaChange={(newMedia) => {
-                    setMultimedia(prev => [...prev, ...newMedia]);
-                  }}
-                  className="min-h-[300px]"
-                />
-                <p className="text-xs text-muted-foreground">
-                  You can paste images directly or upload videos using the toolbar.
-                </p>
-              </div>
-            </ResizableModalBody>
-            <ResizableModalFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateSuggestion}
-                disabled={isSubmitting}
-                className="bg-[#15803D] hover:bg-[#15803D]/90 text-white"
-              >
-                {isSubmitting ? "Submitting..." : "Submit Suggestion"}
-              </Button>
-            </ResizableModalFooter>
-          </ResizableModalContent>
-        </ResizableModal>
+        <SuggestionModal
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+        />
       </div>
 
       <BugsSuggestionsDataTable

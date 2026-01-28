@@ -1,28 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { Plus, CheckCircle2, AlertCircle, Clock, Video } from "lucide-react";
+import { Plus, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  ResizableModal,
-  ResizableModalContent,
-  ResizableModalHeader,
-  ResizableModalTitle,
-  ResizableModalDescription,
-  ResizableModalBody,
-  ResizableModalFooter,
-  ResizableModalTrigger,
-} from "@/components/ui/resizable-modal";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
 import { BugsSuggestionsDataTable, MediaThumbnails } from "@/components/ppdo/dashboard/BugsSuggestionsDataTable";
-import { Badge } from "@/components/ui/badge"; // You might need to import Badge or use the one in component
-import RichTextEditor from "@/components/ui/RichTextEditor";
+import { BugReportModal } from "@/components/maintenance/BugReportModal";
 
 export default function BugReportsPage() {
   const router = useRouter();
@@ -30,57 +16,6 @@ export default function BugReportsPage() {
 
   // Fetch all bug reports
   const reports = useQuery(api.bugReports.getAll);
-  const createBugReport = useMutation(api.bugReports.create);
-
-  // Form state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [stepsToReplicate, setStepsToReplicate] = useState("");
-  const [multimedia, setMultimedia] = useState<Array<{ storageId: string, type: "image" | "video", name: string }>>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleCreateBugReport = async () => {
-    if (!title.trim() || !description.trim()) {
-      toast.error("Validation Error", {
-        description: "Please fill in all required fields",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await createBugReport({
-        title,
-        description,
-        stepsToReplicate,
-        multimedia: multimedia.map(m => ({
-          storageId: m.storageId as any, // Cast to any to avoid Id<"_storage"> type issues in frontend
-          type: m.type,
-          name: m.name
-        }))
-      });
-      console.log("✅ Bug report created:", result);
-
-      toast.success("Bug Report Submitted", {
-        description: "Your bug report has been successfully submitted",
-      });
-      setIsCreateDialogOpen(false);
-      setTitle("");
-      setDescription("");
-      setStepsToReplicate("");
-      setMultimedia([]);
-
-      // Navigating to detail page if needed, or just let the table update
-      // router.push(`/dashboard/settings/updates/bugs-report/${result.reportId}`);
-    } catch (error) {
-      console.error("❌ Error creating bug report:", error);
-      toast.error("Error", {
-        description: "Failed to submit bug report. Please try again.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const columns: ColumnDef<any>[] = [
     {
@@ -173,77 +108,18 @@ export default function BugReportsPage() {
           </p>
         </div>
 
-        <ResizableModal open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <ResizableModalTrigger asChild>
-            <Button className="gap-2 bg-[#15803D] hover:bg-[#15803D]/90 text-white">
-              <Plus className="w-4 h-4" />
-              Report a Bug
-            </Button>
-          </ResizableModalTrigger>
-          <ResizableModalContent className="sm:max-w-[800px] sm:max-h-[80vh] flex flex-col" allowOverflow>
-            <ResizableModalHeader>
-              <ResizableModalTitle>Report a Bug</ResizableModalTitle>
-              <ResizableModalDescription>
-                Describe the bug you encountered. You can upload images or videos.
-              </ResizableModalDescription>
-            </ResizableModalHeader>
-            <ResizableModalBody className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Brief description of the bug"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full"
-                />
-              </div>
+        <Button
+          className="gap-2 bg-[#15803D] hover:bg-[#15803D]/90 text-white"
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <Plus className="w-4 h-4" />
+          Report a Bug
+        </Button>
 
-              <div className="space-y-2">
-                <Label>Description *</Label>
-                <RichTextEditor
-                  value={description}
-                  onChange={setDescription}
-                  placeholder="Describe the bug..."
-                  onMultimediaChange={(newMedia) => {
-                    setMultimedia(prev => [...prev, ...newMedia]);
-                  }}
-                  className="min-h-[300px]"
-                />
-                <p className="text-xs text-muted-foreground">
-                  You can paste images directly or upload videos using the toolbar.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Steps to Replicate (Optional)</Label>
-                <RichTextEditor
-                  value={stepsToReplicate}
-                  onChange={setStepsToReplicate}
-                  placeholder="List the steps to reproduce this bug..."
-                  className="min-h-[150px]"
-                  variant="ordered-list"
-                />
-              </div>
-            </ResizableModalBody>
-            <ResizableModalFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateBugReport}
-                disabled={isSubmitting}
-                className="bg-[#15803D] hover:bg-[#15803D]/90 text-white"
-              >
-                {isSubmitting ? "Submitting..." : "Submit Bug Report"}
-              </Button>
-            </ResizableModalFooter>
-          </ResizableModalContent>
-        </ResizableModal>
+        <BugReportModal
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+        />
       </div>
 
       <BugsSuggestionsDataTable

@@ -8,18 +8,20 @@ import {
     ResizableModalTitle,
     ResizableModalDescription,
     ResizableModalBody,
-    ResizableModalFooter,
 } from "@/components/ui/resizable-modal";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import RichTextEditor from "@/components/ui/RichTextEditor";
-import { Bug, Lightbulb, ArrowLeft, Loader2, Sparkles } from "lucide-react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { toast } from "sonner";
-import confetti from "canvas-confetti";
+import { Bug, Lightbulb, ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+// Dynamic imports for performance
+const BugReportForm = dynamic(() => import("@/components/maintenance/BugReportForm").then(mod => mod.BugReportForm), {
+    loading: () => <div className="flex justify-center p-8"><Loader2 className="animate-spin w-8 h-8 opacity-50" /></div>
+});
+
+const SuggestionForm = dynamic(() => import("@/components/maintenance/SuggestionForm").then(mod => mod.SuggestionForm), {
+    loading: () => <div className="flex justify-center p-8"><Loader2 className="animate-spin w-8 h-8 opacity-50" /></div>
+});
 
 interface ConcernModalProps {
     open: boolean;
@@ -34,17 +36,6 @@ export function ConcernModal({ open, onOpenChange, screenshot }: ConcernModalPro
     const [step, setStep] = useState<"selection" | "form">("selection");
     const [type, setType] = useState<ConcernType>(null);
 
-    // Form State
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isProcessingScreenshot, setIsProcessingScreenshot] = useState(false);
-    const [multimedia, setMultimedia] = useState<Array<{ storageId: string, type: "image" | "video", name: string }>>([]);
-
-    // Mutations
-    const createBugReport = useMutation(api.bugReports.create);
-    const createSuggestion = useMutation(api.suggestions.create);
-    const generateUploadUrl = useMutation(api.media.generateUploadUrl);
 
     // Reset state when modal is closed
     useEffect(() => {
@@ -52,128 +43,25 @@ export function ConcernModal({ open, onOpenChange, screenshot }: ConcernModalPro
             setTimeout(() => {
                 setStep("selection");
                 setType(null);
-                setTitle("");
-                setDescription("");
-                setMultimedia([]);
             }, 300);
         }
     }, [open]);
 
-    // Handle Screenshot Upload and Editor Autofill
-    const handleScreenshotAutofill = async () => {
-        if (screenshot && (description === "" || description === "<p></p>")) {
-            try {
-                setIsProcessingScreenshot(true);
-                // Convert base64 to blob
-                const res = await fetch(screenshot);
-                const blob = await res.blob();
-                const file = new File([blob], "screenshot.png", { type: "image/png" });
+    const handleSuccess = (id: string) => {
+        const path = type === "bug"
+            ? `/dashboard/settings/updates/bugs-report/${id}`
+            : `/dashboard/settings/updates/suggestions/${id}`;
 
-                // Upload to Convex
-                const postUrl = await generateUploadUrl();
-                const result = await fetch(postUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": file.type },
-                    body: file,
-                });
-
-                if (result.ok) {
-                    const { storageId } = await result.json();
-                    // Generate URL (approximate, ideally we get this from backend helper or assume standard format)
-                    const convexSiteUrl = process.env.NEXT_PUBLIC_CONVEX_URL!.replace(".cloud", ".site");
-                    const imageUrl = `${convexSiteUrl}/images/${storageId}`;
-
-                    const imgHtml = `<p><strong>Captured Screenshot:</strong></p><img src="${imageUrl}" class="rounded-md border border-zinc-200 dark:border-zinc-700 my-2" />`;
-                    setDescription(imgHtml);
-
-                    setMultimedia(prev => [...prev, {
-                        storageId,
-                        type: "image",
-                        name: "screenshot.png"
-                    }]);
-                }
-            } catch (error) {
-                console.error("Failed to auto-upload screenshot", error);
-                toast.error("Failed to upload screenshot");
-            } finally {
-                setIsProcessingScreenshot(false);
-            }
-        }
-    };
-
-    // Trigger autofill when entering form step
-    useEffect(() => {
-        if (step === "form" && screenshot && open) {
-            handleScreenshotAutofill();
-        }
-    }, [step, screenshot, open]);
-
-    const handleSubmit = async () => {
-        if (!title.trim() || !description.trim()) {
-            toast.error("Please fill in all fields");
-            return;
-        }
-
-        setIsSubmitting(true);
-        let resultId: any = null;
-
-        try {
-            if (type === "bug") {
-                const result = await createBugReport({
-                    title,
-                    description,
-                    multimedia: multimedia.map(m => ({
-                        storageId: m.storageId as any,
-                        type: m.type,
-                        name: m.name
-                    }))
-                });
-                resultId = result.reportId;
-            } else {
-                const result = await createSuggestion({
-                    title,
-                    description,
-                    multimedia: multimedia.map(m => ({
-                        storageId: m.storageId as any,
-                        type: m.type,
-                        name: m.name
-                    }))
-                });
-                resultId = result.suggestionId;
-            }
-
-            // Success Feedback
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
-            toast.success(type === "bug" ? "Bug Reported!" : "Suggestion Submitted!", {
-                description: "Thank you for your feedback.",
-                action: {
-                    label: "View Report",
-                    onClick: () => {
-                        const path = type === "bug"
-                            ? `/dashboard/settings/updates/bugs-report/${resultId}`
-                            : `/dashboard/settings/updates/suggestions/${resultId}`;
-                        router.push(path);
-                    }
-                },
-            });
-
-            onOpenChange(false);
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to submit", { description: "Something went wrong. Please try again." });
-        } finally {
-            setIsSubmitting(false);
-        }
+        // Slightly delayed closed to allow toast to show if needed, though form handles toast.
+        // Form handles the toast.
+        onOpenChange(false);
+        // Optional: Navigate to detail page
+        router.push(path);
     };
 
     return (
         <ResizableModal open={open} onOpenChange={onOpenChange}>
-            <ResizableModalContent className="sm:max-w-[800px] h-[80vh] flex flex-col" allowOverflow>
+            <ResizableModalContent className="sm:max-w-[800px] sm:max-h-[80vh] flex flex-col" allowOverflow>
 
                 {step === "selection" ? (
                     <>
@@ -239,72 +127,24 @@ export function ConcernModal({ open, onOpenChange, screenshot }: ConcernModalPro
                         </ResizableModalHeader>
 
                         <ResizableModalBody className="p-6 space-y-4 pt-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="title">Title *</Label>
-                                <Input
-                                    id="title"
-                                    placeholder={type === "bug" ? "e.g., Navigation menu is broken" : "e.g., Add dark mode toggle"}
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full"
-                                    autoFocus
+                            {type === "bug" ? (
+                                <BugReportForm
+                                    onSuccess={handleSuccess}
+                                    onCancel={() => onOpenChange(false)}
+                                    screenshot={screenshot}
                                 />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Description *</Label>
-                                <RichTextEditor
-                                    value={description}
-                                    onChange={setDescription}
-                                    placeholder="Details..."
-                                    onMultimediaChange={(newMedia) => {
-                                        setMultimedia(prev => [...prev, ...newMedia]);
-                                    }}
-                                    className="min-h-[300px]"
+                            ) : (
+                                <SuggestionForm
+                                    onSuccess={handleSuccess}
+                                    onCancel={() => onOpenChange(false)}
+                                    screenshot={screenshot}
                                 />
-                                <p className="text-xs text-muted-foreground flex items-center gap-2">
-                                    {isProcessingScreenshot && <Loader2 className="w-3 h-3 animate-spin" />}
-                                    {isProcessingScreenshot
-                                        ? "Attaching screenshot..."
-                                        : screenshot
-                                            ? "A screenshot of your current page has been automatically attached."
-                                            : "You can add screenshots or videos to help explain."}
-                                </p>
-                            </div>
+                            )}
                         </ResizableModalBody>
-
-                        <ResizableModalFooter>
-                            <Button
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                                disabled={isSubmitting}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className={`${type === "bug"
-                                    ? "bg-red-600 hover:bg-red-700"
-                                    : "bg-[#15803D] hover:bg-[#15803D]/90"
-                                    } text-white gap-2`}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    <>
-                                        {type === "bug" ? <Bug className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                                        Submit {type === "bug" ? "Report" : "Suggestion"}
-                                    </>
-                                )}
-                            </Button>
-                        </ResizableModalFooter>
                     </>
                 )}
             </ResizableModalContent>
         </ResizableModal>
     );
 }
+
