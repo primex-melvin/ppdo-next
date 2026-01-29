@@ -19,7 +19,7 @@ export function useBudgetData() {
       utilizationRate: item.utilizationRate,
       projectCompleted: item.projectCompleted,
       projectDelayed: item.projectDelayed,
-      projectsOngoing: item.projectsOngoing,
+      projectsOngoing: item.projectsOngoing || 0,
       year: item.year,
       status: item.status,
       isPinned: item.isPinned,

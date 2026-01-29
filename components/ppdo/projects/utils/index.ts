@@ -194,7 +194,7 @@ export const calculateProjectTotals = (projects: Project[]): ProjectTotals => {
                 acc.utilizationRate + project.utilizationRate / (projects.length || 1),
             projectCompleted: acc.projectCompleted + project.projectCompleted,
             projectDelayed: acc.projectDelayed + (project.projectDelayed || 0),
-            projectsOngoing: acc.projectsOngoing + project.projectsOngoing,
+            projectsOngoing: acc.projectsOngoing + (project.projectsOngoing || 0),
         }),
         {
             totalBudgetAllocated: 0,

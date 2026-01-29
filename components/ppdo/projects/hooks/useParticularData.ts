@@ -3,6 +3,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
+import { Project } from "../types";
+
 export function useParticularData(particular: string) {
     const budgetItem = useQuery(api.budgetItems.getByParticulars, {
         particulars: particular,
@@ -17,7 +19,7 @@ export function useParticularData(particular: string) {
         budgetItem ? { budgetItemId: budgetItem._id } : "skip"
     );
 
-    const transformedProjects =
+    const transformedProjects: Project[] =
         projects
             ?.map((project) => ({
                 id: project._id,

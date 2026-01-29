@@ -138,7 +138,7 @@ export default function ParticularProjectsPage() {
           totalProjects={projects.length}
           projectCompleted={budgetItem.projectCompleted}
           projectDelayed={budgetItem.projectDelayed}
-          projectsOngoing={budgetItem.projectsOngoing}
+          projectsOngoing={budgetItem.projectsOngoing || 0}
           totalBreakdowns={breakdownStats?.totalBreakdowns || 0}
         />
       )}

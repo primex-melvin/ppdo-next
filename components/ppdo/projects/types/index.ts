@@ -17,7 +17,7 @@ export interface Project {
     utilizationRate: number;
     projectCompleted: number;
     projectDelayed: number;
-    projectsOngoing: number;
+    projectsOngoing?: number;
     remarks?: string;
     year?: number;
     status?: "completed" | "ongoing" | "delayed";

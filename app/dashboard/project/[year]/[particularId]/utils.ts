@@ -39,14 +39,14 @@ export {
 // PROJECT-SPECIFIC UTILITIES
 // ============================================================================
 
-import { 
-  Project, 
-  ProjectSortField, 
-  SortDirection, 
-  ProjectTotals, 
-  GroupedProjects, 
+import {
+  Project,
+  ProjectSortField,
+  SortDirection,
+  ProjectTotals,
+  GroupedProjects,
   ProjectCategory,
-  TableColumn 
+  TableColumn
 } from "./types";
 import { DEFAULT_CATEGORY_COLORS, UNCATEGORIZED_COLOR } from "./constants";
 import { sortItems } from "@/lib/shared/utils/sorting";
@@ -80,10 +80,10 @@ export const getCategoryHeaderStyle = (category?: ProjectCategory | null): {
     hash = id.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  const bg = id === "uncategorized" 
-    ? UNCATEGORIZED_COLOR 
+  const bg = id === "uncategorized"
+    ? UNCATEGORIZED_COLOR
     : DEFAULT_CATEGORY_COLORS[Math.abs(hash) % DEFAULT_CATEGORY_COLORS.length];
-  
+
   return { backgroundColor: bg, color: "white" };
 };
 
@@ -195,7 +195,7 @@ export const calculateProjectTotals = (projects: Project[]): ProjectTotals => {
         acc.utilizationRate + project.utilizationRate / (projects.length || 1),
       projectCompleted: acc.projectCompleted + project.projectCompleted,
       projectDelayed: acc.projectDelayed + (project.projectDelayed || 0),
-      projectsOngoing: acc.projectsOngoing + project.projectsOngoing,
+      projectsOngoing: acc.projectsOngoing + (project.projectsOngoing || 0),
     }),
     {
       totalBudgetAllocated: 0,
@@ -318,7 +318,7 @@ export const calculateProjectStats = (projects: any[]) => {
   const avgUtilizationRate =
     projects.length > 0
       ? projects.reduce((sum, project) => sum + project.utilizationRate, 0) /
-        projects.length
+      projects.length
       : 0;
 
   return {

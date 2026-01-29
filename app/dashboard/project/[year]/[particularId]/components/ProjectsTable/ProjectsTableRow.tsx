@@ -42,10 +42,10 @@ export function ProjectsTableRow({
   isRemarksExpanded = false, // 🆕 DEFAULT FALSE
   onToggleRemarks, // 🆕 NEW PROP
 }: ProjectsTableRowProps) {
-  
+
   const [isHoveringRemarks, setIsHoveringRemarks] = useState(false); // 🆕 HOVER STATE
   const animationConfig = useReducedMotion();
-  
+
   const rowClassName = `
     hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-colors
     ${project.isPinned ? 'bg-amber-50 dark:bg-amber-950/20' : ''}
@@ -114,8 +114,8 @@ export function ProjectsTableRow({
         <td className="px-3 py-3 text-sm">
           <span className={`font-medium ${getStatusColor(project.status)}`}>
             {project.status
-              ? project.status.replace('_', ' ').charAt(0).toUpperCase() + 
-                project.status.slice(1).replace('_', ' ')
+              ? project.status.replace('_', ' ').charAt(0).toUpperCase() +
+              project.status.slice(1).replace('_', ' ')
               : '-'}
           </span>
         </td>
@@ -170,29 +170,28 @@ export function ProjectsTableRow({
       {/* Ongoing */}
       {!hiddenColumns.has('projectsOngoing') && (
         <td className="px-3 py-3 text-right text-sm">
-          {Math.round(project.projectsOngoing)}
+          {Math.round(project.projectsOngoing ?? 0)}
         </td>
       )}
 
       {/* 🆕 Remarks - WITH EXPAND BUTTON */}
       {!hiddenColumns.has('remarks') && (
-        <td 
+        <td
           className="px-3 py-3 text-sm text-zinc-500 relative group"
           onMouseEnter={() => setIsHoveringRemarks(true)}
           onMouseLeave={() => setIsHoveringRemarks(false)}
         >
           <div className="flex items-center gap-2">
-            <span 
-              className={`${
-                isRemarksExpanded 
-                  ? 'whitespace-normal break-words' 
+            <span
+              className={`${isRemarksExpanded
+                  ? 'whitespace-normal break-words'
                   : 'truncate max-w-[150px]'
-              }`}
+                }`}
               title={!isRemarksExpanded && project.remarks ? project.remarks : undefined}
             >
               {project.remarks || "-"}
             </span>
-            
+
             {/* 🆕 ELLIPSIS BUTTON - Shows on hover if there's text */}
             {project.remarks && project.remarks !== "-" && (
               <button

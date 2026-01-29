@@ -171,7 +171,7 @@ export function ProjectsTableRow({
             {/* Ongoing */}
             {!hiddenColumns.has('projectsOngoing') && (
                 <td className="px-3 py-3 text-right text-sm">
-                    {Math.round(project.projectsOngoing)}
+                    {Math.round(project.projectsOngoing || 0)}
                 </td>
             )}
 
@@ -185,8 +185,8 @@ export function ProjectsTableRow({
                     <div className="flex items-center gap-2">
                         <span
                             className={`${isRemarksExpanded
-                                    ? 'whitespace-normal break-words'
-                                    : 'truncate max-w-[150px]'
+                                ? 'whitespace-normal break-words'
+                                : 'truncate max-w-[150px]'
                                 }`}
                             title={!isRemarksExpanded && project.remarks ? project.remarks : undefined}
                         >
