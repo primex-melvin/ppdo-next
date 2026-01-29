@@ -2,18 +2,24 @@
 
 "use client";
 
-import { useQuery } from "convex/react";
+import { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, User, Calendar, CheckCircle2, AlertCircle, Clock, PlusCircle } from "lucide-react";
+import { ArrowLeft, User, Calendar, CheckCircle2, AlertCircle, Clock, PlusCircle, Edit2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Id } from "@/convex/_generated/dataModel";
+import { toast } from "sonner";
 
 export default function BugReportDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const idParam = params.id as string;
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [editedTitle, setEditedTitle] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    const updateReport = useMutation(api.bugReports.update);
 
     console.log("🔍 Bug Report Detail Page - Params:", params);
     console.log("🆔 ID Parameter:", idParam);
@@ -69,6 +75,44 @@ export default function BugReportDetailsPage() {
 
     const handleSubmitAnother = () => {
         router.push("/dashboard/settings/updates/bugs-report");
+    };
+
+    const handleEditTitle = () => {
+        setEditedTitle(report.title);
+        setIsEditingTitle(true);
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditingTitle(false);
+        setEditedTitle("");
+    };
+
+    const handleSaveTitle = async () => {
+        if (!editedTitle.trim()) {
+            toast.error("Title cannot be empty");
+            return;
+        }
+
+        if (editedTitle === report.title) {
+            toast.error("No changes made - title is the same");
+            return;
+        }
+
+        try {
+            setIsSaving(true);
+            await updateReport({
+                id: reportId,
+                title: editedTitle.trim(),
+            });
+            toast.success("Bug title updated successfully!");
+            setIsEditingTitle(false);
+            setEditedTitle("");
+        } catch (error) {
+            console.error("Error updating title:", error);
+            toast.error("Failed to update title. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (!reportId) {
@@ -137,9 +181,60 @@ export default function BugReportDetailsPage() {
                 <div className="p-6 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-start justify-between gap-4">
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
-                                {report.title}
-                            </h1>
+                            {isEditingTitle ? (
+                                <div className="flex-1 flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={editedTitle}
+                                        onChange={(e) => setEditedTitle(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                handleSaveTitle();
+                                            } else if (e.key === "Escape") {
+                                                e.preventDefault();
+                                                handleCancelEdit();
+                                            }
+                                        }}
+                                        className="flex-1 px-3 py-2 text-2xl font-bold border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#15803D] focus:border-transparent"
+                                        placeholder="Enter bug title"
+                                        autoFocus
+                                    />
+                                    <Button
+                                        size="sm"
+                                        onClick={handleSaveTitle}
+                                        disabled={isSaving}
+                                        className="gap-2 bg-[#15803D] hover:bg-[#15803D]/90 text-white"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                        {isSaving ? "Saving..." : "Save"}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleCancelEdit}
+                                        disabled={isSaving}
+                                        className="gap-2"
+                                    >
+                                        <X className="w-4 h-4" />
+                                        Cancel
+                                    </Button>
+                                </div>
+                            ) : (
+                                <>
+                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight flex-1">
+                                        {report.title}
+                                    </h1>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={handleEditTitle}
+                                        className="gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </Button>
+                                </>
+                            )}
                             <span
                                 className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
                                     report.status

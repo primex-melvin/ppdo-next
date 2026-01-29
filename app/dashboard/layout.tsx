@@ -100,7 +100,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* AI Assistant removed */}
 
       {/* Global Onboarding Modal - Only show in production */}
-      {shouldShowOnboarding && <OnboardingModal />}
+      {/* {shouldShowOnboarding && <OnboardingModal />} */}
     </div>
   );
 }
