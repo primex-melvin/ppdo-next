@@ -67,6 +67,13 @@ export const specialEducationFundTables = {
       )
     ),
 
+    // ============================================================================
+    // METRICS (Aggregated from breakdowns)
+    // ============================================================================
+    projectCompleted: v.optional(v.number()),
+    projectDelayed: v.optional(v.number()),
+    projectsOngoing: v.optional(v.number()),
+
     /**
      * Optional fields
      */

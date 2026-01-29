@@ -138,7 +138,6 @@ import type * as twentyPercentDFActivities from "../twentyPercentDFActivities.js
 import type * as twentyPercentDFBreakdowns from "../twentyPercentDFBreakdowns.js";
 import type * as userManagement from "../userManagement.js";
 import type * as users from "../users.js";
-import type * as verifySeed from "../verifySeed.js";
 
 import type {
   ApiFromModules,
@@ -277,7 +276,6 @@ declare const fullApi: ApiFromModules<{
   twentyPercentDFBreakdowns: typeof twentyPercentDFBreakdowns;
   userManagement: typeof userManagement;
   users: typeof users;
-  verifySeed: typeof verifySeed;
 }>;
 
 /**

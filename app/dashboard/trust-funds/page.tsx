@@ -48,10 +48,16 @@ export default function TrustFundsLanding() {
         ? yearTrustFunds.reduce((sum, tf) => sum + (tf.utilizationRate || 0), 0) / yearTrustFunds.length
         : 0;
 
+      // Calculate total items (grandchildren breakdown items)
+      const totalItems = yearTrustFunds.reduce((sum, tf) => {
+        return sum + (tf.projectCompleted || 0) + (tf.projectDelayed || 0) + (tf.projectsOngoing || 0);
+      }, 0);
+
       return {
         ...fiscalYear,
         stats: {
           trustFundCount: yearTrustFunds.length,
+          totalItems,
           totalReceived,
           totalUtilized,
           totalBalance,
@@ -159,12 +165,23 @@ export default function TrustFundsLanding() {
                   accentColor={accentColorValue}
                   openButtonLabel="Open Funds"
                   statsContent={
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                        {fiscalYear.stats.trustFundCount}
+                    <div className="flex items-center gap-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                          {fiscalYear.stats.totalItems}
+                        </div>
+                        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                          Items
+                        </div>
                       </div>
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Trust Funds
+                      <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-800" />
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                          {fiscalYear.stats.trustFundCount}
+                        </div>
+                        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                          Trust Funds
+                        </div>
                       </div>
                     </div>
                   }

@@ -59,13 +59,20 @@ export async function recalculateFundMetrics(
 
     const activeBreakdowns = breakdowns.filter((b) => !b.isDeleted);
 
-    // Sum up financials
+    // Sum up financials and counts
     let totalObligated = 0;
     let totalUtilized = 0;
+    const statusCounts = { completed: 0, delayed: 0, ongoing: 0 };
 
     for (const b of activeBreakdowns) {
         if (b.obligatedBudget) totalObligated += b.obligatedBudget;
         if (b.budgetUtilized) totalUtilized += b.budgetUtilized;
+
+        // Count statuses
+        const status = b.status;
+        if (status === "completed") statusCounts.completed++;
+        else if (status === "delayed") statusCounts.delayed++;
+        else if (status === "ongoing") statusCounts.ongoing++;
     }
 
     // Calculate Balance and Utilization Rate
@@ -85,6 +92,9 @@ export async function recalculateFundMetrics(
         utilized: totalUtilized,
         balance: balance,
         utilizationRate: utilizationRate,
+        projectCompleted: statusCounts.completed,
+        projectDelayed: statusCounts.delayed,
+        projectsOngoing: statusCounts.ongoing,
         updatedAt: Date.now(),
         updatedBy: userId,
     });
