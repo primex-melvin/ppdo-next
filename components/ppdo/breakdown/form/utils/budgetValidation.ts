@@ -27,7 +27,7 @@ interface UseBudgetValidationProps {
   currentObligated: number;
   breakdown: any | undefined;
   /** Entity type to determine which API to call */
-  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";
+  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF";
 }
 
 /**
@@ -113,18 +113,34 @@ export const useBudgetValidation = ({
       : "skip"
   );
 
+  const parentTwentyPercentDF = useQuery(
+    api.twentyPercentDF.get,
+    effectiveProjectId && entityType === "twentyPercentDF"
+      ? { id: effectiveProjectId as Id<"twentyPercentDF"> }
+      : "skip"
+  );
+
+  const siblingTwentyPercentDFBreakdowns = useQuery(
+    api.twentyPercentDFBreakdowns.list,
+    effectiveProjectId && entityType === "twentyPercentDF"
+      ? { twentyPercentDFId: effectiveProjectId as Id<"twentyPercentDF"> }
+      : "skip"
+  );
+
   // Select the appropriate parent and siblings based on entity type
   const parentEntity =
     entityType === "trustfund" ? parentTrustFund :
       entityType === "specialeducationfund" ? parentSpecialEducationFund :
         entityType === "specialhealthfund" ? parentSpecialHealthFund :
-          parentProject;
+          entityType === "twentyPercentDF" ? parentTwentyPercentDF :
+            parentProject;
 
   const siblingBreakdowns =
     entityType === "trustfund" ? siblingTrustFundBreakdowns :
       entityType === "specialeducationfund" ? siblingSpecialEducationFundBreakdowns :
         entityType === "specialhealthfund" ? siblingSpecialHealthFundBreakdowns :
-          siblingProjectBreakdowns;
+          entityType === "twentyPercentDF" ? siblingTwentyPercentDFBreakdowns :
+            siblingProjectBreakdowns;
 
   // Calculate budget allocation status
   const budgetAllocationStatus = useMemo(

@@ -123,7 +123,8 @@ export function BreakdownHistoryTable({
     entityType === "trustfund" ? "trustFundBreakdowns" :
       entityType === "specialeducationfund" ? "specialEducationFundBreakdowns" :
         entityType === "specialhealthfund" ? "specialHealthFundBreakdowns" :
-          "govtProjectBreakdowns";
+          entityType === "twentyPercentDF" ? "twentyPercentDFBreakdowns" :
+            "govtProjectBreakdowns";
 
   // Custom hooks
   const {
@@ -216,6 +217,8 @@ export function BreakdownHistoryTable({
       } else if (entityType === "specialeducationfund") {
         breakdownId = navigationParams?.slug || (params as any).slug as string;
       } else if (entityType === "specialhealthfund") {
+        breakdownId = navigationParams?.slug || (params as any).slug as string;
+      } else if (entityType === "twentyPercentDF") {
         breakdownId = navigationParams?.slug || (params as any).slug as string;
       } else {
         breakdownId = navigationParams?.projectbreakdownId || (params as any).projectbreakdownId as string;

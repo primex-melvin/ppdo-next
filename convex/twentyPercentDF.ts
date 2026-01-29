@@ -13,6 +13,7 @@ export const list = query({
     args: {
         year: v.optional(v.number()),
         categoryId: v.optional(v.id("projectCategories")),
+        budgetItemId: v.optional(v.id("budgetItems")),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -24,6 +25,13 @@ export const list = query({
             records = await ctx.db
                 .query("twentyPercentDF")
                 .withIndex("categoryId", (q) => q.eq("categoryId", args.categoryId))
+                .filter((q) => q.neq(q.field("isDeleted"), true))
+                .order("desc")
+                .collect();
+        } else if (args.budgetItemId) {
+            records = await ctx.db
+                .query("twentyPercentDF")
+                .withIndex("budgetItemId", (q) => q.eq("budgetItemId", args.budgetItemId))
                 .filter((q) => q.neq(q.field("isDeleted"), true))
                 .order("desc")
                 .collect();
@@ -68,6 +76,7 @@ export const create = mutation({
         particulars: v.string(),
         implementingOffice: v.string(),
         categoryId: v.optional(v.id("projectCategories")),
+        budgetItemId: v.optional(v.id("budgetItems")),
         totalBudgetAllocated: v.number(),
         obligatedBudget: v.optional(v.number()),
         totalBudgetUtilized: v.number(),
@@ -129,6 +138,7 @@ export const create = mutation({
             implementingOffice: args.implementingOffice,
             departmentId: departmentId,
             categoryId: args.categoryId,
+            budgetItemId: args.budgetItemId,
             totalBudgetAllocated: args.totalBudgetAllocated,
             obligatedBudget: args.obligatedBudget,
             totalBudgetUtilized: args.totalBudgetUtilized,
@@ -178,6 +188,7 @@ export const update = mutation({
         particulars: v.string(),
         implementingOffice: v.string(),
         categoryId: v.optional(v.id("projectCategories")),
+        budgetItemId: v.optional(v.id("budgetItems")),
         totalBudgetAllocated: v.number(),
         obligatedBudget: v.optional(v.number()),
         totalBudgetUtilized: v.number(),
@@ -195,9 +206,8 @@ export const update = mutation({
         const existing = await ctx.db.get(args.id);
         if (!existing) throw new Error("Record not found");
 
-        // Handle reference changes (Agency, Particular, Category) - Decrement old, Increment new
+        // Handle reference changes (Agency, Particular, Category)
         if (args.particulars !== existing.particulars) {
-            // Validate new particular... (omitted for brevity, assume valid or add check)
             const particular = await ctx.db.query("projectParticulars").withIndex("code", q => q.eq("code", args.particulars)).first();
             if (!particular || !particular.isActive) throw new Error("Invalid particular");
 
@@ -227,7 +237,6 @@ export const update = mutation({
         }
 
         const now = Date.now();
-        // Manual utilization rate calculation (will be overwritten if auto-calc is on during recalculate)
         const utilizationRate = args.totalBudgetAllocated > 0
             ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
             : 0;
@@ -237,6 +246,7 @@ export const update = mutation({
             implementingOffice: args.implementingOffice,
             departmentId,
             categoryId: args.categoryId,
+            budgetItemId: args.budgetItemId,
             totalBudgetAllocated: args.totalBudgetAllocated,
             obligatedBudget: args.obligatedBudget,
             totalBudgetUtilized: args.totalBudgetUtilized,
@@ -250,7 +260,6 @@ export const update = mutation({
             updatedBy: userId,
         });
 
-        // Trigger internal aggregation to ensure consistency with breakdowns and auto-calc flag
         await recalculateTwentyPercentDFMetrics(ctx, args.id, userId);
 
         const updated = await ctx.db.get(args.id);
@@ -320,6 +329,201 @@ export const moveToTrash = mutation({
 });
 
 /**
+ * Toggle Pin Status
+ */
+export const togglePin = mutation({
+    args: { id: v.id("twentyPercentDF") },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        const existing = await ctx.db.get(args.id);
+        if (!existing) throw new Error("Record not found");
+
+        const now = Date.now();
+        const newPinnedState = !existing.isPinned;
+
+        await ctx.db.patch(args.id, {
+            isPinned: newPinnedState,
+            pinnedAt: newPinnedState ? now : undefined,
+            pinnedBy: newPinnedState ? userId : undefined,
+            updatedAt: now,
+            updatedBy: userId,
+        });
+
+        return args.id;
+    },
+});
+
+/**
+ * Restore from Trash
+ */
+export const restoreFromTrash = mutation({
+    args: { id: v.id("twentyPercentDF") },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        const existing = await ctx.db.get(args.id);
+        if (!existing) throw new Error("Record not found");
+
+        await ctx.db.patch(args.id, {
+            isDeleted: false,
+            deletedAt: undefined,
+            deletedBy: undefined,
+            updatedAt: Date.now()
+        });
+
+        const breakdowns = await ctx.db
+            .query("twentyPercentDFBreakdowns")
+            .withIndex("twentyPercentDFId", (q) => q.eq("twentyPercentDFId", args.id))
+            .collect();
+
+        for (const breakdown of breakdowns) {
+            if (breakdown.isDeleted) {
+                await ctx.db.patch(breakdown._id, {
+                    isDeleted: false,
+                    deletedAt: undefined,
+                    deletedBy: undefined
+                });
+            }
+        }
+
+        await ctx.runMutation(internal.projectParticulars.updateUsageCount, { code: existing.particulars, delta: 1 });
+        await ctx.runMutation(internal.implementingAgencies.updateUsageCount, { code: existing.implementingOffice, usageContext: "project", delta: 1 });
+        if (existing.categoryId) {
+            await ctx.runMutation(internal.projectCategories.updateUsageCount, { categoryId: existing.categoryId, delta: 1 });
+        }
+
+        await recalculateTwentyPercentDFMetrics(ctx, args.id, userId);
+
+        return { success: true, message: "Restored successfully" };
+    },
+});
+
+/**
+ * Bulk Move to Trash
+ */
+export const bulkMoveToTrash = mutation({
+    args: {
+        ids: v.array(v.id("twentyPercentDF")),
+        reason: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        const user = await ctx.db.get(userId);
+        if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
+            throw new Error("Unauthorized: Only admins can perform bulk actions.");
+        }
+
+        const now = Date.now();
+        let successCount = 0;
+
+        for (const id of args.ids) {
+            const existing = await ctx.db.get(id);
+            if (!existing || existing.isDeleted) continue;
+
+            await ctx.db.patch(id, {
+                isDeleted: true,
+                deletedAt: now,
+                deletedBy: userId,
+                updatedAt: now,
+                updatedBy: userId,
+            });
+
+            const breakdowns = await ctx.db
+                .query("twentyPercentDFBreakdowns")
+                .withIndex("twentyPercentDFId", (q) => q.eq("twentyPercentDFId", id))
+                .collect();
+
+            for (const breakdown of breakdowns) {
+                await ctx.db.patch(breakdown._id, {
+                    isDeleted: true,
+                    deletedAt: now,
+                    deletedBy: userId,
+                });
+            }
+
+            await ctx.runMutation(internal.projectParticulars.updateUsageCount, { code: existing.particulars, delta: -1 });
+            await ctx.runMutation(internal.implementingAgencies.updateUsageCount, { code: existing.implementingOffice, usageContext: "project", delta: -1 });
+            if (existing.categoryId) {
+                await ctx.runMutation(internal.projectCategories.updateUsageCount, { categoryId: existing.categoryId, delta: -1 });
+            }
+
+            await logTwentyPercentDFActivity(ctx, userId, {
+                action: "deleted",
+                twentyPercentDFId: id,
+                previousValues: existing,
+                reason: args.reason || "Bulk move to trash",
+            });
+
+            successCount++;
+        }
+
+        return { success: true, count: successCount };
+    },
+});
+
+/**
+ * Bulk Update Category
+ */
+export const bulkUpdateCategory = mutation({
+    args: {
+        ids: v.array(v.id("twentyPercentDF")),
+        categoryId: v.id("projectCategories"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        const user = await ctx.db.get(userId);
+        if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
+            throw new Error("Unauthorized: Only admins can perform bulk actions.");
+        }
+
+        const category = await ctx.db.get(args.categoryId);
+        if (!category) throw new Error("Category not found");
+
+        const now = Date.now();
+        let successCount = 0;
+
+        for (const id of args.ids) {
+            const existing = await ctx.db.get(id);
+            if (!existing) continue;
+            if (existing.categoryId === args.categoryId) continue;
+
+            const previousValues = { ...existing };
+
+            if (existing.categoryId) {
+                await ctx.runMutation(internal.projectCategories.updateUsageCount, { categoryId: existing.categoryId, delta: -1 });
+            }
+
+            await ctx.db.patch(id, {
+                categoryId: args.categoryId,
+                updatedAt: now,
+                updatedBy: userId,
+            });
+
+            await ctx.runMutation(internal.projectCategories.updateUsageCount, { categoryId: args.categoryId, delta: 1 });
+
+            await logTwentyPercentDFActivity(ctx, userId, {
+                action: "updated",
+                twentyPercentDFId: id,
+                previousValues: previousValues,
+                newValues: { ...existing, categoryId: args.categoryId },
+                reason: "Bulk category update",
+            });
+
+            successCount++;
+        }
+
+        return { success: true, count: successCount };
+    },
+});
+
+/**
  * Toggle Auto-Calculate
  */
 export const toggleAutoCalculate = mutation({
@@ -341,8 +545,18 @@ export const toggleAutoCalculate = mutation({
             updatedBy: userId,
         });
 
-        // Trigger recalculation
-        await recalculateTwentyPercentDFMetrics(ctx, args.id, userId);
+        if (args.autoCalculate) {
+            await recalculateTwentyPercentDFMetrics(ctx, args.id, userId);
+        } else {
+            const utilizationRate = existing.totalBudgetAllocated > 0
+                ? (existing.totalBudgetUtilized / existing.totalBudgetAllocated) * 100
+                : 0;
+            await ctx.db.patch(args.id, {
+                utilizationRate,
+                updatedAt: Date.now(),
+                updatedBy: userId
+            });
+        }
 
         const updated = await ctx.db.get(args.id);
         await logTwentyPercentDFActivity(ctx, userId, {
@@ -358,6 +572,63 @@ export const toggleAutoCalculate = mutation({
 });
 
 /**
+ * Bulk Toggle Auto-Calculate
+ */
+export const bulkToggleAutoCalculate = mutation({
+    args: {
+        ids: v.array(v.id("twentyPercentDF")),
+        autoCalculate: v.boolean(),
+        reason: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        const user = await ctx.db.get(userId);
+        if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
+            throw new Error("Unauthorized: Only admins can perform bulk actions.");
+        }
+
+        const now = Date.now();
+        let successCount = 0;
+
+        for (const id of args.ids) {
+            const existing = await ctx.db.get(id);
+            if (!existing || existing.isDeleted) continue;
+
+            await ctx.db.patch(id, {
+                autoCalculateBudgetUtilized: args.autoCalculate,
+                updatedAt: now,
+                updatedBy: userId,
+            });
+
+            if (args.autoCalculate) {
+                await recalculateTwentyPercentDFMetrics(ctx, id, userId);
+            }
+
+            const updated = await ctx.db.get(id);
+
+            await logTwentyPercentDFActivity(ctx, userId, {
+                action: "updated",
+                twentyPercentDFId: id,
+                previousValues: existing,
+                newValues: updated,
+                reason: args.reason || `Bulk switched to ${args.autoCalculate ? 'auto-calculate' : 'manual'} mode`,
+            });
+
+            successCount++;
+        }
+
+        return {
+            success: true,
+            count: successCount,
+            mode: args.autoCalculate ? "auto" : "manual",
+            message: `${successCount} record(s) switched to ${args.autoCalculate ? 'auto-calculate' : 'manual'} mode`,
+        };
+    },
+});
+
+/**
  * Get single record
  */
 export const get = query({
@@ -368,5 +639,59 @@ export const get = query({
         const record = await ctx.db.get(args.id);
         if (!record || record.isDeleted) throw new Error("Record not found");
         return record;
+    },
+});
+
+/**
+ * Hard Delete
+ */
+export const remove = mutation({
+    args: {
+        id: v.id("twentyPercentDF"),
+        reason: v.optional(v.string())
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        const user = await ctx.db.get(userId);
+        const existing = await ctx.db.get(args.id);
+        if (!existing) throw new Error("Record not found");
+
+        const isSuperAdmin = user?.role === 'super_admin';
+        const isCreator = existing.createdBy === userId;
+
+        if (!isCreator && !isSuperAdmin) throw new Error("Not authorized");
+
+        const breakdowns = await ctx.db
+            .query("twentyPercentDFBreakdowns")
+            .withIndex("twentyPercentDFId", (q) => q.eq("twentyPercentDFId", args.id))
+            .collect();
+
+        for (const breakdown of breakdowns) {
+            await ctx.db.delete(breakdown._id);
+            await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {
+                code: breakdown.implementingOffice,
+                usageContext: "breakdown",
+                delta: -1,
+            });
+        }
+
+        await ctx.db.delete(args.id);
+
+        await ctx.runMutation(internal.projectParticulars.updateUsageCount, { code: existing.particulars, delta: -1 });
+        await ctx.runMutation(internal.implementingAgencies.updateUsageCount, { code: existing.implementingOffice, usageContext: "project", delta: -1 });
+        if (existing.categoryId) {
+            await ctx.runMutation(internal.projectCategories.updateUsageCount, { categoryId: existing.categoryId, delta: -1 });
+        }
+
+        await logTwentyPercentDFActivity(ctx, userId, {
+            action: "deleted",
+            twentyPercentDFId: args.id,
+            previousValues: existing,
+            reason: args.reason || "Permanent Delete"
+        });
+
+        return { success: true };
     },
 });

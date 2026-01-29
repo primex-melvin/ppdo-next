@@ -27,7 +27,7 @@ interface CardData {
 // ... (previous imports)
 
 export interface EntityOverviewCardsProps {
-  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";
+  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF";
   implementingOffice?: string;
   totalBudget?: number;
   obligated?: number;
@@ -111,6 +111,7 @@ export function EntityOverviewCards({
     if (type === "trustfund") return "Trust Fund Status";
     if (type === "specialeducationfund") return "SEF Status";
     if (type === "specialhealthfund") return "SHF Status";
+    if (type === "twentyPercentDF") return "20% DF Status";
     return "Status";
   };
 

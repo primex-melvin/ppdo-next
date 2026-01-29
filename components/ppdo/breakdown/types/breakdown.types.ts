@@ -10,7 +10,7 @@
 import { Id } from "@/convex/_generated/dataModel";
 
 export interface Breakdown {
-  _id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns">;
+  _id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns"> | Id<"twentyPercentDFBreakdowns">;
   _creationTime: number;
   projectName: string;
   implementingOffice: string;
@@ -18,6 +18,7 @@ export interface Breakdown {
   trustFundId?: Id<"trustFunds">;
   specialEducationFundId?: Id<"specialEducationFunds">;
   specialHealthFundId?: Id<"specialHealthFunds">;
+  twentyPercentDFId?: Id<"twentyPercentDF">;
   projectTitle?: string;
   allocatedBudget?: number;
   obligatedBudget?: number;
@@ -58,7 +59,7 @@ export interface BreakdownHistoryTableProps {
   onStatusChange?: (id: string, newStatus: string) => void;
   onOpenTrash?: () => void;
   /** Entity type for navigation - determines URL structure */
-  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";
+  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF";
   /** Navigation params for building detail paths */
   navigationParams?: NavigationParams;
 }

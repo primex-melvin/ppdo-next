@@ -20,6 +20,7 @@ export const twentyPercentDFBreakdownTables = {
         .index("projectName", ["projectName"])
         .index("implementingOffice", ["implementingOffice"])
         .index("status", ["status"])
+        .index("projectNameAndOffice", ["projectName", "implementingOffice"])
         .index("reportDate", ["reportDate"])
         .index("municipality", ["municipality"])
         // 🆕 CRITICAL INDEXES FOR AGGREGATION

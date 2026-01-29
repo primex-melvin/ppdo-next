@@ -131,24 +131,69 @@ export function createBudgetExportConfig(
     includeTimestamp: true,
     customTransform: (row: any, column: TableColumn) => {
       const val = row[column.id];
-      
+
       if (val === undefined || val === null) return "";
-      
+
       // Format currency fields
       if (column.id.includes("Budget") || column.id.includes("Allocated") || column.id.includes("Utilized")) {
         return `"₱${val.toLocaleString()}"`;
       }
-      
+
       // Format percentage fields
       if (column.id.includes("Rate")) {
         return `${val.toFixed(2)}%`;
       }
-      
+
       // Escape strings
       if (typeof val === "string") {
         return `"${val.replace(/"/g, '""')}"`;
       }
-      
+
+      return String(val);
+    },
+  };
+}
+
+/**
+ * Creates a 20% DF-specific CSV export config
+ * 
+ * @param hiddenColumns - Hidden column IDs
+ * @returns CSVExportConfig for 20% DF items
+ */
+export function createTwentyPercentDFExportConfig(
+  columns: TableColumn[],
+  hiddenColumns: Set<string>
+): CSVExportConfig {
+  return {
+    filename: "twenty_percent_df_export",
+    columns,
+    hiddenColumns,
+    includeTimestamp: true,
+    customTransform: (row: any, column: TableColumn) => {
+      const val = row[column.id];
+
+      if (val === undefined || val === null) return "";
+
+      // Format currency fields
+      if (column.id.includes("Budget") || column.id.includes("Allocated") || column.id.includes("Utilized")) {
+        return `"₱${val.toLocaleString()}"`;
+      }
+
+      // Format percentage fields
+      if (column.id.includes("Rate") || column.id.includes("Utilization")) {
+        return `${val.toFixed(2)}%`;
+      }
+
+      // Format status
+      if (column.id === "status") {
+        return val.charAt(0).toUpperCase() + val.slice(1);
+      }
+
+      // Escape strings
+      if (typeof val === "string") {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+
       return String(val);
     },
   };
@@ -171,29 +216,29 @@ export function createProjectExportConfig(
     includeTimestamp: true,
     customTransform: (row: any, column: TableColumn) => {
       const val = row[column.id];
-      
+
       if (val === undefined || val === null) return "";
-      
+
       // Format currency fields
       if (column.id.includes("Budget") || column.id.includes("Allocated") || column.id.includes("Utilized")) {
         return `"₱${val.toLocaleString()}"`;
       }
-      
+
       // Format percentage fields
       if (column.id.includes("Rate") || column.id.includes("Utilization")) {
         return `${val.toFixed(2)}%`;
       }
-      
+
       // Format status
       if (column.id === "status") {
         return val.charAt(0).toUpperCase() + val.slice(1);
       }
-      
+
       // Escape strings
       if (typeof val === "string") {
         return `"${val.replace(/"/g, '""')}"`;
       }
-      
+
       return String(val);
     },
   };

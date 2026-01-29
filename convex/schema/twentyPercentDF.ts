@@ -6,13 +6,15 @@ export const twentyPercentDFTables = {
     /**
      * 20% Development Fund (20% DF)
      * Tracks projects funded by the 20% Development Fund
+     * Enhanced to match projects structure
      */
     twentyPercentDF: defineTable({
         // ============================================================================
-        // IDENTIFICATION
+        // PROJECT IDENTIFICATION
         // ============================================================================
         /**
-         * Particulars/Name of the project/program
+         * Project particulars/name
+         * Note: Backend uses "particulars" to match budgetItems terminology
          */
         particulars: v.string(),
 
@@ -22,17 +24,25 @@ export const twentyPercentDFTables = {
         implementingOffice: v.string(),
 
         /**
-         * Department ID reference
+         * Department ID reference (optional for filtering/grouping)
          */
         departmentId: v.optional(v.id("departments")),
 
+
         /**
          * 🆕 CATEGORY (OPTIONAL)
+         * Links this project to a category for better organization
          */
         categoryId: v.optional(v.id("projectCategories")),
 
+        /**
+         * 🆕 PARENT BUDGET ITEM (OPTIONAL)
+         * Links this project to a specific budget item for aggregation.
+         */
+        budgetItemId: v.optional(v.id("budgetItems")),
+
         // ============================================================================
-        // FINANCIAL DATA
+        // FINANCIAL DATA (matches budgetItems)
         // ============================================================================
         totalBudgetAllocated: v.number(),
         obligatedBudget: v.optional(v.number()),
@@ -42,6 +52,7 @@ export const twentyPercentDFTables = {
         /**
          * 🆕 AUTO-CALCULATION FLAG
          * When TRUE (default): totalBudgetUtilized is auto-calculated from child breakdowns
+         * When FALSE: totalBudgetUtilized can be manually set and won't be overridden
          */
         autoCalculateBudgetUtilized: v.optional(v.boolean()),
 
@@ -55,7 +66,7 @@ export const twentyPercentDFTables = {
         // ============================================================================
         // ADDITIONAL FIELDS
         // ============================================================================
-        remarks: v.optional(v.string()),
+        remarks: v.optional(v.string()), // Kept for backward compatibility or simple remarks
         year: v.optional(v.number()),
 
         /**
@@ -97,19 +108,55 @@ export const twentyPercentDFTables = {
         createdAt: v.number(),
         updatedAt: v.number(),
         updatedBy: v.optional(v.id("users")),
-
-        // Optional: Access Request related fields if needed
-        access: v.optional(v.string()), // Placeholder for access logic if string-based
-        accessRequest: v.optional(v.string()), // Placeholder
-        recycleBin: v.optional(v.boolean()), // Explicit recycle bin flag if separate from isDeleted
     })
         .index("particulars", ["particulars"])
         .index("implementingOffice", ["implementingOffice"])
         .index("departmentId", ["departmentId"])
         .index("categoryId", ["categoryId"])
+        .index("categoryAndStatus", ["categoryId", "status"])
+
         .index("isDeleted", ["isDeleted"])
+        .index("budgetItemId", ["budgetItemId"])
+        .index("budgetItemAndStatus", ["budgetItemId", "status"])
         .index("status", ["status"])
         .index("year", ["year"])
         .index("departmentAndStatus", ["departmentId", "status"])
-        .index("categoryAndStatus", ["categoryId", "status"]),
+        .index("autoCalculate", ["autoCalculateBudgetUtilized"]),
+
+    /**
+     * 20% DF Remarks.
+     */
+    twentyPercentDFRemarks: defineTable({
+        twentyPercentDFId: v.id("twentyPercentDF"),
+        inspectionId: v.optional(v.id("inspections")),
+        content: v.string(),
+        category: v.optional(v.string()),
+        priority: v.optional(
+            v.union(
+                v.literal("high"),
+                v.literal("medium"),
+                v.literal("low")
+            )
+        ),
+        createdBy: v.id("users"),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+        updatedBy: v.id("users"),
+        tags: v.optional(v.string()),
+        isPinned: v.optional(v.boolean()),
+        attachments: v.optional(v.string()),
+    })
+        .index("twentyPercentDFId", ["twentyPercentDFId"])
+        .index("inspectionId", ["inspectionId"])
+        .index("createdBy", ["createdBy"])
+        .index("createdAt", ["createdAt"])
+        .index("updatedAt", ["updatedAt"])
+        .index("category", ["category"])
+        .index("priority", ["priority"])
+        .index("twentyPercentDFAndInspection", ["twentyPercentDFId", "inspectionId"])
+        .index("twentyPercentDFAndCategory", ["twentyPercentDFId", "category"])
+        .index("twentyPercentDFAndCreatedAt", ["twentyPercentDFId", "createdAt"])
+        .index("inspectionAndCreatedAt", ["inspectionId", "createdAt"])
+        .index("isPinned", ["isPinned"])
+        .index("createdByAndTwentyPercentDF", ["createdBy", "twentyPercentDFId"]),
 };

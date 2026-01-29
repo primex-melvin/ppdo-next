@@ -27,7 +27,7 @@ export interface BreakdownHeaderProps {
 
   // Entity Information
   entityName?: string;
-  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";
+  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF";
   implementingOffice?: string;
   year: string;
   subtitle?: string;
@@ -187,7 +187,9 @@ export function BreakdownHeader({
                 ? "specialEducationFundBreakdown"
                 : entityType === "specialhealthfund"
                   ? "specialHealthFundBreakdown"
-                  : "breakdown"
+                  : entityType === "twentyPercentDF"
+                    ? "twentyPercentDFBreakdown"
+                    : "breakdown"
             }
             projectName={entityName}
             implementingOffice={implementingOffice}

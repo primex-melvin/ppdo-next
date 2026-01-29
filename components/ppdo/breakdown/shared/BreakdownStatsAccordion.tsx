@@ -18,7 +18,7 @@ import { IEntityStats, IBaseBreakdown } from "@/lib/types/breakdown.shared";
 
 export interface BreakdownStatsAccordionProps {
   stats: IEntityStats | null;
-  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";
+  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF";
   uniqueOffices?: number;
   uniqueLocations?: number;
   getStatusColor?: (status?: string) => string;

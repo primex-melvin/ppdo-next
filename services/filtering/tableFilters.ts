@@ -138,11 +138,48 @@ export function createProjectFilterConfig<TSortField extends string>(
     sortDirection,
     customFilters: officeFilter.length > 0
       ? [
-          (items) =>
-            items.filter((item) =>
-              officeFilter.includes(item.implementingOffice)
-            ),
-        ]
+        (items) =>
+          items.filter((item) =>
+            officeFilter.includes(item.implementingOffice)
+          ),
+      ]
+      : undefined,
+  };
+}
+
+/**
+ * Creates a filter preset for 20% DF items
+ * 
+ * @param searchQuery - Search query string
+ * @param statusFilter - Array of status strings
+ * @param yearFilter - Array of years
+ * @param officeFilter - Array of implementing offices
+ * @param sortField - Field to sort by
+ * @param sortDirection - Sort direction
+ * @returns FilterConfig for 20% DF items
+ */
+export function createTwentyPercentDFFilterConfig<TSortField extends string>(
+  searchQuery: string,
+  statusFilter: string[],
+  yearFilter: number[],
+  officeFilter: string[],
+  sortField: TSortField | null,
+  sortDirection: SortDirection
+): FilterConfig<any, TSortField> {
+  return {
+    searchQuery,
+    searchFields: ["particulars", "implementingOffice", "status"],
+    statusFilter,
+    yearFilter,
+    sortField,
+    sortDirection,
+    customFilters: officeFilter.length > 0
+      ? [
+        (items) =>
+          items.filter((item) =>
+            officeFilter.includes(item.implementingOffice)
+          ),
+      ]
       : undefined,
   };
 }
