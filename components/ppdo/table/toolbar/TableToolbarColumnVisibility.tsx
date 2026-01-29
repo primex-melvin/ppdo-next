@@ -23,13 +23,17 @@ import { ColumnVisibilityMenuProps } from "./types";
  * Used by TableToolbar and can be extended for custom implementations.
  */
 export function TableToolbarColumnVisibility({
+  columns,
   hiddenColumns,
   onToggleColumn,
   onShowAll,
   onHideAll,
 }: ColumnVisibilityMenuProps) {
-  // Extract column IDs from the hiddenColumns set
-  const columnIds = Array.from(hiddenColumns);
+  // Use provided columns or fallback to hiddenColumns keys (backward compat)
+  const displayColumns = columns || Array.from(hiddenColumns).map(key => ({
+    key,
+    label: formatColumnName(key)
+  }));
 
   return (
     <DropdownMenu>
@@ -43,16 +47,15 @@ export function TableToolbarColumnVisibility({
         <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {columnIds.length > 0 ? (
+        {displayColumns.length > 0 ? (
           <>
-            {columnIds.map((columnId) => (
+            {displayColumns.map((column) => (
               <DropdownMenuCheckboxItem
-                key={columnId}
-                checked={!hiddenColumns.has(columnId)}
-                onCheckedChange={(checked) => onToggleColumn(columnId, checked)}
+                key={column.key}
+                checked={!hiddenColumns.has(column.key)}
+                onCheckedChange={(checked) => onToggleColumn(column.key, checked)}
               >
-                {/* Convert camelCase or snake_case to Title Case */}
-                {formatColumnName(columnId)}
+                {column.label}
               </DropdownMenuCheckboxItem>
             ))}
             <DropdownMenuSeparator />

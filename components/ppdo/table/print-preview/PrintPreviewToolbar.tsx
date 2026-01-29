@@ -6,8 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, X, Save, Palette, Ruler } from 'lucide-react';
+import { ArrowLeft, X, Save, Palette, Ruler, MoreVertical } from 'lucide-react';
 import { DocumentTitleEditor } from './DocumentTitleEditor';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 interface PrintPreviewToolbarProps {
   documentTitle: string;
@@ -46,22 +49,29 @@ export function PrintPreviewToolbar({
 }: PrintPreviewToolbarProps) {
 
   return (
-    <div className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-6">
+    <div className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 sm:px-6">
       {/* Left: Back/Close */}
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={onBack}
-          variant="ghost"
-          size="sm"
-          className="gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
+      <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onBack}
+                variant="ghost"
+                size="sm"
+                className="gap-2 px-2 sm:px-3"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden xs:inline">Back</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Back to list</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
-        <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 hidden xs:block" />
 
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <DocumentTitleEditor
             title={documentTitle}
             onTitleChange={onTitleChange}
@@ -69,7 +79,7 @@ export function PrintPreviewToolbar({
             isDirty={isDirty}
           />
           {lastSavedTime && (
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 truncate">
               {isDirty ? (
                 <span className="text-amber-600 dark:text-amber-400">
                   Unsaved changes
@@ -83,73 +93,160 @@ export function PrintPreviewToolbar({
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2">
-        {/* Editor Mode Toggle */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
-          <Label htmlFor="editor-mode" className="text-xs font-medium cursor-pointer">
-            Editor Mode
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Editor Mode Toggle - Always visible on larger screens, collapsed on tiny ones? 
+            Actually, editor mode is quite important. Keep it visible. */}
+        <div className="hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
+          <Label htmlFor="editor-mode" className="text-[10px] sm:text-xs font-medium cursor-pointer">
+            Editor
           </Label>
           <Switch
             id="editor-mode"
             checked={isEditorMode}
             onCheckedChange={onEditorModeChange}
+            className="scale-75 sm:scale-100"
           />
         </div>
 
-        <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 mx-1" />
+        <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 mx-1 hidden sm:block" />
 
-        {/* Ruler Toggle Button */}
-        {onToggleRuler && (
-          <Button
-            onClick={onToggleRuler}
-            variant="outline"
-            size="sm"
-            className={`gap-2 ${rulerVisible ? 'bg-stone-200' : ''}`}
-            title="Toggle Ruler (Ctrl+Shift+R)"
-          >
-            <Ruler className="w-4 h-4" />
-            Ruler
-          </Button>
-        )}
+        {/* --- DESKTOP ACTIONS --- */}
+        <div className="hidden md:flex items-center gap-2">
+          {/* Ruler Toggle Button */}
+          {onToggleRuler && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onToggleRuler}
+                    variant="outline"
+                    size="sm"
+                    className={`gap-2 ${rulerVisible ? 'bg-zinc-100 dark:bg-zinc-800' : ''}`}
+                  >
+                    <Ruler className="w-4 h-4" />
+                    <span className="hidden lg:inline">Ruler</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Toggle Ruler (Ctrl+Shift+R)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
-        {/* Apply Template Button - Only in editor mode */}
-        {isEditorMode && onApplyTemplate && (
-          <Button
-            onClick={onApplyTemplate}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <Palette className="w-4 h-4" />
-            Apply Template
-          </Button>
-        )}
+          {/* Apply Template Button - Only in editor mode */}
+          {isEditorMode && onApplyTemplate && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onApplyTemplate}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Palette className="w-4 h-4" />
+                    <span className="hidden lg:inline">Template</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Apply Template</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
-        {/* Save Draft Button - Only in editor mode */}
-        {isEditorMode && onSaveDraft && (
-          <Button
-            onClick={onSaveDraft}
-            variant="outline"
-            size="sm"
-            disabled={!isDirty || isSaving}
-            className="gap-2"
-          >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save Draft'}
-          </Button>
-        )}
+          {/* Save Draft Button - Only in editor mode */}
+          {isEditorMode && onSaveDraft && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onSaveDraft}
+                    variant="outline"
+                    size="sm"
+                    disabled={!isDirty || isSaving}
+                    className="gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span className="hidden lg:inline">{isSaving ? 'Saving...' : 'Save Draft'}</span>
+                    <span className="lg:hidden">{isSaving ? '...' : 'Save'}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Save Draft</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
 
-        <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 mx-1" />
+        {/* --- TABLET/MOBILE ACTIONS --- */}
+        <div className="flex md:hidden items-center gap-1">
+          {isEditorMode && onSaveDraft && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onSaveDraft}
+                    variant="outline"
+                    size="icon"
+                    disabled={!isDirty || isSaving}
+                    className="h-8 w-8"
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Save Draft</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          <ResponsiveMoreMenu>
+            <div className="flex items-center justify-between px-2 py-1.5 sm:hidden">
+              <span className="text-xs font-medium">Editor Mode</span>
+              <Switch
+                checked={isEditorMode}
+                onCheckedChange={onEditorModeChange}
+                className="scale-75"
+              />
+            </div>
+
+            {onToggleRuler && (
+              <DropdownMenuItem onClick={onToggleRuler}>
+                <Ruler className="w-4 h-4 mr-2" />
+                {rulerVisible ? 'Hide Ruler' : 'Show Ruler'}
+              </DropdownMenuItem>
+            )}
+
+            {isEditorMode && onApplyTemplate && (
+              <DropdownMenuItem onClick={onApplyTemplate}>
+                <Palette className="w-4 h-4 mr-2" />
+                Apply Template
+              </DropdownMenuItem>
+            )}
+
+            {!onSaveDraft && isEditorMode && (
+              <DropdownMenuItem disabled>
+                <Save className="w-4 h-4 mr-2" />
+                No Save Option
+              </DropdownMenuItem>
+            )}
+          </ResponsiveMoreMenu>
+        </div>
+
+        <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 mx-1 hidden sm:block" />
 
         {/* Close */}
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="icon"
-          className="w-8 h-8"
-        >
-          <X className="w-4 h-4" />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onClose}
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Close Preview</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );

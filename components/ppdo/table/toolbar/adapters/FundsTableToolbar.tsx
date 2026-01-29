@@ -19,6 +19,7 @@
 
 import React from "react";
 import { TableToolbar } from "../TableToolbar";
+import { AVAILABLE_COLUMNS } from "@/components/ppdo/funds/constants";
 
 export interface FundsTableToolbarProps {
   searchQuery: string;
@@ -88,6 +89,7 @@ export function FundsTableToolbar({
       onBulkTrash={onBulkTrash}
       onAddNew={onAddNew}
       accentColor={accentColor}
+      columns={AVAILABLE_COLUMNS.map(col => ({ key: col.id, label: col.label }))}
     />
   );
 }

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { LayoutTemplate, X } from "lucide-react";
+import { LayoutTemplate, X, Columns } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState, ReactNode } from "react";
 import { COLUMN_VISIBILITY_CONFIG } from "@/lib/column-visibility-config";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * Generic column interface that all table columns should extend
@@ -119,34 +120,20 @@ export function ColumnVisibilityMenu<T extends BaseColumn>({
 
   // Table variant trigger: matches breakdown table toolbar styling
   const tableTrigger = (
-    <button
-      className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
-      style={{
-        border: '1px solid rgb(228 228 231 / 1)',
-        borderRadius: '6px',
-      }}
+    <Button
+      variant="outline"
+      size="sm"
+      className={`gap-1.5 px-2.5 sm:px-3 h-9 sm:h-9 ${triggerClassName}`}
+      style={triggerStyle}
     >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect width="18" height="7" x="3" y="3" rx="1" />
-        <rect width="9" height="7" x="3" y="14" rx="1" />
-        <rect width="5" height="7" x="16" y="14" rx="1" />
-      </svg>
+      <Columns className="w-4 h-4" />
       <span className="hidden sm:inline">Columns</span>
       {showCount && hiddenCount > 0 && (
         <span className="ml-0.5 text-xs text-zinc-500">
-          ({hiddenCount} hidden)
+          ({hiddenCount})
         </span>
       )}
-    </button>
+    </Button>
   );
 
   // Default trigger button
@@ -154,32 +141,41 @@ export function ColumnVisibilityMenu<T extends BaseColumn>({
     <Button
       variant="outline"
       size="sm"
-      className={triggerClassName || "gap-2"}
+      className={`gap-2 ${triggerClassName}`}
       style={triggerStyle}
     >
       <LayoutTemplate className="w-4 h-4" />
-      Columns
+      <span className="hidden sm:inline">Columns</span>
       {showCount && hiddenCount > 0 && (
         <span className="ml-0.5 text-xs text-zinc-500">
-          ({hiddenCount} hidden)
+          ({hiddenCount})
         </span>
       )}
     </Button>
   );
 
   // Select the appropriate trigger based on variant
-  const trigger = variant === 'table' ? tableTrigger : defaultTrigger;
+  const triggerElement = variant === 'table' ? tableTrigger : defaultTrigger;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        {renderTrigger
-          ? renderTrigger({ hiddenCount, isOpen: open, defaultTrigger: trigger })
-          : trigger
-        }
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              {renderTrigger
+                ? renderTrigger({ hiddenCount, isOpen: open, defaultTrigger: triggerElement })
+                : triggerElement
+              }
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Toggle Column Visibility</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent
+        align="end"
         className={contentClassName}
         onCloseAutoFocus={(e) => {
           // Prevent focus from returning to trigger when closing
@@ -200,9 +196,9 @@ export function ColumnVisibilityMenu<T extends BaseColumn>({
           </Button>
         </div>
         <DropdownMenuSeparator />
-        
+
         {/* Column checkboxes */}
-        <div 
+        <div
           className="overflow-y-auto"
           style={{ maxHeight }}
         >
@@ -220,9 +216,9 @@ export function ColumnVisibilityMenu<T extends BaseColumn>({
             </DropdownMenuCheckboxItem>
           ))}
         </div>
-        
+
         <DropdownMenuSeparator />
-        
+
         {/* Show All / Hide All buttons */}
         <div className="p-2 flex gap-2">
           <Button

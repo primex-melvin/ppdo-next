@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { BulkAction } from "./types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TableToolbarBulkActionsProps {
   actions: BulkAction[];
@@ -48,17 +49,25 @@ export function TableToolbarBulkActions({ actions }: TableToolbarBulkActionsProp
   return (
     <>
       {visibleActions.map((action) => (
-        <Button
-          key={action.id}
-          onClick={action.onClick}
-          variant={action.variant || "outline"}
-          size="sm"
-          className="gap-2"
-          disabled={action.isDisabled ? action.isDisabled(actions.length) : false}
-        >
-          {action.icon}
-          <span className="hidden sm:inline">{action.label}</span>
-        </Button>
+        <TooltipProvider key={action.id}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={action.onClick}
+                variant={action.variant || "outline"}
+                size="sm"
+                className="gap-2"
+                disabled={action.isDisabled ? action.isDisabled(actions.length) : false}
+              >
+                {action.icon}
+                <span className="hidden sm:inline">{action.label}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{action.label}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ))}
     </>
   );

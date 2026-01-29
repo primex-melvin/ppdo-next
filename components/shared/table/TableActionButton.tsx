@@ -1,8 +1,9 @@
-// components/shared/table/TableActionButton.tsx
-
 "use client";
 
+import React from "react";
 import { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TableActionButtonProps {
   /**
@@ -22,15 +23,14 @@ interface TableActionButtonProps {
 
   /**
    * Button variant style
-   * - 'default': White/zinc-800 background with border
-   * - 'primary': Colored background (uses accentColor)
+   * - 'default': Outline style
+   * - 'primary': Colored style
    * @default 'default'
    */
   variant?: 'default' | 'primary';
 
   /**
-   * Accent color for 'primary' variant (hex or rgb)
-   * @example "#3b82f6" or "rgb(59, 130, 246)"
+   * Accent color for 'primary' variant
    */
   accentColor?: string;
 
@@ -40,40 +40,24 @@ interface TableActionButtonProps {
   title?: string;
 
   /**
-   * Additional className for customization
+   * Additional className
    */
   className?: string;
+
+  /**
+   * Whether the button is disabled
+   */
+  disabled?: boolean;
+
+  /**
+   * Whether to hide text on certain breakpoints
+   * @default true (hides on <sm)
+   */
+  hideLabelOnMobile?: boolean;
 }
 
 /**
- * TableActionButton - Shared action button component for table toolbars
- *
- * Features:
- * - Consistent sizing and spacing
- * - Responsive label hiding (hidden sm:inline)
- * - Two variants: default (outline) and primary (filled)
- * - Dark mode support
- * - Icon size fixed at 14x14px
- *
- * @example
- * ```tsx
- * // Default variant (outline button)
- * <TableActionButton
- *   icon={Trash2}
- *   label="Recycle Bin"
- *   onClick={handleOpenTrash}
- *   title="View Recycle Bin"
- * />
- *
- * // Primary variant (colored button)
- * <TableActionButton
- *   icon={Plus}
- *   label="Add Record"
- *   onClick={handleAdd}
- *   variant="primary"
- *   accentColor="#3b82f6"
- * />
- * ```
+ * TableActionButton - Enhanced action button with Tooltip support
  */
 export function TableActionButton({
   icon: Icon,
@@ -83,38 +67,39 @@ export function TableActionButton({
   accentColor,
   title,
   className = "",
+  disabled = false,
+  hideLabelOnMobile = true,
 }: TableActionButtonProps) {
-  // Default variant: outline style with border
-  if (variant === 'default') {
-    return (
-      <button
-        onClick={onClick}
-        className={`flex cursor-pointer items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors ${className}`}
-        style={{
-          border: '1px solid rgb(228 228 231 / 1)',
-          borderRadius: '6px',
-        }}
-        title={title}
-      >
-        <Icon style={{ width: '14px', height: '14px' }} />
-        <span className="hidden sm:inline">{label}</span>
-      </button>
-    );
-  }
+  const labelContent = (
+    <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>
+      {label}
+    </span>
+  );
 
-  // Primary variant: filled style with accent color
-  return (
-    <button
+  const buttonElement = (
+    <Button
       onClick={onClick}
-      className={`flex cursor-pointer items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-white hover:opacity-90 transition-opacity ${className}`}
-      style={{
-        backgroundColor: accentColor,
-        borderRadius: '6px',
-      }}
-      title={title}
+      variant={variant === 'default' ? 'outline' : 'default'}
+      size="sm"
+      className={`gap-2 ${className}`}
+      style={variant === 'primary' && accentColor ? { backgroundColor: accentColor, color: 'white' } : {}}
+      disabled={disabled}
     >
-      <Icon style={{ width: '14px', height: '14px' }} />
-      <span>{label}</span>
-    </button>
+      <Icon className="w-3.5 h-3.5" />
+      {labelContent}
+    </Button>
+  );
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {buttonElement}
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{title || label}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

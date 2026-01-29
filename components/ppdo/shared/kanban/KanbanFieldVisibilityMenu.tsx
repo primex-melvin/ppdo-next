@@ -12,6 +12,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const TOGGLEABLE_FIELDS = [
     { id: "received", label: "Received" },
@@ -38,12 +44,21 @@ export function KanbanFieldVisibilityMenu({
     return (
         <>
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                        <ListFilter className="w-4 h-4" />
-                        <span className="hidden sm:inline">Fields</span>
-                    </Button>
-                </DropdownMenuTrigger>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="gap-2">
+                                    <ListFilter className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Fields</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Show/Hide Card Fields</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
                 <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>Show/Hide Fields</DropdownMenuLabel>
                     <DropdownMenuSeparator />

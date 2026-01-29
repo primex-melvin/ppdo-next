@@ -21,6 +21,7 @@ import React from "react";
 import { Calculator } from "lucide-react";
 import { TableToolbar } from "../TableToolbar";
 import { BulkAction } from "../types";
+import { AVAILABLE_COLUMNS } from "@/components/ppdo/projects/constants";
 
 export interface ProjectsTableToolbarProps {
   // Search
@@ -141,9 +142,9 @@ export function ProjectsTableToolbar({
       expandButton={expandButton}
       accentColor={accentColor}
       bulkActions={bulkActions.length > 0 ? bulkActions : undefined}
-      // Legacy support
       onBulkCategoryChange={onBulkCategoryChange}
       canManageBulkActions={canManageBulkActions}
+      columns={AVAILABLE_COLUMNS.map(col => ({ key: col.id, label: col.label }))}
     />
   );
 }

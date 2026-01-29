@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -27,6 +26,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ColumnVisibilityMenu } from "./ColumnVisibilityMenu";
 import { TwentyPercentDFBulkActions } from "./TwentyPercentDFBulkActions";
+import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TwentyPercentDFTableToolbarProps {
     // Search
@@ -107,42 +109,68 @@ export function TwentyPercentDFTableToolbar({
     expandButton,
     accentColor,
 }: TwentyPercentDFTableToolbarProps) {
+    // Search Focus State for Animation
+    const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+    const isSearchExpanded = isSearchFocused || (searchQuery && searchQuery.length > 0);
+
     return (
-        <div className="h-16 px-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between no-print gap-4">
+        <div className="h-16 px-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between no-print gap-4 overflow-hidden">
 
             {/* Left: Title or Selection Info */}
-            <div className="flex items-center gap-3 min-w-[200px]">
-                {selectedCount > 0 ? (
-                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7">
-                            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                            {selectedCount} Selected
-                        </Badge>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onClearSelection}
-                            className="text-zinc-500 text-xs h-7 hover:text-zinc-900"
-                        >
-                            Clear
-                        </Button>
-                    </div>
-                ) : (
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                        Projects
-                    </h3>
+            <AnimatePresence mode="popLayout">
+                {(!isSearchExpanded || (typeof window !== 'undefined' && window.innerWidth >= 1024)) && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20, width: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex items-center gap-3 min-w-[200px] whitespace-nowrap"
+                    >
+                        {selectedCount > 0 ? (
+                            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7">
+                                    <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                                    {selectedCount} Selected
+                                </Badge>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={onClearSelection}
+                                    className="text-zinc-500 text-xs h-7 hover:text-zinc-900"
+                                >
+                                    Clear
+                                </Button>
+                            </div>
+                        ) : (
+                            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                                Projects
+                            </h3>
+                        )}
+                    </motion.div>
                 )}
-            </div>
+            </AnimatePresence>
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2 flex-1 justify-end">
 
-                {/* Search */}
-                <div className="relative max-w-xs w-full">
+                {/* Search - Expanding */}
+                <motion.div
+                    className="relative"
+                    initial={false}
+                    animate={{
+                        width: isSearchExpanded ? "100%" : "20rem",
+                        flexGrow: isSearchExpanded ? 1 : 0
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                >
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                     <input
                         ref={searchInputRef}
-                        onFocus={onSearchFocus}
+                        onFocus={(e) => {
+                            setIsSearchFocused(true);
+                            onSearchFocus(e);
+                        }}
+                        onBlur={() => setIsSearchFocused(false)}
                         type="text"
                         placeholder="Search projects..."
                         value={searchQuery}
@@ -157,127 +185,244 @@ export function TwentyPercentDFTableToolbar({
                             <X className="w-3.5 h-3.5" />
                         </button>
                     )}
-                </div>
+                </motion.div>
 
-                <Separator orientation="vertical" className="h-6 mx-1" />
+                <AnimatePresence>
+                    {!isSearchExpanded && (
+                        <motion.div
+                            initial={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95, width: 0 }}
+                            animate={{ opacity: 1, scale: 1, width: "auto" }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center gap-2 overflow-hidden"
+                        >
+                            <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
 
-                {/* Column Visibility */}
-                <ColumnVisibilityMenu
-                    hiddenColumns={hiddenColumns}
-                    onToggleColumn={onToggleColumn}
-                    onShowAll={onShowAllColumns}
-                    onHideAll={onHideAllColumns}
-                />
+                            {/* --- DESKTOP ACTIONS (hidden on mobile) --- */}
+                            <div className="hidden lg:flex items-center gap-2">
+                                {/* Column Visibility */}
+                                <ColumnVisibilityMenu
+                                    hiddenColumns={hiddenColumns}
+                                    onToggleColumn={onToggleColumn}
+                                    onShowAll={onShowAllColumns}
+                                    onHideAll={onHideAllColumns}
+                                />
 
-                {/* Bulk Category Actions */}
-                {selectedCount > 0 && canManageBulkActions && (
-                    <TwentyPercentDFBulkActions
-                        selectedCount={selectedCount}
-                        onCategoryChange={onBulkCategoryChange}
-                    />
-                )}
-
-                {/* 🆕 NEW: Bulk Auto-Calculate Toggle (only when items are selected) */}
-                {selectedCount > 0 && onBulkToggleAutoCalculate && (
-                    <Button
-                        onClick={onBulkToggleAutoCalculate}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                    >
-                        <Calculator className="w-4 h-4" />
-                        Toggle Auto-Calculate
-                    </Button>
-                )}
-
-                <Separator orientation="vertical" className="h-6 mx-1" />
-
-                {/* Trash Button */}
-                <Button
-                    onClick={selectedCount > 0 ? onBulkTrash : onOpenTrash}
-                    variant={selectedCount > 0 ? "destructive" : "outline"}
-                    size="sm"
-                    className="gap-2"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    {selectedCount > 0 ? `To Trash (${selectedCount})` : 'Recycle Bin'}
-                </Button>
-
-                {/* Export/Print Dropdown */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Download className="w-4 h-4" />
-                            <span className="hidden sm:inline">Export</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Export Options</DropdownMenuLabel>
-                        {onOpenPrintPreview && (
-                            <DropdownMenuItem onClick={onOpenPrintPreview} className="cursor-pointer">
-                                <Eye className="w-4 h-4 mr-2" />
-                                Print Preview
-                                {hasPrintDraft && (
-                                    <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                                {/* Bulk Category Actions */}
+                                {selectedCount > 0 && canManageBulkActions && (
+                                    <TwentyPercentDFBulkActions
+                                        selectedCount={selectedCount}
+                                        onCategoryChange={onBulkCategoryChange}
+                                    />
                                 )}
-                            </DropdownMenuItem>
-                        )}
-                        {onPrint && (
-                            <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
-                                <Printer className="w-4 h-4 mr-2" /> Print PDF
-                            </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={onExportCSV} className="cursor-pointer">
-                            <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <div className="p-2">
-                            <span className="text-[10px] text-zinc-500 leading-tight block">
-                                Note: Exports are based on currently shown/hidden columns.
-                            </span>
-                        </div>
-                    </DropdownMenuContent>
-                </DropdownMenu>
 
-                {/* Share Button (Admin Only) */}
-                {isAdmin && (
-                    <Button
-                        onClick={onOpenShare}
-                        variant="secondary"
-                        size="sm"
-                        className="relative gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                        title="Share & Manage Access"
-                    >
-                        <Share2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Share</span>
-                        {pendingRequestsCount !== undefined &&
-                            pendingRequestsCount > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                    {pendingRequestsCount > 9
-                                        ? "9+"
-                                        : pendingRequestsCount}
-                                </span>
+                                {/* Bulk Auto-Calculate Toggle (only when items are selected) */}
+                                {selectedCount > 0 && onBulkToggleAutoCalculate && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    onClick={onBulkToggleAutoCalculate}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="gap-2"
+                                                >
+                                                    <Calculator className="w-4 h-4" />
+                                                    Toggle Auto-Calculate
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Auto-calculate selected</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+
+                                <Separator orientation="vertical" className="h-6 mx-1" />
+
+                                {/* Trash Button */}
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                onClick={selectedCount > 0 ? onBulkTrash : onOpenTrash}
+                                                variant={selectedCount > 0 ? "destructive" : "outline"}
+                                                size="sm"
+                                                className="gap-2"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                {selectedCount > 0 ? `To Trash (${selectedCount})` : 'Recycle Bin'}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{selectedCount > 0 ? "Trash Selected" : "Recycle Bin"}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+
+                                {/* Export/Print Dropdown */}
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="outline" size="sm" className="gap-2">
+                                                            <Download className="w-4 h-4" />
+                                                            <span className="hidden xl:inline">Export</span>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-56">
+                                                        <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                                                        {onOpenPrintPreview && (
+                                                            <DropdownMenuItem onClick={onOpenPrintPreview} className="cursor-pointer">
+                                                                <Eye className="w-4 h-4 mr-2" />
+                                                                Print Preview
+                                                                {hasPrintDraft && (
+                                                                    <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                                                                )}
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        {onPrint && (
+                                                            <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
+                                                                <Printer className="w-4 h-4 mr-2" /> Print PDF
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuItem onClick={onExportCSV} className="cursor-pointer">
+                                                            <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <div className="p-2">
+                                                            <span className="text-[10px] text-zinc-500 leading-tight block">
+                                                                Note: Exports are based on currently shown/hidden columns.
+                                                            </span>
+                                                        </div>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Export & Print Options</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+
+                                {/* Share Button (Admin Only) */}
+                                {isAdmin && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    onClick={onOpenShare}
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    className="relative gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                                                >
+                                                    <Share2 className="w-4 h-4" />
+                                                    <span className="hidden xl:inline">Share</span>
+                                                    {pendingRequestsCount !== undefined &&
+                                                        pendingRequestsCount > 0 && (
+                                                            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                                                {pendingRequestsCount > 9
+                                                                    ? "9+"
+                                                                    : pendingRequestsCount}
+                                                            </span>
+                                                        )}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Share & Manage Access</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+
+                                {/* Expand Button (if provided) */}
+                                {expandButton}
+                            </div>
+
+                            {/* --- MOBILE/TABLET ACTIONS (Hidden on Desktop) --- */}
+                            <div className="flex lg:hidden items-center gap-1">
+                                <ColumnVisibilityMenu
+                                    hiddenColumns={hiddenColumns}
+                                    onToggleColumn={onToggleColumn}
+                                    onShowAll={onShowAllColumns}
+                                    onHideAll={onHideAllColumns}
+                                />
+
+                                <ResponsiveMoreMenu>
+                                    {selectedCount > 0 && onBulkToggleAutoCalculate && (
+                                        <DropdownMenuItem onClick={onBulkToggleAutoCalculate}>
+                                            <Calculator className="w-4 h-4 mr-2" />
+                                            Toggle Auto-Calculate
+                                        </DropdownMenuItem>
+                                    )}
+
+                                    <DropdownMenuItem onClick={selectedCount > 0 ? onBulkTrash : onOpenTrash}>
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        {selectedCount > 0 ? "Trash Selected" : "Recycle Bin"}
+                                    </DropdownMenuItem>
+
+                                    {onOpenPrintPreview && (
+                                        <DropdownMenuItem onClick={onOpenPrintPreview}>
+                                            <Eye className="w-4 h-4 mr-2" />
+                                            Print Preview
+                                            {hasPrintDraft && (
+                                                <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full inline-block" />
+                                            )}
+                                        </DropdownMenuItem>
+                                    )}
+                                    {onPrint && (
+                                        <DropdownMenuItem onClick={onPrint}>
+                                            <Printer className="w-4 h-4 mr-2" /> Print PDF
+                                        </DropdownMenuItem>
+                                    )}
+
+                                    <DropdownMenuItem onClick={onExportCSV}>
+                                        <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
+                                    </DropdownMenuItem>
+
+                                    {isAdmin && (
+                                        <DropdownMenuItem onClick={onOpenShare}>
+                                            <Share2 className="w-4 h-4 mr-2" />
+                                            Share
+                                            {pendingRequestsCount !== undefined && pendingRequestsCount > 0 && (
+                                                <span className="ml-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-4 h-4 inline-flex items-center justify-center">
+                                                    {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
+                                                </span>
+                                            )}
+                                        </DropdownMenuItem>
+                                    )}
+                                </ResponsiveMoreMenu>
+                            </div>
+
+                            <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
+
+                            {/* Add Project Button */}
+                            {onAddProject && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                onClick={onAddProject}
+                                                size="sm"
+                                                className="gap-2 text-white shadow-sm"
+                                                style={{ backgroundColor: accentColor }}
+                                            >
+                                                <span className="text-lg leading-none mb-0.5">+</span>
+                                                <span className="hidden md:inline">Add</span>
+                                                <span className="md:hidden">Add</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Add New Project</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )}
-                    </Button>
-                )}
-
-                {/* Expand Button (if provided) */}
-                {expandButton}
-
-                <Separator orientation="vertical" className="h-6 mx-1" />
-
-                {/* Add Project Button */}
-                {onAddProject && (
-                    <Button
-                        onClick={onAddProject}
-                        size="sm"
-                        className="gap-2 text-white shadow-sm"
-                        style={{ backgroundColor: accentColor }}
-                    >
-                        <span className="text-lg leading-none mb-0.5">+</span>
-                        Add Project
-                    </Button>
-                )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

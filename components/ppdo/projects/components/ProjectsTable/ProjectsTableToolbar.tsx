@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -27,6 +26,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ColumnVisibilityMenu } from "./ColumnVisibilityMenu";
 import { ProjectBulkActions } from "./ProjectBulkActions";
+import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProjectsTableToolbarProps {
     // Search
@@ -159,124 +160,241 @@ export function ProjectsTableToolbar({
                     )}
                 </div>
 
-                <Separator orientation="vertical" className="h-6 mx-1" />
+                <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
 
-                {/* Column Visibility */}
-                <ColumnVisibilityMenu
-                    hiddenColumns={hiddenColumns}
-                    onToggleColumn={onToggleColumn}
-                    onShowAll={onShowAllColumns}
-                    onHideAll={onHideAllColumns}
-                />
-
-                {/* Bulk Category Actions */}
-                {selectedCount > 0 && canManageBulkActions && (
-                    <ProjectBulkActions
-                        selectedCount={selectedCount}
-                        onCategoryChange={onBulkCategoryChange}
+                {/* --- DESKTOP ACTIONS (hidden on mobile) --- */}
+                <div className="hidden lg:flex items-center gap-2">
+                    {/* Column Visibility */}
+                    <ColumnVisibilityMenu
+                        hiddenColumns={hiddenColumns}
+                        onToggleColumn={onToggleColumn}
+                        onShowAll={onShowAllColumns}
+                        onHideAll={onHideAllColumns}
                     />
-                )}
 
-                {/* 🆕 NEW: Bulk Auto-Calculate Toggle (only when items are selected) */}
-                {selectedCount > 0 && onBulkToggleAutoCalculate && (
-                    <Button
-                        onClick={onBulkToggleAutoCalculate}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                    >
-                        <Calculator className="w-4 h-4" />
-                        Toggle Auto-Calculate
-                    </Button>
-                )}
+                    {/* Bulk Category Actions */}
+                    {selectedCount > 0 && canManageBulkActions && (
+                        <ProjectBulkActions
+                            selectedCount={selectedCount}
+                            onCategoryChange={onBulkCategoryChange}
+                        />
+                    )}
 
-                <Separator orientation="vertical" className="h-6 mx-1" />
+                    {/* Bulk Auto-Calculate Toggle (only when items are selected) */}
+                    {selectedCount > 0 && onBulkToggleAutoCalculate && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        onClick={onBulkToggleAutoCalculate}
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
+                                    >
+                                        <Calculator className="w-4 h-4" />
+                                        Toggle Auto-Calculate
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Auto-calculate selected</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
 
-                {/* Trash Button */}
-                <Button
-                    onClick={selectedCount > 0 ? onBulkTrash : onOpenTrash}
-                    variant={selectedCount > 0 ? "destructive" : "outline"}
-                    size="sm"
-                    className="gap-2"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    {selectedCount > 0 ? `To Trash (${selectedCount})` : 'Recycle Bin'}
-                </Button>
+                    <Separator orientation="vertical" className="h-6 mx-1" />
 
-                {/* Export/Print Dropdown */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Download className="w-4 h-4" />
-                            <span className="hidden sm:inline">Export</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                    {/* Trash Button */}
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    onClick={selectedCount > 0 ? onBulkTrash : onOpenTrash}
+                                    variant={selectedCount > 0 ? "destructive" : "outline"}
+                                    size="sm"
+                                    className="gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    {selectedCount > 0 ? `To Trash (${selectedCount})` :
+                                        <span className="hidden xl:inline">Recycle Bin</span>}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{selectedCount > 0 ? "Trash selected" : "Recycle Bin"}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
+                    {/* Export/Print Dropdown */}
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="sm" className="gap-2">
+                                                <Download className="w-4 h-4" />
+                                                <span className="hidden xl:inline">Export</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-56">
+                                            <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                                            {onOpenPrintPreview && (
+                                                <DropdownMenuItem onClick={onOpenPrintPreview} className="cursor-pointer">
+                                                    <Eye className="w-4 h-4 mr-2" />
+                                                    Print Preview
+                                                    {hasPrintDraft && (
+                                                        <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                                                    )}
+                                                </DropdownMenuItem>
+                                            )}
+                                            {onPrint && (
+                                                <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
+                                                    <Printer className="w-4 h-4 mr-2" /> Print PDF
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuItem onClick={onExportCSV} className="cursor-pointer">
+                                                <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <div className="p-2">
+                                                <span className="text-[10px] text-zinc-500 leading-tight block">
+                                                    Note: Exports are based on currently shown/hidden columns.
+                                                </span>
+                                            </div>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Export & Print Options</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
+                    {/* Share Button (Admin Only) */}
+                    {isAdmin && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        onClick={onOpenShare}
+                                        variant="secondary"
+                                        size="sm"
+                                        className="relative gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                        <span className="hidden xl:inline">Share</span>
+                                        {pendingRequestsCount !== undefined &&
+                                            pendingRequestsCount > 0 && (
+                                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                                    {pendingRequestsCount > 9
+                                                        ? "9+"
+                                                        : pendingRequestsCount}
+                                                </span>
+                                            )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Share & Manage Access</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+
+                    {/* Expand Button (if provided) */}
+                    {expandButton}
+                </div>
+
+                {/* --- MOBILE/TABLET ACTIONS (Hidden on Desktop) --- */}
+                <div className="flex lg:hidden items-center gap-1">
+                    {/* Keep column visibility easier to access */}
+                    <ColumnVisibilityMenu
+                        hiddenColumns={hiddenColumns}
+                        onToggleColumn={onToggleColumn}
+                        onShowAll={onShowAllColumns}
+                        onHideAll={onHideAllColumns}
+                    />
+
+                    <ResponsiveMoreMenu>
+                        {/* Bulk Category Actions - Note: ProjectBulkActions might be complex, verify if it fits here. 
+                             Usually complex distinct components don't fit in a menu easily if they are dropdowns themselves.
+                             ProjectBulkActions renders a DropdownMenu.
+                             For now, we might leave it out or implement a custom handler.
+                             Actually, if it's Bulk Actions, it only shows when selectedCount > 0.
+                             If so, we can possibly show it instead of the More menu? 
+                             Or just keep it next to MORE.
+                          */}
+
+                        {selectedCount > 0 && onBulkToggleAutoCalculate && (
+                            <DropdownMenuItem onClick={onBulkToggleAutoCalculate}>
+                                <Calculator className="w-4 h-4 mr-2" />
+                                Toggle Auto-Calculate
+                            </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuItem onClick={selectedCount > 0 ? onBulkTrash : onOpenTrash}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            {selectedCount > 0 ? "Trash Selected" : "Recycle Bin"}
+                        </DropdownMenuItem>
+
                         {onOpenPrintPreview && (
-                            <DropdownMenuItem onClick={onOpenPrintPreview} className="cursor-pointer">
+                            <DropdownMenuItem onClick={onOpenPrintPreview}>
                                 <Eye className="w-4 h-4 mr-2" />
                                 Print Preview
                                 {hasPrintDraft && (
-                                    <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                                    <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full inline-block" />
                                 )}
                             </DropdownMenuItem>
                         )}
+
                         {onPrint && (
-                            <DropdownMenuItem onClick={onPrint} className="cursor-pointer">
+                            <DropdownMenuItem onClick={onPrint}>
                                 <Printer className="w-4 h-4 mr-2" /> Print PDF
                             </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={onExportCSV} className="cursor-pointer">
+
+                        <DropdownMenuItem onClick={onExportCSV}>
                             <FileSpreadsheet className="w-4 h-4 mr-2" /> Export CSV
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <div className="p-2">
-                            <span className="text-[10px] text-zinc-500 leading-tight block">
-                                Note: Exports are based on currently shown/hidden columns.
-                            </span>
-                        </div>
-                    </DropdownMenuContent>
-                </DropdownMenu>
 
-                {/* Share Button (Admin Only) */}
-                {isAdmin && (
-                    <Button
-                        onClick={onOpenShare}
-                        variant="secondary"
-                        size="sm"
-                        className="relative gap-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                        title="Share & Manage Access"
-                    >
-                        <Share2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Share</span>
-                        {pendingRequestsCount !== undefined &&
-                            pendingRequestsCount > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                    {pendingRequestsCount > 9
-                                        ? "9+"
-                                        : pendingRequestsCount}
-                                </span>
-                            )}
-                    </Button>
-                )}
+                        {isAdmin && (
+                            <DropdownMenuItem onClick={onOpenShare}>
+                                <Share2 className="w-4 h-4 mr-2" />
+                                Share
+                                {pendingRequestsCount !== undefined && pendingRequestsCount > 0 && (
+                                    <span className="ml-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-4 h-4 inline-flex items-center justify-center">
+                                        {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
+                                    </span>
+                                )}
+                            </DropdownMenuItem>
+                        )}
+                    </ResponsiveMoreMenu>
+                </div>
 
-                {/* Expand Button (if provided) */}
-                {expandButton}
-
-                <Separator orientation="vertical" className="h-6 mx-1" />
+                <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
 
                 {/* Add Project Button */}
                 {onAddProject && (
-                    <Button
-                        onClick={onAddProject}
-                        size="sm"
-                        className="gap-2 text-white shadow-sm"
-                        style={{ backgroundColor: accentColor }}
-                    >
-                        <span className="text-lg leading-none mb-0.5">+</span>
-                        Add Project
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    onClick={onAddProject}
+                                    size="sm"
+                                    className="gap-2 text-white shadow-sm"
+                                    style={{ backgroundColor: accentColor }}
+                                >
+                                    <span className="text-lg leading-none mb-0.5">+</span>
+                                    <span className="hidden md:inline">Add</span>
+                                    <span className="md:hidden">Add</span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Create new project</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 )}
             </div>
         </div>

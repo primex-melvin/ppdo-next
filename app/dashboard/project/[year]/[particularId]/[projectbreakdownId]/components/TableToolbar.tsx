@@ -1,8 +1,11 @@
-// app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/components/TableToolbar.tsx
-
 "use client";
 
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Printer, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 interface TableToolbarProps {
   search: string;
@@ -22,60 +25,96 @@ export function TableToolbar({
   accentColor,
 }: TableToolbarProps) {
   return (
-    <div className="flex flex-col sm:flex-row justify-between gap-3 p-4 border-b shrink-0">
+    <div className="h-16 px-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-4 no-print">
       {/* Search Input */}
-      <div className="relative w-full sm:w-72">
+      <div className="relative max-w-xs w-full">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
         <input
-          className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+          className="w-full h-9 pl-9 pr-3 text-sm border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
           placeholder="Search..."
           value={search}
           onChange={e => onSearchChange(e.target.value)}
         />
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-2 flex-wrap">
-        {onOpenTrash && (
-          <button
-            onClick={onOpenTrash}
-            className="cursor-pointer px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:scale-105 bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800"
-            title="View Recycle Bin"
-          >
-            <div className="flex items-center gap-2">
-              <Trash2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Recycle Bin</span>
-            </div>
-          </button>
-        )}
+      {/* RIGHT Actions */}
+      <div className="flex items-center gap-2">
 
-        <button
-          onClick={onPrint}
-          className="cursor-pointer px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-md bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-          title="Print"
-        >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" 
-              />
-            </svg>
-            <span className="hidden sm:inline">Print</span>
-          </div>
-        </button>
+        {/* --- DESKTOP --- */}
+        <div className="hidden sm:flex items-center gap-2">
+          {onOpenTrash && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onOpenTrash}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden md:inline">Recycle Bin</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Recycle Bin</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onPrint}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span className="hidden md:inline">Print</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Print</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* --- MOBILE MORE MENU --- */}
+        <div className="flex sm:hidden">
+          <ResponsiveMoreMenu>
+            {onOpenTrash && (
+              <DropdownMenuItem onClick={onOpenTrash}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Recycle Bin
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={onPrint}>
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </DropdownMenuItem>
+          </ResponsiveMoreMenu>
+        </div>
+
+        <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
 
         {onAdd && (
-          <button
-            onClick={onAdd}
-            className="cursor-pointer px-3 sm:px-4 py-2 rounded text-white font-medium flex-1 sm:flex-none"
-            style={{ backgroundColor: accentColor }}
-          >
-            <span className="hidden sm:inline">Add Record</span>
-            <span className="sm:hidden">Add</span>
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onAdd}
+                  size="sm"
+                  className="gap-2 text-white shadow-sm"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Record</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Add New Record</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </div>

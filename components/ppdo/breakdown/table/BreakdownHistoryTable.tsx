@@ -11,13 +11,16 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { Trash2, Printer, Plus, LayoutGrid, Table2 } from "lucide-react";
+import { Trash2, Printer, Plus, LayoutGrid, Table2, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useAccentColor } from "@/contexts/AccentColorContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BreakdownKanban } from "../kanban";
 import { StatusVisibilityMenu } from "../../shared/toolbar";
 import { KanbanFieldVisibilityMenu } from "../../shared/kanban/KanbanFieldVisibilityMenu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Import types
 import {
@@ -92,7 +95,9 @@ export function BreakdownHistoryTable({
   const [printAdapter, setPrintAdapter] = useState<BreakdownPrintAdapter | null>(null);
 
   // View state
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+  const [viewMode, setViewMode] = useState<"table" | "kanban">(
+    (searchParams.get("view") as "table" | "kanban") || "table"
+  );
   const [showViewToggle, setShowViewToggle] = useState(false);
 
   // Keyboard shortcut to toggle view tabs visibility
@@ -113,14 +118,6 @@ export function BreakdownHistoryTable({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showViewToggle]);
-
-  // Handle URL param for initial view mode
-  useEffect(() => {
-    const view = searchParams.get("view");
-    if (view === "kanban") {
-      setViewMode("kanban");
-    }
-  }, [searchParams]);
 
   const [visibleStatuses, setVisibleStatuses] = useState<Set<string>>(new Set(["ongoing", "delayed", "completed"]));
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set([
@@ -331,17 +328,15 @@ export function BreakdownHistoryTable({
 
       <TabsContent value="table" className="mt-0">
         <div
-          className="flex flex-col bg-white dark:bg-zinc-900"
+          className="flex flex-col bg-white dark:bg-zinc-900 border rounded-lg overflow-hidden h-[calc(100vh-200px)] min-h-[500px]"
           style={{
-            height: TABLE_HEIGHT,
-            border: '1px solid rgb(228 228 231 / 1)',
-            borderRadius: '8px',
+            borderColor: 'rgb(228 228 231 / 1)',
           }}
         >
           {/* TOOLBAR */}
           <GenericTableToolbar
             actions={
-              <>
+              <div className="flex items-center gap-1 sm:gap-2">
                 <ColumnVisibilityMenu
                   columns={columns.map(col => ({ key: col.key, label: col.label }))}
                   hiddenColumns={hiddenColumns}
@@ -350,30 +345,52 @@ export function BreakdownHistoryTable({
                   onHideAll={handleHideAllColumns}
                   variant="table"
                 />
-                {onOpenTrash && (
+
+                {/* Desktop secondary actions */}
+                <div className="hidden lg:flex items-center gap-2">
+                  {onOpenTrash && (
+                    <TableActionButton
+                      icon={Trash2}
+                      label="Recycle Bin"
+                      onClick={onOpenTrash}
+                      title="View Recycle Bin"
+                    />
+                  )}
                   <TableActionButton
-                    icon={Trash2}
-                    label="Recycle Bin"
-                    onClick={onOpenTrash}
-                    title="View Recycle Bin"
+                    icon={Printer}
+                    label="Print"
+                    onClick={handlePrint}
+                    title="Print"
                   />
-                )}
-                <TableActionButton
-                  icon={Printer}
-                  label="Print"
-                  onClick={handlePrint}
-                  title="Print"
-                />
+                </div>
+
+                {/* Mobile/Tablet more menu */}
+                <div className="lg:hidden">
+                  <ResponsiveMoreMenu>
+                    {onOpenTrash && (
+                      <DropdownMenuItem onClick={onOpenTrash}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Recycle Bin
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={handlePrint}>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print
+                    </DropdownMenuItem>
+                  </ResponsiveMoreMenu>
+                </div>
+
                 {onAdd && (
                   <TableActionButton
                     icon={Plus}
-                    label="Add Record"
+                    label="Add"
                     onClick={onAdd}
                     variant="primary"
                     accentColor={accentColorValue}
+                    hideLabelOnMobile={true}
                   />
                 )}
-              </>
+              </div>
             }
           >
             <TableSearchInput
@@ -385,10 +402,7 @@ export function BreakdownHistoryTable({
 
           {/* TABLE WRAPPER - CRITICAL: Contains the border grid */}
           <div
-            className="flex-1 overflow-auto"
-            style={{
-              borderTop: '1px solid rgb(228 228 231 / 1)',
-            }}
+            className="flex-1 overflow-auto border-t border-zinc-200 dark:border-zinc-800"
           >
             {/* TABLE CONTENT - Fixed width table with borders */}
             <table
@@ -461,47 +475,83 @@ export function BreakdownHistoryTable({
           {/* KANBAN TOOLBAR */}
           <GenericTableToolbar
             actions={
-              <>
-                <KanbanFieldVisibilityMenu
-                  visibleFields={visibleFields}
-                  onToggleField={handleToggleField}
-                  fields={[
-                    { id: "allocatedBudget", label: "Allocated Budget" },
-                    { id: "obligatedBudget", label: "Obligated Budget" },
-                    { id: "budgetUtilized", label: "Budget Utilized" },
-                    { id: "balance", label: "Balance" },
-                    { id: "utilizationRate", label: "Utilization Rate" },
-                    { id: "date", label: "Date" },
-                    { id: "remarks", label: "Remarks" },
-                  ]}
-                />
-                <StatusVisibilityMenu
-                  visibleStatuses={visibleStatuses}
-                  onToggleStatus={handleToggleStatus}
-                  statusOptions={[
-                    { id: "ongoing", label: "Ongoing" },
-                    { id: "delayed", label: "Delayed" },
-                    { id: "completed", label: "Completed" },
-                  ]}
-                />
-                {onOpenTrash && (
-                  <TableActionButton
-                    icon={Trash2}
-                    label="Recycle Bin"
-                    onClick={onOpenTrash}
-                    title="View Recycle Bin"
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="hidden sm:flex items-center gap-2">
+                  <KanbanFieldVisibilityMenu
+                    visibleFields={visibleFields}
+                    onToggleField={handleToggleField}
+                    fields={[
+                      { id: "allocatedBudget", label: "Allocated Budget" },
+                      { id: "obligatedBudget", label: "Obligated Budget" },
+                      { id: "budgetUtilized", label: "Budget Utilized" },
+                      { id: "balance", label: "Balance" },
+                      { id: "utilizationRate", label: "Utilization Rate" },
+                      { id: "date", label: "Date" },
+                      { id: "remarks", label: "Remarks" },
+                    ]}
                   />
-                )}
+                  <StatusVisibilityMenu
+                    visibleStatuses={visibleStatuses}
+                    onToggleStatus={handleToggleStatus}
+                    statusOptions={[
+                      { id: "ongoing", label: "Ongoing" },
+                      { id: "delayed", label: "Delayed" },
+                      { id: "completed", label: "Completed" },
+                    ]}
+                  />
+                </div>
+
+                {/* Mobile/Tablet more menu for Kanban filters */}
+                <div className="sm:hidden">
+                  <ResponsiveMoreMenu>
+                    <div className="p-2 border-b">
+                      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Visibility</p>
+                      <KanbanFieldVisibilityMenu
+                        visibleFields={visibleFields}
+                        onToggleField={handleToggleField}
+                      />
+                      <StatusVisibilityMenu
+                        visibleStatuses={visibleStatuses}
+                        onToggleStatus={handleToggleStatus}
+                      />
+                    </div>
+                  </ResponsiveMoreMenu>
+                </div>
+
+                <div className="hidden lg:flex items-center gap-2">
+                  {onOpenTrash && (
+                    <TableActionButton
+                      icon={Trash2}
+                      label="Recycle Bin"
+                      onClick={onOpenTrash}
+                      title="View Recycle Bin"
+                    />
+                  )}
+                </div>
+
+                <div className="lg:hidden">
+                  <ResponsiveMoreMenu>
+                    {onOpenTrash && (
+                      <DropdownMenuItem onClick={onOpenTrash}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Recycle Bin
+                      </DropdownMenuItem>
+                    )}
+                    {/* If on mobile and in kanban, maybe add other actions here */}
+                  </ResponsiveMoreMenu>
+                </div>
+
                 {onAdd && (
                   <TableActionButton
                     icon={Plus}
-                    label="Add Record"
+                    label="Add"
                     onClick={onAdd}
                     variant="primary"
                     accentColor={accentColorValue}
+                    hideLabelOnMobile={true}
                   />
                 )}
-              </>
+              </div>
             }
           >
             <TableSearchInput

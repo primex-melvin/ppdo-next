@@ -27,6 +27,7 @@ export interface BulkAction {
  * Allows custom column menus to be plugged in
  */
 export interface ColumnVisibilityMenuProps {
+  columns?: { key: string; label: string }[];
   hiddenColumns: Set<string>;
   onToggleColumn: (columnId: string, isChecked: boolean) => void;
   onShowAll: () => void;
@@ -68,6 +69,9 @@ export interface TableToolbarProps {
 
   /** Callback to hide all columns */
   onHideAllColumns: () => void;
+
+  /** Array of all available columns for visibility toggling */
+  columns?: { key: string; label: string }[];
 
   /** Callback to move selected items to trash */
   onBulkTrash: () => void;

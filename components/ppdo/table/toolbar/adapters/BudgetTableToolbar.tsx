@@ -21,6 +21,7 @@ import React from "react";
 import { Calculator } from "lucide-react";
 import { TableToolbar } from "../TableToolbar";
 import { BulkAction } from "../types";
+import { BUDGET_TABLE_COLUMNS } from "@/app/dashboard/project/[year]/constants";
 
 export interface BudgetTableToolbarProps {
   // Search
@@ -101,7 +102,7 @@ export function BudgetTableToolbar({
     <TableToolbar
       title="Budget Items"
       searchPlaceholder="Search budget items..."
-      addButtonLabel="Add New Item"
+      addButtonLabel="Add New"
       searchQuery={searchQuery}
       onSearchChange={onSearchChange}
       searchInputRef={searchInputRef}
@@ -123,6 +124,7 @@ export function BudgetTableToolbar({
       expandButton={expandButton}
       accentColor={accentColor}
       bulkActions={bulkActions.length > 0 ? bulkActions : undefined}
+      columns={BUDGET_TABLE_COLUMNS.map(col => ({ key: col.key, label: col.label }))}
     />
   );
 }
