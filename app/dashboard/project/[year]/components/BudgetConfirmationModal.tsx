@@ -8,6 +8,7 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onCancel?: () => void;
   title: string;
   message: string;
   confirmText?: string;
@@ -19,6 +20,7 @@ export function ConfirmationModal({
   isOpen,
   onClose,
   onConfirm,
+  onCancel,
   title,
   message,
   confirmText = "Confirm",
@@ -62,7 +64,7 @@ export function ConfirmationModal({
         {/* Actions */}
         <div className="p-6 flex items-center justify-end gap-3">
           <button
-            onClick={onClose}
+            onClick={onCancel || onClose}
             className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
           >
             {cancelText}
@@ -73,9 +75,8 @@ export function ConfirmationModal({
               onConfirm();
               onClose();
             }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-md text-white ${
-              variantColors[variant]
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-md text-white ${variantColors[variant]
+              }`}
             style={
               variant === "info"
                 ? { backgroundColor: accentColorValue }

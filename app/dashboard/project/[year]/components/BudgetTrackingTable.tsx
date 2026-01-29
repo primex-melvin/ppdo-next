@@ -3,6 +3,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccentColor } from "@/contexts/AccentColorContext";
@@ -82,7 +83,6 @@ export function BudgetTrackingTable({
     setShowDraftConfirm,
     setShowBulkToggleDialog,
     setShowTrashModal,
-    hasDraft,
     showHeaderSkeleton,
   } = useBudgetTableState(new Date().getFullYear());
 
@@ -187,8 +187,17 @@ export function BudgetTrackingTable({
   // PRINT & EXPORT HOOKS
   // ============================================================================
 
+  // ============================================================================
+  // PRINT & EXPORT HOOKS
+  // ============================================================================
+
+  const searchParams = useSearchParams();
+  const yearParam = searchParams.get("year");
+  const year = yearParam ? parseInt(yearParam) : new Date().getFullYear();
+
+  const { draftState, saveDraft, hasDraft, deleteDraft } = usePrintDraft(year);
+
   const {
-    year,
     handleOpenPrintPreview,
     handleLoadDraft,
     handleStartFresh,
@@ -197,10 +206,13 @@ export function BudgetTrackingTable({
     filteredAndSortedItems,
     hiddenColumns,
     setShowPrintPreview,
-    setShowDraftConfirm
+    setShowDraftConfirm,
+    {
+      hasDraft,
+      deleteDraft,
+      year,
+    }
   );
-
-  const { draftState, saveDraft } = usePrintDraft(year);
 
   // ============================================================================
   // FORM HANDLERS
@@ -470,6 +482,7 @@ export function BudgetTrackingTable({
           isOpen={modalStates.showDraftConfirm}
           onClose={() => setShowDraftConfirm(false)}
           onConfirm={handleLoadDraft}
+          onCancel={handleStartFresh}
           title="Load Existing Draft?"
           message={`You have a print preview draft from ${draftState ? formatTimestamp(draftState.timestamp) : 'recently'}. Load it or start fresh?`}
           confirmText="Load Draft"

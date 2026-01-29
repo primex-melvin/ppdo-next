@@ -1,8 +1,6 @@
 // app/dashboard/project/[year]/components/hooks/useBudgetTablePrint.ts
 
 import { useCallback } from "react";
-import { useSearchParams } from "next/navigation";
-import { usePrintDraft } from "@/app/dashboard/project/[year]/hooks/usePrintDraft";
 import { exportToCSV, createBudgetExportConfig } from "@/services";
 import { BUDGET_TABLE_COLUMNS } from "@/app/dashboard/project/[year]/constants";
 import { BudgetItem } from "@/app/dashboard/project/[year]/types";
@@ -15,13 +13,14 @@ export function useBudgetTablePrint(
   filteredItems: BudgetItem[],
   hiddenColumns: Set<string>,
   setShowPrintPreview: (show: boolean) => void,
-  setShowDraftConfirm: (show: boolean) => void
+  setShowDraftConfirm: (show: boolean) => void,
+  draftOps: {
+    hasDraft: boolean;
+    deleteDraft: () => boolean;
+    year: number;
+  }
 ) {
-  const searchParams = useSearchParams();
-  const yearParam = searchParams.get("year");
-  const year = yearParam ? parseInt(yearParam) : new Date().getFullYear();
-
-  const { hasDraft, deleteDraft } = usePrintDraft(year);
+  const { hasDraft, deleteDraft, year } = draftOps;
 
   /**
    * Handle print preview open
@@ -55,9 +54,11 @@ export function useBudgetTablePrint(
    * Start fresh (delete draft)
    */
   const handleStartFresh = useCallback(() => {
-    deleteDraft();
-    setShowPrintPreview(true);
-    setShowDraftConfirm(false);
+    const success = deleteDraft();
+    if (success) {
+      setShowPrintPreview(true);
+      setShowDraftConfirm(false);
+    }
   }, [deleteDraft, setShowPrintPreview, setShowDraftConfirm]);
 
   /**
@@ -70,7 +71,7 @@ export function useBudgetTablePrint(
         label: col.label,
         align: col.align
       }));
-      
+
       exportToCSV(
         filteredItems,
         createBudgetExportConfig(columns, hiddenColumns)
