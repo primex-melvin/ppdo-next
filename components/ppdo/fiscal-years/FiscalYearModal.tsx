@@ -111,18 +111,18 @@ export function FiscalYearModal({
             });
 
             if (result.success) {
-                toast.success("Fiscal Year Created", {
-                    description: `Successfully created fiscal year ${typedValues.year}`,
+                toast.success("Year Created", {
+                    description: `Successfully created year ${typedValues.year}`,
                 });
                 setCreatedYear(typedValues.year);
                 setShowRedirectModal(true);
             } else {
-                toast.error("Failed to create fiscal year");
+                toast.error("Failed to create year");
             }
         } catch (error: any) {
-            console.error("Error creating fiscal year:", error);
+            console.error("Error creating year:", error);
             toast.error("Error", {
-                description: error.message || "Failed to create fiscal year",
+                description: error.message || "Failed to create year",
             });
         } finally {
             setIsSubmitting(false);
@@ -139,7 +139,7 @@ export function FiscalYearModal({
                             <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
                         </div>
                         <DialogTitle className="text-center">
-                            Fiscal Year {createdYear} Created!
+                            Year {createdYear} Created!
                         </DialogTitle>
                         <DialogDescription className="text-center">
                             Would you like to navigate to the budget page for {createdYear} to start adding budget items?
@@ -290,7 +290,7 @@ export function FiscalYearModal({
                                     </FormControl>
                                     <div className="space-y-1 leading-none">
                                         <FormLabel className="text-sm font-medium cursor-pointer">
-                                            Set as Current Fiscal Year
+                                            Set as Current Year
                                         </FormLabel>
                                         <FormDescription className="text-xs">
                                             This will unset any existing current year

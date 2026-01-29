@@ -37,6 +37,7 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
 
     // Mutations (only for top-level page actions if needed, table handles most)
     const createProject = useMutation(api.twentyPercentDF.create);
+    const updateProject = useMutation(api.twentyPercentDF.update);
     const moveToTrash = useMutation(api.twentyPercentDF.moveToTrash);
 
     const [showTrashModal, setShowTrashModal] = useState(false);
@@ -77,6 +78,23 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
             toast.success("Successfully added 20% DF item");
         } catch (error) {
             toast.error("Failed to add item");
+            console.error(error);
+        }
+    };
+
+    const handleEdit = async (id: string, data: Partial<TwentyPercentDF>) => {
+        try {
+            // Remove id and _id from data to avoid conflict and type mismatch
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id: _, _creationTime, ...updateData } = data as any;
+
+            await updateProject({
+                id: id as Id<"twentyPercentDF">,
+                ...updateData,
+            });
+            toast.success("Successfully updated 20% DF item");
+        } catch (error) {
+            toast.error("Failed to update item");
             console.error(error);
         }
     };
@@ -150,6 +168,7 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
                 items={projects as any}
                 budgetItemYear={year}
                 onAdd={handleAdd}
+                onEdit={handleEdit}
                 onDelete={handleDelete}
                 onOpenTrash={() => setShowTrashModal(true)}
             />

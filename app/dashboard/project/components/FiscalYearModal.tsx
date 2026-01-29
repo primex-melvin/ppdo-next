@@ -114,7 +114,7 @@ export function FiscalYearModal({
 
       if (result.success) {
         toast.success("Fiscal Year Created", {
-          description: `Successfully created fiscal year ${typedValues.year}`,
+          description: `Successfully created year ${typedValues.year}`,
         });
         setCreatedYear(typedValues.year);
         setShowRedirectModal(true);
