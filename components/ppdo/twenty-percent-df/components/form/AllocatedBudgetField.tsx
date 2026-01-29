@@ -1,4 +1,3 @@
-
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
@@ -17,12 +16,12 @@ import {
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Info, AlertTriangle } from "lucide-react";
-import { ProjectFormValues } from "./utils/formValidation";
+import { TwentyPercentDFFormValues } from "./utils/formValidation";
 import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay, formatCurrency } from "@/lib/shared/utils/form-helpers";
 import { BudgetAvailabilityResult } from "./utils/budgetCalculations";
 
 interface AllocatedBudgetFieldProps {
-    form: UseFormReturn<ProjectFormValues>;
+    form: UseFormReturn<TwentyPercentDFFormValues>;
     displayValue: string;
     setDisplayValue: (value: string) => void;
     budgetAvailability: BudgetAvailabilityResult;

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -18,10 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { ProjectParticularCombobox } from "../ProjectParticularCombobox";
-import { ProjectFormValues } from "./utils/formValidation";
+import { TwentyPercentDFFormValues } from "./utils/formValidation";
 
 interface ParticularFieldProps {
-    form: UseFormReturn<ProjectFormValues>;
+    form: UseFormReturn<TwentyPercentDFFormValues>;
     isEditMode: boolean;
 }
 

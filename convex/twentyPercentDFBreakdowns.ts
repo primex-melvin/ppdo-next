@@ -75,6 +75,8 @@ export const createBreakdown = mutation({
         await logTwentyPercentDFBreakdownActivity(ctx, userId, {
             action: "created",
             breakdownId: breakdownId,
+            projectName: args.projectName,
+            implementingOffice: args.implementingOffice,
             newValues: createdBreakdown,
             source: "web_ui",
             reason: reason,
@@ -155,6 +157,8 @@ export const updateBreakdown = mutation({
         await logTwentyPercentDFBreakdownActivity(ctx, userId, {
             action: "updated",
             breakdownId: breakdownId,
+            projectName: updatedBreakdown?.projectName || previousBreakdown.projectName,
+            implementingOffice: updatedBreakdown?.implementingOffice || previousBreakdown.implementingOffice,
             previousValues: previousBreakdown,
             newValues: updatedBreakdown,
             source: "web_ui",
@@ -207,6 +211,8 @@ export const moveToTrash = mutation({
         await logTwentyPercentDFBreakdownActivity(ctx, userId, {
             action: "updated",
             breakdownId: args.breakdownId,
+            projectName: breakdown.projectName,
+            implementingOffice: breakdown.implementingOffice,
             previousValues: breakdown,
             newValues: { ...breakdown, isDeleted: true },
             source: "web_ui",

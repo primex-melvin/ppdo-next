@@ -11,12 +11,12 @@ import { createBreakdownSlug } from "./helpers";
 
 /**
  * Builds the URL path for viewing breakdown details
- * Supports both project and trust fund breakdowns
+ * Supports project, trust fund, special education fund, special health fund, and 20% DF breakdowns
  */
 export function buildBreakdownDetailPath(
   breakdown: Breakdown,
   params: NavigationParams,
-  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" = "project"
+  entityType: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF" = "project"
 ): string {
   const breakdownSlug = createBreakdownSlug(breakdown);
 
@@ -33,6 +33,11 @@ export function buildBreakdownDetailPath(
   if (entityType === "specialhealthfund") {
     const { year, slug } = params;
     return `/dashboard/special-health-funds/${year}/${slug}/${breakdownSlug}`;
+  }
+
+  if (entityType === "twentyPercentDF") {
+    const { year, slug } = params;
+    return `/dashboard/20_percent_df/${year}/${slug}/${breakdownSlug}`;
   }
 
   // Default: project breakdown

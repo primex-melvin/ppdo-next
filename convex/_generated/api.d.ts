@@ -133,6 +133,7 @@ import type * as trustFundBreakdowns from "../trustFundBreakdowns.js";
 import type * as trustFundSharedAccess from "../trustFundSharedAccess.js";
 import type * as trustFunds from "../trustFunds.js";
 import type * as twentyPercentDF from "../twentyPercentDF.js";
+import type * as twentyPercentDFActivities from "../twentyPercentDFActivities.js";
 import type * as twentyPercentDFBreakdowns from "../twentyPercentDFBreakdowns.js";
 import type * as userManagement from "../userManagement.js";
 import type * as users from "../users.js";
@@ -269,6 +270,7 @@ declare const fullApi: ApiFromModules<{
   trustFundSharedAccess: typeof trustFundSharedAccess;
   trustFunds: typeof trustFunds;
   twentyPercentDF: typeof twentyPercentDF;
+  twentyPercentDFActivities: typeof twentyPercentDFActivities;
   twentyPercentDFBreakdowns: typeof twentyPercentDFBreakdowns;
   userManagement: typeof userManagement;
   users: typeof users;

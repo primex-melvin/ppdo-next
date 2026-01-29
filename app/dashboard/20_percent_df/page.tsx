@@ -26,7 +26,7 @@ export default function TwentyPercentDFLanding() {
     const fiscalYears = useQuery(api.fiscalYears.list, { includeInactive: false });
 
     // Fetch all 20% Development Funds
-    const allTwentyPercentDF = useQuery(api.twentyPercentDF.list);
+    const allTwentyPercentDF = useQuery(api.twentyPercentDF.list, {});
 
     // Delete mutation
     const deleteFiscalYear = useMutation(api.fiscalYears.remove);

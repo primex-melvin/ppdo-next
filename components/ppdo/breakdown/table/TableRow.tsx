@@ -45,7 +45,7 @@ interface TableRowProps {
   onDelete?: (id: string) => void;
   onStartRowResize: (e: React.MouseEvent, rowId: string) => void;
   /** Entity type for status update mutation */
-  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";
+  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF";
 }
 
 export function TableRow({
@@ -70,6 +70,7 @@ export function TableRow({
   const updateTrustFundBreakdown = useMutation(api.trustFundBreakdowns.updateBreakdown);
   const updateSpecialEducationFundBreakdown = useMutation(api.specialEducationFundBreakdowns.updateBreakdown);
   const updateSpecialHealthFundBreakdown = useMutation(api.specialHealthFundBreakdowns.updateBreakdown);
+  const updateTwentyPercentDFBreakdown = useMutation(api.twentyPercentDFBreakdowns.updateBreakdown);
 
   const handleStatusChange = async (newStatus: "completed" | "ongoing" | "delayed") => {
     setIsUpdating(true);
@@ -87,6 +88,11 @@ export function TableRow({
       } else if (entityType === "specialhealthfund") {
         await updateSpecialHealthFundBreakdown({
           id: breakdown._id as Id<"specialHealthFundBreakdowns">,
+          status: newStatus,
+        });
+      } else if (entityType === "twentyPercentDF") {
+        await updateTwentyPercentDFBreakdown({
+          breakdownId: breakdown._id as Id<"twentyPercentDFBreakdowns">,
           status: newStatus,
         });
       } else {

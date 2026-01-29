@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useMemo } from "react";
@@ -12,7 +11,7 @@ import { TrashBinModal } from "@/components/TrashBinModal";
 // 20% DF Components
 import { TwentyPercentDFTable } from "@/components/ppdo/twenty-percent-df/components/TwentyPercentDFTable";
 import { TwentyPercentDFStatistics } from "@/components/ppdo/twenty-percent-df/components/TwentyPercentDFStatistics";
-import { YearBudgetPageHeader } from "@/app/dashboard/project/[year]/components/YearBudgetPageHeader";
+import { TwentyPercentDFYearHeader } from "./components/TwentyPercentDFYearHeader";
 
 // Types
 import { TwentyPercentDF } from "@/components/ppdo/twenty-percent-df/types";
@@ -63,7 +62,7 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
         };
     }, [projects]);
 
-    const handleAdd = async (data: Omit<TwentyPercentDF, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing" | "status"> & { categoryId?: string; autoCalculateBudgetUtilized?: boolean }) => {
+    const handleAdd = async (data: Omit<TwentyPercentDF, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing" | "status"> & { autoCalculateBudgetUtilized?: boolean }) => {
         try {
             await createProject({
                 ...data,
@@ -120,7 +119,7 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
 
     return (
         <div className="p-6">
-            <YearBudgetPageHeader
+            <TwentyPercentDFYearHeader
                 year={year}
                 pageTitle="20% Development Fund"
                 pageDescription="Manage 20% development fund allocations and utilization"

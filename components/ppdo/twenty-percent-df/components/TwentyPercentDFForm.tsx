@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { Form } from "@/components/ui/form";
-import { TwentyPercentDF } from "../types";
+import { TwentyPercentDF, TwentyPercentDFFormData } from "../types";
 import { BudgetViolationModal } from "./BudgetViolationModal";
 
 // Subcomponents
@@ -38,7 +38,7 @@ interface TwentyPercentDFFormProps {
     project?: TwentyPercentDF | null;
     budgetItemId?: string;
     budgetItemYear?: number;
-    onSave: (data: Omit<TwentyPercentDF, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing" | "status"> & { categoryId?: string; autoCalculateBudgetUtilized?: boolean }) => void;
+    onSave: (data: TwentyPercentDFFormData) => void | Promise<void>;
     onCancel: () => void;
 }
 
@@ -64,10 +64,38 @@ export function TwentyPercentDFForm({
         shouldFetchParent ? { id: budgetItemId as Id<"budgetItems"> } : "skip"
     );
 
-    const siblingProjects = useQuery(
+    const siblingProjectsRaw = useQuery(
         api.twentyPercentDF.list,
         shouldFetchParent ? { budgetItemId: budgetItemId as Id<"budgetItems"> } : "skip"
     );
+
+    // Transform Convex query result to TwentyPercentDF[]
+    // Note: Convex schema uses 'projectsOnTrack' but TwentyPercentDF interface uses 'projectsOngoing'
+    const siblingProjects: TwentyPercentDF[] | undefined = siblingProjectsRaw?.map((p) => ({
+        id: p._id,
+        particulars: p.particulars,
+        implementingOffice: p.implementingOffice,
+        categoryId: p.categoryId,
+        departmentId: p.departmentId,
+        totalBudgetAllocated: p.totalBudgetAllocated,
+        obligatedBudget: p.obligatedBudget,
+        totalBudgetUtilized: p.totalBudgetUtilized,
+        utilizationRate: p.utilizationRate || 0,
+        projectCompleted: p.projectCompleted || 0,
+        projectDelayed: p.projectDelayed || 0,
+        // Map Convex 'projectsOnTrack' to interface 'projectsOngoing'
+        projectsOngoing: (p as any).projectsOnTrack || 0,
+        remarks: p.remarks,
+        year: p.year,
+        status: p.status,
+        targetDateCompletion: p.targetDateCompletion,
+        isPinned: p.isPinned,
+        pinnedAt: p.pinnedAt,
+        pinnedBy: p.pinnedBy,
+        projectManagerId: p.projectManagerId,
+        _creationTime: p._creationTime,
+        autoCalculateBudgetUtilized: p.autoCalculateBudgetUtilized,
+    }));
 
     const [showViolationModal, setShowViolationModal] = useState(false);
     const [pendingValues, setPendingValues] = useState<TwentyPercentDFFormValues | null>(null);
@@ -85,7 +113,7 @@ export function TwentyPercentDFForm({
         defaultValues: savedDraft || {
             particulars: project?.particulars || "",
             implementingOffice: project?.implementingOffice || "",
-            categoryId: project?.categoryId || undefined,
+            categoryId: project?.categoryId as string | undefined,
             totalBudgetAllocated: project?.totalBudgetAllocated || 0,
             obligatedBudget: project?.obligatedBudget || undefined,
             totalBudgetUtilized: project?.totalBudgetUtilized || 0,
@@ -144,7 +172,7 @@ export function TwentyPercentDFForm({
     const budgetAvailability = calculateBudgetAvailability(
         shouldFetchParent,
         parentBudgetItem,
-        siblingProjects as TwentyPercentDF[],
+        siblingProjects,
         project,
         totalBudgetAllocated
     );
@@ -163,10 +191,16 @@ export function TwentyPercentDFForm({
     }
 
     const proceedWithSave = (values: TwentyPercentDFFormValues) => {
-        const projectData = {
-            ...values,
+        // Create TwentyPercentDFFormData with proper type casting for categoryId
+        const projectData: TwentyPercentDFFormData = {
+            particulars: values.particulars,
+            implementingOffice: values.implementingOffice,
+            categoryId: values.categoryId as Id<"projectCategories"> | undefined,
+            totalBudgetAllocated: values.totalBudgetAllocated,
+            obligatedBudget: values.obligatedBudget,
+            totalBudgetUtilized: values.totalBudgetUtilized,
             remarks: values.remarks || "",
-            categoryId: values.categoryId || undefined,
+            year: values.year,
             autoCalculateBudgetUtilized: values.autoCalculateBudgetUtilized,
         };
 

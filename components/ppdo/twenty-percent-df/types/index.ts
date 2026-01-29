@@ -1,4 +1,3 @@
-
 import { Id } from "@/convex/_generated/dataModel";
 import { SortState, ContextMenuState } from "@/lib/shared/types/table.types";
 
@@ -10,7 +9,8 @@ export interface TwentyPercentDF {
     id: string;
     particulars: string;
     implementingOffice: string;
-    categoryId?: string;
+    categoryId?: Id<"projectCategories">;
+    departmentId?: Id<"departments">;
     totalBudgetAllocated: number;
     obligatedBudget?: number;
     totalBudgetUtilized: number;
@@ -24,8 +24,8 @@ export interface TwentyPercentDF {
     targetDateCompletion?: number;
     isPinned?: boolean;
     pinnedAt?: number;
-    pinnedBy?: string;
-    projectManagerId?: string;
+    pinnedBy?: Id<"users">;
+    projectManagerId?: Id<"users">;
     _creationTime?: number;
     autoCalculateBudgetUtilized?: boolean;
 }
@@ -33,7 +33,8 @@ export interface TwentyPercentDF {
 export interface TwentyPercentDFFormData {
     particulars: string;
     implementingOffice: string;
-    categoryId?: string;
+    categoryId?: Id<"projectCategories">;
+    departmentId?: Id<"departments">;
     totalBudgetAllocated: number;
     obligatedBudget?: number;
     totalBudgetUtilized: number;
@@ -42,8 +43,8 @@ export interface TwentyPercentDFFormData {
     targetDateCompletion?: number;
     isPinned?: boolean;
     pinnedAt?: number;
-    pinnedBy?: string;
-    projectManagerId?: string;
+    pinnedBy?: Id<"users">;
+    projectManagerId?: Id<"users">;
     _creationTime?: number;
     autoCalculateBudgetUtilized?: boolean;
 }
@@ -59,6 +60,9 @@ export type TwentyPercentDFSortState = SortState<TwentyPercentDFSortField>;
 export type TwentyPercentDFContextMenuState = ContextMenuState<TwentyPercentDF>;
 
 export type SortDirection = "asc" | "desc" | null;
+
+// Add the missing type alias for TwentyPercentDFSortDirection
+export type TwentyPercentDFSortDirection = SortDirection;
 
 export interface TwentyPercentDFFilterState {
     searchQuery: string;
@@ -121,8 +125,9 @@ export interface TwentyPercentDFTotals {
 // ============================================================================
 
 export interface TwentyPercentDFTableProps {
-    data: TwentyPercentDF[]; // Renamed from projects
-    particularId?: string; // Optional/Different context
+    items: TwentyPercentDF[]; // Changed from 'data' to 'items' to match component
+    particularId?: string;
+    budgetItemYear?: number; // Added this prop
     year?: number;
     onAdd?: (data: TwentyPercentDFFormData) => void | Promise<void>;
     onEdit?: (id: string, data: TwentyPercentDFFormData) => void;

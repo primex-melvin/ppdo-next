@@ -32,6 +32,8 @@ export async function logTwentyPercentDFBreakdownActivity(
     activity: {
         action: string;
         breakdownId: Id<"twentyPercentDFBreakdowns">;
+        projectName: string;
+        implementingOffice: string;
         previousValues?: any;
         newValues?: any;
         source?: string;
@@ -43,6 +45,8 @@ export async function logTwentyPercentDFBreakdownActivity(
         userId,
         action: activity.action,
         breakdownId: activity.breakdownId,
+        projectName: activity.projectName,
+        implementingOffice: activity.implementingOffice,
         previousValues: activity.previousValues,
         newValues: activity.newValues,
         source: activity.source,

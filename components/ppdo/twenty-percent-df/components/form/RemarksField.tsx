@@ -1,4 +1,3 @@
-
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
@@ -10,10 +9,10 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { ProjectFormValues } from "./utils/formValidation";
+import { TwentyPercentDFFormValues } from "./utils/formValidation";
 
 interface RemarksFieldProps {
-    form: UseFormReturn<ProjectFormValues>;
+    form: UseFormReturn<TwentyPercentDFFormValues>;
 }
 
 export function RemarksField({ form }: RemarksFieldProps) {

@@ -27,6 +27,10 @@ export const twentyPercentDFActivityTables = {
         action: v.string(),
         breakdownId: v.id("twentyPercentDFBreakdowns"),
 
+        // Contextual snapshots from the breakdown (for quick filtering without joins)
+        projectName: v.string(),
+        implementingOffice: v.string(),
+
         // Common fields
         previousValues: v.optional(v.any()), // Store full object snapshot
         newValues: v.optional(v.any()),      // Store full object snapshot
@@ -40,5 +44,8 @@ export const twentyPercentDFActivityTables = {
         .index("breakdownId", ["breakdownId"])
         .index("userId", ["userId"])
         .index("timestamp", ["timestamp"])
-        .index("batchId", ["batchId"]),
+        .index("batchId", ["batchId"])
+        .index("projectName", ["projectName"])
+        .index("implementingOffice", ["implementingOffice"])
+        .index("projectNameAndOffice", ["projectName", "implementingOffice"]),
 };

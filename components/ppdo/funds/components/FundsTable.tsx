@@ -45,7 +45,9 @@ export function FundsTable<T extends BaseFund>({
         ? api.trustFunds
         : fundType === 'specialEducation'
             ? api.specialEducationFunds
-            : api.specialHealthFunds;
+            : fundType === 'specialHealth'
+                ? api.specialHealthFunds
+                : api.twentyPercentDF;
 
     // Mutations
     const togglePin = useMutation(apiEndpoint.togglePin);
@@ -205,45 +207,36 @@ export function FundsTable<T extends BaseFund>({
     };
 
     const handleExportCSV = () => {
-        try {
-            const fundTypeSlug = fundType === 'trust'
-                ? 'trust-funds'
-                : fundType === 'specialEducation'
-                    ? 'special-education-funds'
-                    : 'special-health-funds';
-            exportToCSV(filteredAndSortedData, hiddenColumns, year, fundTypeSlug);
-            toast.success("CSV exported successfully");
-        } catch (error) {
-            toast.error("Failed to export CSV");
-        }
+        const fundTypeSlug = fundType === 'trust'
+            ? 'trust-funds'
+            : fundType === 'specialEducation'
+                ? 'special-education-funds'
+                : fundType === 'specialHealth'
+                    ? 'special-health-funds'
+                    : '20-percent-df';
+        exportToCSV(filteredAndSortedData, hiddenColumns, year, fundTypeSlug);
     };
 
     const handlePrint = (orientation: 'portrait' | 'landscape') => {
         printTable(orientation);
-        setShowPrintModal(false);
     };
 
     return (
         <>
-            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="space-y-4">
-                <div className="flex items-center justify-end">
-                    <TabsList className="bg-zinc-100 dark:bg-zinc-800">
-                        <TabsTrigger value="table" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
-                            <TableIcon className="h-4 w-4" />
-                            Table
-                        </TabsTrigger>
-                        <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
-                            <LayoutGrid className="h-4 w-4" />
-                            Kanban
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="w-full">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="table" className="gap-2">
+                        <TableIcon className="w-4 h-4" />
+                        Table View
+                    </TabsTrigger>
+                    <TabsTrigger value="kanban" className="gap-2">
+                        <LayoutGrid className="w-4 h-4" />
+                        Kanban View
+                    </TabsTrigger>
+                </TabsList>
 
                 <TabsContent value="table" className="mt-0">
-                    {/* Main Table Container */}
-                    <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-
-                        {/* Toolbar */}
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                         <FundsTableToolbar
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
@@ -265,32 +258,13 @@ export function FundsTable<T extends BaseFund>({
                             searchPlaceholder={searchPlaceholder}
                         />
 
-                        {/* Print Header (hidden on screen, visible in print) */}
-                        <div className="hidden print-only p-4 border-b border-zinc-900">
-                            <h2 className="text-xl font-bold text-zinc-900 mb-2">
-                                {title} {year}
-                            </h2>
-                            <p className="text-sm text-zinc-700">
-                                Generated on:{" "}
-                                {new Date().toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                })}
-                            </p>
-                        </div>
-
-                        {/* Table */}
-                        <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
-                            <table className="w-full">
+                        <div className="overflow-auto max-h-[calc(100vh-300px)]">
+                            <table className="w-full border-collapse">
                                 <FundsTableColgroup
                                     isAdmin={isAdmin}
                                     hiddenColumns={hiddenColumns}
                                     columnWidths={columnWidths}
                                 />
-
                                 <FundsTableHeader
                                     isAdmin={isAdmin}
                                     hiddenColumns={hiddenColumns}
@@ -300,7 +274,6 @@ export function FundsTable<T extends BaseFund>({
                                     onSort={handleSort}
                                     onResizeStart={handleResizeStart}
                                 />
-
                                 <FundsTableBody
                                     data={filteredAndSortedData}
                                     year={year}

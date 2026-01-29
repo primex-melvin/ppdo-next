@@ -1,4 +1,3 @@
-
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
@@ -10,10 +9,10 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ProjectFormValues } from "./utils/formValidation";
+import { TwentyPercentDFFormValues } from "./utils/formValidation";
 
 interface YearFieldProps {
-    form: UseFormReturn<ProjectFormValues>;
+    form: UseFormReturn<TwentyPercentDFFormValues>;
     urlYear?: number;
 }
 

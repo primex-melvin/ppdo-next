@@ -13,7 +13,7 @@ type ActivityLogCardProps = {
   accentColorValue: string;
 };
 
-// ✅ FIXED: Changed 'budget' to 'budgetItem'
+// ✅ FIXED: Added twentyPercentDF and twentyPercentDFBreakdown
 const trackedFieldsByType: Record<ActivityLogType, string[]> = {
   breakdown: ["allocatedBudget", "status", "projectAccomplishment", "remarks"],
   project: ["totalBudgetAllocated", "targetDateCompletion", "remarks", "implementingOffice"],
@@ -23,6 +23,8 @@ const trackedFieldsByType: Record<ActivityLogType, string[]> = {
   specialHealthFund: ["received", "utilized", "balance", "officeInCharge", "remarks"],
   specialEducationFundBreakdown: ["allocatedBudget", "status", "projectAccomplishment", "remarks"],
   specialHealthFundBreakdown: ["allocatedBudget", "status", "projectAccomplishment", "remarks"],
+  twentyPercentDF: ["totalBudgetAllocated", "totalBudgetUtilized", "obligatedBudget", "implementingOffice", "remarks"],
+  twentyPercentDFBreakdown: ["allocatedBudget", "status", "projectAccomplishment", "remarks"],
 };
 
 export function ActivityLogCard({
@@ -86,6 +88,10 @@ export function ActivityLogCard({
                   <>Processed project <strong>{activity.particulars}</strong></>
                 ) : type === "trustFund" ? (
                   <>Processed trust fund <strong>{activity.projectTitle}</strong></>
+                ) : type === "twentyPercentDF" ? (
+                  <>Processed 20% DF <strong>{activity.particulars}</strong></>
+                ) : type === "twentyPercentDFBreakdown" ? (
+                  <>Processed 20% DF breakdown for <strong>{implementingOffice}</strong></>
                 ) : (
                   <>Processed budget item <strong>{activity.particulars}</strong></>
                 )}

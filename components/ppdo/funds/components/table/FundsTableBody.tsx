@@ -31,7 +31,7 @@ interface FundsTableBodyProps<T extends BaseFund> {
     onDelete: (item: T) => void;
     canEdit: boolean;
     canDelete: boolean;
-    fundType: 'trust' | 'specialEducation' | 'specialHealth';
+    fundType: 'trust' | 'specialEducation' | 'specialHealth' | 'twentyPercent';
     emptyMessage?: string;
 }
 

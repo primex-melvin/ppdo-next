@@ -1,4 +1,3 @@
-
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
@@ -13,11 +12,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, MinusCircle, AlertTriangle } from "lucide-react";
-import { ProjectFormValues } from "./utils/formValidation";
+import { TwentyPercentDFFormValues } from "./utils/formValidation";
 import { formatNumberWithCommas, parseFormattedNumber, formatNumberForDisplay } from "@/lib/shared/utils/form-helpers";
 
 interface ManualInputSectionProps {
-    form: UseFormReturn<ProjectFormValues>;
+    form: UseFormReturn<TwentyPercentDFFormValues>;
     showManualInput: boolean;
     setShowManualInput: (show: boolean) => void;
     autoCalculate: boolean;

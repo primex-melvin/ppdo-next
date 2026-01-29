@@ -98,31 +98,20 @@ export const getProjectOfficeActivities = query({
 
         const limit = args.limit || 50;
 
-        // We need to query by project name and/or implementing office
-        // Since we don't have a direct index for both on activities, 
-        // we might rely on the fact that activities copy these fields.
-        // Assuming schema/twentyPercentDFBreakdownActivities.ts has these fields 
-        // and indexes similar to other breakdown activities.
-
-        // Check if we have an index for projectName_implementingOffice?
-        // Usually these activities have indices on projectName and implementingOffice separately.
-
-        // Let's try querying by projectName first (more selective usually)
+        // Query using the composite index on projectName and implementingOffice
         let activities = await ctx.db
             .query("twentyPercentDFBreakdownActivities")
-            .withIndex("projectName", (q) => q.eq("projectName", args.projectName))
+            .withIndex("projectNameAndOffice", (q) =>
+                q.eq("projectName", args.projectName).eq("implementingOffice", args.implementingOffice)
+            )
             .order("desc")
-            .take(limit * 2); // Fetch more to filter
-
-        // Filter by implementingOffice
-        activities = activities.filter(a => a.implementingOffice === args.implementingOffice);
+            .take(limit);
 
         // Filter by action
         if (args.action && args.action !== "all") {
             activities = activities.filter(a => a.action === args.action);
         }
 
-        // Sort again just in case (though filtered list preserves order) and limit
-        return activities.slice(0, limit);
+        return activities;
     },
 });

@@ -465,6 +465,13 @@ export function useActivityLogData({
       return twentyPercentDFBreakdownActivitiesSingle === undefined;
     }
 
+    if (type === "twentyPercentDF") {
+      if (entityId === "all") {
+        return twentyPercentDFActivitiesAll === undefined;
+      }
+      return twentyPercentDFActivitiesSingle === undefined;
+    }
+
     return false;
   }, [
     type,
@@ -482,7 +489,9 @@ export function useActivityLogData({
     healthBreakdownActivitiesSingle,
     healthBreakdownActivitiesProjectOffice,
     twentyPercentDFBreakdownActivitiesSingle,
-    twentyPercentDFBreakdownActivitiesProjectOffice
+    twentyPercentDFBreakdownActivitiesProjectOffice,
+    twentyPercentDFActivitiesAll,
+    twentyPercentDFActivitiesSingle
   ]);
 
   // ============================================================================

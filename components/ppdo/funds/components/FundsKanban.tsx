@@ -14,7 +14,7 @@ interface FundsKanbanProps<T extends BaseFund> {
     onPin: (item: T) => void;
     visibleStatuses?: Set<string>;
     visibleFields?: Set<string>;
-    fundType: 'trust' | 'specialEducation' | 'specialHealth';
+    fundType: 'trust' | 'specialEducation' | 'specialHealth' | 'twentyPercent';
     year: number;
     onStatusChange?: (itemId: string, newStatus: string) => void;
 }
@@ -53,7 +53,9 @@ export function FundsKanban<T extends BaseFund>({
             ? 'trust-funds'
             : fundType === 'specialEducation'
                 ? 'special-education-funds'
-                : 'special-health-funds';
+                : fundType === 'specialHealth'
+                    ? 'special-health-funds'
+                    : '20_percent_df';
 
         data.forEach((item) => {
             let status = item.status;
