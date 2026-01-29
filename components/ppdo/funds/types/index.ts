@@ -29,6 +29,7 @@ export interface BaseFund {
     fiscalYear?: number;
     isPinned?: boolean;
     isDeleted?: boolean;
+    autoCalculateFinancials?: boolean;
     createdAt?: number;
     updatedAt?: number;
 }
@@ -88,12 +89,12 @@ export interface FundsTableProps<T = BaseFund> {
     onDelete?: (id: string) => void;
     onOpenTrash?: () => void;
     year: number;
-    fundType: 'trust' | 'specialEducation' | 'specialHealth';
+    fundType: 'trust' | 'specialEducation' | 'specialHealth' | 'twentyPercent';
     title?: string;
     searchPlaceholder?: string;
     emptyMessage?: string;
     FormComponent?: React.ComponentType<any>;
-    activityLogType: 'trustFund' | 'specialEducationFund' | 'specialHealthFund';
+    activityLogType: 'trustFund' | 'specialEducationFund' | 'specialHealthFund' | 'twentyPercentDF';
 }
 
 // ============================================================================

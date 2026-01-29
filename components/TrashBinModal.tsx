@@ -25,8 +25,8 @@ import {
 import { toast } from "sonner";
 import { useAccentColor } from "../contexts/AccentColorContext";
 
-// 🆕 UPDATED: Added fund types to type union
-type EntityType = "budget" | "project" | "breakdown" | "trustFund" | "specialEducationFund" | "specialHealthFund";
+// ✅ FIXED: Added twentyPercentDF to type union
+type EntityType = "budget" | "project" | "breakdown" | "trustFund" | "specialEducationFund" | "specialHealthFund" | "twentyPercentDF";
 
 interface TrashBinModalProps {
   isOpen: boolean;
@@ -40,24 +40,27 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 🆕 UPDATED: Dynamic Queries with all fund types support
+  // ✅ FIXED: Added twentyPercentDF queries
   const trashItems = useQuery(
     type === "budget" ? api.budgetItems.getTrash :
       type === "project" ? api.projects.getTrash :
         type === "trustFund" ? api.trustFunds.getTrash :
           type === "specialEducationFund" ? api.specialEducationFunds.getTrash :
             type === "specialHealthFund" ? api.specialHealthFunds.getTrash :
-              api.govtProjects.getTrash
+              type === "twentyPercentDF" ? api.twentyPercentDF.getTrash :
+                api.govtProjects.getTrash,
+    {}
   );
 
-  // 🆕 UPDATED: Dynamic Mutations with all fund types support
+  // ✅ FIXED: Added twentyPercentDF mutations
   const restoreMutation = useMutation(
     type === "budget" ? api.budgetItems.restoreFromTrash :
       type === "project" ? api.projects.restoreFromTrash :
         type === "trustFund" ? api.trustFunds.restoreFromTrash :
           type === "specialEducationFund" ? api.specialEducationFunds.restoreFromTrash :
             type === "specialHealthFund" ? api.specialHealthFunds.restoreFromTrash :
-              api.govtProjects.restoreFromTrash
+              type === "twentyPercentDF" ? api.twentyPercentDF.restoreFromTrash :
+                api.govtProjects.restoreFromTrash
   );
 
   const deleteMutation = useMutation(
@@ -66,10 +69,11 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
         type === "trustFund" ? api.trustFunds.remove :
           type === "specialEducationFund" ? api.specialEducationFunds.remove :
             type === "specialHealthFund" ? api.specialHealthFunds.remove :
-              api.govtProjects.deleteProjectBreakdown
+              type === "twentyPercentDF" ? api.twentyPercentDF.remove :
+                api.govtProjects.deleteProjectBreakdown
   );
 
-  // 🆕 UPDATED: Filter items with all fund types support
+  // ✅ FIXED: Added twentyPercentDF filtering
   const filteredItems = trashItems?.filter((item: any) => {
     const term = searchQuery.toLowerCase();
     if (type === "budget") return item.particulars.toLowerCase().includes(term);
@@ -77,6 +81,7 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
     if (type === "trustFund") return item.projectTitle.toLowerCase().includes(term) || item.officeInCharge.toLowerCase().includes(term);
     if (type === "specialEducationFund") return item.projectTitle.toLowerCase().includes(term) || item.officeInCharge.toLowerCase().includes(term);
     if (type === "specialHealthFund") return item.projectTitle.toLowerCase().includes(term) || item.officeInCharge.toLowerCase().includes(term);
+    if (type === "twentyPercentDF") return item.particulars.toLowerCase().includes(term) || item.implementingOffice.toLowerCase().includes(term);
     if (type === "breakdown") return item.projectName.toLowerCase().includes(term) || item.implementingOffice.toLowerCase().includes(term);
     return false;
   }) || [];
@@ -104,7 +109,7 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
   const formatDate = (ts?: number) =>
     ts ? new Date(ts).toLocaleDateString() : "N/A";
 
-  // 🆕 UPDATED: ACTIONS with all fund types support
+  // ✅ FIXED: Added twentyPercentDF restore/delete actions
   const handleRestore = async (ids: string[]) => {
     if (!ids.length) return;
     setIsProcessing(true);
@@ -120,6 +125,8 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
           return restoreMutation({ id: id as Id<"specialEducationFunds"> });
         } else if (type === "specialHealthFund") {
           return restoreMutation({ id: id as Id<"specialHealthFunds"> });
+        } else if (type === "twentyPercentDF") {
+          return restoreMutation({ id: id as Id<"twentyPercentDF"> });
         } else {
           return restoreMutation({ breakdownId: id as Id<"govtProjectBreakdowns"> });
         }
@@ -152,6 +159,8 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
           return deleteMutation({ id: id as Id<"specialEducationFunds"> });
         } else if (type === "specialHealthFund") {
           return deleteMutation({ id: id as Id<"specialHealthFunds"> });
+        } else if (type === "twentyPercentDF") {
+          return deleteMutation({ id: id as Id<"twentyPercentDF"> });
         } else {
           return deleteMutation({ breakdownId: id as Id<"govtProjectBreakdowns"> });
         }
@@ -167,7 +176,7 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
     }
   };
 
-  // 🆕 UPDATED: Title with all fund types support
+  // ✅ FIXED: Added twentyPercentDF title
   const getTitle = () => {
     switch (type) {
       case "budget": return "Budget Items";
@@ -175,6 +184,7 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
       case "trustFund": return "Trust Funds";
       case "specialEducationFund": return "Special Education Funds";
       case "specialHealthFund": return "Special Health Funds";
+      case "twentyPercentDF": return "20% Development Funds";
       case "breakdown": return "Breakdowns";
       default: return "Items";
     }
@@ -281,24 +291,25 @@ export function TrashBinModal({ isOpen, onClose, type }: TrashBinModalProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {/* 🆕 UPDATED: Display fund title */}
+                        {/* ✅ FIXED: Added twentyPercentDF display */}
                         {type === "budget" ? item.particulars :
                           type === "project" ? item.particulars :
                             type === "trustFund" ? item.projectTitle :
                               type === "specialEducationFund" ? item.projectTitle :
                                 type === "specialHealthFund" ? item.projectTitle :
-                                  item.projectName || item.projectTitle || "Untitled"}
+                                  type === "twentyPercentDF" ? item.particulars :
+                                    item.projectName || item.projectTitle || "Untitled"}
                       </div>
                       <div className="text-xs text-zinc-500">
                         ID: {item._id.slice(-6)}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                      {/* 🆕 UPDATED: Display fund office */}
+                      {/* ✅ FIXED: Added twentyPercentDF office display */}
                       {(type === "trustFund" || type === "specialEducationFund" || type === "specialHealthFund") ? item.officeInCharge : item.implementingOffice || "-"}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                      {/* 🆕 UPDATED: Display fund received amount */}
+                      {/* ✅ FIXED: Added twentyPercentDF amount display */}
                       {formatCurrency(
                         (type === "trustFund" || type === "specialEducationFund" || type === "specialHealthFund") ? item.received :
                           item.totalBudgetAllocated || item.allocatedBudget

@@ -1,0 +1,118 @@
+
+
+"use client";
+
+import { Filter } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TwentyPercentDFSortField, SortDirection } from "../../types";
+import { AVAILABLE_COLUMNS } from "../../constants";
+import { SortIcon } from "./SortIcon";
+
+interface TwentyPercentDFTableHeaderProps {
+    hiddenColumns: Set<string>;
+    sortField: TwentyPercentDFSortField | null;
+    sortDirection: SortDirection;
+    onSort: (field: TwentyPercentDFSortField) => void;
+    canManageBulkActions: boolean;
+    isAllSelected: boolean;
+    isIndeterminate: boolean;
+    onSelectAll: (checked: boolean) => void;
+    onFilterClick?: (column: string) => void;
+    activeFilterColumn?: string | null;
+}
+
+/**
+ * Table header with column names, sorting, and selection
+ */
+export function TwentyPercentDFTableHeader({
+    hiddenColumns,
+    sortField,
+    sortDirection,
+    onSort,
+    canManageBulkActions,
+    isAllSelected,
+    isIndeterminate,
+    onSelectAll,
+    onFilterClick,
+    activeFilterColumn,
+}: TwentyPercentDFTableHeaderProps) {
+
+    const renderHeaderCell = (column: typeof AVAILABLE_COLUMNS[0]) => {
+        const isSortable = column.sortable;
+        const isFilterable = column.filterable;
+
+        if (isSortable) {
+            return (
+                <button
+                    onClick={() => onSort(column.id as TwentyPercentDFSortField)}
+                    className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                >
+                    {column.label}
+                    <SortIcon
+                        field={column.id as TwentyPercentDFSortField}
+                        currentSortField={sortField}
+                        currentSortDirection={sortDirection}
+                    />
+                </button>
+            );
+        }
+
+        if (isFilterable && onFilterClick) {
+            return (
+                <button
+                    onClick={() => onFilterClick(column.id)}
+                    className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                >
+                    {column.label}
+                    <Filter
+                        className={`w-3.5 h-3.5 ${activeFilterColumn === column.id
+                            ? 'text-blue-600'
+                            : 'opacity-50'
+                            }`}
+                    />
+                </button>
+            );
+        }
+
+        return (
+            <span className="text-xs font-semibold uppercase tracking-wide">
+                {column.label}
+            </span>
+        );
+    };
+
+    return (
+        <thead>
+            <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+                {/* Checkbox Column */}
+                {canManageBulkActions && (
+                    <th className="w-10 px-3 py-3 text-center sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-20">
+                        <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={onSelectAll}
+                            aria-label="Select all"
+                            className={isIndeterminate ? "opacity-50" : ""}
+                        />
+                    </th>
+                )}
+
+                {/* Data Columns */}
+                {AVAILABLE_COLUMNS.map((column) => {
+                    if (hiddenColumns.has(column.id)) return null;
+
+                    return (
+                        <th
+                            key={column.id}
+                            className={`px-3 py-3 sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10 ${column.align === 'right' ? 'text-right' :
+                                column.align === 'center' ? 'text-center' :
+                                    'text-left'
+                                }`}
+                        >
+                            {renderHeaderCell(column)}
+                        </th>
+                    );
+                })}
+            </tr>
+        </thead>
+    );
+}

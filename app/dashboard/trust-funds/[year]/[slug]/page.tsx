@@ -11,6 +11,7 @@
 
 "use client";
 
+import { AutoCalcConfirmationModal } from "@/components/ppdo/breakdown/shared/AutoCalcConfirmationModal";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
@@ -74,6 +75,7 @@ export default function TrustFundBreakdownPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBreakdown, setSelectedBreakdown] = useState<Breakdown | null>(null);
   const [showHeader, setShowHeader] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
   // Queries
   const trustFund = useQuery(
@@ -116,6 +118,7 @@ export default function TrustFundBreakdownPage() {
   const createBreakdown = useMutation(api.trustFundBreakdowns.createBreakdown);
   const updateBreakdown = useMutation(api.trustFundBreakdowns.updateBreakdown);
   const deleteBreakdown = useMutation(api.trustFundBreakdowns.moveToTrash);
+  const toggleAutoCalculate = useMutation(api.trustFunds.toggleAutoCalculateFinancials);
 
   // Handlers
   const handlePrint = () => window.print();
@@ -213,6 +216,20 @@ export default function TrustFundBreakdownPage() {
     }
   };
 
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      await updateBreakdown({
+        id: id as Id<"trustFundBreakdowns">,
+        status: newStatus as "ongoing" | "completed" | "delayed",
+      });
+      toast.success("Status updated successfully");
+    } catch (error: any) {
+      toast.error("Failed to update status", {
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <>
       {/* Shared Header Component - NO recalculate button for Trust Funds */}
@@ -228,14 +245,24 @@ export default function TrustFundBreakdownPage() {
         setShowHeader={setShowHeader}
         showRecalculateButton={false} // Key difference from Projects
         showActivityLog={true}
+        isAutoCalculate={trustFund?.autoCalculateFinancials}
+        onToggleAutoCalculate={async () => {
+          if (!trustFund) return;
+          await toggleAutoCalculate({ id: trustFundId as Id<"trustFunds"> });
+          setIsConfirmationOpen(true);
+          toast.success("Auto-calculation settings updated");
+        }}
       />
 
       {/* Shared Entity Overview Cards */}
-      {showHeader && trustFund && (
+      {trustFund && (
         <EntityOverviewCards
           entityType="trustfund"
           implementingOffice={trustFund.officeInCharge}
           totalBudget={trustFund.received}
+          obligated={trustFund.obligatedPR}
+          utilized={trustFund.utilized}
+          balance={trustFund.balance}
           statusText={trustFund.status}
           statusColor={getStatusColor(trustFund.status)}
           year={year}
@@ -249,6 +276,19 @@ export default function TrustFundBreakdownPage() {
               }
               : undefined
           }
+        />
+      )}
+
+      {trustFund && (
+        <AutoCalcConfirmationModal
+          isOpen={isConfirmationOpen}
+          onClose={() => setIsConfirmationOpen(false)}
+          isAutoCalculate={trustFund.autoCalculateFinancials ?? false}
+          data={{
+            obligated: trustFund.obligatedPR ?? 0,
+            utilized: trustFund.utilized ?? 0,
+            balance: trustFund.balance ?? 0,
+          }}
         />
       )}
 
@@ -279,6 +319,7 @@ export default function TrustFundBreakdownPage() {
             onAdd={() => setShowAddModal(true)}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
             onOpenTrash={() => setShowTrashModal(true)}
             entityType="trustfund"
           />

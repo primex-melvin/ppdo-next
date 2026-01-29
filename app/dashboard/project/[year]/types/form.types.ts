@@ -18,7 +18,7 @@ export interface BudgetItemFormProps {
       | "utilizationRate"
       | "projectCompleted"
       | "projectDelayed"
-      | "projectsOnTrack"
+      | "projectsOngoing"
       | "status"
     > & { autoCalculateBudgetUtilized?: boolean }
   ) => void;

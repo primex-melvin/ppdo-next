@@ -36,7 +36,7 @@ interface BudgetItem {
   utilizationRate: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
+  projectsOngoing: number;
   year?: number;
   status?: "completed" | "ongoing" | "delayed";
   autoCalculateBudgetUtilized?: boolean; // 🆕 NEW FIELD
@@ -70,7 +70,7 @@ type BudgetItemFormValues = z.infer<typeof budgetItemSchema>;
 
 interface BudgetItemFormProps {
   item?: BudgetItem | null;
-  onSave: (item: Omit<BudgetItem, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOnTrack" | "status"> & { autoCalculateBudgetUtilized?: boolean }) => void;
+  onSave: (item: Omit<BudgetItem, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing" | "status"> & { autoCalculateBudgetUtilized?: boolean }) => void;
   onCancel: () => void;
 }
 
@@ -124,16 +124,16 @@ export function BudgetItemForm({
   const urlYear = (() => {
     const segments = pathname.split('/');
     const projectIndex = segments.findIndex(seg => seg === 'project');
-    
+
     if (projectIndex !== -1 && segments[projectIndex + 1]) {
       const yearSegment = segments[projectIndex + 1];
       const parsed = parseInt(yearSegment);
-      
+
       if (!isNaN(parsed) && parsed >= 2000 && parsed <= 2100) {
         return parsed;
       }
     }
-    
+
     return undefined;
   })();
 
@@ -167,14 +167,14 @@ export function BudgetItemForm({
       obligatedBudget: item?.obligatedBudget || undefined,
       totalBudgetUtilized: item?.totalBudgetUtilized || 0,
       year: item?.year || urlYear || undefined,
-      autoCalculateBudgetUtilized: item?.autoCalculateBudgetUtilized !== undefined 
-        ? item.autoCalculateBudgetUtilized 
+      autoCalculateBudgetUtilized: item?.autoCalculateBudgetUtilized !== undefined
+        ? item.autoCalculateBudgetUtilized
         : true, // 🆕 Default to TRUE
     },
   });
 
   const formValues = form.watch();
-  
+
   // 🆕 Watch auto-calculate state
   const autoCalculate = form.watch("autoCalculateBudgetUtilized");
 
@@ -231,7 +231,7 @@ export function BudgetItemForm({
 
   const handleSaveEdit = async () => {
     const trimmed = editedParticular.trim().toUpperCase();
-    
+
     if (trimmed.length === 0 || !/^[\p{L}0-9_%\s,\.\-@]+$/u.test(trimmed)) {
       toast.error("Invalid format", {
         description: "Code can only contain letters, numbers, underscores, percentage signs, spaces, commas, periods, hyphens, and @"
@@ -250,7 +250,7 @@ export function BudgetItemForm({
 
       try {
         setIsSavingParticular(true);
-        
+
         await createParticular({
           code: trimmed,
           fullName: trimmed,
@@ -504,8 +504,8 @@ export function BudgetItemForm({
                   </Badge>
                 </FormLabel>
                 <FormDescription className="text-xs">
-                  {field.value 
-                    ? "Budget utilized is automatically calculated from linked projects. Manual input is disabled." 
+                  {field.value
+                    ? "Budget utilized is automatically calculated from linked projects. Manual input is disabled."
                     : "Budget utilized can be manually entered. Automatic calculation from projects is disabled."}
                 </FormDescription>
               </div>
@@ -686,8 +686,8 @@ export function BudgetItemForm({
           <div className="text-sm text-blue-700 dark:text-blue-300">
             <p className="font-medium">Automatic Project Metrics & Status</p>
             <p className="mt-1 opacity-90">
-              {autoCalculate 
-                ? "Project counts, status, and budget utilized are automatically calculated from individual projects." 
+              {autoCalculate
+                ? "Project counts, status, and budget utilized are automatically calculated from individual projects."
                 : "Project counts and status are automatically calculated. Budget utilized is manually entered."}
             </p>
           </div>

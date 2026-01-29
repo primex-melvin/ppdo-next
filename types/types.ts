@@ -36,12 +36,12 @@ export interface BudgetItem {
   obligatedBudget?: number;
   totalBudgetUtilized: number;
   utilizationRate: number;
-  
+
   // 🔒 READ-ONLY: Calculated from child projects
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
-  
+  projectsOngoing: number;
+
   year?: number;
   status?: ProjectStatus;
   isPinned?: boolean;
@@ -72,7 +72,7 @@ export interface BudgetItemFromDB {
   utilizationRate: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
+  projectsOngoing: number;
   notes?: string;
   year?: number;
   status?: ProjectStatus;
@@ -140,7 +140,7 @@ export interface ProjectFromDB {
   utilizationRate: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
+  projectsOngoing: number;
   remarks?: string;
   year?: number;
   status?: ProjectStatus;
@@ -190,7 +190,7 @@ export interface GovtProjectBreakdown {
 
 // ✅ Allow string to prevent strict typing errors in sorting
 export type SortDirection = "asc" | "desc" | null;
-export type SortField = string | null; 
+export type SortField = string | null;
 
 export interface ColumnFilter {
   field: string;
@@ -255,22 +255,22 @@ export function calculateAggregateStatus<T extends { status?: ProjectStatus }>(
   items: T[]
 ): ProjectStatus {
   if (items.length === 0) return "ongoing";
-  
+
   let hasOngoing = false;
   let hasDelayed = false;
   let hasCompleted = false;
-  
+
   for (const item of items) {
     const status = item.status;
     if (status === "ongoing") hasOngoing = true;
     else if (status === "delayed") hasDelayed = true;
     else if (status === "completed") hasCompleted = true;
   }
-  
+
   if (hasOngoing) return "ongoing";
   if (hasDelayed) return "delayed";
   if (hasCompleted) return "completed";
-  
+
   return "ongoing";
 }
 

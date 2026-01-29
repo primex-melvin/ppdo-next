@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { Edit, Trash2, Eye, Loader2 } from "lucide-react";
+import { Edit, Trash2, Eye, Loader2, Calculator } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -22,6 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { Breakdown, ColumnConfig } from "../types/breakdown.types";
 import { formatCellValue } from "../utils/formatters";
 
@@ -37,7 +45,7 @@ interface TableRowProps {
   onDelete?: (id: string) => void;
   onStartRowResize: (e: React.MouseEvent, rowId: string) => void;
   /** Entity type for status update mutation */
-  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund";
+  entityType?: "project" | "trustfund" | "specialeducationfund" | "specialhealthfund" | "twentyPercentDF";
 }
 
 export function TableRow({
@@ -62,6 +70,7 @@ export function TableRow({
   const updateTrustFundBreakdown = useMutation(api.trustFundBreakdowns.updateBreakdown);
   const updateSpecialEducationFundBreakdown = useMutation(api.specialEducationFundBreakdowns.updateBreakdown);
   const updateSpecialHealthFundBreakdown = useMutation(api.specialHealthFundBreakdowns.updateBreakdown);
+  const updateTwentyPercentDFBreakdown = useMutation(api.twentyPercentDFBreakdowns.updateBreakdown);
 
   const handleStatusChange = async (newStatus: "completed" | "ongoing" | "delayed") => {
     setIsUpdating(true);
@@ -79,6 +88,11 @@ export function TableRow({
       } else if (entityType === "specialhealthfund") {
         await updateSpecialHealthFundBreakdown({
           id: breakdown._id as Id<"specialHealthFundBreakdowns">,
+          status: newStatus,
+        });
+      } else if (entityType === "twentyPercentDF") {
+        await updateTwentyPercentDFBreakdown({
+          breakdownId: breakdown._id as Id<"twentyPercentDFBreakdowns">,
           status: newStatus,
         });
       } else {
@@ -270,7 +284,7 @@ export function TableRow({
         </tr>
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="w-48">
+      <ContextMenuContent className="w-[280px]">
         <ContextMenuItem
           onClick={(e) => {
             e.stopPropagation();

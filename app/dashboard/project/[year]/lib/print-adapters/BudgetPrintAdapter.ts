@@ -15,7 +15,7 @@ export class BudgetPrintAdapter implements PrintDataAdapter<BudgetItem[]> {
     private columns: ColumnDefinition[],
     private year: number,
     private particular?: string
-  ) {}
+  ) { }
 
   /**
    * Convert budget items to printable format
@@ -72,7 +72,7 @@ export class BudgetPrintAdapter implements PrintDataAdapter<BudgetItem[]> {
       totalBudgetUtilized: totals.totalBudgetUtilized,
       projectCompleted: totals.projectCompleted,
       projectDelayed: totals.projectDelayed,
-      projectsOnTrack: totals.projectsOnTrack,
+      projectsOngoing: totals.projectsOngoing,
     };
   }
 }

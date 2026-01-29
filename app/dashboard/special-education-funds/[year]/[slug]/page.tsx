@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, use } from "react";
+import { AutoCalcConfirmationModal } from "@/components/ppdo/breakdown/shared/AutoCalcConfirmationModal";
 import { useQuery, useMutation } from "convex/react";
 import { toast } from "sonner";
 
@@ -65,6 +66,7 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedBreakdown, setSelectedBreakdown] = useState<Breakdown | null>(null);
+    const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
     const [showHeader, setShowHeader] = useState(false);
 
     // Queries
@@ -106,6 +108,7 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
     const createBreakdown = useMutation(api.specialEducationFundBreakdowns.createBreakdown);
     const updateBreakdown = useMutation(api.specialEducationFundBreakdowns.updateBreakdown);
     const deleteBreakdown = useMutation(api.specialEducationFundBreakdowns.moveToTrash);
+    const toggleAutoCalculate = useMutation(api.specialEducationFunds.toggleAutoCalculateFinancials);
 
     // Handlers
     const handlePrint = () => window.print();
@@ -203,6 +206,20 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
         }
     };
 
+    const handleStatusChange = async (id: string, newStatus: string) => {
+        try {
+            await updateBreakdown({
+                id: id as Id<"specialEducationFundBreakdowns">,
+                status: newStatus as "ongoing" | "completed" | "delayed",
+            });
+            toast.success("Status updated successfully");
+        } catch (error: any) {
+            toast.error("Failed to update status", {
+                description: error.message,
+            });
+        }
+    };
+
     return (
         <>
             <BreakdownHeader
@@ -217,13 +234,23 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
                 setShowHeader={setShowHeader}
                 showRecalculateButton={false}
                 showActivityLog={true}
+                isAutoCalculate={fund?.autoCalculateFinancials}
+                onToggleAutoCalculate={async () => {
+                    if (!fund) return;
+                    await toggleAutoCalculate({ id: fundId as Id<"specialEducationFunds"> });
+                    setIsConfirmationOpen(true);
+                    toast.success("Auto-calculation settings updated");
+                }}
             />
 
-            {showHeader && fund && (
+            {fund && (
                 <EntityOverviewCards
                     entityType="specialeducationfund"
                     implementingOffice={fund.officeInCharge}
                     totalBudget={fund.received}
+                    obligated={fund.obligatedPR}
+                    utilized={fund.utilized}
+                    balance={fund.balance}
                     statusText={fund.status}
                     statusColor={getStatusColor(fund.status)}
                     year={year}
@@ -265,6 +292,7 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
                         onAdd={() => setShowAddModal(true)}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        onStatusChange={handleStatusChange}
                         onOpenTrash={() => setShowTrashModal(true)}
                         entityType="specialeducationfund"
                     />
@@ -332,6 +360,18 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
                 onClose={() => setShowTrashModal(false)}
                 type="breakdown"
             />
+            {fund && (
+                <AutoCalcConfirmationModal
+                    isOpen={isConfirmationOpen}
+                    onClose={() => setIsConfirmationOpen(false)}
+                    isAutoCalculate={fund.autoCalculateFinancials ?? false}
+                    data={{
+                        obligated: fund.obligatedPR ?? 0,
+                        utilized: fund.utilized ?? 0,
+                        balance: fund.balance ?? 0,
+                    }}
+                />
+            )}
         </>
     );
 }

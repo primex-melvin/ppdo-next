@@ -150,9 +150,9 @@ export function ParticularDetailView({ type, item }: ParticularDetailViewProps) 
               </div>
               <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {item.projectsOnTrack || 0}
+                  {item.projectsOngoing || 0}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">On Track</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Ongoing</p>
               </div>
               <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">

@@ -43,6 +43,10 @@ import { specialHealthFundBreakdownTables } from "./schema/specialHealthFundBrea
 import { specialHealthFundBreakdownActivityTables } from "./schema/specialHealthFundBreakdownActivities";
 import { bugReportsTables } from "./schema/bugReports";
 import { suggestionsTables } from "./schema/suggestions";
+import { twentyPercentDFTables } from "./schema/twentyPercentDF";
+import { twentyPercentDFBreakdownTables } from "./schema/twentyPercentDFBreakdowns";
+import { twentyPercentDFActivityTables } from "./schema/twentyPercentDFActivities";
+import { twentyPercentDFSharedAccessTables } from "./schema/twentyPercentDFSharedAccess";
 
 export default defineSchema({
   ...authTables,
@@ -87,4 +91,8 @@ export default defineSchema({
   ...specialHealthFundBreakdownActivityTables,
   ...bugReportsTables,
   ...suggestionsTables,
+  ...twentyPercentDFTables,
+  ...twentyPercentDFBreakdownTables,
+  ...twentyPercentDFActivityTables,
+  ...twentyPercentDFSharedAccessTables,
 });

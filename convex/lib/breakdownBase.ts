@@ -143,8 +143,8 @@ export function createRestoreFields() {
  */
 export async function softDeleteBreakdown(
   ctx: MutationCtx,
-  tableName: "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns",
-  id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns">,
+  tableName: "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns" | "twentyPercentDFBreakdowns",
+  id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns"> | Id<"twentyPercentDFBreakdowns">,
   userId: Id<"users">,
   reason?: string
 ): Promise<void> {
@@ -167,8 +167,8 @@ export async function softDeleteBreakdown(
  */
 export async function restoreBreakdown(
   ctx: MutationCtx,
-  tableName: "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns",
-  id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns">,
+  tableName: "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns" | "twentyPercentDFBreakdowns",
+  id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns"> | Id<"twentyPercentDFBreakdowns">,
   userId: Id<"users">
 ): Promise<void> {
   const restoreFields = createRestoreFields();
@@ -195,7 +195,7 @@ export async function restoreBreakdown(
  * @returns Updated record
  */
 export async function applyBreakdownPatch<
-  T extends "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns"
+  T extends "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns" | "twentyPercentDFBreakdowns"
 >(
   ctx: MutationCtx,
   tableName: T,
@@ -397,12 +397,12 @@ export function validateBreakdownStatus(
  * @returns Array of active breakdown records
  */
 export async function getActiveBreakdowns<
-  T extends "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns"
+  T extends "govtProjectBreakdowns" | "trustFundBreakdowns" | "specialEducationFundBreakdowns" | "specialHealthFundBreakdowns" | "twentyPercentDFBreakdowns"
 >(
   ctx: QueryCtx,
   tableName: T,
-  parentIdField: "projectId" | "trustFundId" | "specialEducationFundId" | "specialHealthFundId",
-  parentId: Id<"projects"> | Id<"trustFunds"> | Id<"specialEducationFunds"> | Id<"specialHealthFunds">
+  parentIdField: "projectId" | "trustFundId" | "specialEducationFundId" | "specialHealthFundId" | "twentyPercentDFId",
+  parentId: Id<"projects"> | Id<"trustFunds"> | Id<"specialEducationFunds"> | Id<"specialHealthFunds"> | Id<"twentyPercentDF">
 ): Promise<Array<any>> {
   const breakdowns = await ctx.db
     .query(tableName)

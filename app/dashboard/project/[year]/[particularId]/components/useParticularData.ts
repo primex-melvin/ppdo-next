@@ -30,7 +30,7 @@ export function useParticularData(particular: string) {
         utilizationRate: project.utilizationRate,
         projectCompleted: project.projectCompleted,
         projectDelayed: project.projectDelayed,
-        projectsOngoing: project.projectsOnTrack,
+        projectsOngoing: project.projectsOngoing,
         remarks: project.remarks ?? "",
         year: project.year,
         status: project.status,

@@ -68,7 +68,7 @@ export function ActivityLogFilters({
 }
 
 function getActionOptions(type: ActivityLogType) {
-  if (type === "breakdown") {
+  if (type === "breakdown" || type === "twentyPercentDFBreakdown") {
     return [
       { value: "all", label: "All Actions" },
       { value: "created", label: "Created" },
@@ -80,7 +80,7 @@ function getActionOptions(type: ActivityLogType) {
     ];
   }
 
-  if (type === "trustFund") {
+  if (type === "trustFund" || type === "specialEducationFund" || type === "specialHealthFund") {
     return [
       { value: "all", label: "All Actions" },
       { value: "created", label: "Created" },
@@ -90,7 +90,7 @@ function getActionOptions(type: ActivityLogType) {
     ];
   }
 
-  if (type === "project") {
+  if (type === "project" || type === "twentyPercentDF") {
     return [
       { value: "all", label: "All Actions" },
       { value: "created", label: "Created" },
@@ -112,10 +112,14 @@ function getActionOptions(type: ActivityLogType) {
 function getSearchPlaceholder(type: ActivityLogType) {
   switch (type) {
     case "breakdown":
+    case "twentyPercentDFBreakdown":
       return "Search by project, office, user...";
     case "project":
+    case "twentyPercentDF":
       return "Search by project name, office, user...";
     case "trustFund":
+    case "specialEducationFund":
+    case "specialHealthFund":
       return "Search by project title, office, user...";
     case "budgetItem":
       return "Search by particulars, user...";

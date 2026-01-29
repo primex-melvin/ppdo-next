@@ -105,6 +105,13 @@ export const FUND_TYPE_CONFIG = {
         apiEndpoint: "specialHealthFunds",
         activityLogType: "specialHealthFund" as const,
     },
+    twentyPercentDF: {
+        singular: "20% Development Fund",
+        plural: "20% Development Funds",
+        storageKey: "twentyPercentDFTableColumnWidths",
+        apiEndpoint: "twentyPercentDF",
+        activityLogType: "twentyPercentDF" as const,
+    },
 } as const;
 
 export type FundType = keyof typeof FUND_TYPE_CONFIG;

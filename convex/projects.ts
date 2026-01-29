@@ -420,14 +420,14 @@ export const create = mutation({
         utilizationRate,
         projectCompleted: 0,
         projectDelayed: 0,
-        projectsOnTrack: 0,
+        projectsOngoing: 0,
         status: "ongoing",
         remarks: args.remarks,
         year: args.year,
         targetDateCompletion: args.targetDateCompletion,
         projectManagerId: args.projectManagerId,
-        autoCalculateBudgetUtilized: args.autoCalculateBudgetUtilized !== undefined 
-          ? args.autoCalculateBudgetUtilized 
+        autoCalculateBudgetUtilized: args.autoCalculateBudgetUtilized !== undefined
+          ? args.autoCalculateBudgetUtilized
           : true, // 🆕 Default to TRUE for new projects
         createdBy: userId,
         createdAt: now,
@@ -714,7 +714,7 @@ export const toggleAutoCalculate = mutation({
       const utilizationRate = existing.totalBudgetAllocated > 0
         ? (existing.totalBudgetUtilized / existing.totalBudgetAllocated) * 100
         : 0;
-      
+
       await ctx.db.patch(args.id, {
         utilizationRate,
         updatedAt: now,
@@ -741,7 +741,7 @@ export const toggleAutoCalculate = mutation({
     return {
       success: true,
       mode: args.autoCalculate ? "auto" : "manual",
-      message: args.autoCalculate 
+      message: args.autoCalculate
         ? "Auto-calculation enabled. Budget utilized will be calculated from breakdowns."
         : "Manual mode enabled. Budget utilized can be entered manually.",
     };

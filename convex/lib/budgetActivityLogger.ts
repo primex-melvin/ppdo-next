@@ -23,16 +23,16 @@ export async function logBudgetActivity(
   if (!user) throw new Error("User not found for logging");
 
   const budgetData = config.budgetItem || config.newValues || config.previousValues || {};
-  
+
   let changedFields: string[] = [];
   let changeSummary: any = {};
 
   if (config.action === "updated" && config.previousValues && config.newValues) {
     const allKeys = new Set([...Object.keys(config.previousValues), ...Object.keys(config.newValues)]);
     for (const key of allKeys) {
-      if (["_id", "_creationTime", "updatedAt", "updatedBy", "createdAt", "createdBy", 
-           "projectCompleted", "projectDelayed", "projectsOnTrack", "utilizationRate"].includes(key)) continue;
-      
+      if (["_id", "_creationTime", "updatedAt", "updatedBy", "createdAt", "createdBy",
+        "projectCompleted", "projectDelayed", "projectsOngoing", "utilizationRate"].includes(key)) continue;
+
       const pVal = config.previousValues[key];
       const nVal = config.newValues[key];
 
@@ -64,7 +64,7 @@ export async function logBudgetActivity(
     performedByName: user.name || "Unknown",
     performedByEmail: user.email || "",
     performedByRole: user.role || "user",
-    
+
     timestamp: Date.now(),
     reason: config.reason,
   });

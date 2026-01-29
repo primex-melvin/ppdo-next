@@ -18,7 +18,7 @@ export interface BudgetItem {
   utilizationRate: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
+  projectsOngoing: number;
   year?: number;
   status?: "completed" | "ongoing" | "delayed";
   isPinned?: boolean;
@@ -39,7 +39,7 @@ export interface BudgetItemFromDB {
   utilizationRate: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
+  projectsOngoing: number;
   year?: number;
   status?: "completed" | "ongoing" | "delayed";
   isPinned?: boolean;
@@ -57,7 +57,7 @@ export type BudgetItemFormData = Omit<
   | "utilizationRate"
   | "projectCompleted"
   | "projectDelayed"
-  | "projectsOnTrack"
+  | "projectsOngoing"
   | "status"
 >;
 
@@ -89,7 +89,7 @@ export interface BudgetTotals {
   totalBudgetUtilized: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
+  projectsOngoing: number;
 }
 
 // ============================================================================
@@ -125,4 +125,4 @@ export type BudgetSortField =
   | "utilizationRate"
   | "projectCompleted"
   | "projectDelayed"
-  | "projectsOnTrack";
+  | "projectsOngoing";

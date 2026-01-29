@@ -78,7 +78,7 @@ export function calculateBudgetTotals(items: BudgetItem[]): BudgetTotals {
       totalBudgetUtilized: acc.totalBudgetUtilized + item.totalBudgetUtilized,
       projectCompleted: acc.projectCompleted + item.projectCompleted,
       projectDelayed: acc.projectDelayed + item.projectDelayed,
-      projectsOnTrack: acc.projectsOnTrack + item.projectsOnTrack,
+      projectsOngoing: acc.projectsOngoing + item.projectsOngoing,
     }),
     {
       totalBudgetAllocated: 0,
@@ -86,7 +86,7 @@ export function calculateBudgetTotals(items: BudgetItem[]): BudgetTotals {
       totalBudgetUtilized: 0,
       projectCompleted: 0,
       projectDelayed: 0,
-      projectsOnTrack: 0,
+      projectsOngoing: 0,
     }
   );
 }

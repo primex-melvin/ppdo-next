@@ -38,26 +38,26 @@ export const ACCESS_LEVELS = [
 // ============================================================================
 
 export const BUDGET_TABLE_COLUMNS = [
-  { 
-    key: "particular", 
-    label: "Particulars", 
-    sortable: true, 
-    filterable: false, 
-    align: "left" as const 
+  {
+    key: "particular",
+    label: "Particulars",
+    sortable: true,
+    filterable: false,
+    align: "left" as const
   },
-  { 
-    key: "year", 
-    label: "Year", 
-    sortable: false, 
-    filterable: true, 
-    align: "center" as const 
+  {
+    key: "year",
+    label: "Year",
+    sortable: false,
+    filterable: true,
+    align: "center" as const
   },
-  { 
-    key: "status", 
-    label: "Status", 
-    sortable: false, 
-    filterable: true, 
-    align: "center" as const 
+  {
+    key: "status",
+    label: "Status",
+    sortable: false,
+    filterable: true,
+    align: "center" as const
   },
   {
     key: "totalBudgetAllocated",
@@ -102,7 +102,7 @@ export const BUDGET_TABLE_COLUMNS = [
     align: "right" as const,
   },
   {
-    key: "projectsOnTrack",
+    key: "projectsOngoing",
     label: "Ongoing",
     sortable: true,
     filterable: false,

@@ -106,7 +106,7 @@ export const seedDatabase = mutation({
                     utilizationRate: (utilized / allocated) * 100,
                     projectCompleted: Math.floor(Math.random() * 10),
                     projectDelayed: Math.floor(Math.random() * 3),
-                    projectsOnTrack: Math.floor(Math.random() * 5),
+                    projectsOngoing: Math.floor(Math.random() * 5),
                     status: "ongoing",
                     createdBy: adminId,
                     createdAt: now - (2026 - year) * 31536000000, // Offset by year
@@ -143,7 +143,7 @@ export const seedDatabase = mutation({
                 utilizationRate: (utilized / allocated) * 100,
                 projectCompleted: status === "completed" ? 1 : 0,
                 projectDelayed: status === "delayed" ? 1 : 0,
-                projectsOnTrack: status === "ongoing" ? 1 : 0,
+                projectsOngoing: status === "ongoing" ? 1 : 0,
                 status,
                 year: budgetItem.year,
                 createdBy: adminId,

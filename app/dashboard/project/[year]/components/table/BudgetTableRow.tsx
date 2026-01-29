@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Pin } from "lucide-react";
+import { Pin, Calculator } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BudgetItem } from "@/app/dashboard/project/[year]/types";
 import { getUtilizationColor, getProjectStatusColor, getStatusColor } from "@/app/dashboard/project/[year]/utils";
@@ -66,6 +66,11 @@ export function BudgetTableRow({
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
               {item.particular}
             </span>
+            {item.autoCalculateBudgetUtilized && (
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shrink-0" title="Auto-calculate enabled">
+                <Calculator className="w-3 h-3" />
+              </div>
+            )}
           </div>
         </td>
       )}
@@ -161,14 +166,14 @@ export function BudgetTableRow({
       )}
 
       {/* Ongoing */}
-      {!hiddenColumns.has("projectsOnTrack") && (
+      {!hiddenColumns.has("projectsOngoing") && (
         <td className="px-4 sm:px-6 py-4 text-right">
           <span
             className={`text-sm font-medium ${getProjectStatusColor(
-              item.projectsOnTrack
+              item.projectsOngoing
             )}`}
           >
-            {Math.round(item.projectsOnTrack)}
+            {Math.round(item.projectsOngoing)}
           </span>
         </td>
       )}

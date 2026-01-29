@@ -18,7 +18,7 @@ export interface BudgetTrackingTableProps {
       | "utilizationRate"
       | "projectCompleted"
       | "projectDelayed"
-      | "projectsOnTrack"
+      | "projectsOngoing"
       | "status"
     >
   ) => void;
@@ -30,7 +30,7 @@ export interface BudgetTrackingTableProps {
       | "utilizationRate"
       | "projectCompleted"
       | "projectDelayed"
-      | "projectsOnTrack"
+      | "projectsOngoing"
       | "status"
     >
   ) => void;

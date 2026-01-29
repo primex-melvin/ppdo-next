@@ -196,7 +196,7 @@ export function ProjectsTable({
     totalBudgetUtilized: totals.totalBudgetUtilized || 0,
     projectCompleted: totals.projectCompleted || 0,
     projectDelayed: totals.projectDelayed || 0,
-    projectsOnTrack: totals.projectsOngoing || 0,
+    projectsOngoing: totals.projectsOngoing || 0,
   }), [totals]);
 
   // Selection state

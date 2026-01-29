@@ -17,12 +17,12 @@ export const projectTables = {
      * Note: Backend uses "particulars" to match budgetItems terminology
      */
     particulars: v.string(),
-    
+
     /**
      * Implementing Office (Department name as string for display)
      */
     implementingOffice: v.string(),
-    
+
     /**
      * Department ID reference (optional for filtering/grouping)
      */
@@ -41,7 +41,7 @@ export const projectTables = {
      * When linked, this project's status contributes to parent's metrics.
      */
     budgetItemId: v.optional(v.id("budgetItems")),
-    
+
     // ============================================================================
     // FINANCIAL DATA (matches budgetItems)
     // ============================================================================
@@ -49,7 +49,7 @@ export const projectTables = {
     obligatedBudget: v.optional(v.number()),
     totalBudgetUtilized: v.number(),
     utilizationRate: v.number(),
-    
+
     /**
      * 🆕 AUTO-CALCULATION FLAG
      * When TRUE (default): totalBudgetUtilized is auto-calculated from child breakdowns
@@ -61,20 +61,21 @@ export const projectTables = {
      * - Mixed scenarios: Can be toggled per project as needed
      */
     autoCalculateBudgetUtilized: v.optional(v.boolean()),
-    
+
     // ============================================================================
     // PROJECT METRICS (matches budgetItems structure)
     // ============================================================================
     projectCompleted: v.number(),
     projectDelayed: v.number(),
-    projectsOnTrack: v.number(), // Often referred to as "projectsOngoing" in frontend
-    
+    projectsOngoing: v.number(),
+    projectsOnTrack: v.optional(v.number()),
+
     // ============================================================================
     // ADDITIONAL PROJECT FIELDS
     // ============================================================================
     remarks: v.optional(v.string()),
     year: v.optional(v.number()),
-    
+
     /**
      * Project status - determines how it's counted in parent budgetItem
      * STRICT 3 OPTIONS: completed, delayed, ongoing
@@ -87,24 +88,24 @@ export const projectTables = {
       )
     ),
     targetDateCompletion: v.optional(v.number()),
-    
+
     /**
      * Project manager/lead
      */
     projectManagerId: v.optional(v.id("users")),
-    
+
     // ============================================================================
     // PIN FUNCTIONALITY
     // ============================================================================
     isPinned: v.optional(v.boolean()),
     pinnedAt: v.optional(v.number()),
     pinnedBy: v.optional(v.id("users")),
-    
+
     // [NEW] Trash System Fields
     isDeleted: v.optional(v.boolean()),
     deletedAt: v.optional(v.number()),
     deletedBy: v.optional(v.id("users")),
-    
+
     // ============================================================================
     // SYSTEM FIELDS
     // ============================================================================
@@ -121,7 +122,7 @@ export const projectTables = {
     .index("categoryAndStatus", ["categoryId", "status"])
     // 🆕 CRITICAL INDEXES FOR AGGREGATION
     .index("isDeleted", ["isDeleted"])
-    .index("budgetItemId", ["budgetItemId"]) 
+    .index("budgetItemId", ["budgetItemId"])
     .index("budgetItemAndStatus", ["budgetItemId", "status"])
     // EXISTING INDEXES
     .index("status", ["status"])

@@ -134,11 +134,64 @@ export function useActivityLogData({
       : "skip"
   );
 
+
+
+  // ============================================================================
+  // 20% DF BREAKDOWN ACTIVITIES
+  // ============================================================================
+  const twentyPercentDFBreakdownActivitiesSingle = useQuery(
+    api.twentyPercentDFActivities.getBreakdownActivities,
+    type === "twentyPercentDFBreakdown" && entityId
+      ? { breakdownId: entityId as Id<"twentyPercentDFBreakdowns">, limit: loadedCount }
+      : "skip"
+  );
+
+  const twentyPercentDFBreakdownActivitiesProjectOffice = useQuery(
+    api.twentyPercentDFActivities.getProjectOfficeActivities,
+    type === "twentyPercentDFBreakdown" && projectName && implementingOffice
+      ? {
+        projectName,
+        implementingOffice,
+        action: actionFilter !== "all" ? actionFilter as any : undefined,
+      }
+      : "skip"
+  );
+
+  // ============================================================================
+  // 20% DF ACTIVITIES
+  // ============================================================================
+  const twentyPercentDFActivitiesAll = useQuery(
+    api.twentyPercentDFActivities.list,
+    type === "twentyPercentDF" && entityId === "all"
+      ? {
+        limit: loadedCount,
+        action: actionFilter !== "all" ? actionFilter : undefined
+      }
+      : "skip"
+  );
+
+  const twentyPercentDFActivitiesSingle = useQuery(
+    api.twentyPercentDFActivities.getByTwentyPercentDFId,
+    type === "twentyPercentDF" && entityId && entityId !== "all"
+      ? {
+        twentyPercentDFId: entityId as Id<"twentyPercentDF">,
+        limit: loadedCount
+      }
+      : "skip"
+  );
+
   // ============================================================================
   // TRANSFORM DATA
   // ============================================================================
   const activities: UnifiedActivityLog[] = useMemo(() => {
     let rawActivities: any[] = [];
+
+    // ... (existing transformations for Trust Fund, Project, BudgetItem, Breakdown, SEF, SHF)
+
+    if (type === "trustFund") {
+      // ...
+    }
+    // ... copy existing transformation logic ...
 
     // Trust Fund Activities
     if (type === "trustFund") {
@@ -291,6 +344,58 @@ export function useActivityLogData({
       }));
     }
 
+    // 20% DF Breakdown Activities
+    if (type === "twentyPercentDFBreakdown") {
+      if (projectName && implementingOffice) {
+        rawActivities = twentyPercentDFBreakdownActivitiesProjectOffice || [];
+      } else {
+        rawActivities = twentyPercentDFBreakdownActivitiesSingle || [];
+      }
+
+      return rawActivities.map((activity) => ({
+        _id: activity._id,
+        action: activity.action,
+        timestamp: activity.timestamp,
+        performedByName: activity.performedByName,
+        performedByEmail: activity.performedByEmail,
+        performedByRole: activity.performedByRole,
+        reason: activity.reason,
+        changedFields: activity.changedFields,
+        changeSummary: activity.changeSummary,
+        previousValues: activity.previousValues,
+        newValues: activity.newValues,
+        projectName: activity.projectName,
+        implementingOffice: activity.implementingOffice,
+        municipality: activity.municipality,
+        barangay: activity.barangay,
+        district: activity.district,
+      }));
+    }
+
+    if (type === "twentyPercentDF") {
+      if (entityId === "all") {
+        rawActivities = twentyPercentDFActivitiesAll || [];
+      } else {
+        rawActivities = twentyPercentDFActivitiesSingle || [];
+      }
+
+      return rawActivities.map((activity) => ({
+        _id: activity._id,
+        action: activity.action,
+        timestamp: activity.timestamp,
+        performedByName: activity.performedByName,
+        performedByEmail: activity.performedByEmail,
+        performedByRole: activity.performedByRole,
+        reason: activity.reason,
+        changedFields: activity.changedFields,
+        changeSummary: activity.changeSummary,
+        previousValues: activity.previousValues,
+        newValues: activity.newValues,
+        particulars: activity.particulars,
+        implementingOffice: activity.implementingOffice,
+      }));
+    }
+
     return [];
   }, [
     type,
@@ -305,6 +410,12 @@ export function useActivityLogData({
     breakdownActivitiesProjectOffice,
     sefBreakdownActivitiesSingle,
     sefBreakdownActivitiesProjectOffice,
+    healthBreakdownActivitiesSingle,
+    healthBreakdownActivitiesProjectOffice,
+    twentyPercentDFBreakdownActivitiesSingle,
+    twentyPercentDFBreakdownActivitiesProjectOffice,
+    twentyPercentDFActivitiesAll,
+    twentyPercentDFActivitiesSingle
   ]);
 
   // ============================================================================
@@ -347,6 +458,20 @@ export function useActivityLogData({
       return healthBreakdownActivitiesSingle === undefined;
     }
 
+    if (type === "twentyPercentDFBreakdown") {
+      if (projectName && implementingOffice) {
+        return twentyPercentDFBreakdownActivitiesProjectOffice === undefined;
+      }
+      return twentyPercentDFBreakdownActivitiesSingle === undefined;
+    }
+
+    if (type === "twentyPercentDF") {
+      if (entityId === "all") {
+        return twentyPercentDFActivitiesAll === undefined;
+      }
+      return twentyPercentDFActivitiesSingle === undefined;
+    }
+
     return false;
   }, [
     type,
@@ -361,6 +486,12 @@ export function useActivityLogData({
     breakdownActivitiesProjectOffice,
     sefBreakdownActivitiesSingle,
     sefBreakdownActivitiesProjectOffice,
+    healthBreakdownActivitiesSingle,
+    healthBreakdownActivitiesProjectOffice,
+    twentyPercentDFBreakdownActivitiesSingle,
+    twentyPercentDFBreakdownActivitiesProjectOffice,
+    twentyPercentDFActivitiesAll,
+    twentyPercentDFActivitiesSingle
   ]);
 
   // ============================================================================

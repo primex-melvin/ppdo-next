@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pin, MoreVertical, Eye, Edit, Archive } from "lucide-react";
+import { Pin, MoreVertical, Eye, Edit, Archive, Calculator } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -115,6 +115,12 @@ function StatusCell({ status, onStatusChange, isUpdating = false }: StatusCellPr
                                 Completed
                             </span>
                         </SelectItem>
+                        <SelectItem value="delayed" className="text-xs">
+                            <span className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-red-500" />
+                                Delayed
+                            </span>
+                        </SelectItem>
                     </SelectContent>
                 </Select>
             )}
@@ -139,7 +145,7 @@ interface FundsTableRowProps<T extends BaseFund> {
     canEdit: boolean;
     canDelete: boolean;
     isUpdatingStatus?: boolean;
-    fundType: 'trust' | 'specialEducation' | 'specialHealth';
+    fundType: 'trust' | 'specialEducation' | 'specialHealth' | 'twentyPercent';
 }
 
 export function FundsTableRow<T extends BaseFund>({
@@ -189,7 +195,9 @@ export function FundsTableRow<T extends BaseFund>({
             ? 'trust-funds'
             : fundType === 'specialEducation'
                 ? 'special-education-funds'
-                : 'special-health-funds';
+                : fundType === 'specialHealth'
+                    ? 'special-health-funds'
+                    : '20_percent_df';
         router.push(`/dashboard/${basePath}/${year}/${slug}`);
     };
 
@@ -224,6 +232,11 @@ export function FundsTableRow<T extends BaseFund>({
                         <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate" title={item.projectTitle}>
                             {truncateText(item.projectTitle, Math.floor(columnWidths.projectTitle / 8))}
                         </span>
+                        {item.autoCalculateFinancials && (
+                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shrink-0" title="Auto-calculate enabled">
+                                <Calculator className="w-3 h-3" />
+                            </div>
+                        )}
                     </div>
                 </TableCell>
             )}

@@ -40,7 +40,7 @@ export async function recalculateBudgetItemMetrics(
   for (const project of projects) {
     // Sum Obligated Budget (always calculated)
     totalObligated += (project.obligatedBudget || 0);
-    
+
     // 🆕 Sum Utilized Budget (only if we're auto-calculating)
     if (shouldAutoCalculate) {
       totalUtilized += (project.totalBudgetUtilized || 0);
@@ -58,7 +58,7 @@ export async function recalculateBudgetItemMetrics(
     obligatedBudget: totalObligated,
     projectCompleted: statusCounts.completed,
     projectDelayed: statusCounts.delayed,
-    projectsOnTrack: statusCounts.onTrack,
+    projectsOngoing: statusCounts.onTrack,
     updatedAt: Date.now(),
     updatedBy: userId,
   };
@@ -79,7 +79,7 @@ export async function recalculateBudgetItemMetrics(
     const utilizationRate = budgetItem.totalBudgetAllocated > 0
       ? (manualUtilized / budgetItem.totalBudgetAllocated) * 100
       : 0;
-    
+
     updateData.utilizationRate = utilizationRate;
     // Note: totalBudgetUtilized is NOT updated, preserving manual input
   }
@@ -127,7 +127,7 @@ export async function recalculateMultipleBudgetItems(
       ...result,
     });
   }
-  
+
   return results;
 }
 
@@ -140,6 +140,6 @@ export async function recalculateAllBudgetItems(
 ) {
   const allBudgetItems = await ctx.db.query("budgetItems").collect();
   const budgetItemIds = allBudgetItems.map((bi) => bi._id);
-  
+
   return await recalculateMultipleBudgetItems(ctx, budgetItemIds, userId);
 }

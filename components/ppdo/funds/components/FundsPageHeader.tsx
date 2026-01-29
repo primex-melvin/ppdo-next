@@ -10,7 +10,7 @@ interface FundsPageHeaderProps {
     onToggleDetails: () => void;
     pageTitle: string;
     pageDescription?: string;
-    activityLogType: "trustFund" | "specialEducationFund" | "specialHealthFund";
+    activityLogType: "trustFund" | "specialEducationFund" | "specialHealthFund" | "twentyPercentDF";
 }
 
 export function FundsPageHeader({

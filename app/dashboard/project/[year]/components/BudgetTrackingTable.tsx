@@ -213,7 +213,7 @@ export function BudgetTrackingTable({
       | "utilizationRate"
       | "projectCompleted"
       | "projectDelayed"
-      | "projectsOnTrack"
+      | "projectsOngoing"
       | "status"
     >
   ) => {
@@ -250,7 +250,7 @@ export function BudgetTrackingTable({
     <>
       {/* Main Table Container */}
       <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        
+
         {/* Toolbar */}
         <BudgetTableToolbar
           searchQuery={searchQuery}
@@ -275,7 +275,7 @@ export function BudgetTrackingTable({
           expandButton={expandButton}
           accentColor={accentColorValue}
         />
-        
+
         {/* Print Header (hidden on screen, visible in print) */}
         <div className="hidden print-only p-4 border-b border-zinc-900">
           <h2 className="text-xl font-bold text-zinc-900 mb-2">
@@ -292,7 +292,7 @@ export function BudgetTrackingTable({
             })}
           </p>
         </div>
-        
+
         {/* Table */}
         <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
           <table className="w-full">
@@ -341,7 +341,7 @@ export function BudgetTrackingTable({
           </table>
         </div>
       </div>
-      
+
       {/* Context Menu */}
       {contextMenu && (
         <BudgetContextMenu
@@ -356,7 +356,7 @@ export function BudgetTrackingTable({
           isTogglingAutoCalculate={isTogglingAutoCalculate}
         />
       )}
-      
+
       {/* Modals */}
       {modalStates.showAddModal && (
         <Modal

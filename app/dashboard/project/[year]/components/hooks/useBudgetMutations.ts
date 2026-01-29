@@ -9,18 +9,18 @@ import { BudgetItem } from "@/types/types";
 // Type guard for MutationResponse
 type MutationResponse =
   | {
-      success: true;
-      data?: any;
-      message?: string;
-    }
+    success: true;
+    data?: any;
+    message?: string;
+  }
   | {
-      success: false;
-      error: {
-        message: string;
-        code?: string;
-      };
-      message?: string;
+    success: false;
+    error: {
+      message: string;
+      code?: string;
     };
+    message?: string;
+  };
 
 function isMutationResponse(value: unknown): value is MutationResponse {
   return (
@@ -43,7 +43,7 @@ export function useBudgetMutations() {
       | "utilizationRate"
       | "projectCompleted"
       | "projectDelayed"
-      | "projectsOnTrack"
+      | "projectsOngoing"
       | "status"
     >
   ) => {
@@ -93,7 +93,7 @@ export function useBudgetMutations() {
       | "utilizationRate"
       | "projectCompleted"
       | "projectDelayed"
-      | "projectsOnTrack"
+      | "projectsOngoing"
       | "status"
     >
   ) => {

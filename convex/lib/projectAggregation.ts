@@ -41,7 +41,7 @@ export async function recalculateProjectMetrics(
   for (const breakdown of breakdowns) {
     // Sum Obligated Budget (always calculated)
     totalObligated += (breakdown.obligatedBudget || 0);
-    
+
     // 🆕 Sum Utilized Budget (only if we're auto-calculating)
     if (shouldAutoCalculate) {
       totalUtilized += (breakdown.budgetUtilized || 0);
@@ -59,7 +59,7 @@ export async function recalculateProjectMetrics(
     obligatedBudget: totalObligated,
     projectCompleted: statusCounts.completed,
     projectDelayed: statusCounts.delayed,
-    projectsOnTrack: statusCounts.onTrack,
+    projectsOngoing: statusCounts.onTrack,
     updatedAt: Date.now(),
     updatedBy: userId,
   };
@@ -80,7 +80,7 @@ export async function recalculateProjectMetrics(
     const utilizationRate = project.totalBudgetAllocated > 0
       ? (manualUtilized / project.totalBudgetAllocated) * 100
       : 0;
-    
+
     updateData.utilizationRate = utilizationRate;
     // Note: totalBudgetUtilized is NOT updated, preserving manual input
   }

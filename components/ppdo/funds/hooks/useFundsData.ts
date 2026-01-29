@@ -14,6 +14,7 @@ interface UseFundsDataOptions<TFund> {
     listQuery: FunctionReference<"query", "public", Record<string, never>, TFund[]>;
     statsQuery: FunctionReference<"query", "public", Record<string, never>, any>;
     converter?: (dbRecord: any) => TFund;
+    statsConverter?: (stats: any) => FundStatistics;
 }
 
 /**
@@ -38,7 +39,7 @@ interface UseFundsDataOptions<TFund> {
 export function useFundsData<TFund = any>(
     options: UseFundsDataOptions<TFund>
 ): UseFundsDataReturn<TFund> {
-    const { listQuery, statsQuery, converter } = options;
+    const { listQuery, statsQuery, converter, statsConverter } = options;
 
     // Fetch funds from Convex
     const fundsFromDB = useQuery(listQuery);
@@ -55,6 +56,9 @@ export function useFundsData<TFund = any>(
 
     // Statistics with defaults
     const statistics: FundStatistics = useMemo(() => {
+        if (statsConverter && statisticsFromDB) {
+            return statsConverter(statisticsFromDB);
+        }
         return {
             totalReceived: statisticsFromDB?.totalReceived || 0,
             totalUtilized: statisticsFromDB?.totalUtilized || 0,
@@ -62,7 +66,7 @@ export function useFundsData<TFund = any>(
             totalProjects: statisticsFromDB?.totalProjects || 0,
             averageUtilizationRate: statisticsFromDB?.averageUtilizationRate || 0,
         };
-    }, [statisticsFromDB]);
+    }, [statisticsFromDB, statsConverter]);
 
     const isLoading = fundsFromDB === undefined || statisticsFromDB === undefined;
 

@@ -1,4 +1,3 @@
-// app/dashboard/project/[year]/[particularId]/page.tsx
 
 "use client";
 
@@ -7,17 +6,25 @@ import { useParams, useRouter } from "next/navigation";
 import { Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AccessDeniedPage from "@/components/AccessDeniedPage";
-import { ProjectsTable } from "./components/ProjectsTable";
-import { ParticularPageHeader } from "./components/ParticularPageHeader";
-import { StatusInfoCard } from "./components/StatusInfoCard";
-import { ProjectSummaryStats } from "./components/ProjectSummaryStats";
-import { ProjectLoadingState } from "./components/ProjectLoadingState";
-import { ProjectExpandModal } from "./components/ProjectExpandModal";
-import { TrashBinModal } from "../../../../../components/TrashBinModal";
-import { useParticularData } from "./components/useParticularData";
-import { useProjectMutations } from "./components/useProjectMutations";
-import { useParticularAccess } from "./hooks/useParticularAccess";
-import { getParticularFullName, calculateProjectStats } from "./utils";
+import { TrashBinModal } from "@/components/TrashBinModal";
+
+// Import from reusable component library
+// Note: We use relative imports if we are inside the same feature folder structure, 
+// but since we moved everything to components/ppdo/projects, we import from there.
+// However, next.js alias @/components is safer.
+import {
+  ProjectsTable,
+  ParticularPageHeader,
+  StatusInfoCard,
+  ProjectSummaryStats,
+  ProjectLoadingState,
+  ProjectExpandModal,
+  useParticularData,
+  useProjectMutations,
+  useParticularAccess,
+  getParticularFullName,
+  calculateProjectStats
+} from "@/components/ppdo/projects";
 
 export default function ParticularProjectsPage() {
   const params = useParams();
@@ -55,7 +62,7 @@ export default function ParticularProjectsPage() {
   // DATA FETCHING
   // ============================================================================
   const { budgetItem, breakdownStats, projects, isLoading: isLoadingData } = useParticularData(particular);
-  
+
   const { handleAddProject, handleEditProject, handleDeleteProject, handleRecalculate } =
     useProjectMutations(budgetItem?._id);
 
@@ -131,7 +138,7 @@ export default function ParticularProjectsPage() {
           totalProjects={projects.length}
           projectCompleted={budgetItem.projectCompleted}
           projectDelayed={budgetItem.projectDelayed}
-          projectsOnTrack={budgetItem.projectsOnTrack}
+          projectsOngoing={budgetItem.projectsOngoing}
           totalBreakdowns={breakdownStats?.totalBreakdowns || 0}
         />
       )}

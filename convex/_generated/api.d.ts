@@ -41,6 +41,7 @@ import type * as lib_budgetAggregation from "../lib/budgetAggregation.js";
 import type * as lib_categoryActivityLogger from "../lib/categoryActivityLogger.js";
 import type * as lib_checkBudgetAccess from "../lib/checkBudgetAccess.js";
 import type * as lib_errors from "../lib/errors.js";
+import type * as lib_fundAggregation from "../lib/fundAggregation.js";
 import type * as lib_govtProjectActivityLogger from "../lib/govtProjectActivityLogger.js";
 import type * as lib_nameUtils from "../lib/nameUtils.js";
 import type * as lib_particularActivityLogger from "../lib/particularActivityLogger.js";
@@ -54,6 +55,8 @@ import type * as lib_specialHealthFundBreakdownActivityLogger from "../lib/speci
 import type * as lib_statusValidation from "../lib/statusValidation.js";
 import type * as lib_trustFundActivityLogger from "../lib/trustFundActivityLogger.js";
 import type * as lib_trustFundBreakdownActivityLogger from "../lib/trustFundBreakdownActivityLogger.js";
+import type * as lib_twentyPercentDFActivityLogger from "../lib/twentyPercentDFActivityLogger.js";
+import type * as lib_twentyPercentDFAggregation from "../lib/twentyPercentDFAggregation.js";
 import type * as loginTrail from "../loginTrail.js";
 import type * as media from "../media.js";
 import type * as myFunctions from "../myFunctions.js";
@@ -108,6 +111,10 @@ import type * as schema_trustFundBreakdownActivities from "../schema/trustFundBr
 import type * as schema_trustFundBreakdowns from "../schema/trustFundBreakdowns.js";
 import type * as schema_trustFundSharedAccess from "../schema/trustFundSharedAccess.js";
 import type * as schema_trustFunds from "../schema/trustFunds.js";
+import type * as schema_twentyPercentDF from "../schema/twentyPercentDF.js";
+import type * as schema_twentyPercentDFActivities from "../schema/twentyPercentDFActivities.js";
+import type * as schema_twentyPercentDFBreakdowns from "../schema/twentyPercentDFBreakdowns.js";
+import type * as schema_twentyPercentDFSharedAccess from "../schema/twentyPercentDFSharedAccess.js";
 import type * as schema_users from "../schema/users.js";
 import type * as specialEducationFundAccess from "../specialEducationFundAccess.js";
 import type * as specialEducationFundActivities from "../specialEducationFundActivities.js";
@@ -125,6 +132,9 @@ import type * as trustFundActivities from "../trustFundActivities.js";
 import type * as trustFundBreakdowns from "../trustFundBreakdowns.js";
 import type * as trustFundSharedAccess from "../trustFundSharedAccess.js";
 import type * as trustFunds from "../trustFunds.js";
+import type * as twentyPercentDF from "../twentyPercentDF.js";
+import type * as twentyPercentDFActivities from "../twentyPercentDFActivities.js";
+import type * as twentyPercentDFBreakdowns from "../twentyPercentDFBreakdowns.js";
 import type * as userManagement from "../userManagement.js";
 import type * as users from "../users.js";
 
@@ -168,6 +178,7 @@ declare const fullApi: ApiFromModules<{
   "lib/categoryActivityLogger": typeof lib_categoryActivityLogger;
   "lib/checkBudgetAccess": typeof lib_checkBudgetAccess;
   "lib/errors": typeof lib_errors;
+  "lib/fundAggregation": typeof lib_fundAggregation;
   "lib/govtProjectActivityLogger": typeof lib_govtProjectActivityLogger;
   "lib/nameUtils": typeof lib_nameUtils;
   "lib/particularActivityLogger": typeof lib_particularActivityLogger;
@@ -181,6 +192,8 @@ declare const fullApi: ApiFromModules<{
   "lib/statusValidation": typeof lib_statusValidation;
   "lib/trustFundActivityLogger": typeof lib_trustFundActivityLogger;
   "lib/trustFundBreakdownActivityLogger": typeof lib_trustFundBreakdownActivityLogger;
+  "lib/twentyPercentDFActivityLogger": typeof lib_twentyPercentDFActivityLogger;
+  "lib/twentyPercentDFAggregation": typeof lib_twentyPercentDFAggregation;
   loginTrail: typeof loginTrail;
   media: typeof media;
   myFunctions: typeof myFunctions;
@@ -235,6 +248,10 @@ declare const fullApi: ApiFromModules<{
   "schema/trustFundBreakdowns": typeof schema_trustFundBreakdowns;
   "schema/trustFundSharedAccess": typeof schema_trustFundSharedAccess;
   "schema/trustFunds": typeof schema_trustFunds;
+  "schema/twentyPercentDF": typeof schema_twentyPercentDF;
+  "schema/twentyPercentDFActivities": typeof schema_twentyPercentDFActivities;
+  "schema/twentyPercentDFBreakdowns": typeof schema_twentyPercentDFBreakdowns;
+  "schema/twentyPercentDFSharedAccess": typeof schema_twentyPercentDFSharedAccess;
   "schema/users": typeof schema_users;
   specialEducationFundAccess: typeof specialEducationFundAccess;
   specialEducationFundActivities: typeof specialEducationFundActivities;
@@ -252,6 +269,9 @@ declare const fullApi: ApiFromModules<{
   trustFundBreakdowns: typeof trustFundBreakdowns;
   trustFundSharedAccess: typeof trustFundSharedAccess;
   trustFunds: typeof trustFunds;
+  twentyPercentDF: typeof twentyPercentDF;
+  twentyPercentDFActivities: typeof twentyPercentDFActivities;
+  twentyPercentDFBreakdowns: typeof twentyPercentDFBreakdowns;
   userManagement: typeof userManagement;
   users: typeof users;
 }>;

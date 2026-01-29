@@ -14,7 +14,7 @@ const BUDGET_COLUMNS: ColumnDefinition[] = [
   { key: "utilizationRate", label: "Utilization Rate", type: "percentage", align: "right" },
   { key: "projectCompleted", label: "Projects Completed", type: "number", align: "center" },
   { key: "projectDelayed", label: "Projects Delayed", type: "number", align: "center" },
-  { key: "projectsOnTrack", label: "Projects On Track", type: "number", align: "center" },
+  { key: "projectsOngoing", label: "Projects On Track", type: "number", align: "center" },
 ];
 
 export const BUDGET_SPREADSHEET_CONFIG: SpreadsheetConfig = {

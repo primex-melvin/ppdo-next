@@ -13,17 +13,17 @@ export const auditTables = {
      * The user who performed the action
      */
     performedBy: v.id("users"),
-    
+
     /**
      * The user who was affected by the action (null for system-level actions)
      */
     targetUserId: v.optional(v.id("users")),
-    
+
     /**
      * Department affected (if applicable)
      */
     targetDepartmentId: v.optional(v.id("departments")),
-    
+
     /**
      * Type of action performed
      */
@@ -40,32 +40,32 @@ export const auditTables = {
       v.literal("department_updated"),
       v.literal("department_deleted")
     ),
-    
+
     /**
      * Previous values before the change (JSON string)
      */
     previousValues: v.optional(v.string()),
-    
+
     /**
      * New values after the change (JSON string)
      */
     newValues: v.optional(v.string()),
-    
+
     /**
      * Optional reason or notes for the action
      */
     notes: v.optional(v.string()),
-    
+
     /**
      * Timestamp when the action was performed
      */
     timestamp: v.number(),
-    
+
     /**
      * IP address from which the action was performed
      */
     ipAddress: v.optional(v.string()),
-    
+
     /**
      * User agent string
      */
@@ -76,4 +76,21 @@ export const auditTables = {
     .index("performedBy", ["performedBy"])
     .index("timestamp", ["timestamp"])
     .index("action", ["action"]),
+
+  /**
+   * Audit log for bug reports and suggestions status changes.
+   */
+  maintenanceAuditLog: defineTable({
+    itemId: v.union(v.id("bugReports"), v.id("suggestions")),
+    itemType: v.union(v.literal("bug"), v.literal("suggestion")),
+    performedBy: v.id("users"),
+    oldStatus: v.string(),
+    newStatus: v.string(),
+    timestamp: v.number(),
+    notes: v.optional(v.string()),
+  })
+    .index("itemId", ["itemId"])
+    .index("itemType", ["itemType"])
+    .index("performedBy", ["performedBy"])
+    .index("timestamp", ["timestamp"]),
 };

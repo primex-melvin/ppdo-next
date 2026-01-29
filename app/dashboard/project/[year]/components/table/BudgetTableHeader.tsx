@@ -96,9 +96,8 @@ export function BudgetTableHeader({
                   </span>
                   {showHeaderSkeleton && <Skeleton className="h-3 w-8 rounded" />}
                   <Filter
-                    className={`w-3.5 h-3.5 ${
-                      yearFilter.length > 0 ? "text-blue-600" : "opacity-50"
-                    }`}
+                    className={`w-3.5 h-3.5 ${yearFilter.length > 0 ? "text-blue-600" : "opacity-50"
+                      }`}
                   />
                 </button>
               </DropdownMenuTrigger>
@@ -137,9 +136,8 @@ export function BudgetTableHeader({
                     <Skeleton className="h-3 w-10 rounded" />
                   )}
                   <Filter
-                    className={`w-3.5 h-3.5 ${
-                      statusFilter.length > 0 ? "text-blue-600" : "opacity-50"
-                    }`}
+                    className={`w-3.5 h-3.5 ${statusFilter.length > 0 ? "text-blue-600" : "opacity-50"
+                      }`}
                   />
                 </button>
               </DropdownMenuTrigger>
@@ -256,16 +254,16 @@ export function BudgetTableHeader({
         )}
 
         {/* Ongoing */}
-        {!hiddenColumns.has("projectsOnTrack") && (
+        {!hiddenColumns.has("projectsOngoing") && (
           <th className="px-4 sm:px-6 py-4 text-right sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10">
             <button
-              onClick={() => onSort("projectsOnTrack")}
+              onClick={() => onSort("projectsOngoing")}
               className="group flex items-center gap-2 ml-auto hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
             >
               <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
                 Ongoing
               </span>
-              <SortIcon field="projectsOnTrack" />
+              <SortIcon field="projectsOngoing" />
             </button>
           </th>
         )}

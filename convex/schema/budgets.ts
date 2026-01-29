@@ -19,26 +19,27 @@ export const budgetTables = {
      * codes in the budgetParticulars table, or they will be rejected on update.
      */
     particulars: v.string(),
-    
+
     totalBudgetAllocated: v.number(),
-    
+
     /**
      * Obligated budget amount (optional)
      * Represents the committed/obligated portion of the allocated budget
      */
     obligatedBudget: v.optional(v.number()),
-    
+
     totalBudgetUtilized: v.number(),
     utilizationRate: v.number(),
     projectCompleted: v.number(),
     projectDelayed: v.number(),
-    projectsOnTrack: v.number(),
-    
+    projectsOngoing: v.number(),
+    projectsOnTrack: v.optional(v.number()),
+
     /**
      * Year for this budget item (optional)
      */
     year: v.optional(v.number()),
-    
+
     /**
      * Status of the budget item (optional)
      * STRICT 3 OPTIONS: completed, delayed, ongoing
@@ -50,7 +51,7 @@ export const budgetTables = {
         v.literal("ongoing")
       )
     ),
-    
+
     /**
      * 🆕 AUTO-CALCULATION FLAG
      * When TRUE (default): totalBudgetUtilized is auto-calculated from child projects
@@ -62,37 +63,37 @@ export const budgetTables = {
      * - Mixed scenarios: Can be toggled per budget item as needed
      */
     autoCalculateBudgetUtilized: v.optional(v.boolean()),
-    
+
     /**
      * Whether this budget item is pinned
      */
     isPinned: v.optional(v.boolean()),
-    
+
     /**
      * Timestamp when pinned
      */
     pinnedAt: v.optional(v.number()),
-    
+
     /**
      * User who pinned this item
      */
     pinnedBy: v.optional(v.id("users")),
-    
+
     /**
      * Department responsible for this budget item
      */
     departmentId: v.optional(v.id("departments")),
-    
+
     /**
      * Fiscal year for this budget (e.g., 2024, 2025)
      */
     fiscalYear: v.optional(v.number()),
-    
+
     // [NEW] Trash System Fields
     isDeleted: v.optional(v.boolean()),
     deletedAt: v.optional(v.number()),
     deletedBy: v.optional(v.id("users")),
-    
+
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
