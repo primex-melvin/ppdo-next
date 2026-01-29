@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
+import { useCurrentUser } from "@/app/hooks/useCurrentUser";
 
 export default function BugReportDetailsPage() {
     const params = useParams();
@@ -20,6 +21,8 @@ export default function BugReportDetailsPage() {
     const [editedTitle, setEditedTitle] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const updateReport = useMutation(api.bugReports.update);
+    const { role: currentUserRole } = useCurrentUser();
+    const canEditTitle = currentUserRole === "admin" || currentUserRole === "user";
 
     console.log("🔍 Bug Report Detail Page - Params:", params);
     console.log("🆔 ID Parameter:", idParam);
@@ -78,7 +81,14 @@ export default function BugReportDetailsPage() {
     };
 
     const handleEditTitle = () => {
-        setEditedTitle(report.title);
+        if (!canEditTitle) {
+            toast.error("You don't have permission to edit this title");
+            return;
+        }
+        if (!report) {
+            return;
+        }
+        setEditedTitle(report.title ?? "");
         setIsEditingTitle(true);
     };
 
@@ -88,6 +98,14 @@ export default function BugReportDetailsPage() {
     };
 
     const handleSaveTitle = async () => {
+        if (!canEditTitle) {
+            toast.error("You don't have permission to edit this title");
+            return;
+        }
+        if (!report || !reportId) {
+            toast.error("Bug report is not loaded yet");
+            return;
+        }
         if (!editedTitle.trim()) {
             toast.error("Title cannot be empty");
             return;
@@ -225,14 +243,16 @@ export default function BugReportDetailsPage() {
                                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight flex-1">
                                         {report.title}
                                     </h1>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={handleEditTitle}
-                                        className="gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                    </Button>
+                                    {canEditTitle && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={handleEditTitle}
+                                            className="gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </Button>
+                                    )}
                                 </>
                             )}
                             <span

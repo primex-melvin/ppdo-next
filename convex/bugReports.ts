@@ -193,10 +193,17 @@ export const update = mutation({
   },
   handler: async (ctx, { id, title, description, stepsToReplicate, status, multimedia }) => {
     const userId = await requireUserId(ctx);
+    const user = await ctx.db.get(userId);
 
     const existing = await ctx.db.get(id);
     if (!existing) {
       throw new Error("Bug report not found");
+    }
+
+    if (title !== undefined) {
+      if (user?.role !== "admin" && user?.role !== "user") {
+        throw new Error("Only admin or user can update bug report title");
+      }
     }
 
     const updates: {
