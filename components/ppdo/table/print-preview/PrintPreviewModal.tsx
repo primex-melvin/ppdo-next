@@ -776,7 +776,20 @@ export function PrintPreviewModal({
       )}
 
       {/* Confirmation Modals */}
-      <ConfirmationModal isOpen={state.showCloseConfirm} onClose={() => state.setShowCloseConfirm(false)} onConfirm={() => { handleSaveDraft(); setTimeout(() => onClose(), 100); }} title="Save Print Preview as Draft?" message="You have unsaved changes. Save them for later?" confirmText="Save & Close" cancelText="Discard & Close" variant="default" />
+      <ConfirmationModal
+        isOpen={state.showCloseConfirm}
+        onClose={() => state.setShowCloseConfirm(false)}
+        onConfirm={() => { handleSaveDraft(); setTimeout(() => onClose(), 100); }}
+        title="Save Print Preview as Draft?"
+        message="You have unsaved changes. Save them for later?"
+        confirmText="Save & Close"
+        cancelText="Discard & Close"
+        onCancel={() => {
+          state.setShowCloseConfirm(false);
+          onClose();
+        }}
+        variant="custom"
+      />
       <TemplateApplicationModal isOpen={showTemplateApplicationModal} onClose={() => { setShowTemplateApplicationModal(false); handleSkipTemplate(); }} onProceed={handleApplySavedTemplate} template={savedTemplate} />
 
       {/* Live Template Selector (Standalone for Toolbar) */}

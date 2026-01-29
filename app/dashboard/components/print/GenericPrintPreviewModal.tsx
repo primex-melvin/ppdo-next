@@ -137,7 +137,7 @@ export function GenericPrintPreviewModal({
   }, [isOpen, adapter, existingDraft, hiddenColumns]);
 
   // Save draft handler
-  const handleSaveDraft = useCallback(() => {
+  const handleSaveDraft = useCallback(async () => {
     if (!onDraftSaved) return;
 
     setIsSaving(true);
@@ -175,13 +175,27 @@ export function GenericPrintPreviewModal({
     };
 
     try {
-      onDraftSaved(draft);
+      const result = onDraftSaved(draft) as any;
+      if (result && typeof result.then === 'function') {
+        await result;
+      }
+
       setLastSavedTime(Date.now());
       setIsDirty(false);
-      toast.success('Draft saved successfully');
+
+      toast.success('Draft Saved', {
+        description: 'Your changes have been safely stored.',
+        duration: 4000,
+        position: 'top-center',
+        className: 'border-green-500/20 bg-green-50/50 dark:bg-green-900/20',
+      });
     } catch (error) {
       console.error('Failed to save draft:', error);
-      toast.error('Failed to save draft');
+      toast.error('Failed to Save', {
+        description: 'There was an error saving your draft. Please try again.',
+        duration: 5000,
+        position: 'top-center',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -449,7 +463,11 @@ export function GenericPrintPreviewModal({
         message="You have unsaved changes. Save them for later?"
         confirmText="Save & Close"
         cancelText="Discard & Close"
-        variant="default"
+        onCancel={() => {
+          setShowCloseConfirm(false);
+          onClose();
+        }}
+        variant="custom"
       />
     </>
   );

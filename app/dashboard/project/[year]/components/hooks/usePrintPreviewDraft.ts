@@ -61,8 +61,8 @@ export function usePrintPreviewDraft({
   onClose,
   appliedTemplate,
 }: UsePrintPreviewDraftProps) {
-  
-  const handleSaveDraft = useCallback(() => {
+
+  const handleSaveDraft = useCallback(async () => {
     if (!onDraftSaved) return;
 
     setIsSaving(true);
@@ -93,12 +93,29 @@ export function usePrintPreviewDraft({
     };
 
     try {
-      onDraftSaved(draft);
+      // Check if onDraftSaved returns a promise (async)
+      const result = onDraftSaved(draft) as any;
+
+      if (result && typeof result.then === 'function') {
+        await result;
+      }
+
       setLastSavedTime(Date.now());
       setIsDirty(false);
-      toast.success('Draft saved successfully');
+
+      toast.success('Draft Saved', {
+        description: 'Your changes have been safely stored. You can resume editing anytime.',
+        duration: 4000,
+        position: 'top-center',
+        className: 'border-green-500/20 bg-green-50/50 dark:bg-green-900/20',
+      });
     } catch (error) {
-      toast.error('Failed to save draft');
+      console.error('Failed to save draft:', error);
+      toast.error('Failed to Save', {
+        description: 'There was an error saving your draft. Please try again.',
+        duration: 5000,
+        position: 'top-center',
+      });
     } finally {
       setIsSaving(false);
     }

@@ -13,7 +13,7 @@ interface ConfirmationModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: "default" | "danger" | "warning" | "info";
+  variant?: "default" | "danger" | "warning" | "info" | "custom";
 }
 
 export function ConfirmationModal({
@@ -40,6 +40,7 @@ export function ConfirmationModal({
     danger: "bg-red-600 hover:bg-red-700",
     warning: "bg-orange-600 hover:bg-orange-700",
     info: "bg-blue-600 hover:bg-blue-700",
+    custom: "bg-[#15803D] hover:bg-[#15803D]/90",
   };
 
   return (
