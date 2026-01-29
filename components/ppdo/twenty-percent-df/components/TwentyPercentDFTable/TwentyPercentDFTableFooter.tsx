@@ -68,21 +68,21 @@ export function TwentyPercentDFTableFooter({
             {/* Completed */}
             {!hiddenColumns.has('projectCompleted') && (
                 <td className="px-3 py-3 text-right text-sm" style={{ color: accentColor }}>
-                    {Math.round(totals.projectCompleted)}
+                    {Math.round(totals.projectCompleted ?? 0)}
                 </td>
             )}
 
             {/* Delayed */}
             {!hiddenColumns.has('projectDelayed') && (
                 <td className="px-3 py-3 text-right text-sm" style={{ color: accentColor }}>
-                    {totals.projectDelayed}
+                    {totals.projectDelayed ?? 0}
                 </td>
             )}
 
             {/* Ongoing */}
             {!hiddenColumns.has('projectsOngoing') && (
                 <td className="px-3 py-3 text-right text-sm" style={{ color: accentColor }}>
-                    {Math.round(totals.projectsOngoing)}
+                    {Math.round(totals.projectsOngoing ?? 0)}
                 </td>
             )}
 

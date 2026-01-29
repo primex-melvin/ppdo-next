@@ -156,8 +156,8 @@ export function TwentyPercentDFTableRow({
             {/* Completed */}
             {!hiddenColumns.has('projectCompleted') && (
                 <td className="px-3 py-3 text-right text-sm">
-                    <span className={project.projectCompleted >= 80 ? "text-green-600" : "text-zinc-600"}>
-                        {Math.round(project.projectCompleted)}
+                    <span className={(project.projectCompleted ?? 0) >= 80 ? "text-green-600" : "text-zinc-600"}>
+                        {Math.round(project.projectCompleted ?? 0)}
                     </span>
                 </td>
             )}
@@ -165,14 +165,14 @@ export function TwentyPercentDFTableRow({
             {/* Delayed */}
             {!hiddenColumns.has('projectDelayed') && (
                 <td className="px-3 py-3 text-right text-sm">
-                    {Math.round(project.projectDelayed)}
+                    {Math.round(project.projectDelayed ?? 0)}
                 </td>
             )}
 
             {/* Ongoing */}
             {!hiddenColumns.has('projectsOngoing') && (
                 <td className="px-3 py-3 text-right text-sm">
-                    {Math.round(project.projectsOngoing)}
+                    {Math.round(project.projectsOngoing ?? 0)}
                 </td>
             )}
 

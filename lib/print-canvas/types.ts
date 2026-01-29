@@ -52,7 +52,7 @@ export interface BudgetTotals {
   totalBudgetUtilized: number;
   projectCompleted: number;
   projectDelayed: number;
-  projectsOnTrack: number;
+  projectsOngoing: number;
 }
 
 /**

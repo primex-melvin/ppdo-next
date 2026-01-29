@@ -61,7 +61,7 @@ export const twentyPercentDFTables = {
         // ============================================================================
         projectCompleted: v.number(),
         projectDelayed: v.number(),
-        projectsOnTrack: v.number(), // "projectsOngoing" in frontend context
+        projectsOngoing: v.number(),
 
         // ============================================================================
         // ADDITIONAL FIELDS

@@ -6,7 +6,7 @@ interface StatusInfoCardProps {
     totalProjects: number;
     projectCompleted: number;
     projectDelayed: number;
-    projectsOnTrack: number;
+    projectsOngoing: number;
     totalBreakdowns: number;
 }
 
@@ -15,11 +15,11 @@ export function StatusInfoCard({
     totalProjects,
     projectCompleted,
     projectDelayed,
-    projectsOnTrack,
+    projectsOngoing,
     totalBreakdowns,
 }: StatusInfoCardProps) {
     const getStatusRule = () => {
-        if (projectsOnTrack > 0) return "Ongoing (has ongoing projects)";
+        if (projectsOngoing > 0) return "Ongoing (has ongoing projects)";
         if (projectDelayed > 0) return "Delayed (has delayed projects)";
         return "Completed (all projects completed)";
     };
@@ -56,7 +56,7 @@ export function StatusInfoCard({
                         {totalProjects}
                     </div>
                     <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-                        {projectCompleted}C • {projectDelayed}D • {projectsOnTrack}O
+                        {projectCompleted}C • {projectDelayed}D • {projectsOngoing}O
                     </div>
                 </div>
 

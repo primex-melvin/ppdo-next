@@ -70,7 +70,7 @@ export function TwentyPercentDFForm({
     );
 
     // Transform Convex query result to TwentyPercentDF[]
-    // Note: Convex schema uses 'projectsOnTrack' but TwentyPercentDF interface uses 'projectsOngoing'
+    // Note: projectsOngoing is now directly mapped from the backend
     const siblingProjects: TwentyPercentDF[] | undefined = siblingProjectsRaw?.map((p) => ({
         id: p._id,
         particulars: p.particulars,
@@ -83,8 +83,7 @@ export function TwentyPercentDFForm({
         utilizationRate: p.utilizationRate || 0,
         projectCompleted: p.projectCompleted || 0,
         projectDelayed: p.projectDelayed || 0,
-        // Map Convex 'projectsOnTrack' to interface 'projectsOngoing'
-        projectsOngoing: (p as any).projectsOnTrack || 0,
+        projectsOngoing: (p as any).projectsOngoing || 0,
         remarks: p.remarks,
         year: p.year,
         status: p.status,

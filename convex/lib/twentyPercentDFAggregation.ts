@@ -57,7 +57,7 @@ export async function recalculateTwentyPercentDFMetrics(
         obligatedBudget: totalObligated,
         projectCompleted: statusCounts.completed,
         projectDelayed: statusCounts.delayed,
-        projectsOnTrack: statusCounts.onTrack,
+        projectsOngoing: statusCounts.onTrack,
         updatedAt: Date.now(),
         updatedBy: userId,
     };

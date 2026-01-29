@@ -120,7 +120,7 @@ export const create = mutation({
             utilizationRate,
             projectCompleted: 0,
             projectDelayed: 0,
-            projectsOnTrack: 0,
+            projectsOngoing: 0,
             remarks: args.remarks,
             year: args.year,
             status: "ongoing",
