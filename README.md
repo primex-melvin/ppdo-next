@@ -2,7 +2,7 @@
 
 ## 📝 Git Commit Guide
 
-Follow these commit message prefixes to keep our git history clean and organized!
+Follow these commit message prefixes to keep our git history clean and organized! e.g git commit -m (e.g. message)
 
 ### Common Commit Types
 
@@ -21,6 +21,8 @@ Follow these commit message prefixes to keep our git history clean and organized
 | **revert:**  | Reverts a previous commit                                              | `revert: undo feature X` |
 
 ---
+
+e.g git commit -m (e.g. message) powershell
 
 ## 🌍 Environment Configuration (Convex)
 
