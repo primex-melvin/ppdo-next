@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const events = [
   {
@@ -63,6 +64,24 @@ const news = [
 ];
 
 export default function PPDOActivities() {
+  const bulletinImages = [
+    "/news-events/Monitoring and Evaluation of Government Development Programs.png",
+    "/news-events/Investment Promotion and Local Economic Development Support.png",
+    "/news-events/Program Performance Review and Impact Assessment.png",
+    "/news-events/Development Program Review and Strategic Assessment.png",
+  ];
+  const [bulletinIndex, setBulletinIndex] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setBulletinIndex((prev) =>
+        prev === bulletinImages.length - 1 ? 0 : prev + 1
+      );
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [bulletinImages.length]);
+
   return (
     <section
       className="bg-[#f8f8f8] py-20"
@@ -85,14 +104,16 @@ export default function PPDOActivities() {
           <div className="space-y-6">
             <div className="bg-white/85 border border-[#012130]/10 rounded-2xl shadow-sm overflow-hidden">
               <div className="relative h-[260px] sm:h-[300px]">
-                <Image
-                  src="/placeholder.jpg"
-                  alt="Featured activity"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0c3823]/70 via-[#0c3823]/10 to-transparent" />
+                <div className="absolute inset-0 transition-transform duration-500 ease-out">
+                  <Image
+                    src={bulletinImages[bulletinIndex]}
+                    alt="Provincial bulletin"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c3823]/75 via-[#0c3823]/10 to-transparent" />
                 <div className="absolute bottom-0 left-0 p-6 text-white">
                   <p className="text-xs uppercase tracking-[0.35em] text-white/80">
                     Provincial Bulletin

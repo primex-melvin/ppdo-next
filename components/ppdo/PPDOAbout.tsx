@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 export default function PPDOAbout() {
   const [activeTab, setActiveTab] = useState<"mission" | "vision" | "quality">(
     "mission"
   );
+  const [isAutoplay, setIsAutoplay] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isAutoplay) {
+      void videoRef.current.play();
+    } else {
+      videoRef.current.pause();
+    }
+  }, [isAutoplay]);
 
   return (
     <section className="bg-[#f8f8f8] py-20 px-6">
@@ -96,16 +107,27 @@ export default function PPDOAbout() {
           </div>
         </div>
 
-        {/* RIGHT IMAGE */}
+        {/* RIGHT VIDEO */}
         <div className="w-full">
           <div className="rounded-2xl overflow-hidden shadow-lg bg-white">
-            <Image
-              src="/placeholder.jpg"
-              alt="PPDO Department"
-              width={700}
-              height={500}
-              className="w-full h-auto object-cover"
-            />
+            <div className="relative">
+              <video
+                ref={videoRef}
+                src="/video/about.mp4"
+                autoPlay={isAutoplay}
+                loop
+                muted
+                playsInline
+                className="w-full h-auto object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => setIsAutoplay((prev) => !prev)}
+                className="absolute bottom-4 right-4 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white hover:bg-black/80"
+              >
+                {isAutoplay ? "Autoplay: On" : "Autoplay: Off"}
+              </button>
+            </div>
           </div>
         </div>
 
