@@ -73,12 +73,14 @@ export function PrintPreviewModal({
     addTabStop,
     updateTabStop,
     removeTabStop,
+    toggleMarginGuides,
   } = useRulerState();
 
   const [scrollLeft, setScrollLeft] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
+  const [canvasOffsetLeft, setCanvasOffsetLeft] = useState(0);
   const canvasScrollRef = useRef<HTMLDivElement>(null);
-
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [isEditorMode, setIsEditorMode] = useState(false);
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const [showTemplateApplicationModal, setShowTemplateApplicationModal] = useState(false);
@@ -105,12 +107,37 @@ export function PrintPreviewModal({
   // Track initialization to prevent re-triggering
   const initializationStartedRef = useRef(false);
 
+  // Calculate canvas offset for ruler positioning
+  const updateCanvasOffset = useCallback(() => {
+    if (canvasContainerRef.current && canvasScrollRef.current) {
+      const scrollContainer = canvasScrollRef.current;
+      const pageDimensions = getPageDimensions(state.currentPage.size, state.currentPage.orientation);
+      const containerWidth = scrollContainer.clientWidth;
+      const canvasWidth = pageDimensions.width;
+
+      const padding = 32; // px-8 padding
+      const canvasStartOffset = Math.max(padding, (containerWidth - canvasWidth) / 2);
+
+      setCanvasOffsetLeft(canvasStartOffset);
+    }
+  }, [state.currentPage.size, state.currentPage.orientation]);
+
+  // Update canvas offset on scroll, resize, or page changes
+  useEffect(() => {
+    updateCanvasOffset();
+    const handleResize = () => updateCanvasOffset();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateCanvasOffset]);
+
   // Persist panel state
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('printPreview.panelCollapsed', isPanelCollapsed.toString());
     }
-  }, [isPanelCollapsed]);
+    // Also trigger offset update when panel collapses/expands
+    updateCanvasOffset();
+  }, [isPanelCollapsed, updateCanvasOffset]);
 
   // Prepare table data for ColumnVisibilityPanel (with label overrides)
   const tables = useMemo(() => [{
@@ -659,27 +686,92 @@ export function PrintPreviewModal({
           onEditorModeChange={setIsEditorMode}
           rulerVisible={rulerState.visible}
           onToggleRuler={toggleRulerVisibility}
+          marginGuidesVisible={rulerState.showMarginGuides}
+          onToggleMarginGuides={toggleMarginGuides}
           pageOrientation={state.currentPage.orientation}
           pageSize={state.currentPage.size}
         />
 
-        {/* Rulers and Canvas UI Block */}
+        {/* Inner Editor Toolbar (moved up for alignment) */}
+        <div className="z-20 bg-stone-100 border-b border-stone-300 shadow-sm no-print">
+          <Toolbar
+            selectedElement={state.selectedElement}
+            onUpdateElement={state.selectedElementId ? (updates) => actions.updateElement(state.selectedElementId!, updates) : undefined}
+            onAddText={() => { }}
+            pageSize={state.currentPage.size}
+            orientation={state.currentPage.orientation}
+            onPageSizeChange={actions.changePageSize}
+            onOrientationChange={actions.changeOrientation}
+            onPrint={handlePrint}
+            activeSection={state.activeSection}
+            headerBackgroundColor={state.header.backgroundColor || '#ffffff'}
+            footerBackgroundColor={state.footer.backgroundColor || '#ffffff'}
+            pageBackgroundColor={state.currentPage.backgroundColor || '#ffffff'}
+            onHeaderBackgroundChange={actions.updateHeaderBackground}
+            onFooterBackgroundChange={actions.updateFooterBackground}
+            onPageBackgroundChange={actions.updatePageBackground}
+            pages={state.pages}
+            header={state.header}
+            footer={state.footer}
+            isEditorMode={isEditorMode}
+            rulerVisible={rulerState.visible}
+            onToggleRuler={toggleRulerVisibility}
+            marginGuidesVisible={rulerState.showMarginGuides}
+            onToggleMarginGuides={toggleMarginGuides}
+          />
+        </div>
+
+        {/* Rulers UI Block */}
         {rulerState.visible && (
-          <div className="sticky top-0 z-30 bg-stone-200 border-b border-stone-300 flex">
-            {rulerState.showVertical && <div className="flex-shrink-0 bg-stone-200 border-r border-stone-300" style={{ width: RULER_WIDTH, height: RULER_HEIGHT }} />}
-            <div className="flex-1 overflow-hidden flex justify-center" style={{ height: RULER_HEIGHT }}>
-              <div style={{ transform: `translateX(${-scrollLeft}px)` }}>
-                <HorizontalRuler width={getPageDimensions(state.currentPage.size, state.currentPage.orientation).width} rulerState={rulerState} onMarginChange={updateMargin} onIndentChange={updateIndent} onTabStopAdd={addTabStop} onTabStopUpdate={updateTabStop} onTabStopRemove={removeTabStop} scrollLeft={0} />
+          <div className="sticky top-0 z-30 bg-stone-200 border-b border-stone-300 flex no-print">
+            {/* Space for Vertical Ruler */}
+            {rulerState.showVertical && (
+              <div
+                className="flex-shrink-0 bg-stone-200 border-r border-stone-300"
+                style={{ width: RULER_WIDTH, height: RULER_HEIGHT }}
+              />
+            )}
+
+            {/* Space for Left Sidebar (ColumnVisibilityPanel) */}
+            <div
+              className="flex-shrink-0 bg-stone-200 border-r border-stone-300 transition-all duration-300"
+              style={{ width: isPanelCollapsed ? 48 : 280, height: RULER_HEIGHT }}
+            />
+
+            {/* Horizontal Ruler - centered with canvas */}
+            <div
+              ref={canvasContainerRef}
+              className="flex-1 overflow-hidden flex justify-start"
+              style={{ height: RULER_HEIGHT }}
+            >
+              <div
+                style={{
+                  marginLeft: Math.max(0, canvasOffsetLeft),
+                  transform: `translateX(${-scrollLeft}px)`,
+                }}
+              >
+                <HorizontalRuler
+                  width={getPageDimensions(state.currentPage.size, state.currentPage.orientation).width}
+                  rulerState={rulerState}
+                  onMarginChange={updateMargin}
+                  onIndentChange={updateIndent}
+                  onTabStopAdd={addTabStop}
+                  onTabStopUpdate={updateTabStop}
+                  onTabStopRemove={removeTabStop}
+                  scrollLeft={0}
+                />
               </div>
             </div>
-            <div className="w-64 flex-shrink-0 bg-stone-200" style={{ height: RULER_HEIGHT }} />
+
+            {/* Space for Right Sidebar (PagePanel) */}
+            <div className="w-64 flex-shrink-0 bg-stone-200 border-l border-stone-300" style={{ height: RULER_HEIGHT }} />
           </div>
         )}
 
         <div className="flex flex-1 overflow-hidden">
           {rulerState.visible && rulerState.showVertical && (
             <div className="flex-shrink-0 bg-stone-100 border-r border-stone-300 overflow-hidden" style={{ width: RULER_WIDTH }}>
-              <div style={{ transform: `translateY(${-scrollTop}px)`, marginTop: 16 }}>
+              <div style={{ transform: `translateY(${-scrollTop}px)`, marginTop: 0 }}>
                 <VerticalRuler height={getPageDimensions(state.currentPage.size, state.currentPage.orientation).height} rulerState={rulerState} onMarginChange={updateMargin} scrollTop={0} showHeaderFooter={true} />
               </div>
             </div>
@@ -701,32 +793,28 @@ export function PrintPreviewModal({
           />
 
           <div className="flex-1 flex flex-col overflow-hidden bg-stone-50 min-w-0">
-            <div className="sticky top-0 z-10 bg-stone-100 border-b border-stone-300 shadow-sm">
-              <Toolbar
-                selectedElement={state.selectedElement}
-                onUpdateElement={state.selectedElementId ? (updates) => actions.updateElement(state.selectedElementId!, updates) : undefined}
-                onAddText={() => { }}
-                pageSize={state.currentPage.size}
-                orientation={state.currentPage.orientation}
-                onPageSizeChange={actions.changePageSize}
-                onOrientationChange={actions.changeOrientation}
-                onPrint={handlePrint}
-                activeSection={state.activeSection}
-                headerBackgroundColor={state.header.backgroundColor || '#ffffff'}
-                footerBackgroundColor={state.footer.backgroundColor || '#ffffff'}
-                pageBackgroundColor={state.currentPage.backgroundColor || '#ffffff'}
-                onHeaderBackgroundChange={actions.updateHeaderBackground}
-                onFooterBackgroundChange={actions.updateFooterBackground}
-                onPageBackgroundChange={actions.updatePageBackground}
-                pages={state.pages}
-                header={state.header}
-                footer={state.footer}
-                isEditorMode={isEditorMode}
-              />
-            </div>
+            {/* Canvas Area */}
 
             <div ref={canvasScrollRef} className="flex-1 overflow-y-auto overflow-x-auto flex items-start justify-center pt-4 pb-16 px-8" onScroll={(e) => { const target = e.target as HTMLDivElement; setScrollLeft(target.scrollLeft); setScrollTop(target.scrollTop); }}>
-              <Canvas page={{ ...state.currentPage, elements: visibleElements }} selectedElementId={isEditorMode ? state.selectedElementId : null} onSelectElement={isEditorMode ? state.setSelectedElementId : () => { }} onUpdateElement={isEditorMode ? actions.updateElement : () => { }} onDeleteElement={isEditorMode ? actions.deleteElement : () => { }} isEditingElementId={isEditorMode ? state.isEditingElementId : null} onEditingChange={isEditorMode ? state.setIsEditingElementId : () => { }} header={state.header} footer={state.footer} pageNumber={state.currentPageIndex + 1} totalPages={state.pages.length} activeSection={state.activeSection} onActiveSectionChange={isEditorMode ? state.setActiveSection : () => { }} selectedGroupId={state.selectedGroupId} isEditorMode={isEditorMode} onSetDirty={state.setIsDirty} />
+              <Canvas
+                page={{ ...state.currentPage, elements: visibleElements }}
+                selectedElementId={isEditorMode ? state.selectedElementId : null}
+                onSelectElement={isEditorMode ? state.setSelectedElementId : () => { }}
+                onUpdateElement={isEditorMode ? actions.updateElement : () => { }}
+                onDeleteElement={isEditorMode ? actions.deleteElement : () => { }}
+                isEditingElementId={isEditorMode ? state.isEditingElementId : null}
+                onEditingChange={isEditorMode ? state.setIsEditingElementId : () => { }}
+                header={state.header}
+                footer={state.footer}
+                pageNumber={state.currentPageIndex + 1}
+                totalPages={state.pages.length}
+                activeSection={state.activeSection}
+                onActiveSectionChange={isEditorMode ? state.setActiveSection : () => { }}
+                selectedGroupId={state.selectedGroupId}
+                isEditorMode={isEditorMode}
+                onSetDirty={state.setIsDirty}
+                showMarginGuides={rulerState.showMarginGuides}
+              />
             </div>
 
             <div className="border-t border-stone-200 bg-white flex-shrink-0">
@@ -764,16 +852,18 @@ export function PrintPreviewModal({
             />
           </div>
         </div>
-      </div>
+      </div >
 
       {/* ✅ SETUP WIZARD: Handles both Template + Orientation */}
-      {showSetupModal && (
-        <TemplateSelector
-          isOpen={true}
-          onClose={handleClose}
-          onComplete={handleSetupComplete}
-        />
-      )}
+      {
+        showSetupModal && (
+          <TemplateSelector
+            isOpen={true}
+            onClose={handleClose}
+            onComplete={handleSetupComplete}
+          />
+        )
+      }
 
       {/* Confirmation Modals */}
       <ConfirmationModal
@@ -793,13 +883,15 @@ export function PrintPreviewModal({
       <TemplateApplicationModal isOpen={showTemplateApplicationModal} onClose={() => { setShowTemplateApplicationModal(false); handleSkipTemplate(); }} onProceed={handleApplySavedTemplate} template={savedTemplate} />
 
       {/* Live Template Selector (Standalone for Toolbar) */}
-      {showLiveTemplateSelector && (
-        <TemplateSelector
-          isOpen={true}
-          onClose={() => setShowLiveTemplateSelector(false)}
-          onComplete={(res) => handleApplyLiveTemplate({ template: res.template })}
-        />
-      )}
+      {
+        showLiveTemplateSelector && (
+          <TemplateSelector
+            isOpen={true}
+            onClose={() => setShowLiveTemplateSelector(false)}
+            onComplete={(res) => handleApplyLiveTemplate({ template: res.template })}
+          />
+        )
+      }
     </>
   );
 }
