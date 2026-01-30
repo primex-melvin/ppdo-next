@@ -49,6 +49,52 @@ export function useActivityLogData({
   );
 
   // ============================================================================
+  // SPECIAL EDUCATION FUND ACTIVITIES
+  // ============================================================================
+  const specialEducationFundActivitiesAll = useQuery(
+    api.specialEducationFundActivities.list,
+    type === "specialEducationFund" && entityId === "all"
+      ? {
+        limit: loadedCount,
+        action: actionFilter !== "all" ? actionFilter : undefined
+      }
+      : "skip"
+  );
+
+  const specialEducationFundActivitiesSingle = useQuery(
+    api.specialEducationFundActivities.getBySpecialEducationFundId,
+    type === "specialEducationFund" && entityId && entityId !== "all"
+      ? {
+        specialEducationFundId: entityId as Id<"specialEducationFunds">,
+        limit: loadedCount
+      }
+      : "skip"
+  );
+
+  // ============================================================================
+  // SPECIAL HEALTH FUND ACTIVITIES
+  // ============================================================================
+  const specialHealthFundActivitiesAll = useQuery(
+    api.specialHealthFundActivities.list,
+    type === "specialHealthFund" && entityId === "all"
+      ? {
+        limit: loadedCount,
+        action: actionFilter !== "all" ? actionFilter : undefined
+      }
+      : "skip"
+  );
+
+  const specialHealthFundActivitiesSingle = useQuery(
+    api.specialHealthFundActivities.getBySpecialHealthFundId,
+    type === "specialHealthFund" && entityId && entityId !== "all"
+      ? {
+        specialHealthFundId: entityId as Id<"specialHealthFunds">,
+        limit: loadedCount
+      }
+      : "skip"
+  );
+
+  // ============================================================================
   // PROJECT ACTIVITIES
   // ============================================================================
   const projectActivities = useQuery(
@@ -396,6 +442,54 @@ export function useActivityLogData({
       }));
     }
 
+    if (type === "specialEducationFund") {
+      if (entityId === "all") {
+        rawActivities = specialEducationFundActivitiesAll || [];
+      } else {
+        rawActivities = specialEducationFundActivitiesSingle || [];
+      }
+
+      return rawActivities.map((activity) => ({
+        _id: activity._id,
+        action: activity.action,
+        timestamp: activity.timestamp,
+        performedByName: activity.performedByName,
+        performedByEmail: activity.performedByEmail,
+        performedByRole: activity.performedByRole,
+        reason: activity.reason,
+        changedFields: activity.changedFields,
+        changeSummary: activity.changeSummary,
+        previousValues: activity.previousValues,
+        newValues: activity.newValues,
+        projectTitle: activity.projectTitle,
+        officeInCharge: activity.officeInCharge,
+      }));
+    }
+
+    if (type === "specialHealthFund") {
+      if (entityId === "all") {
+        rawActivities = specialHealthFundActivitiesAll || [];
+      } else {
+        rawActivities = specialHealthFundActivitiesSingle || [];
+      }
+
+      return rawActivities.map((activity) => ({
+        _id: activity._id,
+        action: activity.action,
+        timestamp: activity.timestamp,
+        performedByName: activity.performedByName,
+        performedByEmail: activity.performedByEmail,
+        performedByRole: activity.performedByRole,
+        reason: activity.reason,
+        changedFields: activity.changedFields,
+        changeSummary: activity.changeSummary,
+        previousValues: activity.previousValues,
+        newValues: activity.newValues,
+        projectTitle: activity.projectTitle,
+        officeInCharge: activity.officeInCharge,
+      }));
+    }
+
     return [];
   }, [
     type,
@@ -414,8 +508,13 @@ export function useActivityLogData({
     healthBreakdownActivitiesProjectOffice,
     twentyPercentDFBreakdownActivitiesSingle,
     twentyPercentDFBreakdownActivitiesProjectOffice,
+    twentyPercentDFBreakdownActivitiesProjectOffice,
     twentyPercentDFActivitiesAll,
-    twentyPercentDFActivitiesSingle
+    twentyPercentDFActivitiesSingle,
+    specialEducationFundActivitiesAll,
+    specialEducationFundActivitiesSingle,
+    specialHealthFundActivitiesAll,
+    specialHealthFundActivitiesSingle
   ]);
 
   // ============================================================================
@@ -472,6 +571,20 @@ export function useActivityLogData({
       return twentyPercentDFActivitiesSingle === undefined;
     }
 
+    if (type === "specialEducationFund") {
+      if (entityId === "all") {
+        return specialEducationFundActivitiesAll === undefined;
+      }
+      return specialEducationFundActivitiesSingle === undefined;
+    }
+
+    if (type === "specialHealthFund") {
+      if (entityId === "all") {
+        return specialHealthFundActivitiesAll === undefined;
+      }
+      return specialHealthFundActivitiesSingle === undefined;
+    }
+
     return false;
   }, [
     type,
@@ -491,7 +604,11 @@ export function useActivityLogData({
     twentyPercentDFBreakdownActivitiesSingle,
     twentyPercentDFBreakdownActivitiesProjectOffice,
     twentyPercentDFActivitiesAll,
-    twentyPercentDFActivitiesSingle
+    twentyPercentDFActivitiesSingle,
+    specialEducationFundActivitiesAll,
+    specialEducationFundActivitiesSingle,
+    specialHealthFundActivitiesAll,
+    specialHealthFundActivitiesSingle
   ]);
 
   // ============================================================================

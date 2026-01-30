@@ -123,6 +123,7 @@ import type * as specialEducationFundBreakdownActivities from "../specialEducati
 import type * as specialEducationFundBreakdowns from "../specialEducationFundBreakdowns.js";
 import type * as specialEducationFundSharedAccess from "../specialEducationFundSharedAccess.js";
 import type * as specialEducationFunds from "../specialEducationFunds.js";
+import type * as specialHealthFundActivities from "../specialHealthFundActivities.js";
 import type * as specialHealthFundBreakdownActivities from "../specialHealthFundBreakdownActivities.js";
 import type * as specialHealthFundBreakdowns from "../specialHealthFundBreakdowns.js";
 import type * as specialHealthFunds from "../specialHealthFunds.js";
@@ -261,6 +262,7 @@ declare const fullApi: ApiFromModules<{
   specialEducationFundBreakdowns: typeof specialEducationFundBreakdowns;
   specialEducationFundSharedAccess: typeof specialEducationFundSharedAccess;
   specialEducationFunds: typeof specialEducationFunds;
+  specialHealthFundActivities: typeof specialHealthFundActivities;
   specialHealthFundBreakdownActivities: typeof specialHealthFundBreakdownActivities;
   specialHealthFundBreakdowns: typeof specialHealthFundBreakdowns;
   specialHealthFunds: typeof specialHealthFunds;
