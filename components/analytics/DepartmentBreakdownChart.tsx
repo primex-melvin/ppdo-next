@@ -7,11 +7,18 @@ import {
     Pie,
     Cell,
     Tooltip,
-    Legend,
     ResponsiveContainer,
 } from "recharts";
 import { DashboardChartCard } from "@/components/ppdo/dashboard/charts/DashboardChartCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ListFilter } from "lucide-react";
 
 interface DepartmentBreakdownChartProps {
     data: any[];
@@ -22,15 +29,19 @@ const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 
 export function DepartmentBreakdownChart({ data, officeData = [] }: DepartmentBreakdownChartProps) {
     const [activeTab, setActiveTab] = useState("office");
+    const [limit, setLimit] = useState("10");
 
     const currentData = activeTab === "department" ? data : officeData;
 
     // Prepare data for the pie chart
-    const chartData = currentData.map((item) => ({
+    const fullChartData = currentData.map((item) => ({
         name: item.code || item.name,
         fullName: item.name,
         value: item.allocated,
-    })).filter(item => item.value > 0).slice(0, 10); // Ensure top 10
+    })).filter(item => item.value > 0);
+
+    const limitNum = limit === "all" ? fullChartData.length : parseInt(limit);
+    const chartData = fullChartData.slice(0, limitNum);
 
     const formatCurrency = (value: number) =>
         new Intl.NumberFormat("en-PH", {
@@ -43,11 +54,11 @@ export function DepartmentBreakdownChart({ data, officeData = [] }: DepartmentBr
     // Custom label for permanent percentages
     const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
         const RADIAN = Math.PI / 180;
-        const radius = outerRadius + 20;
+        const radius = outerRadius + 22; // Distance from outer radius - adjusted to prevent clipping
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-        if (percent < 0.05) return null;
+        if (percent < 0.03) return null; // Show labels for segments >= 3%
 
         return (
             <text
@@ -67,11 +78,27 @@ export function DepartmentBreakdownChart({ data, officeData = [] }: DepartmentBr
         <DashboardChartCard
             title="Allocation Breakdown"
             subtitle={`Budget distribution by top ${activeTab === "department" ? "departments" : "offices"}`}
-            height={440}
+            height={480}
         >
-            <div className="flex justify-between items-start mb-6">
-                <div />
-                <div className="flex items-center space-x-2">
+            <div className="flex flex-col space-y-4 mb-6">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <ListFilter className="w-4 h-4 text-zinc-400" />
+                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Display Limit</span>
+                        <Select value={limit} onValueChange={setLimit}>
+                            <SelectTrigger size="sm" className="w-[100px] h-8 rounded-lg font-bold text-xs bg-zinc-50 dark:bg-zinc-800/50">
+                                <SelectValue placeholder="Limit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="5">Top 5</SelectItem>
+                                <SelectItem value="10">Top 10</SelectItem>
+                                <SelectItem value="20">Top 20</SelectItem>
+                                <SelectItem value="50">Top 50</SelectItem>
+                                <SelectItem value="all">Show All</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[200px]">
                         <TabsList className="grid w-full grid-cols-2 h-9 rounded-xl bg-zinc-100/80 dark:bg-zinc-800/80 p-1">
                             <TabsTrigger value="office" className="text-xs font-bold rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Office</TabsTrigger>
@@ -82,15 +109,15 @@ export function DepartmentBreakdownChart({ data, officeData = [] }: DepartmentBr
             </div>
 
             <motion.div
-                key={activeTab}
+                key={`${activeTab}-${limit}`}
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4 }}
-                className="h-[320px]"
+                className="h-[360px]"
             >
                 <div className="flex flex-col sm:flex-row items-center h-full gap-8">
                     {/* Donut Chart */}
-                    <div className="relative flex-shrink-0" style={{ width: 220, height: 220 }}>
+                    <div className="relative flex-shrink-0" style={{ width: 260, height: 260 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -128,15 +155,17 @@ export function DepartmentBreakdownChart({ data, officeData = [] }: DepartmentBr
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-black">Top {chartData.length}</span>
-                            <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">
+                            <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-black">
+                                {limit === 'all' ? `All ${chartData.length}` : `Top ${chartData.length}`}
+                            </span>
+                            <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tighter">
                                 Allocated
                             </span>
                         </div>
                     </div>
 
                     {/* Enhanced Legend */}
-                    <div className="flex-1 w-full grid grid-cols-1 gap-2 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+                    <div className="flex-1 w-full grid grid-cols-1 gap-2 overflow-y-auto max-h-[360px] pr-2 custom-scrollbar">
                         {chartData.map((item, idx) => {
                             const totalVal = chartData.reduce((acc, curr) => acc + curr.value, 0);
                             const percentage = totalVal > 0 ? (item.value / totalVal) * 100 : 0;
