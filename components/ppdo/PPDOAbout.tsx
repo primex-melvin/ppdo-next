@@ -13,7 +13,9 @@ export default function PPDOAbout() {
   useEffect(() => {
     if (!videoRef.current) return;
     if (isAutoplay) {
-      void videoRef.current.play();
+      videoRef.current.play().catch(() => {
+        // Autoplay can be blocked by browser power-saving policies.
+      });
     } else {
       videoRef.current.pause();
     }
@@ -118,6 +120,7 @@ export default function PPDOAbout() {
                 loop
                 muted
                 playsInline
+                preload="metadata"
                 className="w-full h-auto object-cover"
               />
               <button
