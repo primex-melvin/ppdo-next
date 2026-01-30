@@ -316,12 +316,19 @@ function DepartmentMultiSelect({ value, onChange, departments }: DepartmentMulti
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto justify-between">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    {selectedDepts.length > 0
-                        ? `${selectedDepts.length} Department${selectedDepts.length > 1 ? "s" : ""}`
-                        : "Departments"}
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                <Button variant="outline" className="w-full sm:w-auto justify-between gap-2">
+                    <div className="flex items-center">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        {selectedDepts.length > 0
+                            ? `${selectedDepts.length} Department${selectedDepts.length > 1 ? "s" : ""}`
+                            : "Departments"}
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Badge variant="outline" className="h-5 px-1.5 font-black bg-zinc-100/50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-[10px]">
+                            {departments.length}
+                        </Badge>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                    </div>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[300px] p-0" align="start">
@@ -383,12 +390,19 @@ function OfficeMultiSelect({ value, onChange, offices }: OfficeMultiSelectProps)
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto justify-between">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    {value.length > 0
-                        ? `${value.length} Office${value.length > 1 ? "s" : ""}`
-                        : "Offices"}
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                <Button variant="outline" className="w-full sm:w-auto justify-between gap-2">
+                    <div className="flex items-center">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        {value.length > 0
+                            ? `${value.length} Office${value.length > 1 ? "s" : ""}`
+                            : "Offices"}
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Badge variant="outline" className="h-5 px-1.5 font-black bg-zinc-100/50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-[10px]">
+                            {offices.length}
+                        </Badge>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                    </div>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[300px] p-0" align="start">
