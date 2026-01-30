@@ -44,6 +44,19 @@ import {
     CommandItem,
     CommandList,
 } from "@/components/ui/command";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { DashboardFilters as Filters } from "@/hooks/useDashboardFilters";
@@ -54,15 +67,18 @@ interface DashboardFiltersProps {
     filters: Filters;
     onChange: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
     onReset: () => void;
+    activeYear?: number;
 }
 
 export function DashboardFilters({
     filters,
     onChange,
     onReset,
+    activeYear,
 }: DashboardFiltersProps) {
     const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+    // Fetch data for selectors
     // Fetch data for selectors
     const fiscalYears = useQuery(api.fiscalYears.list, {});
     const departments = useQuery(api.departments.list, {});
@@ -89,13 +105,14 @@ export function DashboardFilters({
             <div className="container mx-auto p-4">
                 {/* Desktop Filters */}
                 <div className="hidden lg:flex flex-wrap items-center gap-3">
-                    {/* Fiscal Year Selector */}
-                    <FiscalYearSelector
-                        value={filters.fiscalYearId}
-                        onChange={(value) => onChange("fiscalYearId", value)}
+                    {/* High-Visibility Year Switcher */}
+                    <YearSwitcher
                         fiscalYears={fiscalYears || []}
+                        currentFiscalYearId={filters.fiscalYearId}
+                        activeYear={activeYear}
                     />
 
+                    <div className="h-8 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2" />
                     {/* Office Multi-Select */}
                     <OfficeMultiSelect
                         value={filters.officeIds || []}
@@ -196,10 +213,11 @@ export function DashboardFilters({
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <FiscalYearSelector
-                                value={filters.fiscalYearId}
-                                onChange={(value) => onChange("fiscalYearId", value)}
+                            <YearSwitcher
                                 fiscalYears={fiscalYears || []}
+                                currentFiscalYearId={filters.fiscalYearId}
+                                activeYear={activeYear}
+                                mobile
                             />
                             <DepartmentMultiSelect
                                 value={filters.departmentIds || []}
@@ -221,7 +239,6 @@ export function DashboardFilters({
                         <ActiveFilterBadges
                             filters={filters}
                             onChange={onChange}
-                            fiscalYears={fiscalYears || []}
                         />
                     </motion.div>
                 )}
@@ -234,67 +251,138 @@ export function DashboardFilters({
 // SUB-COMPONENTS
 // ============================================================================
 
-interface FiscalYearSelectorProps {
-    value?: Id<"fiscalYears">;
-    onChange: (value?: Id<"fiscalYears">) => void;
-    fiscalYears: Doc<"fiscalYears">[];
-}
-
-function FiscalYearSelector({ value, onChange, fiscalYears }: FiscalYearSelectorProps) {
-    const [open, setOpen] = useState(false);
-
-    const selected = fiscalYears.find((fy) => fy._id === value);
-
+function LoadingModal({ open }: { open: boolean }) {
     return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto justify-between">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {selected ? `FY ${selected.year}` : "Year"}
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="start">
-                <Command>
-                    <CommandInput placeholder="Search year..." />
-                    <CommandList>
-                        <CommandEmpty>No year found.</CommandEmpty>
-                        <CommandGroup>
-                            {fiscalYears.map((fy) => (
-                                <CommandItem
-                                    key={fy._id}
-                                    value={fy.year.toString()}
-                                    onSelect={() => {
-                                        onChange(fy._id);
-                                        setOpen(false);
-                                    }}
-                                >
-                                    <div
-                                        className={cn(
-                                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                                            value === fy._id
-                                                ? "bg-primary text-primary-foreground"
-                                                : "opacity-50 [&_svg]:invisible"
-                                        )}
-                                    >
-                                        <Check className="h-3 w-3" />
-                                    </div>
-                                    FY {fy.year}
-                                    {fy.label && (
-                                        <span className="ml-2 text-xs text-muted-foreground">
-                                            {fy.label}
-                                        </span>
-                                    )}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
+        <Dialog open={open} onOpenChange={() => { }}>
+            <DialogContent className="[&>button]:hidden sm:max-w-[425px] flex flex-col items-center justify-center py-10 gap-6">
+                <div className="relative">
+                    <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Calendar className="h-6 w-6 text-primary animate-pulse" />
+                    </div>
+                </div>
+                <div className="text-center space-y-2">
+                    <DialogTitle className="text-xl font-bold tracking-tight">Updating Dashboard</DialogTitle>
+                    <p className="text-sm text-muted-foreground">Switching fiscal year data...</p>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 
+interface YearSwitcherProps {
+    fiscalYears: Doc<"fiscalYears">[];
+    currentFiscalYearId?: Id<"fiscalYears">;
+    mobile?: boolean;
+    activeYear?: number;
+}
+
+function YearSwitcher({ fiscalYears, currentFiscalYearId, mobile, activeYear }: YearSwitcherProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [open, setOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const currentYear = fiscalYears.find(fy => fy._id === currentFiscalYearId);
+
+    // Priority: activeYear prop > currentFiscalYearId lookup > "Select"
+    const displayYear = activeYear || (currentYear ? currentYear.year : "Select");
+
+    const handleYearChange = async (year: number) => {
+        if ((activeYear === year) || (currentYear && currentYear.year === year)) {
+            setOpen(false);
+            return;
+        }
+
+        setOpen(false);
+        setIsLoading(true);
+
+        // 1.5s artificial delay for "loading" UX
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const params = new URLSearchParams(searchParams.toString());
+        // We simply navigate to the new year path. 
+        // Note: The parent component or page should handle the re-fetching based on the new URL params/path.
+        router.push(`/dashboard/${year}?${params.toString()}`);
+
+        // We don't turn off loading here immediately because the page navigation will happen.
+        // However, since it's a client side transition, we should strictly turn it off 
+        // to prevent it getting stuck if navigation is instant or fails. 
+        // But for the UX requested, seeing it for 1.5s is the priority.
+        setTimeout(() => setIsLoading(false), 500);
+    };
+
+    const TriggerInfo = (
+        <div className={cn("flex items-center gap-2", mobile && "w-full justify-between")}>
+            <span className="font-bold text-lg">Year: {displayYear}</span>
+            <ChevronDown className="h-4 w-4 opacity-50" />
+        </div>
+    );
+
+    return (
+        <>
+            <LoadingModal open={isLoading} />
+            <Popover open={open} onOpenChange={setOpen}>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className={cn(
+                                        "h-10 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200",
+                                        mobile ? "w-full border rounded-md" : "border-b-2 border-transparent hover:border-primary rounded-none"
+                                    )}
+                                >
+                                    {TriggerInfo}
+                                </Button>
+                            </PopoverTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Switch Fiscal Year</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <PopoverContent className="w-[200px] p-0" align="start">
+                    <Command>
+                        <CommandInput placeholder="Search year..." />
+                        <CommandList>
+                            <CommandEmpty>No year found.</CommandEmpty>
+                            <CommandGroup>
+                                {fiscalYears.map((fy) => (
+                                    <CommandItem
+                                        key={fy._id}
+                                        value={fy.year.toString()}
+                                        onSelect={() => handleYearChange(fy.year)}
+                                        className="cursor-pointer"
+                                    >
+                                        <div
+                                            className={cn(
+                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                                displayYear === fy.year
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "opacity-50 [&_svg]:invisible"
+                                            )}
+                                        >
+                                            <Check className="h-3 w-3" />
+                                        </div>
+                                        <span className="font-medium">FY {fy.year}</span>
+                                        {fy.label && (
+                                            <span className="ml-2 text-xs text-muted-foreground">
+                                                {fy.label}
+                                            </span>
+                                        )}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+        </>
+    );
+}
 interface DepartmentMultiSelectProps {
     value: Id<"departments">[];
     onChange: (value: Id<"departments">[]) => void;
@@ -618,20 +706,10 @@ function StatusFilter({ label, value, onChange, options }: StatusFilterProps) {
 interface ActiveFilterBadgesProps {
     filters: Filters;
     onChange: DashboardFiltersProps["onChange"];
-    fiscalYears?: Doc<"fiscalYears">[];
 }
 
-function ActiveFilterBadges({ filters, onChange, fiscalYears }: ActiveFilterBadgesProps) {
+function ActiveFilterBadges({ filters, onChange }: ActiveFilterBadgesProps) {
     const badges: Array<{ key: string; label: string; onRemove: () => void }> = [];
-
-    if (filters.fiscalYearId) {
-        const fy = fiscalYears?.find((f) => f._id === filters.fiscalYearId);
-        badges.push({
-            key: "fiscalYear",
-            label: fy ? `FY: ${fy.year}` : "FY: ...",
-            onRemove: () => onChange("fiscalYearId", undefined),
-        });
-    }
 
     if (filters.departmentIds && filters.departmentIds.length > 0) {
         badges.push({

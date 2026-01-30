@@ -25,6 +25,7 @@ export interface DashboardFilters {
     searchTerm?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
+    fundType?: "budget" | "trust" | "twenty-percent-df" | "education" | "health";
 }
 
 // URL parameter key mapping for cleaner URLs
@@ -41,6 +42,7 @@ const URL_KEY_MAP: Record<keyof DashboardFilters, string> = {
     searchTerm: "search",
     sortBy: "sort",
     sortOrder: "order",
+    fundType: "fund",
 };
 
 export function useDashboardFilters() {
@@ -53,6 +55,10 @@ export function useDashboardFilters() {
      */
     const filters = useMemo<DashboardFilters>(() => {
         const parsed: DashboardFilters = {};
+
+        // Fund Type
+        const fund = searchParams.get("fund");
+        if (fund) parsed.fundType = fund as any;
 
         // Fiscal Year
         const fy = searchParams.get("fy");

@@ -137,9 +137,43 @@ const filterArgs = {
     sortBy: v.optional(v.string()),
     sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
 
+    // Fund Source
+    fundType: v.optional(v.union(
+        v.literal("budget"),
+        v.literal("trust"),
+        v.literal("twenty-percent-df"),
+        v.literal("education"),
+        v.literal("health")
+    )),
+
     // Search
     searchTerm: v.optional(v.string()),
 };
+
+// Data Normalization Interfaces
+interface NormalizedProject {
+    _id: string;
+    createdAt: number;
+    year?: number;
+    departmentId?: Id<"departments">;
+    implementingOffice?: string;
+    particulars: string; // Name/Title
+    status?: string;
+    totalBudgetAllocated: number;
+    obligatedBudget: number;
+    totalBudgetUtilized: number;
+}
+
+interface NormalizedBudgetItem {
+    _id: string;
+    createdAt: number;
+    year?: number;
+    departmentId?: Id<"departments">; // Some funds might not have this, optional
+    particulars: string;
+    totalBudgetAllocated: number;
+    obligatedBudget: number;
+    totalBudgetUtilized: number;
+}
 
 /**
  * Main Analytics Dashboard Query
@@ -159,11 +193,116 @@ export const getDashboardAnalytics = query({
         }
 
         // Fetch all base data
-        let allProjects = await ctx.db.query("projects").collect();
-        let allBudgetItems = await ctx.db.query("budgetItems").collect();
+        let rawProjects: any[] = [];
+        let rawBudgetItems: any[] = [];
+        let allBreakdowns: any[] = [];
+
+        const fundType = args.fundType || "budget";
+
+        if (fundType === "trust") {
+            // Trust Funds -> Treat as "Projects"
+            const trustFunds = await ctx.db.query("trustFunds").collect();
+            // Trust funds don't have separate "budget items" table usually, 
+            // the fund itself acts as both project and budget source.
+            // We map it to both or just projects? 
+            // The dashboard expects `budgetItems` for financial aggregation and `projects` for counts.
+            // We will map trust funds to both normalized arrays to satisfy metrics.
+
+            rawProjects = trustFunds;
+            rawBudgetItems = trustFunds; // Double mapping for calculation compatibility
+
+            // Adjust mappings for specific fields later if needed
+        } else if (fundType === "twenty-percent-df") {
+            const dfProjects = await ctx.db.query("twentyPercentDF").collect();
+            rawProjects = dfProjects;
+            rawBudgetItems = dfProjects;
+        } else if (fundType === "education") {
+            const sefProjects = await ctx.db.query("specialEducationFunds").collect();
+            rawProjects = sefProjects;
+            rawBudgetItems = sefProjects;
+        } else if (fundType === "health") {
+            const shfProjects = await ctx.db.query("specialHealthFunds").collect();
+            rawProjects = shfProjects;
+            rawBudgetItems = shfProjects;
+        } else {
+            // Default "budget"
+            rawProjects = await ctx.db.query("projects").collect();
+            rawBudgetItems = await ctx.db.query("budgetItems").collect();
+        }
+
         const allDepartments = await ctx.db.query("departments").collect();
         const allCategories = await ctx.db.query("projectCategories").collect();
-        const allBreakdowns = await ctx.db.query("govtProjectBreakdowns").collect();
+        // Breakdowns might not exist for all types yet
+        allBreakdowns = await ctx.db.query("govtProjectBreakdowns").collect();
+
+        // NORMALIZE DATA
+        let allProjects: NormalizedProject[] = [];
+        let allBudgetItems: NormalizedBudgetItem[] = [];
+
+        if (fundType === "budget") {
+            allProjects = (rawProjects as any[]).map(p => ({
+                _id: p._id,
+                createdAt: p.createdAt,
+                year: p.year,
+                departmentId: p.departmentId,
+                implementingOffice: p.implementingOffice,
+                particulars: p.particulars,
+                status: p.status,
+                totalBudgetAllocated: p.totalBudgetAllocated || 0,
+                obligatedBudget: p.obligatedBudget || 0,
+                totalBudgetUtilized: p.totalBudgetUtilized || 0,
+            }));
+
+            allBudgetItems = (rawBudgetItems as any[]).map(b => ({
+                _id: b._id,
+                createdAt: b.createdAt,
+                year: b.year,
+                departmentId: b.departmentId,
+                particulars: b.particulars,
+                totalBudgetAllocated: b.totalBudgetAllocated || 0,
+                obligatedBudget: b.obligatedBudget || 0,
+                totalBudgetUtilized: b.totalBudgetUtilized || 0,
+            }));
+        } else if (fundType === "trust") {
+            // Map Trust Funds
+            allProjects = (rawProjects as any[]).map(t => ({
+                _id: t._id,
+                createdAt: t.createdAt,
+                year: t.year || t.fiscalYear, // Trust funds use 'year' or 'fiscalYear'? Schema says both optional?
+                departmentId: t.departmentId,
+                implementingOffice: t.officeInCharge, // Map officeInCharge -> implementingOffice
+                particulars: t.projectTitle, // Map projectTitle -> particulars
+                status: t.status,
+                totalBudgetAllocated: t.received || 0, // Map received -> allocated
+                obligatedBudget: t.obligatedPR || 0,
+                totalBudgetUtilized: t.utilized || 0,
+            }));
+
+            // For other funds, the project IS the budget item
+            allBudgetItems = allProjects;
+        } else {
+            // Generic mapping for other funds (20% DF, SEF, SHF)
+            // Assumption: They share similar structure to Trust Funds or Projects
+            // Check Schema or use 'any' if unsure, but strict mapping is better.
+            // Based on recent files, they likely use 'officeInCharge' and 'projectTitle' too?
+            // twentyPercentDF uses 'projectTitle', 'implementingOffice'.
+            // sef uses 'projectTitle', 'implementingOffice'.
+            // shf uses 'projectTitle', 'implementingOffice'.
+
+            allProjects = (rawProjects as any[]).map(p => ({
+                _id: p._id,
+                createdAt: p.createdAt,
+                year: p.year || p.fiscalYear,
+                departmentId: p.departmentId,
+                implementingOffice: p.officeInCharge || p.implementingOffice, // Try both
+                particulars: p.projectTitle || p.programTitle || p.particulars || "Unnamed Project",
+                status: p.status,
+                totalBudgetAllocated: p.totalBudgetAllocated || p.received || p.allocated || 0,
+                obligatedBudget: p.obligatedBudget || p.obligatedPR || p.obligated || 0,
+                totalBudgetUtilized: p.totalBudgetUtilized || p.utilized || 0,
+            }));
+            allBudgetItems = allProjects;
+        }
 
         // Apply filters
         const filters = buildFilters(args, targetYear);
@@ -177,7 +316,7 @@ export const getDashboardAnalytics = query({
 
             allProjects = allProjects.filter(p =>
                 p.particulars.toLowerCase().includes(searchLower) ||
-                p.implementingOffice.toLowerCase().includes(searchLower)
+                (p.implementingOffice && p.implementingOffice.toLowerCase().includes(searchLower))
             );
 
             allBudgetItems = allBudgetItems.filter(b =>

@@ -21,6 +21,7 @@ export default function AnalyticsPage({ params }: { params: Promise<{ year: stri
         filters={filters}
         onChange={updateFilter}
         onReset={resetFilters}
+        activeYear={year ? parseInt(year) : undefined}
       />
 
       {/* Main Content with Suspense */}

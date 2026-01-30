@@ -18,8 +18,8 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const view = searchParams.get("view");
 
-  const handleSelectBudget = () => {
-    router.push("/dashboard?view=years");
+  const handleSelectFund = (fundId: string) => {
+    router.push(`/dashboard?view=years&fund=${fundId}`);
   };
 
   const handleBackToSelection = () => {
@@ -34,5 +34,5 @@ export default function DashboardPage() {
     return <FiscalYearLanding onBack={handleBackToSelection} />;
   }
 
-  return <DashboardFundSelection onSelectBudget={handleSelectBudget} onBack={handleBackToHome} />;
+  return <DashboardFundSelection onSelectFund={handleSelectFund} onBack={handleBackToHome} />;
 }

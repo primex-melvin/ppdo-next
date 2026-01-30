@@ -17,28 +17,11 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface DashboardFundSelectionProps {
-    onSelectBudget: () => void;
+    onSelectFund: (fundId: string) => void;
     onBack?: () => void;
 }
 
-export function DashboardFundSelection({ onSelectBudget, onBack }: DashboardFundSelectionProps) {
-    const [showComingSoon, setShowComingSoon] = useState<string | null>(null);
-
-    if (showComingSoon) {
-        return (
-            <div className="space-y-4">
-                <button
-                    onClick={() => setShowComingSoon(null)}
-                    className="cursor-grab flex items-center text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-                >
-                    ← Back to Fund Selection
-                </button>
-                <ComingSoonPage />
-                {/* Note: ComingSoonPage usually has its own layout, we might need to adjust it or wrap it if it has a full screen layout */}
-            </div>
-        );
-    }
-
+export function DashboardFundSelection({ onSelectFund, onBack }: DashboardFundSelectionProps) {
     const funds = [
         {
             id: "budget",
@@ -48,19 +31,19 @@ export function DashboardFundSelection({ onSelectBudget, onBack }: DashboardFund
             color: "text-green-600 dark:text-green-400",
             bgColor: "bg-green-50 dark:bg-green-900/20",
             borderColor: "hover:border-green-600 dark:hover:border-green-500",
-            onClick: onSelectBudget,
+            onClick: () => onSelectFund("budget"),
             active: true,
         },
         {
             id: "twenty-percent-df",
             title: "20% DF",
-            description: "Montior 20% Development Fund projects and allocations",
+            description: "Monitor 20% Development Fund projects and allocations",
             icon: TrendingUp,
             color: "text-emerald-600 dark:text-emerald-400",
             bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
             borderColor: "hover:border-emerald-600 dark:hover:border-emerald-500",
-            onClick: () => setShowComingSoon("20% DF"),
-            active: false,
+            onClick: () => onSelectFund("twenty-percent-df"),
+            active: true,
         },
         {
             id: "trust",
@@ -70,8 +53,8 @@ export function DashboardFundSelection({ onSelectBudget, onBack }: DashboardFund
             color: "text-blue-600 dark:text-blue-400",
             bgColor: "bg-blue-50 dark:bg-blue-900/20",
             borderColor: "hover:border-blue-600 dark:hover:border-blue-500",
-            onClick: () => setShowComingSoon("Trust Funds"),
-            active: false,
+            onClick: () => onSelectFund("trust"),
+            active: true,
         },
         {
             id: "education",
@@ -81,8 +64,8 @@ export function DashboardFundSelection({ onSelectBudget, onBack }: DashboardFund
             color: "text-purple-600 dark:text-purple-400",
             bgColor: "bg-purple-50 dark:bg-purple-900/20",
             borderColor: "hover:border-purple-600 dark:hover:border-purple-500",
-            onClick: () => setShowComingSoon("Special Education Funds"),
-            active: false,
+            onClick: () => onSelectFund("education"),
+            active: true,
         },
         {
             id: "health",
@@ -92,8 +75,8 @@ export function DashboardFundSelection({ onSelectBudget, onBack }: DashboardFund
             color: "text-rose-600 dark:text-rose-400",
             bgColor: "bg-rose-50 dark:bg-rose-900/20",
             borderColor: "hover:border-rose-600 dark:hover:border-rose-500",
-            onClick: () => setShowComingSoon("Special Health Funds"),
-            active: false,
+            onClick: () => onSelectFund("health"),
+            active: true,
         },
     ];
 

@@ -9,7 +9,7 @@ import { EnhancedBudgetChart } from "@/components/analytics/EnhancedBudgetChart"
 import { TimeSeriesChart } from "@/components/analytics/TimeSeriesChart";
 import { DepartmentBreakdownChart } from "@/components/analytics/DepartmentBreakdownChart";
 import { StatusDistributionChart } from "@/components/analytics/StatusDistributionChart";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface DashboardContentProps {
@@ -52,29 +52,55 @@ export function DashboardContent({ filters, year }: DashboardContentProps) {
 
     const { metrics, chartData, timeSeriesData, departmentBreakdown } = analytics;
 
+    const containerVariants: Variants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants: Variants = {
+        hidden: { opacity: 0, y: -20 },
+        show: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                type: "spring",
+                stiffness: 50,
+                damping: 10
+            }
+        }
+    };
+
     return (
         <motion.div
             className="space-y-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
         >
             {/* KPI Cards */}
-            <KPICardsRow
-                totalProjects={metrics.totalProjects}
-                ongoing={metrics.ongoingProjects}
-                completed={metrics.completedProjects}
-                delayed={metrics.delayedProjects}
-            />
+            <motion.div variants={itemVariants}>
+                <KPICardsRow
+                    totalProjects={metrics.totalProjects}
+                    ongoing={metrics.ongoingProjects}
+                    completed={metrics.completedProjects}
+                    delayed={metrics.delayedProjects}
+                />
+            </motion.div>
 
             {/* Top Row: Budget & Time Series */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <EnhancedBudgetChart data={chartData.budgetOverview} />
                 <TimeSeriesChart data={timeSeriesData} />
-            </div>
+            </motion.div>
 
             {/* Bottom Row: Department Breakdown & Categories */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DepartmentBreakdownChart
                     data={departmentBreakdown}
                     officeData={analytics.officeBreakdown}
@@ -82,7 +108,7 @@ export function DashboardContent({ filters, year }: DashboardContentProps) {
 
                 {/* Status Distribution (New Small Chart) */}
                 <StatusDistributionChart data={chartData.statusDistribution} />
-            </div>
+            </motion.div>
         </motion.div>
     );
 }

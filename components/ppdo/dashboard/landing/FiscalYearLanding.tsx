@@ -1,7 +1,7 @@
 // components/ppdo/dashboard/landing/FiscalYearLanding.tsx
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useMemo } from "react";
@@ -38,6 +38,8 @@ interface FiscalYearLandingProps {
 
 export function FiscalYearLanding({ onBack }: FiscalYearLandingProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fundType = searchParams.get("fund");
   const { accentColorValue } = useAccentColor();
   const { user } = useCurrentUser();
   const [showFiscalYearModal, setShowFiscalYearModal] = useState(false);
@@ -89,7 +91,9 @@ export function FiscalYearLanding({ onBack }: FiscalYearLandingProps) {
   }, [fiscalYears, dashboardData]);
 
   const handleOpenYear = (year: number) => {
-    router.push(`/dashboard/${year}`);
+    const params = new URLSearchParams();
+    if (fundType) params.set("fund", fundType);
+    router.push(`/dashboard/${year}?${params.toString()}`);
   };
 
   const toggleCard = (cardId: string) => {
