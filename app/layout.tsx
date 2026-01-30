@@ -11,6 +11,7 @@ import { AccentColorProvider } from "../contexts/AccentColorContext";
 import { ProgressBar } from "@/components/providers/ProgressBar";
 import { ChangelogBanner } from "@/components/ui/changelog-banner";
 import { getLatestChangelog } from "@/data/changelog-data";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -51,19 +52,21 @@ export default function RootLayout({
           <ConvexClientProvider>
             <ThemeProvider>
               <AccentColorProvider>
-                <ProgressBar />
-                {/* Changelog Banner - Shows on all pages */}
-                <ChangelogBanner
-                  version={latestChangelog.version}
-                  latestChange={latestChangelog.title}
-                  changelogUrl="/changelog"
-                  dismissible={true}
-                  storageKey={`changelog-${latestChangelog.version}-dismissed`}
-                />
+                <TooltipProvider delayDuration={300}>
+                  <ProgressBar />
+                  {/* Changelog Banner - Shows on all pages */}
+                  <ChangelogBanner
+                    version={latestChangelog.version}
+                    latestChange={latestChangelog.title}
+                    changelogUrl="/changelog"
+                    dismissible={true}
+                    storageKey={`changelog-${latestChangelog.version}-dismissed`}
+                  />
 
-                {children}
+                  {children}
 
-                <Toaster />
+                  <Toaster />
+                </TooltipProvider>
               </AccentColorProvider>
             </ThemeProvider>
           </ConvexClientProvider>
