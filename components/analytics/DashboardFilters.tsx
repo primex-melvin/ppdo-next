@@ -96,18 +96,18 @@ export function DashboardFilters({
                         fiscalYears={fiscalYears || []}
                     />
 
-                    {/* Department Multi-Select */}
-                    <DepartmentMultiSelect
-                        value={filters.departmentIds || []}
-                        onChange={(value) => onChange("departmentIds", value)}
-                        departments={departments || []}
-                    />
-
                     {/* Office Multi-Select */}
                     <OfficeMultiSelect
                         value={filters.officeIds || []}
                         onChange={(value) => onChange("officeIds", value)}
                         offices={implementingAgencies || []}
+                    />
+
+                    {/* Department Multi-Select */}
+                    <DepartmentMultiSelect
+                        value={filters.departmentIds || []}
+                        onChange={(value) => onChange("departmentIds", value)}
+                        departments={departments || []}
                     />
 
                     {/* Date Range Picker */}
@@ -129,8 +129,8 @@ export function DashboardFilters({
                     {/* Global Search */}
                     <GlobalSearch />
 
-                    {/* Project Status Filter */}
-                    <StatusFilter
+                    {/* Project Status Filter - Hidden for now */}
+                    {/* <StatusFilter
                         label="Project Status"
                         value={filters.projectStatuses || []}
                         onChange={(value) => onChange("projectStatuses", value)}
@@ -142,7 +142,7 @@ export function DashboardFilters({
                             { value: "delayed", label: "Delayed" },
                             { value: "cancelled", label: "Cancelled" },
                         ]}
-                    />
+                    /> */}
 
                     {/* Actions */}
                     <div className="ml-auto flex items-center gap-2">
@@ -218,7 +218,11 @@ export function DashboardFilters({
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <ActiveFilterBadges filters={filters} onChange={onChange} />
+                        <ActiveFilterBadges
+                            filters={filters}
+                            onChange={onChange}
+                            fiscalYears={fiscalYears || []}
+                        />
                     </motion.div>
                 )}
             </div>
@@ -246,7 +250,7 @@ function FiscalYearSelector({ value, onChange, fiscalYears }: FiscalYearSelector
             <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-auto justify-between">
                     <Calendar className="mr-2 h-4 w-4" />
-                    {selected ? `FY ${selected.year}` : "Fiscal Year"}
+                    {selected ? `FY ${selected.year}` : "Year"}
                     <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -265,12 +269,16 @@ function FiscalYearSelector({ value, onChange, fiscalYears }: FiscalYearSelector
                                         setOpen(false);
                                     }}
                                 >
-                                    <Check
+                                    <div
                                         className={cn(
-                                            "mr-2 h-4 w-4",
-                                            value === fy._id ? "opacity-100" : "opacity-0"
+                                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                            value === fy._id
+                                                ? "bg-primary text-primary-foreground"
+                                                : "opacity-50 [&_svg]:invisible"
                                         )}
-                                    />
+                                    >
+                                        <Check className="h-3 w-3" />
+                                    </div>
                                     FY {fy.year}
                                     {fy.label && (
                                         <span className="ml-2 text-xs text-muted-foreground">
@@ -596,15 +604,17 @@ function StatusFilter({ label, value, onChange, options }: StatusFilterProps) {
 interface ActiveFilterBadgesProps {
     filters: Filters;
     onChange: DashboardFiltersProps["onChange"];
+    fiscalYears?: Doc<"fiscalYears">[];
 }
 
-function ActiveFilterBadges({ filters, onChange }: ActiveFilterBadgesProps) {
+function ActiveFilterBadges({ filters, onChange, fiscalYears }: ActiveFilterBadgesProps) {
     const badges: Array<{ key: string; label: string; onRemove: () => void }> = [];
 
     if (filters.fiscalYearId) {
+        const fy = fiscalYears?.find((f) => f._id === filters.fiscalYearId);
         badges.push({
             key: "fiscalYear",
-            label: `FY: ${filters.fiscalYearId}`,
+            label: fy ? `FY: ${fy.year}` : "FY: ...",
             onRemove: () => onChange("fiscalYearId", undefined),
         });
     }
