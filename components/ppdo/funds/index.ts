@@ -60,12 +60,15 @@ export {
     extractIdFromSlug,
 } from "./utils";
 
+export { FundsPrintAdapter } from "./lib/print-adapters/FundsPrintAdapter";
+
 // ============================================================================
 // HOOKS
 // ============================================================================
 
 export { useFundsData } from "./hooks/useFundsData";
 export { useFundsMutations } from "./hooks/useFundsMutations";
+export { useFundsPrintDraft } from "./hooks/useFundsPrintDraft";
 export { useColumnWidths } from "./hooks/useColumnWidths";
 export { useColumnResize } from "./hooks/useColumnResize";
 export { useTableSort } from "./hooks/useTableSort";

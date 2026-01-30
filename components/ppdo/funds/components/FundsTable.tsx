@@ -13,7 +13,7 @@ import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/Bud
 import { ActivityLogSheet } from "@/components/ActivityLogSheet";
 import { FundsTableToolbar } from "./toolbar/FundsTableToolbar";
 import { FundsContextMenu } from "./context-menu/FundsContextMenu";
-import { PrintOrientationModal } from "./modals/PrintOrientationModal";
+import { GenericPrintPreviewModal } from "@/app/dashboard/components/print/GenericPrintPreviewModal";
 import { FundsTableColgroup } from "./table/FundsTableColgroup";
 import { FundsTableHeader } from "./table/FundsTableHeader";
 import { FundsTableBody } from "./table/FundsTableBody";
@@ -21,9 +21,9 @@ import { BaseFund, FundsTableProps, ContextMenuState } from "../types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, Table as TableIcon } from "lucide-react";
 import { FundsKanban } from "./FundsKanban";
-import { exportToCSV, printTable, calculateTotals } from "../utils";
-import { useColumnWidths, useColumnResize, useTableSort, useTableFilter, useTableSelection } from "../";
-
+import { exportToCSV, calculateTotals, formatTimestamp } from "../utils";
+import { useColumnWidths, useColumnResize, useTableSort, useTableFilter, useTableSelection, useFundsPrintDraft, FundsPrintAdapter } from "../";
+import { AVAILABLE_COLUMNS } from "../constants";
 export function FundsTable<T extends BaseFund>({
     data,
     onAdd,
@@ -62,6 +62,7 @@ export function FundsTable<T extends BaseFund>({
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
+    const [showDraftConfirm, setShowDraftConfirm] = useState(false);
     const [selectedItem, setSelectedItem] = useState<T | null>(null);
     const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
     const [showViewToggle, setShowViewToggle] = useState(false);
@@ -237,10 +238,45 @@ export function FundsTable<T extends BaseFund>({
         exportToCSV(filteredAndSortedData, hiddenColumns, year, fundTypeSlug);
     };
 
-    const handlePrint = (orientation: 'portrait' | 'landscape') => {
-        printTable(orientation);
+    const { draftState, hasDraft, saveDraft, deleteDraft } = useFundsPrintDraft(year, fundType);
+
+    const handleOpenPrintPreview = () => {
+        if (hasDraft) {
+            setShowDraftConfirm(true);
+        } else {
+            setShowPrintModal(true);
+        }
     };
 
+    const handleLoadDraft = () => {
+        setShowDraftConfirm(false);
+        setShowPrintModal(true);
+    };
+
+    const handleStartFresh = () => {
+        deleteDraft();
+        setShowDraftConfirm(false);
+        setShowPrintModal(true);
+    };
+
+    const printAdapter = useMemo(() => {
+        const columns = AVAILABLE_COLUMNS.map(col => ({
+            key: col.id,
+            label: col.label,
+            align: (['received', 'utilized', 'balance', 'utilizationRate', 'obligatedPR'].includes(col.id) ? 'right' : 'left') as 'left' | 'right' | 'center',
+            sortable: true,
+            filterable: true
+        }));
+
+        return new FundsPrintAdapter(
+            filteredAndSortedData,
+            totals,
+            columns,
+            year,
+            fundType,
+            title
+        );
+    }, [filteredAndSortedData, totals, year, fundType, title]);
     return (
         <>
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="w-full">
@@ -272,7 +308,8 @@ export function FundsTable<T extends BaseFund>({
                             onShowAllColumns={() => setHiddenColumns(new Set())}
                             onHideAllColumns={() => setHiddenColumns(new Set(['projectTitle', 'officeInCharge', 'status', 'dateReceived', 'received', 'obligatedPR', 'utilized', 'utilizationRate', 'balance', 'remarks']))}
                             onExportCSV={handleExportCSV}
-                            onOpenPrintPreview={() => setShowPrintModal(true)}
+                            onOpenPrintPreview={handleOpenPrintPreview}
+                            hasPrintDraft={hasDraft}
                             isAdmin={isAdmin}
                             onOpenTrash={onOpenTrash}
                             onBulkTrash={handleBulkTrash}
@@ -338,7 +375,8 @@ export function FundsTable<T extends BaseFund>({
                             onShowAllColumns={() => setHiddenColumns(new Set())}
                             onHideAllColumns={() => { }}
                             onExportCSV={handleExportCSV}
-                            onOpenPrintPreview={() => setShowPrintModal(true)}
+                            onOpenPrintPreview={handleOpenPrintPreview}
+                            hasPrintDraft={hasDraft}
                             isAdmin={isAdmin}
                             onOpenTrash={onOpenTrash}
                             onBulkTrash={() => { }} // Bulk trash not supported in Kanban
@@ -463,13 +501,38 @@ export function FundsTable<T extends BaseFund>({
                 />
             )}
 
-            {/* Print Orientation Modal */}
-            <PrintOrientationModal
-                isOpen={showPrintModal}
-                onClose={() => setShowPrintModal(false)}
-                onConfirm={handlePrint}
-            />
+            {/* Print Preview Modal */}
+            {showPrintModal && (
+                <GenericPrintPreviewModal
+                    isOpen={showPrintModal}
+                    onClose={() => setShowPrintModal(false)}
+                    adapter={printAdapter}
+                    existingDraft={draftState}
+                    onDraftSaved={saveDraft}
+                    hiddenColumns={hiddenColumns}
+                    filterState={{
+                        searchQuery,
+                        statusFilter: Array.from(visibleStatuses),
+                        yearFilter: [year],
+                        sortField,
+                        sortDirection
+                    }}
+                />
+            )}
 
+            {showDraftConfirm && (
+                <ConfirmationModal
+                    isOpen={showDraftConfirm}
+                    onClose={() => setShowDraftConfirm(false)}
+                    onConfirm={handleLoadDraft}
+                    onCancel={handleStartFresh}
+                    title="Load Existing Draft?"
+                    message={`You have a print preview draft from ${draftState ? formatTimestamp(draftState.timestamp) : 'recently'}. Load it or start fresh?`}
+                    confirmText="Load Draft"
+                    cancelText="Start Fresh"
+                    variant="default"
+                />
+            )}
             {/* Activity Log Sheet */}
             {selectedLogItem && (
                 <ActivityLogSheet
