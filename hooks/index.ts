@@ -32,3 +32,6 @@ export {
   type UseTableColumnVisibilityOptions,
   type UseTableColumnVisibilityReturn,
 } from "./useTableColumnVisibility";
+
+// Migration hooks
+export { useMigration } from "./useMigration";

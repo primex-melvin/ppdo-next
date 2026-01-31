@@ -13,6 +13,7 @@ import { getDisplayName } from "@/lib/utils";
 // import domToImage from "dom-to-image-more"; 
 import { ConcernModal } from "./ConcernModal";
 import { ScreenshotZoom } from "./ScreenshotZoom";
+import { MigrationContainer } from "@/components/migration/MigrationContainer";
 
 interface HeaderProps {
   onSearchChange?: (query: string) => void;
@@ -223,6 +224,11 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
                 >
                   {showBugReport ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
+              </div>
+
+              {/* Migration Button - Admin only */}
+              <div className="hidden sm:flex ml-2">
+                <MigrationContainer />
               </div>
             </div>
 
