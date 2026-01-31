@@ -8,7 +8,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { ThemeToggle } from "../../components/ThemeToggle";
+import { ThemeToggle } from "../../../components/ThemeToggle";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 
 // Error type classification for better UX
@@ -335,15 +335,15 @@ export default function SignUp() {
                   setLoading(false);
                   return;
                 }
-                
+
                 try {
                   // Sign up with Convex Auth
                   formData.set("flow", "signUp");
                   const result = await signIn("password", formData);
-                  
+
                   // The afterUserCreatedOrUpdated callback in auth.ts will automatically
                   // set role, status, createdAt, updatedAt, and lastLogin for new users
-                  
+
                   // Redirect to dashboard
                   router.push("/dashboard");
                 } catch (error: any) {

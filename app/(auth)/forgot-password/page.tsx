@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { ThemeToggle } from "../../components/ThemeToggle";
+import { ThemeToggle } from "../../../components/ThemeToggle";
 
 interface LocationData {
   city: string;
@@ -25,7 +25,7 @@ export default function ForgotPassword() {
   const [clientIP, setClientIP] = useState<string>("Unknown");
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
-  
+
   const submitResetRequest = useMutation(api.passwordReset.submitPasswordResetRequest);
   const resetStatus = useQuery(
     api.passwordReset.checkResetRequestStatus,
@@ -36,7 +36,7 @@ export default function ForgotPassword() {
   useEffect(() => {
     async function fetchLocationData() {
       setLocationLoading(true);
-      
+
       // First, try to get IP address
       let ipAddress = "Unknown";
       try {
@@ -69,7 +69,7 @@ export default function ForgotPassword() {
           async (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            
+
             try {
               const geocodeResponse = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
@@ -80,11 +80,11 @@ export default function ForgotPassword() {
                   signal: AbortSignal.timeout(5000),
                 }
               );
-              
+
               if (geocodeResponse.ok) {
                 const geocodeData = await geocodeResponse.json();
                 const address = geocodeData.address || {};
-                
+
                 setLocationData({
                   city: address.city || address.town || address.village || address.municipality || 'Unknown',
                   region: address.state || address.province || address.region || 'Unknown',
@@ -97,7 +97,7 @@ export default function ForgotPassword() {
             } catch (error) {
               console.log('Reverse geocoding failed, falling back to IP location');
             }
-            
+
             await fetchIPBasedLocation(ipAddress);
           },
           async (error) => {
@@ -120,7 +120,7 @@ export default function ForgotPassword() {
         const response = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
           signal: AbortSignal.timeout(5000),
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setLocationData({
@@ -146,7 +146,7 @@ export default function ForgotPassword() {
           country: 'Unknown'
         });
       }
-      
+
       setLocationLoading(false);
     }
 
@@ -162,7 +162,7 @@ export default function ForgotPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       toast.error("Please enter your email address");
       return;
@@ -237,7 +237,7 @@ export default function ForgotPassword() {
             <img src="/logo.png" alt="Logo" className="h-12 object-contain" />
             <img src="/y.png" alt="Y Logo" className="h-12 object-contain" />
           </div>
-          
+
           <div className="shrink-0 mb-1 w-full flex justify-center relative">
             {/* Floating elements */}
             <div className="absolute inset-0 pointer-events-none">
@@ -327,7 +327,7 @@ export default function ForgotPassword() {
               />
             </div>
           </div>
-          
+
           <div className="flex-1 flex items-center justify-center px-6">
             <div className="text-center">
               <blockquote className="text-xl md:text-2xl font-medium text-zinc-700 dark:text-zinc-300 mb-4 italic">
@@ -362,17 +362,17 @@ export default function ForgotPassword() {
             {resetStatus && (
               <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
                 <div className="flex items-start gap-3">
-                  <svg 
-                    className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
                   <div className="flex-1">
@@ -443,8 +443,8 @@ export default function ForgotPassword() {
               <button
                 type="submit"
                 disabled={
-                  loading || 
-                  locationLoading || 
+                  loading ||
+                  locationLoading ||
                   !resetStatus ||
                   !resetStatus.canSubmit ||
                   !email
@@ -452,13 +452,13 @@ export default function ForgotPassword() {
                 className="w-full py-3 rounded-xl bg-[#15803d] hover:bg-[#16a34a] text-white font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
               >
                 <span className="relative z-10">
-                  {loading 
-                    ? "Submitting..." 
-                    : locationLoading 
-                    ? "Detecting location..." 
-                    : resetStatus && resetStatus.remainingSeconds > 0
-                    ? `Wait ${resetStatus.remainingSeconds}s`
-                    : "Request Password Reset"}
+                  {loading
+                    ? "Submitting..."
+                    : locationLoading
+                      ? "Detecting location..."
+                      : resetStatus && resetStatus.remainingSeconds > 0
+                        ? `Wait ${resetStatus.remainingSeconds}s`
+                        : "Request Password Reset"}
                 </span>
               </button>
             </form>
