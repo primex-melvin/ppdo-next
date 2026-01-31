@@ -1,325 +1,198 @@
-# PPDO Next Project
+# PPDO Next
 
-## 📝 Git Commit Guide
+> **Provincial Planning and Development Office (Philippines)**  
+> A modern web-based system for managing provincial planning, budgeting, and project tracking.
 
-Follow these commit message prefixes to keep our git history clean and organized! e.g git commit -m (e.g. message)
-
-### Common Commit Types
-
-| Prefix   | Meaning                                                                 | Example |
-|----------|-------------------------------------------------------------------------|---------|
-| **feat:**    | Introduces a new feature                                               | `feat: add user profile page` |
-| **fix:**     | Fixes a bug                                                            | `fix: resolve login redirect issue` |
-| **docs:**    | Documentation changes only                                             | `docs: update README with setup steps` |
-| **style:**   | Code style changes (formatting, missing semicolons, no logic changes) | `style: format dashboard layout` |
-| **refactor:**| Rewriting code without altering behavior                               | `refactor: simplify auth logic` |
-| **perf:**    | Performance improvements                                               | `perf: optimize database queries` |
-| **test:**    | Adding or updating tests only                                          | `test: add unit tests for auth` |
-| **build:**   | Changes to build system, dependencies, or CI pipelines                 | `build: update next.js to v14` |
-| **ci:**      | CI configuration or scripts                                            | `ci: add github actions workflow` |
-| **chore:**   | Maintenance tasks (e.g., cleaning files, bumps), no production code    | `chore: clean up unused imports` |
-| **revert:**  | Reverts a previous commit                                              | `revert: undo feature X` |
+Built with **Next.js 16**, **Convex**, and **Tailwind CSS**. Designed for government use with role-based access control, real-time collaboration, and comprehensive reporting.
 
 ---
 
-e.g git commit -m (e.g. message) powershell
+## 📚 Developer Documentation
 
-## 🌍 Environment Configuration (Convex)
+### Quick Navigation
 
-We use **Convex environment variables** to control which features show up in different environments (development, staging, production).
+| Documentation | Description |
+|--------------|-------------|
+| [📊 Dashboard Docs](./app/dashboard/docs/README.md) | Main dashboard architecture, routing, modules |
+| [🧩 Components Docs](./components/ppdo/docs/README.md) | Reusable component library documentation |
+| [📁 Projects Module Docs](./app/dashboard/project/docs/README.md) | Detailed Projects module (Budget → Projects → Breakdowns → Details) |
 
-### What This Does
+---
 
-- **Development/Local**: Hides the onboarding modal so you can work without distractions
-- **Staging**: Same as development - clean testing environment
-- **Production**: Shows all features including the onboarding modal for real users
+## 📖 Full Documentation Index
 
-### 🚀 Quick Setup
+### Dashboard Documentation (`app/dashboard/docs/`)
 
-#### Step 1: Create the Convex Config File
+| File | Topic |
+|------|-------|
+| [README.md](./app/dashboard/docs/README.md) | Dashboard overview & quick start |
+| [01-architecture-overview.md](./app/dashboard/docs/01-architecture-overview.md) | System architecture & tech stack |
+| [02-routing-structure.md](./app/dashboard/docs/02-routing-structure.md) | Route definitions & navigation |
+| [03-layout-and-navigation.md](./app/dashboard/docs/03-layout-and-navigation.md) | Sidebar, header, contexts |
+| [04-module-projects.md](./app/dashboard/docs/04-module-projects.md) | Projects module overview |
+| [05-module-particulars.md](./app/dashboard/docs/05-module-particulars.md) | Particulars management |
+| [06-module-funds.md](./app/dashboard/docs/06-module-funds.md) | Trust Funds, SEF, SHF |
+| [07-module-settings.md](./app/dashboard/docs/07-module-settings.md) | User management & updates |
+| [08-data-flow.md](./app/dashboard/docs/08-data-flow.md) | Convex integration & data flow |
+| [09-access-control.md](./app/dashboard/docs/09-access-control.md) | RBAC & permissions |
+| [10-development-guide.md](./app/dashboard/docs/10-development-guide.md) | Coding standards & patterns |
 
-Create a new file: `convex/config.ts`
+### PPDO Components Documentation (`components/ppdo/docs/`)
 
-```typescript
-import { query } from "./_generated/server";
+| File | Topic |
+|------|-------|
+| [README.md](./components/ppdo/docs/README.md) | Component library overview |
+| [01-architecture-overview.md](./components/ppdo/docs/01-architecture-overview.md) | Component architecture |
+| [02-breakdown-components.md](./components/ppdo/docs/02-breakdown-components.md) | Breakdown module components |
+| [03-dashboard-components.md](./components/ppdo/docs/03-dashboard-components.md) | Charts & dashboard UI |
+| [04-projects-components.md](./components/ppdo/docs/04-projects-components.md) | Projects table & forms |
+| [05-funds-components.md](./components/ppdo/docs/05-funds-components.md) | Funds management components |
+| [06-table-components.md](./components/ppdo/docs/06-table-components.md) | Table system & print preview |
+| [07-shared-components.md](./components/ppdo/docs/07-shared-components.md) | Cross-module shared components |
+| [08-static-components.md](./components/ppdo/docs/08-static-components.md) | Landing page components |
+| [09-component-patterns.md](./components/ppdo/docs/09-component-patterns.md) | Design patterns & best practices |
 
-export const getEnvironment = query({
-  args: {},
-  handler: async (ctx) => {
-    // Get environment from Convex environment variable
-    // Defaults to "production" if APP_ENV is not set
-    const env = process.env.APP_ENV || "production";
-    return env as "production" | "staging" | "development";
-  },
-});
+### Projects Module Documentation (`app/dashboard/project/docs/`)
+
+| File | Topic |
+|------|-------|
+| [README.md](./app/dashboard/project/docs/README.md) | Projects module overview |
+| [01-architecture-overview.md](./app/dashboard/project/docs/01-architecture-overview.md) | 4-level hierarchy architecture |
+| [02-route-structure.md](./app/dashboard/project/docs/02-route-structure.md) | Route structure & navigation |
+| [03-budget-items.md](./app/dashboard/project/docs/03-budget-items.md) | Budget items (Level 1) |
+| [04-projects-list.md](./app/dashboard/project/docs/04-projects-list.md) | Projects list (Level 2) |
+| [05-breakdowns-list.md](./app/dashboard/project/docs/05-breakdowns-list.md) | Breakdowns (Level 3) |
+| [06-project-detail.md](./app/dashboard/project/docs/06-project-detail.md) | Project detail tabs (Level 4) |
+| [07-hooks-data-flow.md](./app/dashboard/project/docs/07-hooks-data-flow.md) | Hooks & data flow |
+| [08-print-system.md](./app/dashboard/project/docs/08-print-system.md) | Print preview & PDF generation |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Convex account
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/ppdo-next.git
+cd ppdo-next
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+
+# Run development server
+npm run dev
 ```
 
-#### Step 2: Set Your Environment Variable
+### Environment Setup
 
-Open your terminal and run one of these commands:
-
-**For Local Development** (this is what you'll use most of the time):
 ```bash
+# Set Convex environment
 npx convex env set APP_ENV development
 ```
 
-**For Staging** (if your team has a staging environment):
+---
+
+## 📝 Git Commit Convention
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Prefix | Use For |
+|--------|---------|
+| `feat:` | New features |
+| `fix:` | Bug fixes |
+| `docs:` | Documentation |
+| `style:` | Code formatting |
+| `refactor:` | Code restructuring |
+| `perf:` | Performance improvements |
+| `test:` | Tests |
+| `build:` | Build system |
+| `ci:` | CI/CD |
+| `chore:` | Maintenance |
+
+Example:
 ```bash
-npx convex env set APP_ENV staging --prod
+git commit -m "feat: add budget approval workflow"
+git commit -m "docs: update API documentation"
 ```
-
-**For Production** (live site):
-```bash
-npx convex env set APP_ENV production --prod
-```
-
-#### Step 3: Verify It's Working
-
-1. Save your changes and restart your dev server
-2. The onboarding modal should now be hidden in development
-3. Check the Convex dashboard to confirm the variable is set
-
-### 🤔 Common Questions
-
-**Q: Do I need to set this every time I work on the project?**  
-A: Nope! Once you set it, it stays until you change it.
-
-**Q: What if I forget to set it?**  
-A: No worries! It defaults to "production" mode, so everything will still work.
-
-**Q: How do I check what environment I'm in?**  
-A: Run `npx convex env list` to see all your environment variables.
 
 ---
 
-## 🛠️ Developer Automation (Optional)
-
-To streamline moving code from `ppdo-next` to `ppdo-staging` without manually deleting and copying folders, you can use the `push-staging` PowerShell command.
-
-### What This Script Does
-
-* **Smart Sync**: Wipes the `ppdo-staging` folder but preserves `.git` (history), `.env*` (configs), and `node_modules` (dependencies).
-* **Automatic Copy**: Transfers all new code from `ppdo-next`.
-* **Dependency Check**: Automatically runs `npm install` in the staging folder if `package.json` changed.
-* **Git Remote Configuration**: Automatically configures the correct remote URL and branch.
-* **Review Before Push**: Shows you a summary of changes and asks for confirmation before pushing.
-* **Git Integration**: Captures the last commit message from `ppdo-next` and automatically commits/pushes to the staging repository.
-* **Execution Logs**: Displays success/error messages and a timer showing how long the sync took.
-
-### ⚙️ How to Setup
-
-#### Step 1: Open PowerShell Profile
-
-1. Open PowerShell and type: `notepad $PROFILE`
-2. If you get a message that the file doesn't exist, click **Yes** to create it
-
-#### Step 2: Add the Function
-
-Paste the following function into the Notepad file:
-
-```powershell
-function push-staging {
-    # 1. Configuration
-    $rootPath    = "C:\ppdo"
-    $stagingPath = "$rootPath\ppdo-staging"
-    $sourcePath  = "$rootPath\ppdo-next"
-    $protectedItems = @(".git", "node_modules")
-    $remoteUrl = "https://github.com/mviner000/ppdo-staging.git"
-    $targetBranch = "main"
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    Write-Host "`n--- Starting Sync & Deploy: next -> staging ---" -ForegroundColor Cyan
-    if (!(Test-Path $stagingPath) -or !(Test-Path $sourcePath)) {
-        Write-Host "ERROR: Folder paths not found." -ForegroundColor Red
-        Write-Host "Expected paths:" -ForegroundColor Yellow
-        Write-Host "  Source: $sourcePath" -ForegroundColor Gray
-        Write-Host "  Staging: $stagingPath" -ForegroundColor Gray
-        return
-    }
-    try {
-        # --- STEP 1: CAPTURE COLLEAGUE'S MESSAGE ---
-        Write-Host "Step 1: Capturing last commit message from next..." -ForegroundColor Yellow
-        Set-Location $sourcePath
-        
-        # Capture as string and trim whitespace
-        $lastMessage = (git log -1 --pretty=%B 2>&1 | Out-String).Trim()
-        
-        # Check if message is empty or git command failed
-        if ([string]::IsNullOrWhiteSpace($lastMessage) -or $LASTEXITCODE -ne 0) {
-            throw "Could not capture git message from ppdo-next."
-        }
-        
-        Write-Host "Captured Message: '$($lastMessage.Split("`n")[0])...'" -ForegroundColor Gray
-        
-        # --- STEP 2: CLEANING STAGING ---
-        Write-Host "Step 2: Cleaning staging (preserving .git/modules)..." -ForegroundColor Yellow
-        $itemsToDelete = Get-ChildItem -Path $stagingPath -Force | Where-Object {
-            $name = $_.Name
-            ($protectedItems -notcontains $name) -and ($name -notlike ".env*")
-        }
-        $itemsToDelete | ForEach-Object {
-            Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
-        }
-        
-        # --- STEP 3: COPYING FILES ---
-        Write-Host "Step 3: Copying updated files..." -ForegroundColor Yellow
-        $itemsToCopy = Get-ChildItem -Path $sourcePath -Force | Where-Object {
-            $name = $_.Name
-            ($protectedItems -notcontains $name) -and ($name -notlike ".env*")
-        }
-        $itemsToCopy | ForEach-Object {
-            Copy-Item -LiteralPath $_.FullName -Destination $stagingPath -Recurse -Force -ErrorAction Stop
-        }
-        
-        # --- STEP 4: NPM INSTALL ---
-        Set-Location $stagingPath
-        if (Test-Path "package.json") {
-            Write-Host "Step 4: Running 'npm install'..." -ForegroundColor Yellow
-            cmd /c "npm install"
-            if ($LASTEXITCODE -ne 0) { throw "npm install failed." }
-        }
-        
-        # --- STEP 5: CONFIGURE GIT REMOTE & BRANCH ---
-        Write-Host "Step 5: Configuring git remote and branch..." -ForegroundColor Yellow
-        
-        # Check if origin exists
-        $remoteExists = git remote get-url origin 2>$null
-        
-        if ($remoteExists) {
-            # Update existing remote
-            git remote set-url origin $remoteUrl
-            Write-Host "Remote 'origin' updated to: $remoteUrl" -ForegroundColor Gray
-        } else {
-            # Add new remote
-            git remote add origin $remoteUrl
-            Write-Host "Remote 'origin' added: $remoteUrl" -ForegroundColor Gray
-        }
-        
-        # Ensure we're on the correct branch
-        $currentBranch = git branch --show-current
-        if ($currentBranch -ne $targetBranch) {
-            # Check if main branch exists
-            $branchExists = git rev-parse --verify $targetBranch 2>$null
-            if ($branchExists) {
-                # Switch to existing main branch
-                git checkout $targetBranch
-                Write-Host "Switched to existing branch: $targetBranch" -ForegroundColor Gray
-            } else {
-                # Create and switch to new main branch
-                git checkout -b $targetBranch
-                Write-Host "Created and switched to new branch: $targetBranch" -ForegroundColor Gray
-            }
-        } else {
-            Write-Host "Already on branch: $targetBranch" -ForegroundColor Gray
-        }
-        
-        # --- STEP 6: GIT STATUS & REVIEW ---
-        Write-Host "`nStep 6: Reviewing changes to be committed..." -ForegroundColor Yellow
-        git add .
-        
-        # Show git status
-        Write-Host "`n=== GIT STATUS ===" -ForegroundColor Cyan
-        git status --short
-        
-        # Show commit summary
-        Write-Host "`n=== COMMIT SUMMARY ===" -ForegroundColor Cyan
-        Write-Host "Branch: $targetBranch" -ForegroundColor White
-        Write-Host "Remote: $remoteUrl" -ForegroundColor White
-        Write-Host "Commit Message: $lastMessage" -ForegroundColor White
-        
-        # Count changes
-        $statusOutput = git status --short
-        if ($statusOutput) {
-            $fileCount = ($statusOutput | Measure-Object).Count
-            Write-Host "Files Changed: $fileCount" -ForegroundColor White
-        } else {
-            Write-Host "Files Changed: 0 (No changes detected)" -ForegroundColor Gray
-        }
-        
-        # --- STEP 7: CONFIRMATION PROMPT ---
-        Write-Host "`n=== CONFIRMATION ===" -ForegroundColor Yellow
-        Write-Host "Ready to commit and push to staging repository." -ForegroundColor White
-        $confirmation = Read-Host "Proceed with push? (Y/N)"
-        
-        if ($confirmation -ne 'Y' -and $confirmation -ne 'y') {
-            Write-Host "`nPush cancelled by user." -ForegroundColor Yellow
-            $sw.Stop()
-            Write-Host "Time: $($sw.Elapsed.TotalSeconds.ToString('N2'))s" -ForegroundColor Cyan
-            return
-        }
-        
-        # --- STEP 8: GIT COMMIT & PUSH ---
-        Write-Host "`nStep 7: Committing and Pushing to staging..." -ForegroundColor Yellow
-        
-        # We use the captured message exactly as it was
-        git commit -m "$lastMessage"
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Pushing to origin/$targetBranch..." -ForegroundColor Yellow
-            
-            # Set upstream and push to main
-            git push --set-upstream origin $targetBranch
-            
-            if ($LASTEXITCODE -ne 0) { throw "git push failed." }
-            Write-Host "Success: Code pushed to staging repository on $targetBranch branch." -ForegroundColor Green
-        } else {
-            Write-Host "Note: No changes detected to commit." -ForegroundColor Gray
-        }
-        
-        $sw.Stop()
-        Write-Host "`nTOTAL SUCCESS: Sync, Install, and Push complete!" -ForegroundColor Green
-        Write-Host "Time: $($sw.Elapsed.TotalSeconds.ToString('N2'))s" -ForegroundColor Cyan
-        
-    } catch {
-        $sw.Stop()
-        Write-Host "`nFATAL ERROR: $($_.Exception.Message)" -ForegroundColor Red
-        Write-Host "Process halted." -ForegroundColor DarkRed
-    }
-}
-```
-
-#### Step 3: Save and Reload
-
-1. Save the file and close Notepad (Ctrl+S, then close)
-2. Restart PowerShell **OR** run this command to reload your profile:
-
-```powershell
-. $PROFILE
-```
-
-### 📁 Required Folder Structure
-
-Make sure your folders are organized like this:
+## 🏗️ Project Structure
 
 ```
-C:\ppdo\
-├── ppdo-next\      (development branch)
-└── ppdo-staging\   (staging branch)
+ppdo-next/
+├── app/                          # Next.js App Router
+│   ├── (auth)/                   # Auth routes (signin, signup)
+│   ├── (dashboard)/              # Dashboard routes
+│   │   ├── project/              # Projects module
+│   │   ├── particulars/          # Particulars module
+│   │   ├── trust-funds/          # Trust Funds module
+│   │   ├── settings/             # Settings module
+│   │   └── ...
+│   └── page.tsx                  # Landing page
+├── components/
+│   ├── ppdo/                     # PPDO-specific components
+│   ├── ui/                       # shadcn/ui components
+│   ├── sidebar/                  # Navigation sidebar
+│   └── header/                   # App header
+├── convex/                       # Backend (Convex)
+│   ├── schema.ts                 # Database schema
+│   ├── *.ts                      # Queries & mutations
+│   └── lib/                      # Shared backend code
+├── lib/                          # Utilities
+├── types/                        # TypeScript types
+└── ...
 ```
 
-### ⚡ How to Use
+---
 
-Simply type the command from anywhere in your terminal:
+## 🛠️ Tech Stack
 
-```powershell
-push-staging
-```
+| Layer | Technology |
+|-------|------------|
+| **Framework** | Next.js 16 (App Router) |
+| **UI Library** | React 19 |
+| **Styling** | Tailwind CSS 4 |
+| **Components** | shadcn/ui + Radix UI |
+| **Backend** | Convex (real-time database) |
+| **Auth** | @convex-dev/auth |
+| **Forms** | React Hook Form + Zod |
+| **Charts** | Recharts |
+| **PDF** | jsPDF |
+| **Testing** | Jest + React Testing Library |
 
-The script will:
-1. Capture the last commit message from `ppdo-next`
-2. Clean the staging folder (keeping `.git`, `node_modules`, and `.env*` files)
-3. Copy all updated files from `ppdo-next`
-4. Run `npm install` if needed
-5. Configure git remote and branch
-6. Show you a summary of changes
-7. Ask for confirmation before pushing
-8. Commit and push to the staging repository
+---
 
-### 🔧 Troubleshooting
+## 👥 Team
 
-**Error: "Folder paths not found"**
-- Make sure you have both `C:\ppdo\ppdo-next` and `C:\ppdo\ppdo-staging` folders
-- The script will show you which paths it's looking for
+This project is maintained by the **PPDO Development Team**:
 
-**Error: "Could not capture git message"**
-- Make sure you have at least one commit in your `ppdo-next` repository
-- Navigate to `ppdo-next` and run `git log` to verify commits exist
+- **Product & Documentation Lead** - Requirements & documentation
+- **Backend/Convex Architect** - Database & API design
+- **Frontend/React Specialist** - UI development
+- **UI/UX Designer** - Design system & accessibility
+- **Security & Auth Specialist** - Authentication & RBAC
+- **Data & Business Logic Engineer** - Domain logic
+- **QA & Testing Agent** - Quality assurance
+- **Print & Export Specialist** - PDF & document generation
+- **DevOps & Performance Agent** - Deployment & optimization
+
+---
+
+## 📄 License
+
+© 2026 Provincial Planning and Development Office. All rights reserved.
+
+---
+
+*For detailed documentation, see the [Developer Docs Index](#-full-documentation-index) above.*
