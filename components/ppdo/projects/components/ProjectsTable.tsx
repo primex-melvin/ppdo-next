@@ -53,7 +53,7 @@ import {
     getProjectPrintColumns,
 } from "../utils/printAdapters";
 import { BudgetTotals, PrintDraft } from "@/lib/print-canvas/types";
-import { BudgetItem } from "@/app/dashboard/project/[year]/types";
+import { BudgetItem } from "@/components/ppdo/11_project_plan/types";
 
 export function ProjectsTable({
     projects,

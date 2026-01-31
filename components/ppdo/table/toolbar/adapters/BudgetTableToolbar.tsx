@@ -21,7 +21,7 @@ import React from "react";
 import { Calculator } from "lucide-react";
 import { TableToolbar } from "../TableToolbar";
 import { BulkAction } from "../types";
-import { BUDGET_TABLE_COLUMNS } from "@/app/dashboard/project/[year]/constants";
+import { BUDGET_TABLE_COLUMNS } from "@/components/ppdo/11_project_plan/constants";
 
 export interface BudgetTableToolbarProps {
   // Search

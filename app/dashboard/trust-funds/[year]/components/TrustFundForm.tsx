@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { TrustFund } from "@/types/trustFund.types";
-import { ImplementingOfficeSelector } from "@/app/dashboard/project/[year]/[particularId]/components/ImplementingOfficeSelector";
+import { ImplementingOfficeSelector } from "@/components/ppdo/table/implementing-office";
 
 // ✅ FIXED: Made dateReceived optional in schema
 const trustFundSchema = z.object({

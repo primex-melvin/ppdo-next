@@ -8,18 +8,18 @@ import { useRouter } from "next/navigation";
 import { Expand } from "lucide-react";
 import AccessDeniedPage from "@/components/AccessDeniedPage";
 import { TrashBinModal } from "@/components/TrashBinModal";
-import BudgetStatistics from "./components/BudgetStatistics";
-import { BudgetTrackingTable } from "./components/BudgetTrackingTable";
 import {
+  BudgetStatistics,
+  BudgetTrackingTable,
   ExpandModal,
-  LoadingState,
   useBudgetAccess,
   useBudgetData,
-  useBudgetMutations
-} from "./components";
+  useBudgetMutations,
+  YearBudgetPageHeader,
+} from "@/components/ppdo/11_project_plan";
+import { LoadingState } from "@/components/ppdo/LoadingState";
 import { Button } from "@/components/ui/button";
-import { YearBudgetPageHeader } from "./components/YearBudgetPageHeader";
-import { BudgetItem } from "./types";
+import { BudgetItem } from "@/components/ppdo/11_project_plan/types";
 
 interface PageProps {
   params: Promise<{ year: string }>;

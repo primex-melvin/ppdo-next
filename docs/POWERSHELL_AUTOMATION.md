@@ -1,6 +1,6 @@
 # PowerShell Automation Guide
 
-updated repo found here: https://github.com/primex-melvin/primex-script.git
+> **[Official Repo of script here)](https://github.com/primex-melvin/primex-script.git)**
 
 > Automate deployment from `ppdo-next` to `ppdo-staging`
 

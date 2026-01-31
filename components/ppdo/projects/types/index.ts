@@ -2,15 +2,20 @@
 import { Id } from "@/convex/_generated/dataModel";
 import { SortState, ContextMenuState } from "@/lib/shared/types/table.types";
 
+// Re-export API types
+export type { ProjectApiConfig, ProjectComponentConfig, WithApiConfigProps } from "./api.types";
+
 // ============================================================================
-// PROJECT TYPES
+// PROJECT TYPES - Generic interface for all project-like entities
+// Works for Budget Projects, 20% DF, and potentially other fund types
 // ============================================================================
 
 export interface Project {
     id: string;
     particulars: string;
     implementingOffice: string;
-    categoryId?: string;
+    categoryId?: string | Id<"projectCategories">;
+    departmentId?: string | Id<"departments">;
     totalBudgetAllocated: number;
     obligatedBudget?: number;
     totalBudgetUtilized: number;
@@ -24,18 +29,26 @@ export interface Project {
     targetDateCompletion?: number;
     isPinned?: boolean;
     pinnedAt?: number;
-    pinnedBy?: string;
-    budgetItemId?: string;
-    projectManagerId?: string;
+    pinnedBy?: string | Id<"users">;
+    // Budget Projects specific
+    budgetItemId?: string | Id<"budgetItems">;
+    // 20% DF specific
+    twentyPercentDFId?: string | Id<"twentyPercentDF">;
+    // Shared
+    projectManagerId?: string | Id<"users">;
     _creationTime?: number;
-    autoCalculateBudgetUtilized?: boolean; // 🆕 NEW: Auto-calculate toggle
+    autoCalculateBudgetUtilized?: boolean;
 }
 
-// 🆕 SIMPLIFIED: Explicit interface instead of complex Omit type
+// ============================================================================
+// PROJECT FORM DATA - For creating/updating projects
+// ============================================================================
+
 export interface ProjectFormData {
     particulars: string;
     implementingOffice: string;
-    categoryId?: string;
+    categoryId?: string | Id<"projectCategories">;
+    departmentId?: string | Id<"departments">;
     totalBudgetAllocated: number;
     obligatedBudget?: number;
     totalBudgetUtilized: number;
@@ -44,11 +57,15 @@ export interface ProjectFormData {
     targetDateCompletion?: number;
     isPinned?: boolean;
     pinnedAt?: number;
-    pinnedBy?: string;
-    budgetItemId?: string;
-    projectManagerId?: string;
+    pinnedBy?: string | Id<"users">;
+    // Budget Projects specific
+    budgetItemId?: string | Id<"budgetItems">;
+    // 20% DF specific  
+    twentyPercentDFId?: string | Id<"twentyPercentDF">;
+    // Shared
+    projectManagerId?: string | Id<"users">;
     _creationTime?: number;
-    autoCalculateBudgetUtilized?: boolean; // 🆕 NEW: Auto-calculate toggle
+    autoCalculateBudgetUtilized?: boolean;
 }
 
 // ============================================================================
@@ -149,10 +166,23 @@ export interface ProjectsTableProps {
     particularId: string;
     budgetItemId?: string;
     budgetItemYear?: number;
-    onAdd?: (project: ProjectFormData) => void | Promise<void>; // 🆕 SIMPLIFIED
-    onEdit?: (id: string, project: ProjectFormData) => void; // 🆕 SIMPLIFIED
+    onAdd?: (project: ProjectFormData) => void | Promise<void>;
+    onEdit?: (id: string, project: ProjectFormData) => void;
     onDelete?: (id: string) => void;
     onOpenTrash?: () => void;
     newlyAddedProjectId?: string | null;
     expandButton?: React.ReactNode;
+}
+
+// ============================================================================
+// FORM PROPS TYPES
+// ============================================================================
+
+export interface ProjectFormProps {
+    project?: Project | null;
+    budgetItemId?: string;
+    budgetItemYear?: number;
+    draftKey?: string;  // Optional: defaults to "project_form_draft"
+    onSave: (data: ProjectFormData) => void | Promise<void>;
+    onCancel: () => void;
 }

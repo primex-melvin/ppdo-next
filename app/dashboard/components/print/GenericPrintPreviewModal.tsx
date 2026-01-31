@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { PrintPreviewToolbar } from '@/components/ppdo/table/print-preview/PrintPreviewToolbar';
-import { ConfirmationModal } from '@/app/dashboard/project/[year]/components/BudgetConfirmationModal';
+import { ConfirmationModal } from "@/components/ppdo/11_project_plan";
 import { convertTableToCanvas } from '@/lib/print-canvas/tableToCanvas';
 import { printAllPages } from '@/lib/print';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';

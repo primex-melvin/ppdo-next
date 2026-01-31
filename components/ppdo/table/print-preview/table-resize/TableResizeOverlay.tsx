@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useCallback, useState, useEffect } from 'react';
-import { useTableCanvasResize } from '../../../../../app/dashboard/project/[year]/components/hooks/useTableCanvasResize';
+import { useTableCanvasResize } from "@/components/ppdo/11_project_plan/hooks";
 import { TableResizeHandle } from './TableResizeHandle';
 import { DimensionTooltip } from './DimensionTooltip';
 import { ActiveResizeHighlight } from './ActiveResizeHighlight';

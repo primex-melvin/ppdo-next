@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Form } from "@/components/ui/form";
-import { Project } from "../types";
+import { Project, ProjectFormData } from "../types";
 import { BudgetViolationModal } from "./BudgetViolationModal";
 
 // Subcomponents
@@ -38,7 +38,8 @@ interface ProjectFormProps {
     project?: Project | null;
     budgetItemId?: string;
     budgetItemYear?: number;
-    onSave: (project: Omit<Project, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing" | "status"> & { categoryId?: string; autoCalculateBudgetUtilized?: boolean }) => void;
+    draftKey?: string;  // Optional: defaults to "project_form_draft"
+    onSave: (data: ProjectFormData) => void | Promise<void>;
     onCancel: () => void;
 }
 
@@ -46,6 +47,7 @@ export function ProjectForm({
     project,
     budgetItemId,
     budgetItemYear,
+    draftKey = "project_form_draft",
     onSave,
     onCancel
 }: ProjectFormProps) {
@@ -77,7 +79,7 @@ export function ProjectForm({
     const [displayObligated, setDisplayObligated] = useState("");
     const [displayUtilized, setDisplayUtilized] = useState("");
 
-    const { loadDraft, saveDraft, clearDraft } = useFormDraft("project_form_draft");
+    const { loadDraft, saveDraft, clearDraft } = useFormDraft(draftKey);
     const savedDraft = project ? null : loadDraft();
 
     const form = useForm<ProjectFormValues>({

@@ -24,8 +24,8 @@ import {
 
 // Shared Components
 import { TrashBinModal } from "@/components/TrashBinModal";
-import { Modal } from "@/app/dashboard/project/[year]/components/BudgetModal";
-import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/BudgetConfirmationModal";
+import { Modal } from "@/components/ppdo/11_project_plan";
+import { ConfirmationModal } from "@/components/ppdo/11_project_plan";
 
 // Shared Hooks
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";

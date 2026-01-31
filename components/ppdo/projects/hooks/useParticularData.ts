@@ -2,10 +2,13 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-
 import { Project } from "../types";
 
-export function useParticularData(particular: string) {
+interface UseParticularDataOptions {
+    particular: string;
+}
+
+export function useParticularData({ particular }: UseParticularDataOptions) {
     const budgetItem = useQuery(api.budgetItems.getByParticulars, {
         particulars: particular,
     });
@@ -41,10 +44,11 @@ export function useParticularData(particular: string) {
                 pinnedBy: project.pinnedBy,
                 budgetItemId: project.budgetItemId,
                 categoryId: project.categoryId,
-                _creationTime: project._creationTime, // Include creation time for sorting
-                autoCalculateBudgetUtilized: project.autoCalculateBudgetUtilized, // 🆕 NEW: Include auto-calculate
+                projectManagerId: project.projectManagerId,
+                _creationTime: project._creationTime,
+                autoCalculateBudgetUtilized: project.autoCalculateBudgetUtilized,
             }))
-            .sort((a, b) => b._creationTime - a._creationTime) ?? []; // Sort newest first
+            .sort((a, b) => (b._creationTime ?? 0) - (a._creationTime ?? 0)) ?? [];
 
     return {
         budgetItem,

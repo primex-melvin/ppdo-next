@@ -2,7 +2,7 @@
 
 import { Page, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
-import { BudgetItem } from '@/app/dashboard/project/[year]/types';
+import { BudgetItem } from "@/components/ppdo/11_project_plan/types";
 
 /**
  * Column definition for table-to-canvas conversion

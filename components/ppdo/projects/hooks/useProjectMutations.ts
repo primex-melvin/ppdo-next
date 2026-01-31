@@ -1,8 +1,9 @@
 
 import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
+import { budgetProjectApi } from "../api/budgetProjectApi";
+import { ProjectApiConfig, ProjectFormData } from "../types";
 
 // Type guard for MutationResponse
 type MutationResponse =
@@ -29,13 +30,21 @@ function isMutationResponse(value: unknown): value is MutationResponse {
     );
 }
 
-export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
-    const createProject = useMutation(api.projects.create);
-    const updateProject = useMutation(api.projects.update);
-    const deleteProject = useMutation(api.projects.moveToTrash);
-    const recalculateBudgetItem = useMutation(api.budgetItems.recalculateSingleBudgetItem);
+interface UseProjectMutationsOptions {
+    budgetItemId?: Id<"budgetItems">;
+    apiConfig?: ProjectApiConfig;  // Optional: defaults to budget projects
+}
 
-    const handleAddProject = async (projectData: any): Promise<string | null> => {
+export function useProjectMutations({ 
+    budgetItemId, 
+    apiConfig = budgetProjectApi 
+}: UseProjectMutationsOptions = {}) {
+    const createProject = useMutation(apiConfig.mutations.create);
+    const updateProject = useMutation(apiConfig.mutations.update);
+    const deleteProject = useMutation(apiConfig.mutations.moveToTrash);
+    const recalculateBudgetItem = useMutation(apiConfig.queries.getBreakdownStats);
+
+    const handleAddProject = async (projectData: ProjectFormData): Promise<string | null> => {
         if (!budgetItemId) {
             console.error("Budget item not found. Cannot create project.");
             toast.error("Budget item not found");
@@ -57,7 +66,7 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
                 year: projectData.year || undefined,
                 targetDateCompletion: projectData.targetDateCompletion || undefined,
                 projectManagerId: projectData.projectManagerId || undefined,
-                autoCalculateBudgetUtilized: projectData.autoCalculateBudgetUtilized, // 🆕 NEW: Pass auto-calculate
+                autoCalculateBudgetUtilized: projectData.autoCalculateBudgetUtilized,
             });
 
             toast.dismiss(toastId);
@@ -95,7 +104,7 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
         }
     };
 
-    const handleEditProject = async (id: string, projectData: any) => {
+    const handleEditProject = async (id: string, projectData: ProjectFormData) => {
         if (!budgetItemId) {
             console.error("Budget item not found. Cannot edit project.");
             toast.error("Budget item not found");
@@ -118,7 +127,7 @@ export function useProjectMutations(budgetItemId?: Id<"budgetItems">) {
                 year: projectData.year || undefined,
                 targetDateCompletion: projectData.targetDateCompletion || undefined,
                 projectManagerId: projectData.projectManagerId || undefined,
-                autoCalculateBudgetUtilized: projectData.autoCalculateBudgetUtilized, // 🆕 NEW: Pass auto-calculate
+                autoCalculateBudgetUtilized: projectData.autoCalculateBudgetUtilized,
                 reason: "Updated via dashboard UI",
             });
 

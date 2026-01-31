@@ -61,10 +61,10 @@ export default function ParticularProjectsPage() {
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
-  const { budgetItem, breakdownStats, projects, isLoading: isLoadingData } = useParticularData(particular);
+  const { budgetItem, breakdownStats, projects, isLoading: isLoadingData } = useParticularData({ particular });
 
   const { handleAddProject, handleEditProject, handleDeleteProject, handleRecalculate } =
-    useProjectMutations(budgetItem?._id);
+    useProjectMutations({ budgetItemId: budgetItem?._id });
 
   // ============================================================================
   // HELPER FUNCTIONS

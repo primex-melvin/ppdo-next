@@ -21,7 +21,7 @@ export type { BreakdownStatsAccordionProps } from "./BreakdownStatsAccordion";
  * print adapters, etc.).
  *
  * For the Trust Fund implementation, these components can be reused directly from:
- * - app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/components/
+ * - app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/_components/
  *
  * In the future, these could be further abstracted, but they already work with
  * IBaseBreakdown[] data and can be parameterized through props.

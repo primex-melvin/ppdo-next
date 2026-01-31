@@ -13,7 +13,7 @@ import { useState, useMemo, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { BudgetViolationModal } from "@/app/dashboard/project/[year]/components/BudgetViolationModal";
+import { BudgetViolationModal } from "@/components/ppdo/11_project_plan/components/BudgetViolationModal";
 
 // Import validation and types
 import {

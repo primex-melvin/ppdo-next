@@ -25,19 +25,19 @@ import {
 } from "@/components/ppdo/breakdown";
 
 // Local Components (Project-specific)
-import { StatusChainCard } from "./components/StatusChainCard";
+import { StatusChainCard } from "./_components/StatusChainCard";
 
 // Shared Components
 import { TrashBinModal } from "@/components/TrashBinModal";
-import { Modal } from "@/app/dashboard/project/[year]/components/BudgetModal";
-import { ConfirmationModal } from "@/app/dashboard/project/[year]/components/BudgetConfirmationModal";
+import { Modal } from "@/components/ppdo/11_project_plan";
+import { ConfirmationModal } from "@/components/ppdo/11_project_plan";
 
 // Shared Hooks
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";
 
 // Utils
 import { extractIdFromSlug, getParticularFullName, extractCleanNameFromSlug, decodeLabel, formatYearLabel } from "@/lib/utils/breadcrumb-utils";
-import { getStatusColor } from "./utils/page-helpers";
+import { getStatusColor } from "./_lib/page-helpers";
 import { useDashboardBreadcrumbs } from "@/lib/hooks/useDashboardBreadcrumbs";
 
 export default function ProjectBreakdownPage() {

@@ -4,12 +4,12 @@
 
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { PrintPreviewToolbar } from './PrintPreviewToolbar';
-import { ConfirmationModal } from '../../../../app/dashboard/project/[year]/components/BudgetConfirmationModal';
+import { ConfirmationModal } from "@/components/ppdo/11_project_plan";
 import { TemplateSelector } from './TemplateSelector';
 import { TemplateApplicationModal } from './TemplateApplicationModal';
 import { ColumnVisibilityPanel } from './ColumnVisibilityPanel';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
-import { BudgetItem } from '@/app/dashboard/project/[year]/types';
+import { BudgetItem } from "@/components/ppdo/11_project_plan/types";
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
 
 // Canvas components
@@ -21,9 +21,9 @@ import { HorizontalRuler, VerticalRuler } from '@/app/(extra)/canvas/_components
 import { useRulerState } from '@/app/(extra)/canvas/_components/editor/hooks/useRulerState';
 import { getPageDimensions, RULER_WIDTH, RULER_HEIGHT } from '@/app/(extra)/canvas/_components/editor/constants';
 // Custom hooks
-import { usePrintPreviewState } from '../../../../app/dashboard/project/[year]/components/hooks/usePrintPreviewState';
-import { usePrintPreviewActions } from '../../../../app/dashboard/project/[year]/components/hooks/usePrintPreviewActions';
-import { usePrintPreviewDraft } from '../../../../app/dashboard/project/[year]/components/hooks/usePrintPreviewDraft';
+import { usePrintPreviewState } from "@/components/ppdo/11_project_plan/hooks";
+import { usePrintPreviewActions } from "@/components/ppdo/11_project_plan/hooks";
+import { usePrintPreviewDraft } from "@/components/ppdo/11_project_plan/hooks";
 import { convertTableToCanvas } from '@/lib/print-canvas/tableToCanvas';
 import { mergeTemplateWithCanvas } from '@/lib/canvas-utils/mergeTemplate';
 import { toast } from 'sonner';
