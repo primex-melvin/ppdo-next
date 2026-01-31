@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { getRemarksByProject, addRemark } from "@/app/dashboard/project/[year]/[particularId]/[projectbreakdownId]/[inspectionId]/data";
+import { getRemarksByProject, addRemark } from "@/app/dashboard/(protected)/project/[year]/[particularId]/[projectbreakdownId]/[inspectionId]/data";
 import { Remark } from "@/types/types";
 
 interface RemarksSectionProps {
@@ -148,7 +148,7 @@ export default function RemarksSection({ projectId }: RemarksSectionProps) {
                   )}
                 </div>
               </div>
-              
+
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {remark.content}
               </p>
