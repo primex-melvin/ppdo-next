@@ -1,7 +1,7 @@
 // app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[inspectionId]/data.ts
 
-import { Project, Remark } from "../../../../../../../../types/types";
-import { getProjectsByParticular } from "../../../../../../../../data/data";
+import { Project, Remark } from "../../../../../../../../../types/types";
+import { getProjectsByParticular } from "../../../../../../../../../data/data";
 import { FinancialBreakdownItem } from "@/components/ppdo/inspection/types";
 
 // Mock remarks data - in production, this would come from an API

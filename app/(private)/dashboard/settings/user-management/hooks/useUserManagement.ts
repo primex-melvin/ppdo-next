@@ -1,11 +1,11 @@
 // app/dashboard/settings/user-management/hooks/useUserManagement.ts
 
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
+import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useState } from "react";
-import { UserFormData } from "../../../../../types/user.types";
+import { UserFormData } from "../../../../../../types/user.types";
 
 export function useUserManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,7 +26,7 @@ export function useUserManagement() {
   const handleCreateUser = async (data: UserFormData) => {
     try {
       setIsSubmitting(true);
-      
+
       await createUserMutation({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -39,7 +39,7 @@ export function useUserManagement() {
         employeeId: data.employeeId,
         status: data.status,
       });
-      
+
       toast.success("User created successfully");
       return true;
     } catch (error: any) {
@@ -58,9 +58,9 @@ export function useUserManagement() {
     try {
       setIsSubmitting(true);
       await updateUserRole({ userId, newRole });
-      
+
       toast.success("User role updated successfully");
-      
+
       return true;
     } catch (error: any) {
       toast.error(error.message || "Failed to update user role");
@@ -79,9 +79,9 @@ export function useUserManagement() {
     try {
       setIsSubmitting(true);
       await updateUserStatus({ userId, newStatus, reason });
-      
+
       toast.success("User status updated successfully");
-      
+
       return true;
     } catch (error: any) {
       toast.error(error.message || "Failed to update user status");
@@ -99,9 +99,9 @@ export function useUserManagement() {
     try {
       setIsSubmitting(true);
       await updateUserDepartment({ userId, departmentId });
-      
+
       toast.success("User department updated successfully");
-      
+
       return true;
     } catch (error: any) {
       toast.error(error.message || "Failed to update user department");
@@ -118,7 +118,7 @@ export function useUserManagement() {
   ) => {
     try {
       setIsSubmitting(true);
-      
+
       // Update profile fields (name components, position, employeeId)
       if (data.firstName || data.lastName || data.middleName !== undefined || data.nameExtension !== undefined || data.position || data.employeeId) {
         await updateUserProfile({
@@ -131,12 +131,12 @@ export function useUserManagement() {
           employeeId: data.employeeId,
         });
       }
-      
+
       // Update role if provided (now includes inspector)
       if (data.role) {
         await updateUserRole({ userId, newRole: data.role });
       }
-      
+
       // Update status if provided
       if (data.status) {
         await updateUserStatus({
@@ -145,14 +145,14 @@ export function useUserManagement() {
           reason: data.suspensionReason,
         });
       }
-      
+
       // Update department if provided
       if (data.departmentId !== undefined) {
         await updateUserDepartment({ userId, departmentId: data.departmentId });
       }
-      
+
       toast.success("User updated successfully");
-      
+
       return true;
     } catch (error: any) {
       toast.error(error.message || "Failed to update user");
@@ -166,9 +166,9 @@ export function useUserManagement() {
   const handleDeleteUser = async (userId: Id<"users">) => {
     try {
       setIsSubmitting(true);
-      
+
       await deleteUserMutation({ userId });
-      
+
       toast.success("User deleted successfully");
       return true;
     } catch (error: any) {

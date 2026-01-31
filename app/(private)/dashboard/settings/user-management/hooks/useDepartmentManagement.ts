@@ -1,8 +1,8 @@
 // app/dashboard/settings/user-management/hooks/useDepartmentManagement.ts
 
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
+import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -34,7 +34,7 @@ export function useDepartmentManagement() {
   const handleCreateDepartment = async (data: DepartmentFormData) => {
     try {
       setIsSubmitting(true);
-      
+
       await createDepartmentMutation({
         name: data.name,
         code: data.code,
@@ -47,7 +47,7 @@ export function useDepartmentManagement() {
         isActive: data.isActive,
         displayOrder: data.displayOrder,
       });
-      
+
       toast.success("Department created successfully");
       return true;
     } catch (error: any) {
@@ -65,7 +65,7 @@ export function useDepartmentManagement() {
   ) => {
     try {
       setIsSubmitting(true);
-      
+
       await updateDepartmentMutation({
         id,
         name: data.name,
@@ -79,7 +79,7 @@ export function useDepartmentManagement() {
         isActive: data.isActive,
         displayOrder: data.displayOrder,
       });
-      
+
       toast.success("Department updated successfully");
       return true;
     } catch (error: any) {
@@ -94,9 +94,9 @@ export function useDepartmentManagement() {
   const handleDeleteDepartment = async (id: Id<"departments">) => {
     try {
       setIsSubmitting(true);
-      
+
       await deleteDepartmentMutation({ id });
-      
+
       toast.success("Department deleted successfully");
       return true;
     } catch (error: any) {

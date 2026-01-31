@@ -14,10 +14,10 @@ import { UserDeleteDialog } from "./components/UserDeleteDialog";
 import { DepartmentModal } from "./components/DepartmentModal";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Building2, KeyRound } from "lucide-react";
-import { Id } from "../../../../convex/_generated/dataModel";
+import { Id } from "../../../../../convex/_generated/dataModel";
 import { formatDate, getInitials } from "@/lib/utils";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
-import { useAccentColor } from "../../../../contexts/AccentColorContext";
+import { useAccentColor } from "../../../../../contexts/AccentColorContext";
 import { UserFilters } from "./components/UserFilters";
 import { UserRoleBadge } from "./components/UserRoleBadge";
 import { UserActions } from "./components/UserActions";
@@ -95,9 +95,9 @@ export default function UserManagementPage() {
 
   const handleDeleteConfirm = async () => {
     if (!selectedUser) return;
-    
+
     const success = await deleteUser(selectedUser._id as Id<"users">);
-    
+
     if (success) {
       setShowDeleteDialog(false);
       setSelectedUser(null);
@@ -109,12 +109,12 @@ export default function UserManagementPage() {
     newStatus: "active" | "inactive" | "suspended"
   ) => {
     let reason: string | null | undefined;
-    
+
     if (newStatus === "suspended") {
       reason = prompt("Please provide a reason for suspension:");
       if (!reason) return;
     }
-    
+
     await updateStatus(user._id as Id<"users">, newStatus, reason ?? undefined);
   };
 
@@ -174,7 +174,7 @@ export default function UserManagementPage() {
                 Manage Departments
               </Button>
             )}
-            
+
             {/* Password Reset Management Button - Only for Admin and Super Admin */}
             {(isAdmin || isSuperAdmin) && (
               <Button

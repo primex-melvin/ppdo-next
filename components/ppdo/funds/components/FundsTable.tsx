@@ -13,7 +13,7 @@ import { ConfirmationModal } from "@/components/ppdo/11_project_plan/components/
 import { ActivityLogSheet } from "@/components/ActivityLogSheet";
 import { FundsTableToolbar } from "./toolbar/FundsTableToolbar";
 import { FundsContextMenu } from "./context-menu/FundsContextMenu";
-import { GenericPrintPreviewModal } from "@/app/dashboard/components/print/GenericPrintPreviewModal";
+import { GenericPrintPreviewModal } from "@/app/(private)/dashboard/components/print/GenericPrintPreviewModal";
 import { FundsTableColgroup } from "./table/FundsTableColgroup";
 import { FundsTableHeader } from "./table/FundsTableHeader";
 import { FundsTableBody } from "./table/FundsTableBody";

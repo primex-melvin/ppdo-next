@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Id } from "../../../../../convex/_generated/dataModel";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Loader2, Pencil, Trash2, Plus, Building2 } from "lucide-react";
 import {
   AlertDialog,
@@ -163,9 +163,9 @@ export function DepartmentModal({
 
   const handleDeleteConfirm = async () => {
     if (!departmentToDelete) return;
-    
+
     const success = await onDelete(departmentToDelete._id as Id<"departments">);
-    
+
     if (success) {
       setShowDeleteDialog(false);
       setDepartmentToDelete(null);
@@ -174,15 +174,15 @@ export function DepartmentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     let success = false;
-    
+
     if (selectedDepartment) {
       success = await onUpdate(selectedDepartment._id as Id<"departments">, formData);
     } else {
       success = await onCreate(formData);
     }
-    
+
     if (success) {
       setView("list");
       setSelectedDepartment(null);
@@ -216,8 +216,8 @@ export function DepartmentModal({
               {view === "list"
                 ? "View, create, edit, or delete organizational departments."
                 : selectedDepartment
-                ? "Update department information and settings."
-                : "Create a new department with organizational details."}
+                  ? "Update department information and settings."
+                  : "Create a new department with organizational details."}
             </DialogDescription>
           </DialogHeader>
 
@@ -257,7 +257,7 @@ export function DepartmentModal({
                                 </span>
                               )}
                             </div>
-                            
+
                             {dept.description && (
                               <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2 line-clamp-2">
                                 {dept.description}

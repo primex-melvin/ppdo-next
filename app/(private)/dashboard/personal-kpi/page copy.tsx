@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PersonalKPICard } from "../../../components/PersonalKPICard";
-import { DetailedMetricCard } from "../../../components/DetailedMetricCard";
+import { PersonalKPICard } from "../../../../components/PersonalKPICard";
+import { DetailedMetricCard } from "../../../../components/DetailedMetricCard";
 
 export default function PersonalKPIPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

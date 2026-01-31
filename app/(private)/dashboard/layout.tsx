@@ -7,15 +7,15 @@ import { useRouter, usePathname } from "next/navigation";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-import { Header } from "../../components/header/Header";
-import { Breadcrumbs } from "../../components/Breadcrumbs";
-import { TimeLocation } from "../../components/TimeLocation";
-import { SearchProvider } from "../../contexts/SearchContext";
-import { SidebarProvider } from "../../contexts/SidebarContext";
-import { AccentColorProvider } from "../../contexts/AccentColorContext";
-import { BreadcrumbProvider } from "../../contexts/BreadcrumbContext";
+import { Header } from "../../../components/header/Header";
+import { Breadcrumbs } from "../../../components/Breadcrumbs";
+import { TimeLocation } from "../../../components/TimeLocation";
+import { SearchProvider } from "../../../contexts/SearchContext";
+import { SidebarProvider } from "../../../contexts/SidebarContext";
+import { AccentColorProvider } from "../../../contexts/AccentColorContext";
+import { BreadcrumbProvider } from "../../../contexts/BreadcrumbContext";
 import { OnboardingModal } from "@/components/modals/OnboardingModal";
-import { Sidebar } from "../../components/sidebar/Sidebar";
+import { Sidebar } from "../../../components/sidebar/Sidebar";
 import { BetaBanner } from "@/components/ui/beta-banner";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { useAccentColor } from "../../../../contexts/AccentColorContext";
+import { useAccentColor } from "../../../../../contexts/AccentColorContext";
 
 interface TableRow {
   id: string;
@@ -62,7 +62,7 @@ export default function OfficeDetailPage() {
         // HRMO API returns: { success: true, count: number, data: [...] }
         // Handle both wrapped format and direct array format
         let items: any[] = [];
-        
+
         if (Array.isArray(responseData)) {
           // Direct array response
           items = responseData;
@@ -89,12 +89,12 @@ export default function OfficeDetailPage() {
             item.percentComplete !== undefined
               ? item.percentComplete
               : item.percentage !== undefined
-              ? item.percentage
-              : item.progress !== undefined
-              ? item.progress
-              : item.completion !== undefined
-              ? item.completion
-              : 0,
+                ? item.percentage
+                : item.progress !== undefined
+                  ? item.progress
+                  : item.completion !== undefined
+                    ? item.completion
+                    : 0,
         }));
 
         setTableData(transformedData);

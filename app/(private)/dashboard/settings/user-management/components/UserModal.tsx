@@ -20,8 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Id } from "../../../../../convex/_generated/dataModel";
-import { User, UserFormData } from "../../../../../types/user.types";
+import { Id } from "../../../../../../convex/_generated/dataModel";
+import { User, UserFormData } from "../../../../../../types/user.types";
 
 interface Department {
   _id: string;

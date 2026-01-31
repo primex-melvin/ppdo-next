@@ -7,7 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginTrailTable } from "./LoginTrailTable";
-import { BlockedItemsManagement } from "../app/dashboard/security/components/BlockedItems";
+import { BlockedItemsManagement } from "../app/(private)/dashboard/security/components/BlockedItems";
 import { Import } from "lucide-react";
 import { PersonalKPICard } from "./PersonalKPICard";
 

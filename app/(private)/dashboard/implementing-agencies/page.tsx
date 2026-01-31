@@ -1,7 +1,7 @@
 
 import { Building2, TrendingUp, FileText, Users } from "lucide-react"
 import { formatCurrency, implementingAgencies } from "./mock-data"
-import { ThemeToggle } from "../../../components/ThemeToggle"
+import { ThemeToggle } from "../../../../components/ThemeToggle"
 import { AgencyCard } from "./components/AgencyCard"
 
 export default function ImplementingAgenciesPage() {

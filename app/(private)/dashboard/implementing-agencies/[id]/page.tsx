@@ -18,7 +18,7 @@ import {
   Pause,
   ClipboardList,
 } from "lucide-react"
-import { ThemeToggle } from "../../../../components/ThemeToggle"
+import { ThemeToggle } from "../../../../../components/ThemeToggle"
 import { formatCurrency, getAgencyById, getAgencyStats } from "../mock-data"
 import { ProjectCard } from "../components/ProjectCard"
 
