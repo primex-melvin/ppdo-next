@@ -13,13 +13,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, ArrowRight, Database } from "lucide-react";
 
 export interface MigrationInputModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (sourceId: string, targetId: string) => void;
+  onSubmit: (sourceId: string, targetYear: number) => void;
   isLoading?: boolean;
+  fiscalYears: Array<{ year: number; label?: string }>; // For dropdown
 }
 
 // Convex ID format validation (alphanumeric string typically 32 chars)
@@ -30,10 +38,11 @@ export function MigrationInputModal({
   onOpenChange,
   onSubmit,
   isLoading = false,
+  fiscalYears,
 }: MigrationInputModalProps) {
   const [sourceId, setSourceId] = useState("k57eavzkpm7yrjzsc3bp4302dx7z6ygj");
-  const [targetId, setTargetId] = useState("");
-  const [errors, setErrors] = useState<{ sourceId?: string; targetId?: string }>({});
+  const [targetYear, setTargetYear] = useState<string>("");
+  const [errors, setErrors] = useState<{ sourceId?: string; targetYear?: string }>({});
 
   const validateId = (id: string): boolean => {
     if (!id.trim()) return false;
@@ -42,7 +51,7 @@ export function MigrationInputModal({
   };
 
   const validateForm = useCallback((): boolean => {
-    const newErrors: { sourceId?: string; targetId?: string } = {};
+    const newErrors: { sourceId?: string; targetYear?: string } = {};
 
     if (!sourceId.trim()) {
       newErrors.sourceId = "Source Budget Item ID is required";
@@ -50,21 +59,19 @@ export function MigrationInputModal({
       newErrors.sourceId = "Invalid Convex ID format";
     }
 
-    if (!targetId.trim()) {
-      newErrors.targetId = "Target 20% DF ID is required";
-    } else if (!validateId(targetId)) {
-      newErrors.targetId = "Invalid Convex ID format";
+    if (!targetYear) {
+      newErrors.targetYear = "Target Fiscal Year is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [sourceId, targetId]);
+  }, [sourceId, targetYear]);
 
   const handleSubmit = useCallback(() => {
     if (validateForm()) {
-      onSubmit(sourceId.trim(), targetId.trim());
+      onSubmit(sourceId.trim(), parseInt(targetYear, 10));
     }
-  }, [validateForm, onSubmit, sourceId, targetId]);
+  }, [validateForm, onSubmit, sourceId, targetYear]);
 
   const handleClose = useCallback(() => {
     if (!isLoading) {
@@ -105,7 +112,7 @@ export function MigrationInputModal({
           <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-4 py-3">
             <p className="text-sm text-amber-800 dark:text-amber-200">
               This tool will migrate all projects and breakdowns from the source budget item
-              to the target 20% Development Fund. This action cannot be undone.
+              to new 20% Development Fund items for the selected fiscal year. This action cannot be undone.
             </p>
           </div>
 
@@ -140,34 +147,48 @@ export function MigrationInputModal({
             )}
           </div>
 
-          {/* Target 20% DF ID */}
+          {/* Target Fiscal Year */}
           <div className="space-y-2">
             <Label
-              htmlFor="targetId"
+              htmlFor="targetYear"
               className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
-              Target 20% DF ID <span className="text-red-500">*</span>
+              Target Fiscal Year <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="targetId"
-              value={targetId}
-              onChange={(e) => {
-                setTargetId(e.target.value);
-                if (errors.targetId) {
-                  setErrors((prev) => ({ ...prev, targetId: undefined }));
+            <Select
+              value={targetYear}
+              onValueChange={(value) => {
+                setTargetYear(value);
+                if (errors.targetYear) {
+                  setErrors((prev) => ({ ...prev, targetYear: undefined }));
                 }
               }}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter target twentyPercentDF ID"
               disabled={isLoading}
-              className={`bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 ${
-                errors.targetId
-                  ? "border-red-500 focus-visible:ring-red-500/30"
-                  : ""
-              }`}
-            />
-            {errors.targetId && (
-              <p className="text-sm text-red-500">{errors.targetId}</p>
+            >
+              <SelectTrigger
+                id="targetYear"
+                className={`w-full bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 ${
+                  errors.targetYear
+                    ? "border-red-500 focus-visible:ring-red-500/30"
+                    : ""
+                }`}
+              >
+                <SelectValue placeholder="Select fiscal year" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700">
+                {fiscalYears.map((fy) => (
+                  <SelectItem
+                    key={fy.year}
+                    value={String(fy.year)}
+                    className="text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-zinc-800"
+                  >
+                    {fy.label || `FY ${fy.year}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.targetYear && (
+              <p className="text-sm text-red-500">{errors.targetYear}</p>
             )}
           </div>
         </ResizableModalBody>

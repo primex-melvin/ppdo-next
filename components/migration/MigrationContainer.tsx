@@ -17,6 +17,11 @@ export function MigrationContainer() {
         open={migration.isOpen && migration.step === "input"}
         onOpenChange={(open) => !open && migration.handleClose()}
         onSubmit={migration.handleInputSubmit}
+        fiscalYears={migration.fiscalYears.map((fy: any) => ({
+          year: fy.year ?? fy.fiscalYear ?? 0,
+          label: fy.label ?? fy.name ?? `Year ${fy.year ?? fy.fiscalYear}`,
+        }))}
+        isLoading={migration.fiscalYears === undefined}
       />
 
       <MigrationSummaryModal

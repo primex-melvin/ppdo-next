@@ -2,7 +2,7 @@
  * Data Migration Module
  *
  * Handles migration of data from budgetItems → projects → govtProjectBreakdowns
- * to twentyPercentDF → twentyPercentDFBreakdowns
+ * to twentyPercentDF → twentyPercentDFBreakdowns (year-based migration)
  *
  * @module convex/migrations
  */
@@ -30,6 +30,7 @@ type MigrationDetail = {
   projectName: string;
   breakdownsMigrated: number;
   breakdownIds: Id<"twentyPercentDFBreakdowns">[];
+  createdTwentyPercentDFId?: Id<"twentyPercentDF">;
   error?: string;
 };
 
@@ -41,22 +42,79 @@ type MigrationError = {
 };
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const MIN_YEAR = 2000;
+const MAX_YEAR = 2100;
+
+// ============================================================================
 // QUERIES
 // ============================================================================
 
 /**
+ * Get all fiscal years for dropdown selection
+ */
+export const getFiscalYears = query({
+  args: {},
+  handler: async (ctx): Promise<{
+    success: boolean;
+    years: Array<{
+      id: Id<"fiscalYears">;
+      year: number;
+      label?: string;
+      isActive: boolean;
+      isCurrent?: boolean;
+    }>;
+    errors: string[];
+  }> => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    try {
+      const fiscalYears = await ctx.db
+        .query("fiscalYears")
+        .withIndex("isActive", (q) => q.eq("isActive", true))
+        .order("desc")
+        .collect();
+
+      return {
+        success: true,
+        years: fiscalYears.map((fy) => ({
+          id: fy._id,
+          year: fy.year,
+          label: fy.label,
+          isActive: fy.isActive,
+          isCurrent: fy.isCurrent,
+        })),
+        errors: [],
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        success: false,
+        years: [],
+        errors: [`Failed to fetch fiscal years: ${errorMessage}`],
+      };
+    }
+  },
+});
+
+/**
  * Get a preview of migration data before executing
- * Shows source budget item, target 20% DF, and breakdowns to be migrated
+ * Shows source budget item, target year, and breakdowns to be migrated
  */
 export const getMigrationPreview = query({
   args: {
     sourceBudgetItemId: v.id("budgetItems"),
-    targetTwentyPercentDFId: v.id("twentyPercentDF"),
+    targetYear: v.number(),
   },
   handler: async (ctx, args): Promise<{
     success: boolean;
     sourceBudgetItem: Doc<"budgetItems"> | null;
-    targetTwentyPercentDF: Doc<"twentyPercentDF"> | null;
+    targetYear: number;
     projectsCount: number;
     totalBreakdownsCount: number;
     projectsWithBreakdowns: Array<{
@@ -81,6 +139,11 @@ export const getMigrationPreview = query({
 
     const errors: string[] = [];
 
+    // Validate target year is reasonable
+    if (args.targetYear < MIN_YEAR || args.targetYear > MAX_YEAR) {
+      errors.push(`Target year must be between ${MIN_YEAR} and ${MAX_YEAR}`);
+    }
+
     // Validate source budget item exists
     const sourceBudgetItem = await ctx.db.get(args.sourceBudgetItemId);
     if (!sourceBudgetItem) {
@@ -89,20 +152,12 @@ export const getMigrationPreview = query({
       errors.push(`Source budget item with ID ${args.sourceBudgetItemId} has been deleted`);
     }
 
-    // Validate target 20% DF exists
-    const targetTwentyPercentDF = await ctx.db.get(args.targetTwentyPercentDFId);
-    if (!targetTwentyPercentDF) {
-      errors.push(`Target 20% DF with ID ${args.targetTwentyPercentDFId} not found`);
-    } else if (targetTwentyPercentDF.isDeleted) {
-      errors.push(`Target 20% DF with ID ${args.targetTwentyPercentDFId} has been deleted`);
-    }
-
-    // If either source or target is invalid, return early
+    // If validation failed, return early
     if (errors.length > 0) {
       return {
         success: false,
         sourceBudgetItem: sourceBudgetItem || null,
-        targetTwentyPercentDF: targetTwentyPercentDF || null,
+        targetYear: args.targetYear,
         projectsCount: 0,
         totalBreakdownsCount: 0,
         projectsWithBreakdowns: [],
@@ -162,7 +217,7 @@ export const getMigrationPreview = query({
     return {
       success: true,
       sourceBudgetItem,
-      targetTwentyPercentDF,
+      targetYear: args.targetYear,
       projectsCount: projects.length,
       totalBreakdownsCount,
       projectsWithBreakdowns,
@@ -177,29 +232,57 @@ export const getMigrationPreview = query({
 
 /**
  * Migrate data from budgetItems → projects → govtProjectBreakdowns
- * to twentyPercentDF → twentyPercentDFBreakdowns
+ * to twentyPercentDF → twentyPercentDFBreakdowns (year-based)
+ * 
+ * For each project, creates a new twentyPercentDF item for the target year,
+ * then migrates all breakdowns to link to the newly created items.
  */
 export const migrateBudgetToTwentyPercentDF = mutation({
   args: {
     sourceBudgetItemId: v.id("budgetItems"),
-    targetTwentyPercentDFId: v.id("twentyPercentDF"),
+    targetYear: v.number(),
   },
   handler: async (ctx, args): Promise<{
     success: boolean;
+    targetYear: number;
     migratedProjects: number;
     migratedBreakdowns: number;
-    details: MigrationDetail[];
-    errors: MigrationError[];
+    createdTwentyPercentDFItems: Array<{
+      id: Id<"twentyPercentDF">;
+      particulars: string;
+      implementingOffice: string;
+    }>;
+    errors: Array<{
+      projectId?: string;
+      projectName?: string;
+      breakdownId?: string;
+      error: string;
+    }>;
   }> => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) {
       throw new Error("Not authenticated");
     }
 
-    const errors: MigrationError[] = [];
-    const details: MigrationDetail[] = [];
+    const errors: Array<{
+      projectId?: string;
+      projectName?: string;
+      breakdownId?: string;
+      error: string;
+    }> = [];
+    const createdTwentyPercentDFItems: Array<{
+      id: Id<"twentyPercentDF">;
+      particulars: string;
+      implementingOffice: string;
+    }> = [];
+    
     let migratedProjects = 0;
     let migratedBreakdowns = 0;
+
+    // Validate target year
+    if (args.targetYear < MIN_YEAR || args.targetYear > MAX_YEAR) {
+      throw new Error(`Target year must be between ${MIN_YEAR} and ${MAX_YEAR}`);
+    }
 
     // Validate source budget item exists
     const sourceBudgetItem = await ctx.db.get(args.sourceBudgetItemId);
@@ -210,15 +293,6 @@ export const migrateBudgetToTwentyPercentDF = mutation({
       throw new Error(`Source budget item with ID ${args.sourceBudgetItemId} has been deleted`);
     }
 
-    // Validate target 20% DF exists
-    const targetTwentyPercentDF = await ctx.db.get(args.targetTwentyPercentDFId);
-    if (!targetTwentyPercentDF) {
-      throw new Error(`Target 20% DF with ID ${args.targetTwentyPercentDFId} not found`);
-    }
-    if (targetTwentyPercentDF.isDeleted) {
-      throw new Error(`Target 20% DF with ID ${args.targetTwentyPercentDFId} has been deleted`);
-    }
-
     // Fetch all projects linked to the source budget item (non-deleted only)
     const projects = await ctx.db
       .query("projects")
@@ -226,14 +300,56 @@ export const migrateBudgetToTwentyPercentDF = mutation({
       .filter((q) => q.neq(q.field("isDeleted"), true))
       .collect();
 
-    // Process each project and its breakdowns
+    // Map to track projectId -> newly created twentyPercentDFId
+    const projectToTwentyPercentDFMap = new Map<Id<"projects">, Id<"twentyPercentDF">>();
+
+    // Step 1: Create twentyPercentDF items for each project
     for (const project of projects) {
-      const detail: MigrationDetail = {
-        projectId: project._id,
-        projectName: project.particulars,
-        breakdownsMigrated: 0,
-        breakdownIds: [],
-      };
+      try {
+        const newTwentyPercentDFId = await createTwentyPercentDFFromProject(
+          ctx,
+          project,
+          args.targetYear,
+          userId
+        );
+
+        projectToTwentyPercentDFMap.set(project._id, newTwentyPercentDFId);
+        createdTwentyPercentDFItems.push({
+          id: newTwentyPercentDFId,
+          particulars: project.particulars,
+          implementingOffice: project.implementingOffice,
+        });
+
+        // Log creation activity
+        await logTwentyPercentDFActivity(ctx, userId, {
+          action: "created",
+          twentyPercentDFId: newTwentyPercentDFId,
+          newValues: {
+            particulars: project.particulars,
+            implementingOffice: project.implementingOffice,
+            year: args.targetYear,
+            sourceProjectId: project._id,
+          },
+          reason: `Created from project during migration to year ${args.targetYear}`,
+        });
+      } catch (createError) {
+        const errorMessage = createError instanceof Error ? createError.message : String(createError);
+        errors.push({
+          projectId: project._id,
+          projectName: project.particulars,
+          error: `Failed to create twentyPercentDF from project: ${errorMessage}`,
+        });
+      }
+    }
+
+    // Step 2: Migrate breakdowns for each project
+    for (const project of projects) {
+      const targetTwentyPercentDFId = projectToTwentyPercentDFMap.get(project._id);
+      
+      // Skip if we failed to create the twentyPercentDF item for this project
+      if (!targetTwentyPercentDFId) {
+        continue;
+      }
 
       try {
         // Fetch all non-deleted breakdowns for this project
@@ -249,12 +365,10 @@ export const migrateBudgetToTwentyPercentDF = mutation({
             const newBreakdownId = await migrateBreakdown(
               ctx,
               breakdown,
-              args.targetTwentyPercentDFId,
+              targetTwentyPercentDFId,
               userId
             );
 
-            detail.breakdownIds.push(newBreakdownId);
-            detail.breakdownsMigrated++;
             migratedBreakdowns++;
 
             // Log breakdown creation activity
@@ -264,7 +378,7 @@ export const migrateBudgetToTwentyPercentDF = mutation({
               projectName: breakdown.projectName,
               implementingOffice: breakdown.implementingOffice,
               source: "migration",
-              reason: `Migrated from govtProjectBreakdown ${breakdown._id} (project: ${project._id})`,
+              reason: `Migrated from govtProjectBreakdown ${breakdown._id} (project: ${project._id}) to twentyPercentDF ${targetTwentyPercentDFId}`,
             });
 
             // Update implementing agency usage count
@@ -284,12 +398,21 @@ export const migrateBudgetToTwentyPercentDF = mutation({
           }
         }
 
+        // Recalculate metrics for the newly created twentyPercentDF item
+        try {
+          await recalculateTwentyPercentDFMetrics(ctx, targetTwentyPercentDFId, userId);
+        } catch (metricsError) {
+          const errorMessage = metricsError instanceof Error ? metricsError.message : String(metricsError);
+          errors.push({
+            projectId: project._id,
+            projectName: project.particulars,
+            error: `Failed to recalculate metrics: ${errorMessage}`,
+          });
+        }
+
         migratedProjects++;
-        details.push(detail);
       } catch (projectError) {
         const errorMessage = projectError instanceof Error ? projectError.message : String(projectError);
-        detail.error = errorMessage;
-        details.push(detail);
         errors.push({
           projectId: project._id,
           projectName: project.particulars,
@@ -298,37 +421,12 @@ export const migrateBudgetToTwentyPercentDF = mutation({
       }
     }
 
-    // Recalculate target 20% DF metrics
-    try {
-      await recalculateTwentyPercentDFMetrics(ctx, args.targetTwentyPercentDFId, userId);
-    } catch (metricsError) {
-      const errorMessage = metricsError instanceof Error ? metricsError.message : String(metricsError);
-      errors.push({
-        error: `Failed to recalculate target metrics: ${errorMessage}`,
-      });
-    }
-
-    // Log migration activity
-    await logTwentyPercentDFActivity(ctx, userId, {
-      action: "data_migration",
-      twentyPercentDFId: args.targetTwentyPercentDFId,
-      previousValues: {
-        sourceBudgetItemId: args.sourceBudgetItemId,
-        sourceBudgetItemName: sourceBudgetItem.particulars,
-      },
-      newValues: {
-        migratedProjects,
-        migratedBreakdowns,
-        targetTwentyPercentDFId: args.targetTwentyPercentDFId,
-      },
-      reason: `Migration from budget item ${args.sourceBudgetItemId} to 20% DF ${args.targetTwentyPercentDFId}`,
-    });
-
     return {
       success: errors.length === 0,
+      targetYear: args.targetYear,
       migratedProjects,
       migratedBreakdowns,
-      details,
+      createdTwentyPercentDFItems,
       errors,
     };
   },
@@ -337,6 +435,70 @@ export const migrateBudgetToTwentyPercentDF = mutation({
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Create a new twentyPercentDF item from a project
+ * Copies all fields from the project and sets year to targetYear
+ */
+async function createTwentyPercentDFFromProject(
+  ctx: any,
+  project: Doc<"projects">,
+  targetYear: number,
+  userId: Id<"users">
+): Promise<Id<"twentyPercentDF">> {
+  const now = Date.now();
+
+  // Copy all fields from project to twentyPercentDF
+  // Note: projectsOngoing is optional in projects but required in twentyPercentDF
+  const twentyPercentDFData = {
+    // Project identification
+    particulars: project.particulars,
+    implementingOffice: project.implementingOffice,
+    departmentId: project.departmentId,
+    categoryId: project.categoryId,
+    // budgetItemId is intentionally left undefined to break link with old budget
+
+    // Financial data
+    totalBudgetAllocated: project.totalBudgetAllocated,
+    obligatedBudget: project.obligatedBudget,
+    totalBudgetUtilized: project.totalBudgetUtilized,
+    utilizationRate: project.utilizationRate,
+    autoCalculateBudgetUtilized: project.autoCalculateBudgetUtilized,
+
+    // Metrics
+    projectCompleted: project.projectCompleted,
+    projectDelayed: project.projectDelayed,
+    // projectsOngoing: use project's value or default to 0
+    projectsOngoing: project.projectsOngoing ?? 0,
+
+    // Additional fields
+    remarks: project.remarks,
+    year: targetYear, // Set to target year
+    status: project.status,
+    targetDateCompletion: project.targetDateCompletion,
+    projectManagerId: project.projectManagerId,
+
+    // Pin functionality (reset for new record)
+    isPinned: false,
+    pinnedAt: undefined,
+    pinnedBy: undefined,
+
+    // Trash system (reset for new record)
+    isDeleted: false,
+    deletedAt: undefined,
+    deletedBy: undefined,
+
+    // System fields
+    createdBy: userId,
+    createdAt: now,
+    updatedAt: now,
+    updatedBy: userId,
+  };
+
+  const newTwentyPercentDFId = await ctx.db.insert("twentyPercentDF", twentyPercentDFData);
+
+  return newTwentyPercentDFId;
+}
 
 /**
  * Migrate a single govtProjectBreakdown to twentyPercentDFBreakdown

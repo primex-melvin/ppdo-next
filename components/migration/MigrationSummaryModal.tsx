@@ -19,8 +19,9 @@ import {
   FolderOpen,
   List,
   Building2,
-  Target,
+  Calendar,
   TrendingUp,
+  FilePlus,
 } from "lucide-react";
 import { formatNumberForDisplay } from "@/lib/shared/utils/formatting";
 
@@ -38,7 +39,7 @@ export interface MigrationSummaryModalProps {
   onCancel: () => void;
   previewData: {
     sourceBudgetItem: { particulars: string; _id: string };
-    targetTwentyPercentDF: { particulars: string; _id: string };
+    targetYear: number;
     projectsCount: number;
     totalBreakdownsCount: number;
     breakdownsByProject: BreakdownByProject[];
@@ -114,16 +115,19 @@ export function MigrationSummaryModal({
                 {/* Target Card */}
                 <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Target className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                    <Calendar className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                      Target
+                      Target Information
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
-                    {previewData.targetTwentyPercentDF.particulars}
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    Fiscal Year: {previewData.targetYear}
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-mono">
-                    {previewData.targetTwentyPercentDF._id}
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-1">
+                    Items to Create: {previewData.projectsCount}
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                    New 20% DF items will be created for each project
                   </p>
                 </div>
               </div>
@@ -159,24 +163,30 @@ export function MigrationSummaryModal({
                 </div>
               </div>
 
-              {/* Projects List */}
+              {/* Projects Table */}
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Projects to Migrate
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Projects to Migrate
+                  </h4>
+                  <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                    <FilePlus className="h-3.5 w-3.5" />
+                    <span>Each project will become a 20% DF item</span>
+                  </div>
+                </div>
                 <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                   <div className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
                     <table className="w-full text-sm">
                       <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
                         <tr>
                           <th className="text-left px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
-                            Project
+                            Project Name
                           </th>
-                          <th className="text-center px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800 w-20">
-                            Items
+                          <th className="text-center px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800 w-24">
+                            Breakdowns
                           </th>
                           <th className="text-right px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800 w-28">
-                            Budget
+                            Total Budget
                           </th>
                         </tr>
                       </thead>
@@ -213,8 +223,9 @@ export function MigrationSummaryModal({
                     Warning: This action will modify data
                   </p>
                   <p className="text-sm text-amber-700 dark:text-amber-300">
-                    Once confirmed, projects and breakdowns will be permanently reassigned
-                    to the target 20% Development Fund. This operation cannot be undone.
+                    This will create {previewData.projectsCount} new 20% Development Fund items for
+                    fiscal year {previewData.targetYear} with {previewData.totalBreakdownsCount}{" "}
+                    breakdowns. This action cannot be undone.
                   </p>
                 </div>
               </div>
