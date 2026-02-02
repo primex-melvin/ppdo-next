@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/shared";
+import { AlertCircle, Clock, CheckCircle, XCircle } from "lucide-react";
 
 interface LocationData {
   city: string;
@@ -15,6 +16,100 @@ interface LocationData {
   coordinates?: {
     lat: number;
     lng: number;
+  };
+}
+
+/**
+ * Parse Convex errors into user-friendly messages
+ * Extracts the actual error message from Convex's verbose error format
+ */
+function parseErrorMessage(error: any): { title: string; message: string; type: "error" | "warning" | "info" | "success" } {
+  // Default error
+  const defaultError = {
+    title: "Request Failed",
+    message: "Unable to submit password reset request. Please try again later.",
+    type: "error" as const
+  };
+
+  if (!error) return defaultError;
+
+  // Get error message string
+  const errorMessage = typeof error === "string" 
+    ? error 
+    : error.message || error.toString();
+
+  // Extract clean message from Convex error format
+  // Format: [CONVEX M(...)] [Request ID: ...] Server Error Uncaught Error: ACTUAL_MESSAGE
+  const convexMatch = errorMessage.match(/Server Error Uncaught Error:\s*(.+?)(?:\s*at\s+handler|$)/);
+  const cleanMessage = convexMatch ? convexMatch[1].trim() : errorMessage;
+
+  // Known error patterns
+  if (cleanMessage.includes("pending password reset request") || cleanMessage.includes("already have a pending")) {
+    return {
+      title: "Request Already Pending",
+      message: "You already have a password reset request waiting for admin review. Please wait for it to be processed before submitting a new one.",
+      type: "warning"
+    };
+  }
+
+  if (cleanMessage.includes("maximum number of password reset requests") || cleanMessage.includes("maximum requests reached")) {
+    return {
+      title: "Daily Limit Reached",
+      message: "You've used all 3 password reset attempts for today. Please try again tomorrow.",
+      type: "error"
+    };
+  }
+
+  if (cleanMessage.includes("wait") && cleanMessage.includes("seconds")) {
+    const secondsMatch = cleanMessage.match(/(\d+)\s*seconds/);
+    const seconds = secondsMatch ? secondsMatch[1] : "a few";
+    return {
+      title: "Please Wait",
+      message: `Rate limit active. Please wait ${seconds} seconds before submitting another request.`,
+      type: "warning"
+    };
+  }
+
+  if (cleanMessage.includes("email is registered") || cleanMessage.includes("If this email is registered")) {
+    return {
+      title: "Request Submitted",
+      message: "If this email address is registered in our system, your password reset request has been submitted for admin review.",
+      type: "info"
+    };
+  }
+
+  if (cleanMessage.includes("network") || cleanMessage.includes("fetch") || cleanMessage.includes("connection")) {
+    return {
+      title: "Connection Error",
+      message: "Unable to connect to the server. Please check your internet connection and try again.",
+      type: "error"
+    };
+  }
+
+  if (cleanMessage.includes("unauthorized") || cleanMessage.includes("not authenticated")) {
+    return {
+      title: "Session Expired",
+      message: "Your session has expired. Please refresh the page and try again.",
+      type: "error"
+    };
+  }
+
+  // Network/timeout errors
+  if (errorMessage.includes("timeout") || errorMessage.includes("ETIMEDOUT")) {
+    return {
+      title: "Request Timeout",
+      message: "The request took too long. Please check your connection and try again.",
+      type: "error"
+    };
+  }
+
+  // Return cleaned message if we can't categorize it
+  return {
+    title: "Request Failed",
+    message: cleanMessage.length > 10 && cleanMessage.length < 200 
+      ? cleanMessage 
+      : defaultError.message,
+    type: "error"
   };
 }
 
@@ -209,7 +304,35 @@ export default function ForgotPassword() {
       setMessage("");
     } catch (error: any) {
       console.error("Password reset request error:", error);
-      toast.error(error.message || "Failed to submit password reset request. Please try again.");
+      
+      // Parse error into user-friendly message
+      const { title, message, type } = parseErrorMessage(error);
+      
+      // Show appropriate toast based on error type
+      switch (type) {
+        case "success":
+          toast.success(title, { description: message });
+          break;
+        case "warning":
+          toast.warning(title, { 
+            description: message,
+            icon: <Clock className="w-4 h-4" />
+          });
+          break;
+        case "info":
+          toast.info(title, { 
+            description: message,
+            icon: <CheckCircle className="w-4 h-4" />
+          });
+          break;
+        case "error":
+        default:
+          toast.error(title, { 
+            description: message,
+            icon: <AlertCircle className="w-4 h-4" />
+          });
+          break;
+      }
     } finally {
       setLoading(false);
     }
