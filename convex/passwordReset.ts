@@ -19,10 +19,13 @@ export const submitPasswordResetRequest = mutation({
     const now = Date.now();
     const todayKey = new Date(now).toISOString().split('T')[0]; // YYYY-MM-DD
     
+    // Normalize email to lowercase for consistent tracking
+    const normalizedEmail = args.email.toLowerCase().trim();
+    
     // Check if user exists
     const user = await ctx.db
       .query("users")
-      .withIndex("email", (q) => q.eq("email", args.email))
+      .withIndex("email", (q) => q.eq("email", normalizedEmail))
       .first();
     
     if (!user) {
@@ -33,7 +36,7 @@ export const submitPasswordResetRequest = mutation({
     // Check daily attempt limit
     const attemptRecord = await ctx.db
       .query("passwordResetAttempts")
-      .withIndex("emailAndDate", (q) => q.eq("email", args.email).eq("dateKey", todayKey))
+      .withIndex("emailAndDate", (q) => q.eq("email", normalizedEmail).eq("dateKey", todayKey))
       .first();
 
     if (attemptRecord && attemptRecord.attemptCount >= 3) {
@@ -49,7 +52,7 @@ export const submitPasswordResetRequest = mutation({
     // Check for pending requests
     const pendingRequest = await ctx.db
       .query("passwordResetRequests")
-      .withIndex("emailAndStatus", (q) => q.eq("email", args.email).eq("status", "pending"))
+      .withIndex("emailAndStatus", (q) => q.eq("email", normalizedEmail).eq("status", "pending"))
       .first();
 
     if (pendingRequest) {
@@ -74,7 +77,7 @@ export const submitPasswordResetRequest = mutation({
     } else {
       // Create new record
       await ctx.db.insert("passwordResetAttempts", {
-        email: args.email,
+        email: normalizedEmail,
         dateKey: todayKey,
         attemptCount: 1,
         lastAttemptAt: now,
@@ -84,7 +87,7 @@ export const submitPasswordResetRequest = mutation({
 
     // Create password reset request
     const requestId = await ctx.db.insert("passwordResetRequests", {
-      email: args.email,
+      email: normalizedEmail,
       userId: user._id,
       message: args.message,
       ipAddress: args.ipAddress,
@@ -102,7 +105,7 @@ export const submitPasswordResetRequest = mutation({
       title: "Password Reset Requested",
       description: `Password reset requested for ${args.email} from ${args.ipAddress}`,
       metadata: JSON.stringify({
-        email: args.email,
+        email: normalizedEmail,
         ipAddress: args.ipAddress,
         message: args.message,
         requestId: requestId,
@@ -128,11 +131,14 @@ export const checkResetRequestStatus = query({
   handler: async (ctx, args) => {
     const now = Date.now();
     const todayKey = new Date(now).toISOString().split('T')[0];
+    
+    // Normalize email to lowercase for consistent lookup
+    const normalizedEmail = args.email.toLowerCase().trim();
 
     // Get attempt record
     const attemptRecord = await ctx.db
       .query("passwordResetAttempts")
-      .withIndex("emailAndDate", (q) => q.eq("email", args.email).eq("dateKey", todayKey))
+      .withIndex("emailAndDate", (q) => q.eq("email", normalizedEmail).eq("dateKey", todayKey))
       .first();
 
     if (!attemptRecord) {
