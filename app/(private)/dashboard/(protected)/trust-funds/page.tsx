@@ -171,19 +171,19 @@ export default function TrustFundsLanding() {
                     <div className="flex items-center gap-6">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                          {fiscalYear.stats.totalItems}
+                          {fiscalYear.stats.trustFundCount}
                         </div>
                         <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                          Items
+                          Trust Funds
                         </div>
                       </div>
                       <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-800" />
                       <div className="text-center">
                         <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                          {fiscalYear.stats.trustFundCount}
+                          {fiscalYear.stats.totalItems}
                         </div>
                         <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                          Trust Funds
+                          Breakdowns
                         </div>
                       </div>
                     </div>

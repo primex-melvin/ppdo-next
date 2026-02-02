@@ -178,14 +178,6 @@ export default function ProjectDashboardLanding() {
                     <>
                       <div className="text-center min-w-[70px]">
                         <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                          {fiscalYear.stats.budgetItemCount}
-                        </div>
-                        <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400">
-                          Items
-                        </div>
-                      </div>
-                      <div className="text-center min-w-[70px]">
-                        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                           {fiscalYear.stats.projectCount}
                         </div>
                         <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400">
@@ -198,6 +190,14 @@ export default function ProjectDashboardLanding() {
                         </div>
                         <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400">
                           Breakdowns
+                        </div>
+                      </div>
+                      <div className="text-center min-w-[70px]">
+                        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                          {fiscalYear.stats.budgetItemCount}
+                        </div>
+                        <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400">
+                          Budget Items
                         </div>
                       </div>
                     </>
