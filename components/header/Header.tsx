@@ -11,9 +11,9 @@ import { NotificationsDropdown } from "./NotificationsDropdown";
 import { EmailDropdown } from "./EmailDropdown";
 import { getDisplayName } from "@/lib/utils";
 // import domToImage from "dom-to-image-more"; 
-import { ConcernModal } from "./ConcernModal";
-import { ScreenshotZoom } from "./ScreenshotZoom";
-import { MigrationContainer } from "@/components/migration/MigrationContainer";
+// import { ConcernModal } from "./ConcernModal";
+// import { ScreenshotZoom } from "./ScreenshotZoom";
+// import { MigrationContainer } from "@/components/migration/MigrationContainer";
 
 interface HeaderProps {
   onSearchChange?: (query: string) => void;
@@ -227,9 +227,9 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
               </div>
 
               {/* Migration Button - Admin only */}
-              <div className="hidden sm:flex ml-2">
+              {/* <div className="hidden sm:flex ml-2">
                 <MigrationContainer />
-              </div>
+              </div> */}
             </div>
 
             {/* Right section - Actions */}
@@ -260,20 +260,20 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
       )}
 
       {/* Screenshot Zoom Animation */}
-      <ScreenshotZoom
+      {/* <ScreenshotZoom
         screenshotUrl={screenshotUrl}
         onAnimationComplete={handleAnimationComplete}
-      />
+      /> */}
 
       {/* Concern Modal */}
-      <ConcernModal
+      {/* <ConcernModal
         open={showConcernModal}
         onOpenChange={(open) => {
           setShowConcernModal(open);
           if (!open) setScreenshotUrl(null); // Clear screenshot when closed
         }}
         screenshot={screenshotUrl}
-      />
+      /> */}
     </>
   );
 }
