@@ -308,6 +308,51 @@ If issues occur:
 
 ---
 
-**Plan Version:** 1.0  
-**Created:** 2026-02-02  
+## Update: Staging Environment Fix (2026-02-03)
+
+### Problem Discovered After Initial Fix
+
+The initial fix (`import { Scrypt } from "lucia"`) worked locally but failed in staging (Vercel/Convex) with a generic "Server Error".
+
+### Root Cause
+
+The `lucia` package uses ESM with multiple dependencies (`@oslojs/encoding`, `@oslojs/crypto`). Convex's serverless bundler doesn't properly resolve these transitive dependencies when importing from `lucia` directly.
+
+### Solution: Self-Contained Scrypt Implementation
+
+Created `convex/lib/scrypt.ts` with a self-contained Scrypt implementation that:
+- Has no external dependencies (uses only Web Crypto API)
+- Produces hashes compatible with Lucia/Convex Auth format
+- Works in all environments (local, staging, production)
+
+### Updated Implementation
+
+```typescript
+// convex/passwordResetManagement.ts
+import { Scrypt } from "./lib/scrypt";  // Local implementation
+
+async function hashPassword(password: string): Promise<string> {
+  return await new Scrypt().hash(password);
+}
+```
+
+### Files Added/Modified
+
+| File | Change |
+|------|--------|
+| `convex/lib/scrypt.ts` | NEW - Self-contained Scrypt class |
+| `convex/passwordResetManagement.ts` | Import from `./lib/scrypt` instead of `lucia` |
+
+### Why This Works
+
+1. No external dependency resolution needed
+2. Pure JavaScript/TypeScript code bundled directly
+3. Uses Web Crypto API (available everywhere)
+4. Same hash format (`salt:hash`) as Lucia
+
+---
+
+**Plan Version:** 2.0
+**Created:** 2026-02-02
+**Updated:** 2026-02-03 (Staging fix)
 **Reviewers:** Security/Auth Specialist, QA Testing Agent, Backend Architect

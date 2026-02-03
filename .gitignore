@@ -45,3 +45,6 @@ next-env.d.ts
 /.automaker/
 
 copy.txt
+
+# windows reserved device files
+nul

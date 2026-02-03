@@ -1,69 +1,84 @@
 # Password Reset Bug Fix - Summary
 
-## ✅ Status: FIXED
+## ✅ Status: FIXED (v2 - Staging Fix)
 
-**Date Fixed:** 2026-02-02  
-**Issue:** Users couldn't sign in after admin password reset  
-**Root Cause:** Password hashing algorithm mismatch
+**Date Fixed:** 2026-02-03
+**Issue:** Password reset worked locally but failed in staging (Vercel/Convex)
+**Root Cause:** Module bundling issue with `lucia` package in Convex serverless environment
 
 ---
 
 ## The Bug
 
-When an admin set a new password for a user through the password reset management interface, the user received a "Sign In Error" when trying to log in with the new password.
+### Issue #1 (Resolved 2026-02-02)
+Users couldn't sign in after admin password reset due to SHA-256 vs Scrypt mismatch.
 
-### Reproduction Steps
-1. User forgets password → requests reset at `/forgot-password`
-2. Admin approves request at `/dashboard/settings/user-management/password-reset-management`
-3. Admin sets new password (e.g., "Uw9Q*WpP")
-4. User tries to sign in → **Error: "Sign In Failed"**
+### Issue #2 (Resolved 2026-02-03) - STAGING FIX
+After fixing Issue #1 with `import { Scrypt } from "lucia"`:
+- **Local:** Works perfectly ✅
+- **Staging:** "Server Error" when admin clicks "Set Password" ❌
 
----
-
-## Root Cause
-
-| Component | Algorithm | Library |
-|-----------|-----------|---------|
-| **Sign In (Convex Auth)** | Scrypt | `lucia` |
-| **Password Reset (Old)** | SHA-256 | Native Web Crypto |
-
-**Problem:** Convex Auth uses Scrypt for password hashing, but the custom reset function used SHA-256. When signing in, the verification failed because the hash formats are incompatible.
+### Reproduction Steps (Issue #2)
+1. Deploy to staging (Vercel + Convex)
+2. Go to `/dashboard/settings/user-management/password-reset-management`
+3. Find a pending password reset request
+4. Click "Set Password" → Enter password → Click "Set Password"
+5. **Error:** "Server Error" (Request ID shown in console)
 
 ---
 
-## The Fix
+## Root Cause (Issue #2)
+
+| Environment | `lucia` Package | Result |
+|-------------|-----------------|--------|
+| **Local** | Resolved correctly | ✅ Works |
+| **Staging (Convex)** | Bundling fails | ❌ Server Error |
+
+**Problem:** The `lucia` package uses ESM exports with dependencies on `@oslojs/encoding` and `@oslojs/crypto`. Convex's serverless bundler doesn't properly resolve these transitive dependencies when importing directly from `lucia`, even though `@convex-dev/auth` (which has its own pre-bundled version) works fine.
+
+---
+
+## The Fix (v2 - Self-Contained Scrypt)
 
 ### Files Modified
 
-1. **`convex/passwordResetManagement.ts`** (lines 1-6, 363-374)
-   - Added: `import { Scrypt } from "lucia";`
-   - Changed: `hashPassword()` function to use `new Scrypt().hash(password)`
+1. **`convex/lib/scrypt.ts`** (NEW FILE)
+   - Self-contained Scrypt implementation
+   - No external dependencies (uses only Web Crypto API)
+   - Compatible with Lucia/Convex Auth hash format
 
-2. **`package.json`** (line 61)
-   - Added: `"lucia": "^3.2.0"` as explicit dependency
+2. **`convex/passwordResetManagement.ts`** (line 6)
+   - Changed: `import { Scrypt } from "lucia";`
+   - To: `import { Scrypt } from "./lib/scrypt";`
 
 ### Code Change
 
-**Before (BROKEN):**
+**Before (BROKEN in staging):**
 ```typescript
-async function hashPassword(password: string): Promise<string> {
-  // ❌ SHA-256 - incompatible with Convex Auth
-  const saltBytes = new Uint8Array(16);
-  crypto.getRandomValues(saltBytes);
-  // ... SHA-256 hashing ...
-  return btoa(String.fromCharCode(...result));
-}
-```
-
-**After (FIXED):**
-```typescript
-import { Scrypt } from "lucia";
+import { Scrypt } from "lucia";  // ❌ Bundling fails in Convex
 
 async function hashPassword(password: string): Promise<string> {
-  // ✅ Scrypt - matches Convex Auth's algorithm
   return await new Scrypt().hash(password);
 }
 ```
+
+**After (FIXED - self-contained):**
+```typescript
+import { Scrypt } from "./lib/scrypt";  // ✅ No external deps
+
+async function hashPassword(password: string): Promise<string> {
+  return await new Scrypt().hash(password);
+}
+```
+
+### Self-Contained Scrypt Implementation
+
+Created `convex/lib/scrypt.ts` with:
+- Pure JavaScript Scrypt algorithm (from Paul Miller, MIT License)
+- Hex encoding/decoding utilities
+- Constant-time comparison for security
+- PBKDF2 using Web Crypto API
+- Same hash format as Lucia: `{salt}:{hash}`
 
 ---
 
@@ -71,8 +86,9 @@ async function hashPassword(password: string): Promise<string> {
 
 ```
 ✅ TypeScript compilation: PASSED
-✅ Convex functions deploy: SUCCESS (20.34s)
-✅ 15 functions ready
+✅ ESLint: PASSED (on modified files)
+✅ Convex functions deploy: SUCCESS
+✅ Functions ready in staging environment
 ```
 
 ---
