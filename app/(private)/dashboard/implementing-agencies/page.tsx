@@ -1,15 +1,40 @@
+"use client"
 
-import { Building2, TrendingUp, FileText, Users } from "lucide-react"
-import { formatCurrency, implementingAgencies } from "./mock-data"
+import { Building2, TrendingUp, FileText, Users, Loader2 } from "lucide-react"
 import { ThemeToggle } from "@/components/shared"
 import { AgencyCard } from "./components/AgencyCard"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+
+// Helper function for currency formatting
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
 
 export default function ImplementingAgenciesPage() {
-  const totalAgencies = implementingAgencies.length
-  const totalProjects = implementingAgencies.reduce((sum, agency) => sum + agency.totalProjects, 0)
-  const totalBudget = implementingAgencies.reduce((sum, agency) => sum + agency.totalBudget, 0)
-  const totalUtilized = implementingAgencies.reduce((sum, agency) => sum + agency.utilizedBudget, 0)
+  const implementingAgencies = useQuery(api.implementingAgencies.list, { includeInactive: false })
+
+  // Calculate totals safely
+  const totalAgencies = implementingAgencies?.length || 0
+  const totalProjects = implementingAgencies?.reduce((sum, agency) => sum + (agency.totalProjects || 0), 0) || 0
+  const totalBudget = implementingAgencies?.reduce((sum, agency) => sum + (agency.totalBudget || 0), 0) || 0
+  const totalUtilized = implementingAgencies?.reduce((sum, agency) => sum + (agency.utilizedBudget || 0), 0) || 0
+
+  // Avoid division by zero
   const avgUtilization = totalBudget > 0 ? ((totalUtilized / totalBudget) * 100).toFixed(1) : "0.0"
+
+  if (implementingAgencies === undefined) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#15803D]" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -103,11 +128,17 @@ export default function ImplementingAgenciesPage() {
             <p className="text-sm text-muted-foreground">{totalAgencies} agencies found</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {implementingAgencies.map((agency) => (
-              <AgencyCard key={agency.id} agency={agency} />
-            ))}
-          </div>
+          {totalAgencies === 0 ? (
+            <div className="p-8 text-center border rounded-lg bg-card/50">
+              <p className="text-muted-foreground">No implementing agencies found.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {implementingAgencies.map((agency) => (
+                <AgencyCard key={agency._id} agency={agency} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 

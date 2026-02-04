@@ -3,11 +3,38 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, MapPin, Users } from "lucide-react"
-import { formatCurrency, formatNumber, Project } from "../mock-data"
 import { useAccentColor } from "@/contexts/AccentColorContext"
 
+// Define the interface matching the backend's normalized structure
+export interface ProjectItem {
+  id: string
+  name: string
+  description: string
+  status: string
+  budget: number
+  utilized: number
+  location: string
+  startDate: string
+  endDate: string
+  beneficiaries: number
+  type: "project" | "breakdown"
+}
+
 interface ProjectCardProps {
-  project: Project
+  project: ProjectItem
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
+function formatNumber(num: number): string {
+  return new Intl.NumberFormat("en-PH").format(num)
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
@@ -32,8 +59,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
           className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
         }
       case "on-hold":
+      case "delayed":
         return {
-          label: "On Hold",
+          label: status === "delayed" ? "Delayed" : "On Hold",
           className: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
         }
       default:
@@ -53,12 +81,16 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <Badge variant="outline" className={`${statusConfig.className} font-medium`}>
             {statusConfig.label}
           </Badge>
-          {project.beneficiaries && (
+          {project.beneficiaries > 0 && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
               <Users className="h-3 w-3" />
               <span>{formatNumber(project.beneficiaries)}</span>
             </div>
           )}
+          {/* Show type badge if useful */}
+          <Badge variant="secondary" className="text-[10px] h-5">
+            {project.type === "project" ? "MAIN" : "BREAKDOWN"}
+          </Badge>
         </div>
 
         <CardTitle className="text-lg font-cinzel leading-tight">{project.name}</CardTitle>
@@ -66,7 +98,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
       <CardContent className="space-y-4 flex-1 flex flex-col">
         {/* Description */}
-        <p className="text-sm text-muted-foreground leading-relaxed flex-1">{project.description}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed flex-1 line-clamp-3">
+          {project.description}
+        </p>
 
         {/* Project Details */}
         <div className="space-y-2 text-sm">
@@ -115,7 +149,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
-                  width: `${utilizationRate}%`,
+                  width: `${Number(utilizationRate) > 100 ? 100 : utilizationRate}%`,
                   backgroundColor: project.status === "completed" ? "#3b82f6" : accentColorValue,
                 }}
               />

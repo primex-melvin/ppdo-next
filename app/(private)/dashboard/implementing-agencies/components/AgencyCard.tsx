@@ -4,34 +4,61 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Building2, FileText, CheckCircle2, Clock, Mail, Phone } from "lucide-react"
-import { formatCurrency, getAgencyStats, ImplementingAgency } from "../mock-data"
 import { useAccentColor } from "@/contexts/AccentColorContext"
+import { Doc } from "@/convex/_generated/dataModel"
+
+// Helper for strict typing of the enriched agency object
+// This matches the return type of api.implementingAgencies.list
+type EnrichedAgency = Doc<"implementingAgencies"> & {
+  department: { id: string; name: string; code: string } | null
+  totalProjects: number
+  activeProjects: number
+  completedProjects: number
+  totalBudget: number
+  utilizedBudget: number
+  usageCount: number
+}
 
 interface AgencyCardProps {
-  agency: ImplementingAgency
+  agency: EnrichedAgency
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
 }
 
 export function AgencyCard({ agency }: AgencyCardProps) {
-  const stats = getAgencyStats(agency)
   const { accentColorValue } = useAccentColor()
+
+  // Calculate utilization rate safely
+  const utilizationRate = agency.totalBudget > 0
+    ? ((agency.utilizedBudget / agency.totalBudget) * 100).toFixed(1)
+    : "0.0"
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "national":
+      case "external": // 'national' in mock was mapped to 'external' or similar? In schema it's 'department' or 'external'. 
+        // Schema: "department" | "external". The mock used "national", "provincial" etc.
+        // We should adapt.
         return "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20"
-      case "provincial":
+      case "department":
         return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-      case "local":
-        return "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
-      case "municipal":
-        return "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20"
       default:
         return "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20"
     }
   }
 
+  // Create a display type label
+  const displayType = agency.type === "department" ? "PROVINCIAL" : "EXTERNAL"
+
   return (
-    <Link href={`/dashboard/implementing-agencies/${agency.id}`}>
+    // Note: Use string interpolation safely for ID
+    <Link href={`/dashboard/implementing-agencies/${agency._id}`}>
       <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 hover:border-[#15803D]/30">
         <CardHeader className="space-y-3 pb-4">
           <div className="flex items-start justify-between gap-2">
@@ -44,7 +71,7 @@ export function AgencyCard({ agency }: AgencyCardProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <Badge variant="outline" className={`${getTypeColor(agency.type)} font-medium mb-2`}>
-                  {agency.type.toUpperCase()}
+                  {displayType}
                 </Badge>
               </div>
             </div>
@@ -52,17 +79,19 @@ export function AgencyCard({ agency }: AgencyCardProps) {
 
           <div>
             <CardTitle className="text-xl font-cinzel leading-tight mb-2 group-hover:text-[#15803D] transition-colors">
-              {agency.acronym}
+              {agency.code}
             </CardTitle>
             <CardDescription className="text-xs font-medium text-muted-foreground line-clamp-1">
-              {agency.name}
+              {agency.fullName}
             </CardDescription>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-4">
           {/* Description */}
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{agency.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed h-[40px]">
+            {agency.description || "No description provided."}
+          </p>
 
           {/* Key Metrics */}
           <div className="grid grid-cols-3 gap-2">
@@ -108,13 +137,13 @@ export function AgencyCard({ agency }: AgencyCardProps) {
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Utilization Rate</span>
-                <span className="font-semibold">{stats.utilizationRate}%</span>
+                <span className="font-semibold">{utilizationRate}%</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
-                    width: `${stats.utilizationRate}%`,
+                    width: `${Number(utilizationRate) > 100 ? 100 : utilizationRate}%`,
                     backgroundColor: accentColorValue,
                   }}
                 />
@@ -126,11 +155,11 @@ export function AgencyCard({ agency }: AgencyCardProps) {
           <div className="space-y-2 pt-2 border-t">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Mail className="h-3 w-3" />
-              <span className="truncate">{agency.contactEmail}</span>
+              <span className="truncate">{agency.contactEmail || "No email"}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Phone className="h-3 w-3" />
-              <span>{agency.contactPhone}</span>
+              <span>{agency.contactPhone || "No phone"}</span>
             </div>
           </div>
 

@@ -44,7 +44,7 @@ export const list = query({
       return a.code.localeCompare(b.code);
     });
 
-    // Enrich with department information if linked
+    // Enrich with department information and runtime stats
     const enrichedAgencies = await Promise.all(
       agencies.map(async (agency) => {
         let departmentInfo = null;
@@ -59,15 +59,57 @@ export const list = query({
           }
         }
 
+        // Calculate stats on-the-fly
+        // 1. Get Projects
+        const projects = await ctx.db
+          .query("projects")
+          .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+          .collect();
+
+        // 2. Get Breakdowns
+        const breakdowns = await ctx.db
+          .query("govtProjectBreakdowns")
+          .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+          .collect();
+
+        // 3. Filter out deleted items
+        const activeProjects = projects.filter(p => !p.isDeleted);
+        const activeBreakdowns = breakdowns.filter(b => !b.isDeleted);
+
+        const totalProjectsCount = activeProjects.length + activeBreakdowns.length;
+
+        // Count by status
+        const completedProjectsCount =
+          activeProjects.filter(p => p.status === "completed").length +
+          activeBreakdowns.filter(b => b.status === "completed").length;
+
+        const ongoingProjectsCount =
+          activeProjects.filter(p => p.status === "ongoing" || p.status === "delayed").length +
+          activeBreakdowns.filter(b => b.status === "ongoing" || b.status === "delayed").length;
+
+        const projectBudget = activeProjects.reduce((sum, p) => sum + p.totalBudgetAllocated, 0);
+        const breakdownBudget = activeBreakdowns.reduce((sum, b) => sum + (b.allocatedBudget || 0), 0);
+        const totalBudget = projectBudget + breakdownBudget;
+
+        const projectUtilized = activeProjects.reduce((sum, p) => sum + p.totalBudgetUtilized, 0);
+        const breakdownUtilized = activeBreakdowns.reduce((sum, b) => sum + (b.budgetUtilized || 0), 0);
+        const utilizedBudget = projectUtilized + breakdownUtilized;
+
         return {
           ...agency,
           department: departmentInfo,
-          // Return appropriate usage count based on context
-          usageCount: args.usageContext === "project" 
-            ? agency.projectUsageCount 
+          // Runtime calculated stats
+          totalProjects: totalProjectsCount,
+          activeProjects: ongoingProjectsCount,
+          completedProjects: completedProjectsCount,
+          totalBudget: totalBudget,
+          utilizedBudget: utilizedBudget,
+          // Keep existing usageCount logic for backward compatibility (or UI dependency)
+          usageCount: args.usageContext === "project"
+            ? agency.projectUsageCount
             : args.usageContext === "breakdown"
-            ? agency.breakdownUsageCount
-            : (agency.projectUsageCount || 0) + (agency.breakdownUsageCount || 0),
+              ? agency.breakdownUsageCount
+              : (agency.projectUsageCount || 0) + (agency.breakdownUsageCount || 0),
         };
       })
     );
@@ -78,6 +120,9 @@ export const list = query({
 
 /**
  * Get a single implementing agency by ID
+ */
+/**
+ * Get a single implementing agency by ID with full details (stats + project list)
  */
 export const get = query({
   args: { id: v.id("implementingAgencies") },
@@ -101,9 +146,84 @@ export const get = query({
       }
     }
 
+    // 1. Get Projects
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    // 2. Get Breakdowns
+    const breakdowns = await ctx.db
+      .query("govtProjectBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    // 3. Filter out deleted items
+    const activeProjects = projects.filter(p => !p.isDeleted);
+    const activeBreakdowns = breakdowns.filter(b => !b.isDeleted);
+
+    // 4. Calculate Stats
+    const totalProjectsCount = activeProjects.length + activeBreakdowns.length;
+
+    const completedProjectsCount =
+      activeProjects.filter(p => p.status === "completed").length +
+      activeBreakdowns.filter(b => b.status === "completed").length;
+
+    const ongoingProjectsCount =
+      activeProjects.filter(p => p.status === "ongoing" || p.status === "delayed").length +
+      activeBreakdowns.filter(b => b.status === "ongoing" || b.status === "delayed").length;
+
+    const projectBudget = activeProjects.reduce((sum, p) => sum + p.totalBudgetAllocated, 0);
+    const breakdownBudget = activeBreakdowns.reduce((sum, b) => sum + (b.allocatedBudget || 0), 0);
+    const totalBudget = projectBudget + breakdownBudget;
+
+    const projectUtilized = activeProjects.reduce((sum, p) => sum + p.totalBudgetUtilized, 0);
+    const breakdownUtilized = activeBreakdowns.reduce((sum, b) => sum + (b.budgetUtilized || 0), 0);
+    const utilizedBudget = projectUtilized + breakdownUtilized;
+
+    // 5. Normalization for Project Cards
+    const mappedProjects = activeProjects.map(p => ({
+      id: p._id,
+      name: p.particulars,
+      description: p.remarks || "No description",
+      status: p.status || "ongoing",
+      budget: p.totalBudgetAllocated,
+      utilized: p.totalBudgetUtilized,
+      location: "Provincial", // Projects are usually provincial level
+      startDate: new Date(p.createdAt).toISOString(), // Fallback
+      endDate: p.targetDateCompletion ? new Date(p.targetDateCompletion).toISOString() : new Date().toISOString(),
+      beneficiaries: 0, // Not in schema
+      type: "project" as const
+    }));
+
+    const mappedBreakdowns = activeBreakdowns.map(b => ({
+      id: b._id,
+      name: b.projectName,
+      description: b.remarks || "No description",
+      status: b.status || "ongoing",
+      budget: b.allocatedBudget || 0,
+      utilized: b.budgetUtilized || 0,
+      location: b.municipality || "Various",
+      startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
+      endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
+      beneficiaries: 0,
+      type: "breakdown" as const
+    }));
+
+    const allProjects = [...mappedProjects, ...mappedBreakdowns];
+
     return {
       ...agency,
       department: departmentInfo,
+      // Stats
+      totalProjects: totalProjectsCount,
+      activeProjects: ongoingProjectsCount,
+      completedProjects: completedProjectsCount,
+      totalBudget: totalBudget,
+      utilizedBudget: utilizedBudget,
+      avgProjectBudget: totalProjectsCount > 0 ? totalBudget / totalProjectsCount : 0,
+      // List
+      projects: allProjects
     };
   },
 });
@@ -220,11 +340,11 @@ export const getStatistics = query({
     const external = allAgencies.filter(a => a.type === "external");
     const systemDefaults = allAgencies.filter(a => a.isSystemDefault);
 
-    const totalProjectUsage = allAgencies.reduce((sum, a) => 
+    const totalProjectUsage = allAgencies.reduce((sum, a) =>
       sum + (a.projectUsageCount || 0), 0
     );
-    
-    const totalBreakdownUsage = allAgencies.reduce((sum, a) => 
+
+    const totalBreakdownUsage = allAgencies.reduce((sum, a) =>
       sum + (a.breakdownUsageCount || 0), 0
     );
 
@@ -293,7 +413,7 @@ export const create = mutation({
       if (!args.departmentId) {
         throw new Error("Department ID is required when type is 'department'");
       }
-      
+
       // Verify department exists
       const dept = await ctx.db.get(args.departmentId);
       if (!dept) {
@@ -457,12 +577,12 @@ export const toggleActive = mutation({
       const projectUsage = existing.projectUsageCount || 0;
       const breakdownUsage = existing.breakdownUsageCount || 0;
       const totalUsage = projectUsage + breakdownUsage;
-      
+
       if (totalUsage > 0) {
         const usageDetails = [];
         if (projectUsage > 0) usageDetails.push(`${projectUsage} project(s)`);
         if (breakdownUsage > 0) usageDetails.push(`${breakdownUsage} breakdown(s)`);
-        
+
         throw new Error(
           `Cannot deactivate "${existing.code}" - it is currently used by ${usageDetails.join(' and ')}. ` +
           `Please remove all references before deactivating.`
@@ -507,12 +627,12 @@ export const remove = mutation({
     const projectUsage = existing.projectUsageCount || 0;
     const breakdownUsage = existing.breakdownUsageCount || 0;
     const totalUsage = projectUsage + breakdownUsage;
-    
+
     if (totalUsage > 0) {
       const usageDetails = [];
       if (projectUsage > 0) usageDetails.push(`${projectUsage} project(s)`);
       if (breakdownUsage > 0) usageDetails.push(`${breakdownUsage} breakdown(s)`);
-      
+
       throw new Error(
         `Cannot delete "${existing.code}" - it is currently used by ${usageDetails.join(' and ')}. ` +
         `Please remove all references before deleting.`
@@ -583,13 +703,13 @@ export const recalculateUsageCounts = mutation({
     }
 
     const allAgencies = await ctx.db.query("implementingAgencies").collect();
-    
+
     // Get all projects and breakdowns (exclude deleted ones)
     const projects = await ctx.db
       .query("projects")
       .filter((q) => q.neq(q.field("isDeleted"), true))
       .collect();
-      
+
     const breakdowns = await ctx.db
       .query("govtProjectBreakdowns")
       .filter((q) => q.neq(q.field("isDeleted"), true))
@@ -641,13 +761,13 @@ export const recalculateUsageCountsInternal = internalMutation({
   args: {},
   handler: async (ctx) => {
     const allAgencies = await ctx.db.query("implementingAgencies").collect();
-    
+
     // Get all projects and breakdowns (exclude deleted ones)
     const projects = await ctx.db
       .query("projects")
       .filter((q) => q.neq(q.field("isDeleted"), true))
       .collect();
-      
+
     const breakdowns = await ctx.db
       .query("govtProjectBreakdowns")
       .filter((q) => q.neq(q.field("isDeleted"), true))
