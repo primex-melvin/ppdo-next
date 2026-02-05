@@ -250,6 +250,29 @@ export const updateStatus = mutation({
       }
     }
 
+    // SPECIAL HEALTH FUND ACCESS APPROVAL
+    if (args.status === "approved" && request.accessType === "specialHealthFund") {
+      // Check if user already has special health fund access
+      const existingAccess = await ctx.db
+        .query("specialHealthFundSharedAccess")
+        .withIndex("userIdAndActive", (q) =>
+          q.eq("userId", request.userId).eq("isActive", true)
+        )
+        .first();
+
+      if (!existingAccess) {
+        // Grant access with viewer level by default
+        await ctx.db.insert("specialHealthFundSharedAccess", {
+          userId: request.userId,
+          accessLevel: "viewer",
+          grantedBy: userId,
+          grantedAt: now,
+          isActive: true,
+          notes: `Access granted via request approval. Request ID: ${args.requestId}`,
+        });
+      }
+    }
+
     return { success: true };
   },
 });

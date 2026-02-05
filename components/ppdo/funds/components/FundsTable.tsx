@@ -37,6 +37,10 @@ export function FundsTable<T extends BaseFund>({
     emptyMessage = "No funds found",
     FormComponent,
     activityLogType,
+    // Enhanced toolbar features
+    expandButton,
+    pendingRequestsCount,
+    onOpenShare,
 }: FundsTableProps<T>) {
     const { accentColorValue } = useAccentColor();
 
@@ -317,6 +321,10 @@ export function FundsTable<T extends BaseFund>({
                             accentColor={accentColorValue}
                             title={title}
                             searchPlaceholder={searchPlaceholder}
+                            // Enhanced toolbar features
+                            expandButton={expandButton}
+                            pendingRequestsCount={pendingRequestsCount}
+                            onOpenShare={onOpenShare}
                         />
 
                         <div className="overflow-auto max-h-[calc(100vh-300px)]">

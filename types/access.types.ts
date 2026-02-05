@@ -10,9 +10,10 @@ export type AccessLevel = "viewer" | "editor" | "admin";
 /**
  * Enriched user with access information
  * This is what gets returned from getSharedUsers queries
+ * Generic _id type to support all shared access table types
  */
 export interface UserWithAccessInfo {
-  _id: Id<"budgetSharedAccess"> | Id<"budgetParticularSharedAccess">;
+  _id: Id<"budgetSharedAccess"> | Id<"budgetParticularSharedAccess"> | Id<"trustFundSharedAccess"> | Id<"specialEducationFundSharedAccess"> | Id<"specialHealthFundSharedAccess">;
   userId: Id<"users">;
   userName: string;
   userEmail: string;

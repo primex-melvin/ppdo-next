@@ -3,10 +3,13 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { useFundsData, useFundsMutations, FundsPageHeader, FundsStatistics, FundsTable, FundForm } from "@/components/ppdo/funds";
+import { useQuery } from "convex/react";
+import { useFundsData, useFundsMutations, FundsPageHeader, FundsStatistics, FundsTable, FundForm, FundsExpandModal, FundsShareModal } from "@/components/ppdo/funds";
 import { api } from "@/convex/_generated/api";
 import { TrashBinModal } from "@/components/modals";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Expand } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ year: string }>;
@@ -32,6 +35,11 @@ export default function YearTrustFundsPage({ params }: PageProps) {
 
   const [showTrashModal, setShowTrashModal] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
+  const [showExpandModal, setShowExpandModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  // Get pending access requests count for share button badge
+  const pendingRequestsCount = useQuery(api.accessRequests.getPendingCount);
 
   // Filter trust funds by year
   const yearFilteredFunds = useMemo(() => {
@@ -189,12 +197,41 @@ export default function YearTrustFundsPage({ params }: PageProps) {
         onDelete={handleDelete}
         onOpenTrash={() => setShowTrashModal(true)}
         FormComponent={FundForm}
+        // Enhanced toolbar features
+        expandButton={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Expand table"
+            onClick={() => setShowExpandModal(true)}
+          >
+            <Expand className="w-4 h-4" />
+          </Button>
+        }
+        pendingRequestsCount={pendingRequestsCount}
+        onOpenShare={() => setShowShareModal(true)}
       />
 
       <TrashBinModal
         isOpen={showTrashModal}
         onClose={() => setShowTrashModal(false)}
         type="trustFund"
+      />
+
+      <FundsExpandModal
+        isOpen={showExpandModal}
+        onClose={() => setShowExpandModal(false)}
+        fundType="trust"
+        year={year}
+        title="Trust Funds"
+      />
+
+      <FundsShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        fundType="trust"
+        title="Trust Funds"
       />
     </div>
   );

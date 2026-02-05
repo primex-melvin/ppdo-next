@@ -101,4 +101,9 @@ export { FundsContextMenu } from "./components/context-menu/FundsContextMenu";
 
 // Modals
 export { PrintOrientationModal } from "./components/modals/PrintOrientationModal";
+export { FundsExpandModal } from "./components/FundsExpandModal";
+export { FundsShareModal } from "./components/FundsShareModal";
+
+// Spreadsheet Config
+export { createFundsSpreadsheetConfig } from "./utils/fundsSpreadsheetConfig";
 

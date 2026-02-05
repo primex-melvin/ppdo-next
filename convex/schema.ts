@@ -39,6 +39,7 @@ import { specialEducationFundBreakdownTables } from "./schema/specialEducationFu
 import { specialEducationFundBreakdownActivityTables } from "./schema/specialEducationFundBreakdownActivities";
 import { specialHealthFundTables } from "./schema/specialHealthFunds";
 import { specialHealthFundActivityTables } from "./schema/specialHealthFundActivities";
+import { specialHealthFundSharedAccessTables } from "./schema/specialHealthFundSharedAccess";
 import { specialHealthFundBreakdownTables } from "./schema/specialHealthFundBreakdowns";
 import { specialHealthFundBreakdownActivityTables } from "./schema/specialHealthFundBreakdownActivities";
 import { bugReportsTables } from "./schema/bugReports";
@@ -87,6 +88,7 @@ export default defineSchema({
   ...specialEducationFundBreakdownActivityTables,
   ...specialHealthFundTables,
   ...specialHealthFundActivityTables,
+  ...specialHealthFundSharedAccessTables,
   ...specialHealthFundBreakdownTables,
   ...specialHealthFundBreakdownActivityTables,
   ...bugReportsTables,

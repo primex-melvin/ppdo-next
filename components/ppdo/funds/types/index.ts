@@ -95,6 +95,17 @@ export interface FundsTableProps<T = BaseFund> {
     emptyMessage?: string;
     FormComponent?: React.ComponentType<any>;
     activityLogType: 'trustFund' | 'specialEducationFund' | 'specialHealthFund' | 'twentyPercentDF';
+
+    // ============================================
+    // ENHANCED TOOLBAR FEATURES
+    // ============================================
+
+    /** Expand button slot for spreadsheet view */
+    expandButton?: React.ReactNode;
+
+    /** Share functionality */
+    pendingRequestsCount?: number;
+    onOpenShare?: () => void;
 }
 
 // ============================================================================

@@ -106,6 +106,7 @@ import type * as schema_specialEducationFunds from "../schema/specialEducationFu
 import type * as schema_specialHealthFundActivities from "../schema/specialHealthFundActivities.js";
 import type * as schema_specialHealthFundBreakdownActivities from "../schema/specialHealthFundBreakdownActivities.js";
 import type * as schema_specialHealthFundBreakdowns from "../schema/specialHealthFundBreakdowns.js";
+import type * as schema_specialHealthFundSharedAccess from "../schema/specialHealthFundSharedAccess.js";
 import type * as schema_specialHealthFunds from "../schema/specialHealthFunds.js";
 import type * as schema_suggestions from "../schema/suggestions.js";
 import type * as schema_tableSettings from "../schema/tableSettings.js";
@@ -126,9 +127,11 @@ import type * as specialEducationFundBreakdownActivities from "../specialEducati
 import type * as specialEducationFundBreakdowns from "../specialEducationFundBreakdowns.js";
 import type * as specialEducationFundSharedAccess from "../specialEducationFundSharedAccess.js";
 import type * as specialEducationFunds from "../specialEducationFunds.js";
+import type * as specialHealthFundAccess from "../specialHealthFundAccess.js";
 import type * as specialHealthFundActivities from "../specialHealthFundActivities.js";
 import type * as specialHealthFundBreakdownActivities from "../specialHealthFundBreakdownActivities.js";
 import type * as specialHealthFundBreakdowns from "../specialHealthFundBreakdowns.js";
+import type * as specialHealthFundSharedAccess from "../specialHealthFundSharedAccess.js";
 import type * as specialHealthFunds from "../specialHealthFunds.js";
 import type * as suggestions from "../suggestions.js";
 import type * as tableSettings from "../tableSettings.js";
@@ -249,6 +252,7 @@ declare const fullApi: ApiFromModules<{
   "schema/specialHealthFundActivities": typeof schema_specialHealthFundActivities;
   "schema/specialHealthFundBreakdownActivities": typeof schema_specialHealthFundBreakdownActivities;
   "schema/specialHealthFundBreakdowns": typeof schema_specialHealthFundBreakdowns;
+  "schema/specialHealthFundSharedAccess": typeof schema_specialHealthFundSharedAccess;
   "schema/specialHealthFunds": typeof schema_specialHealthFunds;
   "schema/suggestions": typeof schema_suggestions;
   "schema/tableSettings": typeof schema_tableSettings;
@@ -269,9 +273,11 @@ declare const fullApi: ApiFromModules<{
   specialEducationFundBreakdowns: typeof specialEducationFundBreakdowns;
   specialEducationFundSharedAccess: typeof specialEducationFundSharedAccess;
   specialEducationFunds: typeof specialEducationFunds;
+  specialHealthFundAccess: typeof specialHealthFundAccess;
   specialHealthFundActivities: typeof specialHealthFundActivities;
   specialHealthFundBreakdownActivities: typeof specialHealthFundBreakdownActivities;
   specialHealthFundBreakdowns: typeof specialHealthFundBreakdowns;
+  specialHealthFundSharedAccess: typeof specialHealthFundSharedAccess;
   specialHealthFunds: typeof specialHealthFunds;
   suggestions: typeof suggestions;
   tableSettings: typeof tableSettings;
