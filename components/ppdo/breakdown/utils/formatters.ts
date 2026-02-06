@@ -1,13 +1,14 @@
 // components/ppdo/breakdown/utils/formatters.ts
 
-/**
- * Centralized Formatting Utilities for Breakdown Components
- *
- * These formatters are used by both Project and Trust Fund breakdown tables.
- */
-
 import { Breakdown, ColumnConfig } from "../types/breakdown.types";
-import { CURRENCY_FORMAT_OPTIONS, LOCALE } from "../constants/table.constants";
+import {
+  formatCurrency,
+  formatDate,
+  formatPercentage
+} from "@/lib/shared/utils/formatting";
+
+// Re-export for convenience if needed within breakdown module
+export { formatCurrency, formatDate, formatPercentage };
 
 /**
  * Formats a cell value based on column type
@@ -42,27 +43,6 @@ export function formatCellValue(
       }
       return String(value);
   }
-}
-
-/**
- * Formats a number as currency (PHP)
- */
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat(LOCALE, CURRENCY_FORMAT_OPTIONS).format(value);
-}
-
-/**
- * Formats a timestamp as a date string
- */
-export function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString(LOCALE);
-}
-
-/**
- * Formats a number as percentage with 1 decimal place
- */
-export function formatPercentage(value: number): string {
-  return `${parseFloat(String(value)).toFixed(1)}%`;
 }
 
 /**

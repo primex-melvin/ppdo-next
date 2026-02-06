@@ -26,6 +26,11 @@ import { useAccentColor } from "@/contexts/AccentColorContext";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
+import {
+  formatNumberWithCommas,
+  parseFormattedNumber,
+  formatNumberForDisplay
+} from "@/lib/shared/utils/formatting";
 
 interface BudgetItem {
   id: string;
@@ -73,30 +78,6 @@ interface BudgetItemFormProps {
   onSave: (item: Omit<BudgetItem, "id" | "utilizationRate" | "projectCompleted" | "projectDelayed" | "projectsOngoing" | "status"> & { autoCalculateBudgetUtilized?: boolean }) => void;
   onCancel: () => void;
 }
-
-const formatNumberWithCommas = (value: string): string => {
-  const cleaned = value.replace(/[^\d.]/g, '');
-  const parts = cleaned.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  if (parts.length > 1) {
-    return parts[0] + '.' + parts[1].slice(0, 2);
-  }
-  return parts[0];
-};
-
-const parseFormattedNumber = (value: string): number => {
-  const cleaned = value.replace(/,/g, '');
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? 0 : parsed;
-};
-
-const formatNumberForDisplay = (value: number): string => {
-  if (value === 0) return '';
-  return new Intl.NumberFormat('en-PH', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
 
 export function BudgetItemForm({
   item,

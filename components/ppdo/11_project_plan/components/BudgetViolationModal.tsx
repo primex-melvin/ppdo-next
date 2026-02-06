@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, ArrowRight, AlertCircle } from "lucide-react";
+import { formatCurrency } from "@/lib/shared/utils/formatting";
 
 interface ViolationData {
   hasViolation: boolean;
@@ -52,12 +53,6 @@ export function BudgetViolationModal({
       }
     }
   }, [isOpen, allocationViolation, utilizationViolation]);
-
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(val);
 
   const handleNext = () => {
     if (step === 1 && utilizationViolation.hasViolation) {
@@ -174,9 +169,8 @@ export function BudgetViolationModal({
           </Button>
           <Button
             onClick={handleNext}
-            className={`w-full sm:w-auto ${
-              step === 1 ? "bg-red-600 hover:bg-red-700" : "bg-orange-600 hover:bg-orange-700"
-            } text-white`}
+            className={`w-full sm:w-auto ${step === 1 ? "bg-red-600 hover:bg-red-700" : "bg-orange-600 hover:bg-orange-700"
+              } text-white`}
           >
             {isLastStep ? (
               "Confirm & Proceed"

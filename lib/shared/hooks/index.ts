@@ -80,3 +80,7 @@ export {
   type BreakpointKey,
   type BreakpointState,
 } from './useBreakpoint';
+
+// Statistics hooks
+export { useCurrencyFormatter } from './useCurrencyFormatter';
+export { useStatusCounts } from './useStatusCounts';

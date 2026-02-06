@@ -7,28 +7,18 @@
 
 import { BaseFund } from "../types";
 import { AVAILABLE_COLUMNS, STATUS_CONFIG, STATUS_CLASSES } from "../constants";
+import {
+    formatCurrency,
+    formatDate,
+    formatPercentage,
+} from "@/lib/shared/utils/formatting";
+
+// Re-export shared formatters
+export { formatCurrency, formatDate, formatPercentage };
 
 // ============================================================================
-// FORMATTING UTILITIES
+// ADDITIONAL FORMATTING UTILITIES
 // ============================================================================
-
-export const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(amount);
-};
-
-export const formatDate = (timestamp?: number): string => {
-    if (!timestamp) return "—";
-    return new Date(timestamp).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-};
 
 export const formatTimestamp = (timestamp: number): string => {
     const now = Date.now();
@@ -43,14 +33,8 @@ export const formatTimestamp = (timestamp: number): string => {
     if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
     if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
 
-    return new Date(timestamp).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
+    return formatDate(timestamp);
 };
-
-
 
 export const formatStatus = (status?: string): string => {
     if (!status) return "—";
@@ -66,11 +50,6 @@ export const getStatusClassName = (status?: string): string => {
 export const truncateText = (text: string, maxLength: number = 50): string => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
-};
-
-export const formatPercentage = (value?: number): string => {
-    if (value === undefined || value === null) return "—";
-    return `${value.toFixed(2)}%`;
 };
 
 // ============================================================================
@@ -111,10 +90,6 @@ export const calculateTotals = <T extends BaseFund>(data: T[]) => {
 
 /**
  * Export funds data to CSV
- * @param data - Array of fund records
- * @param hiddenColumns - Set of hidden column IDs
- * @param year - Optional year for filename
- * @param fundType - Type of fund for filename (e.g., 'trust-funds', 'special-education-funds')
  */
 export const exportToCSV = <T extends BaseFund>(
     data: T[],
@@ -194,11 +169,6 @@ export const printTable = (orientation: 'portrait' | 'landscape'): void => {
 // SLUG UTILITIES
 // ============================================================================
 
-/**
- * Creates a URL-safe slug from fund data
- * Format: {slugified-project-title}-{id}
- * Example: "construction-of-school-building-abc123"
- */
 export const createFundSlug = (projectTitle: string, id: string): string => {
     const slug = projectTitle
         .toLowerCase()
@@ -208,10 +178,6 @@ export const createFundSlug = (projectTitle: string, id: string): string => {
     return `${slug}-${id}`;
 };
 
-/**
- * Extract ID from a slug
- * Example: "construction-of-school-building-abc123" => "abc123"
- */
 export const extractIdFromSlug = (slug: string): string => {
     const parts = slug.split("-");
     return parts[parts.length - 1];

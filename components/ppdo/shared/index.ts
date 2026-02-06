@@ -9,8 +9,10 @@
 export { StatCard } from "./StatCard";
 export { PageHeaderWithIcon } from "./PageHeaderWithIcon";
 export { StandardStatisticsGrid } from "./StandardStatisticsGrid";
+export { EntityStatistics } from "./EntityStatistics";
 
 // Types
 export type { StatCardProps } from "./StatCard";
 export type { PageHeaderWithIconProps } from "./PageHeaderWithIcon";
 export type { StandardStatisticsGridProps, StatusConfig } from "./StandardStatisticsGrid";
+export type { EntityStatisticsProps } from "./EntityStatistics";

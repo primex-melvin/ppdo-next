@@ -1,5 +1,13 @@
 // lib/shared/utils/formatting.ts
 
+export const LOCALE = "en-PH";
+
+export const CURRENCY_FORMAT_OPTIONS: Intl.NumberFormatOptions = {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 0,
+};
+
 /**
  * Formats number with commas for input fields
  * @param value - String value to format
@@ -35,36 +43,45 @@ export function parseFormattedNumber(value: string): number {
 }
 
 /**
- * Formats number for display after blur
+ * Formats number for display (e.g. input blur)
  * @param value - Number value
  * @returns Formatted string
  */
 export function formatNumberForDisplay(value: number): string {
   if (value === 0) return "";
-  return new Intl.NumberFormat("en-PH", {
+  return new Intl.NumberFormat(LOCALE, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(value);
 }
 
 /**
- * Formats currency value
+ * Formats currency value (PHP)
  * @param value - Number to format as currency
  * @returns Formatted currency string
  */
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(value);
+export function formatCurrency(value: number | undefined | null): string {
+  if (value === undefined || value === null) return "-";
+  return new Intl.NumberFormat(LOCALE, CURRENCY_FORMAT_OPTIONS).format(value);
 }
 
 /**
  * Formats a number as percentage
+ * Assumes value is 0-100 (e.g. 85 for 85%)
  * @param value - Number to format
  * @returns Formatted percentage string
  */
-export function formatPercentage(value: number): string {
-  return `${value.toFixed(1)}%`;
+export function formatPercentage(value: number | undefined | null, decimals = 1): string {
+  if (value === undefined || value === null) return "-";
+  return `${Number(value).toFixed(decimals)}%`;
+}
+
+/**
+ * Formats a timestamp as a date string
+ * @param timestamp - Number timestamp or Date object
+ * @returns Formatted date string
+ */
+export function formatDate(timestamp: number | Date | undefined | null): string {
+  if (!timestamp) return "-";
+  return new Date(timestamp).toLocaleDateString(LOCALE);
 }

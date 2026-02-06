@@ -45,6 +45,7 @@ export interface StandardStatisticsGridProps {
   // Optional
   ariaLabel?: string;
   className?: string;
+  showBreakdown?: boolean;
 }
 
 export function StandardStatisticsGrid({
@@ -62,9 +63,12 @@ export function StandardStatisticsGrid({
   statusCounts,
   ariaLabel = "Statistics",
   className = "",
+  showBreakdown = true,
 }: StandardStatisticsGridProps) {
   // Build the status breakdown sub-content
   const statusBreakdown = useMemo(() => {
+    if (!showBreakdown) return undefined;
+    
     const total = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
     
     return (
@@ -89,7 +93,7 @@ export function StandardStatisticsGrid({
         </div>
       </div>
     );
-  }, [statusConfig, statusCounts]);
+  }, [statusConfig, statusCounts, showBreakdown]);
 
   return (
     <section

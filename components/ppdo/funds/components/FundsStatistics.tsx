@@ -1,9 +1,6 @@
-// components/ppdo/funds/components/FundsStatistics.tsx
-
-"use client";
-
-import React, { useMemo } from "react";
-import { StandardStatisticsGrid } from "@/components/ppdo/shared";
+import React from "react";
+import { EntityStatistics } from "@/components/ppdo/shared/EntityStatistics";
+import type { StatusConfig } from "@/components/ppdo/shared/StandardStatisticsGrid";
 import { StatusCounts } from "../types";
 
 export interface FundsStatisticsProps {
@@ -22,6 +19,24 @@ export interface FundsStatisticsProps {
   };
 }
 
+const FUNDS_STATUS_CONFIG: StatusConfig[] = [
+  {
+    key: "on_process",
+    label: "On Process",
+    dotColor: "bg-zinc-700",
+  },
+  {
+    key: "ongoing",
+    label: "Ongoing",
+    dotColor: "bg-zinc-600",
+  },
+  {
+    key: "completed",
+    label: "Completed",
+    dotColor: "bg-zinc-500",
+  },
+];
+
 export function FundsStatistics({
   totalAllocated,
   totalUtilized,
@@ -29,62 +44,31 @@ export function FundsStatistics({
   averageUtilizationRate,
   totalProjects,
   statusCounts,
-  labels = {
-    allocated: "Total Budget Allocated",
-    utilized: "Total Budget Utilized",
-    obligated: "Total Obligated Budget",
-    utilizationRate: "Average Utilization Rate",
-    projects: "Total Projects",
-  },
+  labels = {},
 }: FundsStatisticsProps) {
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-        maximumFractionDigits: 0,
-      }),
-    []
-  );
-
-  // Status configuration - using gray scale like BudgetStatistics
-  const statusConfig = [
-    {
-      key: "on_process" as const,
-      label: "On Process",
-      dotColor: "bg-zinc-700",
-    },
-    {
-      key: "ongoing" as const,
-      label: "Ongoing",
-      dotColor: "bg-zinc-600",
-    },
-    {
-      key: "completed" as const,
-      label: "Completed",
-      dotColor: "bg-zinc-500",
-    },
-  ];
+  const counts = {
+    on_process: statusCounts.on_process || 0,
+    ongoing: statusCounts.ongoing || 0,
+    completed: statusCounts.completed || 0,
+  };
 
   return (
-    <StandardStatisticsGrid
-      ariaLabel="Fund statistics"
-      stat1Label={labels.allocated || "Total Budget Allocated"}
-      stat1Value={currency.format(totalAllocated)}
-      stat2Label={labels.utilizationRate || "Average Utilization Rate"}
-      stat2Value={`${averageUtilizationRate.toFixed(1)}%`}
-      stat3Label={labels.utilized || "Total Budget Utilized"}
-      stat3Value={currency.format(totalUtilized)}
-      stat4Label={labels.obligated || "Total Obligated Budget"}
-      stat4Value={currency.format(totalObligated)}
-      stat5Label={labels.projects || "Total Projects"}
-      stat5Value={totalProjects.toLocaleString()}
-      statusConfig={statusConfig}
-      statusCounts={{
-        on_process: statusCounts.on_process || 0,
-        ongoing: statusCounts.ongoing || 0,
-        completed: statusCounts.completed || 0,
+    <EntityStatistics
+      totalAllocated={totalAllocated}
+      totalUtilized={totalUtilized}
+      totalObligated={totalObligated}
+      averageUtilizationRate={averageUtilizationRate}
+      totalItems={totalProjects}
+      statusCounts={counts}
+      statusConfig={FUNDS_STATUS_CONFIG}
+      labels={{
+        allocated: labels.allocated ?? "Total Budget Allocated",
+        utilized: labels.utilized ?? "Total Budget Utilized",
+        obligated: labels.obligated ?? "Total Obligated Budget",
+        utilizationRate: labels.utilizationRate ?? "Average Utilization Rate",
+        totalItems: labels.projects ?? "Total Projects",
       }}
+      ariaLabel="Fund statistics"
     />
   );
 }
