@@ -1,5 +1,25 @@
-// components/ppdo/inspection/index.ts
+// components/features/ppdo/inspection/index.ts
 // Centralized Inspection Components Module
+
+// ============================================================================
+// NEW STANDARDIZED COMPONENTS (Following Breakdown Page Pattern)
+// ============================================================================
+export { InspectionPageHeader } from "./_components/InspectionPageHeader";
+export type { InspectionPageHeaderProps } from "./_components/InspectionPageHeader";
+
+export { InspectionStatistics } from "./_components/InspectionStatistics";
+
+export { InspectionTable } from "./_components/InspectionTable";
+
+// ============================================================================
+// HOOKS
+// ============================================================================
+export { useInspectionStats } from "./_hooks/useInspectionStats";
+export type { InspectionStats } from "./_hooks/useInspectionStats";
+
+// ============================================================================
+// LEGACY COMPONENTS (Preserved for backward compatibility)
+// ============================================================================
 
 // Financial Components
 export { FinancialBreakdownCard } from "./components/financial/FinancialBreakdownCard";
@@ -34,15 +54,13 @@ export { default as RemarksSection } from "./components/RemarksSection";
 
 export { tabs } from "./components/financial/FinancialBreakdownHeader";
 
-// Re-export all types
+// ============================================================================
+// TYPES
+// ============================================================================
 export * from "./types";
 
-// Utilities
-export {
-  // Utility exports will be added as needed
-} from "./utils";
-
-// Constants
-export {
-  // Constant exports will be added as needed
-} from "./constants";
+// ============================================================================
+// UTILITIES & CONSTANTS
+// ============================================================================
+export * from "./components/utils";
+export * from "./components/mockData";

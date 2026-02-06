@@ -23,7 +23,7 @@ export interface InspectionItem {
   programNumber: string
   title: string
   category: string
-  inspectionDate: number
+  inspectionDateTime: number
   remarks: string
   status: "completed" | "in_progress" | "pending" | "cancelled"
   viewCount: number
@@ -41,6 +41,8 @@ export interface InspectionItem {
   } | null
   imageCount?: number
   thumbnails?: string[]
+  // Legacy alias for compatibility
+  inspectionDate?: number
 }
 
 // Alias for backward compatibility

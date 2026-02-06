@@ -12,14 +12,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { InspectionFormData, NewInspectionFormProps } from "../../types";
 
-const getDefaultDate = () => new Date().toISOString().split('T')[0];
+// Get current datetime in format: YYYY-MM-DDTHH:mm (for datetime-local input)
+const getDefaultDateTime = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 16);
+};
 
 export const NewInspectionForm: React.FC<NewInspectionFormProps> = ({ open, onOpenChange, onSubmit }) => {
   const [formData, setFormData] = useState<InspectionFormData>({
     programNumber: "",
     title: "",
     category: "",
-    date: getDefaultDate(),
+    date: getDefaultDateTime(),
     remarks: "",
     images: []
   });
@@ -61,7 +66,7 @@ export const NewInspectionForm: React.FC<NewInspectionFormProps> = ({ open, onOp
       programNumber: "",
       title: "",
       category: "",
-      date: getDefaultDate(),
+      date: getDefaultDateTime(),
       remarks: "",
       images: []
     });
@@ -128,7 +133,7 @@ export const NewInspectionForm: React.FC<NewInspectionFormProps> = ({ open, onOp
             New Inspection
           </DialogTitle>
           <DialogDescription className="text-gray-600 dark:text-gray-400">
-            Fill in the details for the new inspection report. All fields are required.
+            Fill in the details for the new inspection report. Title and Date/Time are required.
           </DialogDescription>
         </DialogHeader>
         
@@ -150,39 +155,26 @@ export const NewInspectionForm: React.FC<NewInspectionFormProps> = ({ open, onOp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm font-medium">
-              Category
-            </Label>
-            <Input 
-              id="category" 
-              name="category" 
-              type="text" 
-              placeholder="e.g., Skill Development, Healthcare, Infrastructure" 
-              value={formData.category} 
-              onChange={handleInputChange} 
-              required 
-              className="w-full" 
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="date" className="text-sm font-medium">
-              Inspection Date
+              Inspection Date & Time
             </Label>
             <Input 
               id="date" 
               name="date" 
-              type="date" 
+              type="datetime-local" 
               value={formData.date} 
               onChange={handleInputChange} 
               required 
               className="w-full" 
             />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Defaults to current date and time, but you can change it.
+            </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="remarks" className="text-sm font-medium">
-              Remarks
+              Remarks <span className="text-zinc-400 font-normal">(Optional)</span>
             </Label>
             <Textarea 
               id="remarks" 
@@ -190,7 +182,6 @@ export const NewInspectionForm: React.FC<NewInspectionFormProps> = ({ open, onOp
               placeholder="Enter detailed remarks about the inspection..." 
               value={formData.remarks} 
               onChange={handleInputChange} 
-              required 
               rows={5} 
               className="w-full resize-none" 
             />
