@@ -23,9 +23,7 @@ import { ProjectCategoryCombobox } from "./ProjectCategoryCombobox";
 import { ProjectShareModal } from "./ProjectShareModal";
 import { ProjectCategoryFilter } from "./ProjectsTable/ProjectCategoryFilter";
 import { ProjectsTableToolbar } from "./ProjectsTable/ProjectsTableToolbar";
-import { ProjectsTableHeader } from "./ProjectsTable/ProjectsTableHeader";
-import { ProjectsTableBody } from "./ProjectsTable/ProjectsTableBody";
-import { ProjectsTableFooter } from "./ProjectsTable/ProjectsTableFooter";
+import { ProjectsResizableTable } from "./ProjectsResizableTable";
 import { ProjectContextMenu } from "./ProjectsTable/ProjectContextMenu";
 import { ProjectBulkToggleDialog } from "./ProjectBulkToggleDialog";
 import { PrintPreviewModal } from "@/components/ppdo/table/print-preview/PrintPreviewModal";
@@ -869,56 +867,53 @@ export function ProjectsTable({
                     )}
 
                     {/* Table View */}
-                    <TabsContent value="table" className="mt-0">
-                        <div className="overflow-x-auto max-h-[600px] relative">
-                            <table className="w-full">
-
-                                {/* Header */}
-                                <ProjectsTableHeader
-                                    hiddenColumns={hiddenColumns}
-                                    sortField={sortField}
-                                    sortDirection={sortDirection}
-                                    onSort={handleSort}
-                                    canManageBulkActions={canManageBulkActions}
-                                    isAllSelected={isAllSelected}
-                                    isIndeterminate={isIndeterminate}
-                                    onSelectAll={handleSelectAll}
-                                    onFilterClick={setActiveFilterColumn}
-                                    activeFilterColumn={activeFilterColumn}
-                                    columnWidths={columnWidths}
-                                    onResizeStart={handleResizeStart}
-                                    canEditLayout={canEditLayout}
-                                />
-
-                                {/* Body */}
-                                <ProjectsTableBody
-                                    groupedProjects={groupedProjects}
-                                    hiddenColumns={hiddenColumns}
-                                    selectedIds={selectedIds}
-                                    newlyAddedProjectId={newlyAddedProjectId}
-                                    canManageBulkActions={canManageBulkActions}
-                                    totalVisibleColumns={totalVisibleColumns}
-                                    onSelectCategory={handleSelectCategory}
-                                    onSelectRow={handleSelectRow}
-                                    onRowClick={handleRowClick}
-                                    onContextMenu={handleContextMenu}
-                                    accentColor={accentColorValue}
-                                    expandedRemarks={expandedRemarks}
-                                    onToggleRemarks={handleToggleRemarks}
-                                />
-
-                                {/* Footer */}
-                                <tfoot>
-                                    <ProjectsTableFooter
-                                        totals={totals}
-                                        hiddenColumns={hiddenColumns}
-                                        canManageBulkActions={canManageBulkActions}
-                                        accentColor={accentColorValue}
-                                    />
-                                </tfoot>
-
-                            </table>
-                        </div>
+                    <TabsContent value="table" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                        <ProjectsResizableTable
+                            projects={filteredAndSortedProjects}
+                            particularId={particularId}
+                            hiddenColumns={hiddenColumns}
+                            selectedIds={selectedIds}
+                            onRowClick={handleRowClick}
+                            onEdit={(project) => {
+                                setSelectedProject(project);
+                                setShowEditModal(true);
+                            }}
+                            onDelete={(project) => {
+                                setTrashTargetItems([project]);
+                                setIsBulkTrash(false);
+                                setShowTrashConfirmModal(true);
+                            }}
+                            onPin={async (project) => {
+                                try {
+                                    await togglePinProject({ id: project.id as Id<"projects"> });
+                                } catch (error) {
+                                    toast.error("Failed to toggle pin");
+                                }
+                            }}
+                            onToggleAutoCalculate={async (project, newValue) => {
+                                setIsTogglingAutoCalculate(true);
+                                try {
+                                    const toastId = toast.loading("Updating auto-calculate mode...");
+                                    await toggleAutoCalculate({
+                                        id: project.id as Id<"projects">,
+                                        autoCalculate: newValue,
+                                    });
+                                    toast.dismiss(toastId);
+                                    toast.success(`Switched to ${newValue ? 'auto-calculate' : 'manual'} mode`);
+                                } catch (error) {
+                                    toast.error("Failed to toggle auto-calculate");
+                                } finally {
+                                    setIsTogglingAutoCalculate(false);
+                                }
+                            }}
+                            onChangeCategory={(project) => {
+                                setSelectedCategoryProject(project);
+                                setSingleCategoryId(project.categoryId as Id<"projectCategories"> | undefined);
+                                setShowSingleCategoryModal(true);
+                            }}
+                            onSelectRow={handleSelectRow}
+                            onSelectAll={handleSelectAll}
+                        />
                     </TabsContent>
 
                     {/* Kanban View */}
