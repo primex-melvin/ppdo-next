@@ -8,12 +8,14 @@ export const inspectionTables = {
    * Inspections.
    */
   inspections: defineTable({
+    // ============================================================================
+    // REQUIRED CORE FIELDS (Unchanged)
+    // ============================================================================
     projectId: v.id("projects"),
     budgetItemId: v.optional(v.id("budgetItems")),
     programNumber: v.string(),
     title: v.string(),
     category: v.string(),
-    inspectionDate: v.number(),
     remarks: v.string(),
     status: v.union(
       v.literal("completed"),
@@ -23,21 +25,64 @@ export const inspectionTables = {
     ),
     viewCount: v.number(),
     uploadSessionId: v.optional(v.id("uploadSessions")),
+
+    // ============================================================================
+    // CHANGED: inspectionDate → inspectionDateTime (more precise)
+    // ============================================================================
+    inspectionDateTime: v.number(), // REQUIRED - replaces inspectionDate
+
+    // ============================================================================
+    // NEW: LOCATION FIELDS (All Optional)
+    // ============================================================================
+    locationLatitude: v.optional(v.number()),
+    locationLongitude: v.optional(v.number()),
+    locationAccuracy: v.optional(v.number()), // GPS accuracy in meters
+    barangay: v.optional(v.string()),
+    municipality: v.optional(v.string()),
+    province: v.optional(v.string()),
+    siteMarkerKilometer: v.optional(v.number()), // KM marker for roads/highways
+    siteMarkerDescription: v.optional(v.string()), // Landmark reference
+    mapUrl: v.optional(v.string()), // Auto-generated Google Maps link
+
+    // ============================================================================
+    // NEW: SCHEDULING FIELDS (All Optional)
+    // ============================================================================
+    scheduledDate: v.optional(v.number()), // Originally scheduled for this date
+    isRescheduled: v.optional(v.boolean()),
+    rescheduleReason: v.optional(v.string()),
+    previousScheduledDate: v.optional(v.number()),
+    inspectionStartTime: v.optional(v.number()),
+    inspectionEndTime: v.optional(v.number()),
+    durationMinutes: v.optional(v.number()),
+
+    // ============================================================================
+    // AUDIT FIELDS (Unchanged)
+    // ============================================================================
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
     updatedBy: v.optional(v.id("users")),
     metadata: v.optional(v.string()),
   })
+    // ============================================================================
+    // INDEXES
+    // ============================================================================
     .index("projectId", ["projectId"])
     .index("budgetItemId", ["budgetItemId"])
     .index("status", ["status"])
     .index("category", ["category"])
-    .index("inspectionDate", ["inspectionDate"])
+    // Location-based indexes
+    .index("municipality", ["municipality"])
+    .index("barangay", ["barangay"])
+    .index("locationLatLng", ["locationLatitude", "locationLongitude"])
+    // Time-based indexes
+    .index("inspectionDateTime", ["inspectionDateTime"])
+    .index("scheduledDate", ["scheduledDate"])
+    .index("isRescheduled", ["isRescheduled"])
     .index("createdBy", ["createdBy"])
     .index("createdAt", ["createdAt"])
     .index("programNumber", ["programNumber"])
     .index("projectAndStatus", ["projectId", "status"])
-    .index("projectAndDate", ["projectId", "inspectionDate"])
+    .index("projectAndDate", ["projectId", "inspectionDateTime"])
     .index("categoryAndStatus", ["category", "status"]),
 };

@@ -14,7 +14,7 @@ export const createInspection = mutation({
     programNumber: v.string(),
     title: v.string(),
     category: v.string(),
-    inspectionDate: v.number(),
+    inspectionDateTime: v.number(), // REQUIRED - replaces inspectionDate
     remarks: v.string(),
     status: v.union(
       v.literal("completed"),
@@ -24,6 +24,26 @@ export const createInspection = mutation({
     ),
     uploadSessionId: v.optional(v.id("uploadSessions")),
     metadata: v.optional(v.string()),
+
+    // NEW: Location fields (all optional)
+    locationLatitude: v.optional(v.number()),
+    locationLongitude: v.optional(v.number()),
+    locationAccuracy: v.optional(v.number()),
+    barangay: v.optional(v.string()),
+    municipality: v.optional(v.string()),
+    province: v.optional(v.string()),
+    siteMarkerKilometer: v.optional(v.number()),
+    siteMarkerDescription: v.optional(v.string()),
+    mapUrl: v.optional(v.string()),
+
+    // NEW: Scheduling fields (all optional)
+    scheduledDate: v.optional(v.number()),
+    isRescheduled: v.optional(v.boolean()),
+    rescheduleReason: v.optional(v.string()),
+    previousScheduledDate: v.optional(v.number()),
+    inspectionStartTime: v.optional(v.number()),
+    inspectionEndTime: v.optional(v.number()),
+    durationMinutes: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -39,7 +59,7 @@ export const createInspection = mutation({
       programNumber: args.programNumber,
       title: args.title,
       category: args.category,
-      inspectionDate: args.inspectionDate,
+      inspectionDateTime: args.inspectionDateTime,
       remarks: args.remarks,
       status: args.status,
       viewCount: 0,
@@ -48,6 +68,26 @@ export const createInspection = mutation({
       createdAt: now,
       updatedAt: now,
       metadata: args.metadata,
+
+      // NEW: Location fields
+      locationLatitude: args.locationLatitude,
+      locationLongitude: args.locationLongitude,
+      locationAccuracy: args.locationAccuracy,
+      barangay: args.barangay,
+      municipality: args.municipality,
+      province: args.province,
+      siteMarkerKilometer: args.siteMarkerKilometer,
+      siteMarkerDescription: args.siteMarkerDescription,
+      mapUrl: args.mapUrl,
+
+      // NEW: Scheduling fields
+      scheduledDate: args.scheduledDate,
+      isRescheduled: args.isRescheduled,
+      rescheduleReason: args.rescheduleReason,
+      previousScheduledDate: args.previousScheduledDate,
+      inspectionStartTime: args.inspectionStartTime,
+      inspectionEndTime: args.inspectionEndTime,
+      durationMinutes: args.durationMinutes,
     });
 
     return inspectionId;
@@ -63,7 +103,7 @@ export const updateInspection = mutation({
     programNumber: v.optional(v.string()),
     title: v.optional(v.string()),
     category: v.optional(v.string()),
-    inspectionDate: v.optional(v.number()),
+    inspectionDateTime: v.optional(v.number()), // Replaces inspectionDate
     remarks: v.optional(v.string()),
     status: v.optional(
       v.union(
@@ -75,6 +115,26 @@ export const updateInspection = mutation({
     ),
     uploadSessionId: v.optional(v.id("uploadSessions")),
     metadata: v.optional(v.string()),
+
+    // NEW: Location fields (all optional)
+    locationLatitude: v.optional(v.number()),
+    locationLongitude: v.optional(v.number()),
+    locationAccuracy: v.optional(v.number()),
+    barangay: v.optional(v.string()),
+    municipality: v.optional(v.string()),
+    province: v.optional(v.string()),
+    siteMarkerKilometer: v.optional(v.number()),
+    siteMarkerDescription: v.optional(v.string()),
+    mapUrl: v.optional(v.string()),
+
+    // NEW: Scheduling fields (all optional)
+    scheduledDate: v.optional(v.number()),
+    isRescheduled: v.optional(v.boolean()),
+    rescheduleReason: v.optional(v.string()),
+    previousScheduledDate: v.optional(v.number()),
+    inspectionStartTime: v.optional(v.number()),
+    inspectionEndTime: v.optional(v.number()),
+    durationMinutes: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -205,7 +265,7 @@ export const listInspectionsByProject = query({
 
     // Sort by inspection date (most recent first)
     const sortedInspections = filteredInspections.sort(
-      (a, b) => b.inspectionDate - a.inspectionDate
+      (a, b) => b.inspectionDateTime - a.inspectionDateTime
     );
 
     // Enrich with creator info and image count + thumbnail URLs
@@ -263,7 +323,7 @@ export const listInspectionsByBudgetItem = query({
 
     // Sort by inspection date (most recent first)
     const sortedInspections = inspections.sort(
-      (a, b) => b.inspectionDate - a.inspectionDate
+      (a, b) => b.inspectionDateTime - a.inspectionDateTime
     );
 
     // Enrich with creator info and project name
@@ -304,7 +364,7 @@ export const listInspectionsByCategory = query({
       .withIndex("category", (q) => q.eq("category", args.category))
       .collect();
 
-    return inspections.sort((a, b) => b.inspectionDate - a.inspectionDate);
+    return inspections.sort((a, b) => b.inspectionDateTime - a.inspectionDateTime);
   },
 });
 
@@ -448,7 +508,7 @@ export const searchInspections = query({
       const bTitle = b.title.toLowerCase().includes(searchLower);
       if (aTitle && !bTitle) return -1;
       if (!aTitle && bTitle) return 1;
-      return b.inspectionDate - a.inspectionDate;
+      return b.inspectionDateTime - a.inspectionDateTime;
     });
 
     return sorted;

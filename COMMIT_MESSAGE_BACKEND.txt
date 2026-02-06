@@ -1,0 +1,79 @@
+feat(inspections): add location tracking and datetime precision (v2)
+
+Implement minimal field enhancements for PPDO inspection system:
+- GPS location tracking with Philippine administrative structure
+- Precise datetime handling with reschedule tracking
+
+## Schema Changes
+
+### Modified
+- `inspectionDate` → `inspectionDateTime` (Unix timestamp for precision)
+
+### Added - Location Fields (all optional)
+- `locationLatitude`, `locationLongitude`, `locationAccuracy` (GPS)
+- `barangay`, `municipality`, `province` (Philippine structure)
+- `siteMarkerKilometer`, `siteMarkerDescription` (infrastructure markers)
+- `mapUrl` (auto-generated Google Maps link)
+
+### Added - Scheduling Fields (all optional)
+- `scheduledDate`, `isRescheduled`, `rescheduleReason`
+- `previousScheduledDate` (audit trail)
+- `inspectionStartTime`, `inspectionEndTime`, `durationMinutes`
+
+### New Indexes
+- Location: `locationLatLng`, `municipality`, `barangay`
+- Time: `inspectionDateTime`, `scheduledDate`, `isRescheduled`
+
+## API Changes
+
+### Mutations Updated
+- `createInspection` - accepts all new location/scheduling fields
+- `updateInspection` - accepts all new fields (optional)
+- All date sorting now uses `inspectionDateTime`
+
+### Migration Scripts
+- `migrateInspectionsV2` - migrates existing records
+- `getMigrationStatus` - checks migration progress
+- `backfillLocationFromRemarks` - extracts location from remarks (optional)
+
+## Migration Guide
+
+### Before
+```typescript
+await createInspection({
+  inspectionDate: Date.now(),
+  // ...
+});
+```
+
+### After
+```typescript
+await createInspection({
+  inspectionDateTime: Date.now(), // Required
+  locationLatitude: 14.5995,      // Optional
+  barangay: "Poblacion",          // Optional
+  municipality: "San Jose",       // Optional
+  isRescheduled: false,           // Optional
+  // ...
+});
+```
+
+## Deployment
+
+```bash
+# Deploy schema
+npx convex dev
+
+# Run migration
+npx convex run migrations/migrateInspectionsV2:migrateInspectionsV2
+
+# Verify
+npx convex run migrations/migrateInspectionsV2:getMigrationStatus
+```
+
+## Files Changed
+- convex/schema/inspections.ts
+- convex/inspections.ts
+- convex/migrations/migrateInspectionsV2.ts (new)
+
+BREAKING CHANGE: `inspectionDate` replaced with `inspectionDateTime`
