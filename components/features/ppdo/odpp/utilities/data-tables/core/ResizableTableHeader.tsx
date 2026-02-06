@@ -80,7 +80,7 @@ export function ResizableTableHeader({
                         className={`relative px-2 sm:px-3 py-2 text-zinc-700 dark:text-zinc-200 ${canEditLayout ? "cursor-move" : ""
                             }`}
                         style={{
-                            width: `${column.width}px`,
+                            width: column.width <= 100 ? `${column.width}%` : `${column.width}px`,
                             border: '1px solid rgb(228 228 231 / 1)',
                             textAlign: column.align,
                         }}

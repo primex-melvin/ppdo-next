@@ -7,7 +7,7 @@ import { ColumnConfig } from "../types/table.types";
 export function generateGridTemplate(columns: ColumnConfig[]): string {
     return [
         "48px", // Row number column
-        ...columns.map(c => `${c.width}px`),
+        ...columns.map(c => c.width <= 100 ? `${c.width}%` : `${c.width}px`),
         "64px" // Actions column
     ].join(" ");
 }

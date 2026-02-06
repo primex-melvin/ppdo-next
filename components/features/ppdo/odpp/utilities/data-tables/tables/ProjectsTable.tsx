@@ -55,8 +55,11 @@ function ProjectsTotalsRow({ columns, projects }: ProjectsTotalsRowProps) {
         acc.allocatedBudget = (acc.allocatedBudget || 0) + (project.totalBudgetAllocated || 0);
         acc.obligatedBudget = (acc.obligatedBudget || 0) + (project.obligatedBudget || 0);
         acc.utilization = (acc.utilization || 0) + (project.totalBudgetUtilized || 0);
+        acc.projectCompleted = (acc.projectCompleted || 0) + (project.projectCompleted || 0);
+        acc.projectDelayed = (acc.projectDelayed || 0) + (project.projectDelayed || 0);
+        acc.projectsOngoing = (acc.projectsOngoing || 0) + (project.projectsOngoing || 0);
         return acc;
-    }, { allocatedBudget: 0, obligatedBudget: 0, utilization: 0 });
+    }, { allocatedBudget: 0, obligatedBudget: 0, utilization: 0, projectCompleted: 0, projectDelayed: 0, projectsOngoing: 0 });
 
     const utilizationRate = totals.allocatedBudget > 0
         ? (totals.utilization / totals.allocatedBudget) * 100
@@ -76,6 +79,12 @@ function ProjectsTotalsRow({ columns, projects }: ProjectsTotalsRowProps) {
                     cellContent = formatCurrency(totals.utilization);
                 } else if (column.key === "utilizationRate") {
                     cellContent = formatPercentage(utilizationRate);
+                } else if (column.key === "projectCompleted") {
+                    cellContent = Math.round(totals.projectCompleted).toString();
+                } else if (column.key === "projectDelayed") {
+                    cellContent = Math.round(totals.projectDelayed).toString();
+                } else if (column.key === "projectsOngoing") {
+                    cellContent = Math.round(totals.projectsOngoing).toString();
                 } else if (column.key === "particulars") {
                     cellContent = "TOTALS";
                 }

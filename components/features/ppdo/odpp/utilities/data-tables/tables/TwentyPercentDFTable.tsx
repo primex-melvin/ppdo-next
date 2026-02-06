@@ -81,6 +81,12 @@ function TwentyPercentDFResizableTotalsRow({ columns, totals }: TwentyPercentDFR
                             {formatPercentage(totals.utilizationRate)}
                         </span>
                     );
+                } else if (column.key === "projectCompleted") {
+                    cellContent = Math.round(totals.projectCompleted).toString();
+                } else if (column.key === "projectDelayed") {
+                    cellContent = Math.round(totals.projectDelayed).toString();
+                } else if (column.key === "projectsOngoing") {
+                    cellContent = Math.round(totals.projectsOngoing).toString();
                 } else if (column.key === "particulars") {
                     cellContent = "TOTALS";
                 }
