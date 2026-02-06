@@ -2,7 +2,7 @@
 
 import { Page, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
-import { BudgetItem } from "@/components/ppdo/odpp/table-pages/11_project_plan/types";
+import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 
 /**
  * Column definition for table-to-canvas conversion
@@ -178,12 +178,12 @@ export const DEFAULT_TABLE_STYLE: TableStyle = {
   headerFontSize: 10,
   dataFontSize: 9,
   totalsFontSize: 10,
-  cellPadding: 0, // ✅ CHANGED: Zero padding for edge-to-edge cells
+  cellPadding: 0, // âœ… CHANGED: Zero padding for edge-to-edge cells
   borderWidth: 1,
   headerColor: '#18181b',
   dataColor: '#27272a',
   totalsColor: '#18181b',
-  borderColor: '#000000', // ✅ CHANGED: Black borders like Google Docs
+  borderColor: '#000000', // âœ… CHANGED: Black borders like Google Docs
   headerBgColor: '#f4f4f5',
   totalsBgColor: '#e4e4e7',
 };

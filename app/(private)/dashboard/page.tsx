@@ -10,8 +10,8 @@
  * Features global search overlay that appears on click.
  */
 
-import { FiscalYearLanding, DashboardFundSelection } from "@/components/ppdo/dashboard/landing";
-import { DashboardSearch } from "@/components/ppdo/dashboard/DashboardSearch";
+import { FiscalYearLanding, DashboardFundSelection } from "@/components/features/ppdo/dashboard/landing";
+import { DashboardSearch } from "@/components/features/ppdo/dashboard/DashboardSearch";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";

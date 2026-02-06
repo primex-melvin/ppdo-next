@@ -19,29 +19,29 @@ The Projects module is the most complex module in the PPDO Dashboard. It manages
 
 ```
 Fiscal Year (e.g., 2025)
-│
-├── Budget Item (e.g., "Road Infrastructure")
-│   ├── Total Budget Allocated: ₱10,000,000
-│   ├── Total Budget Utilized: ₱6,000,000
-│   │
-│   └── Project (e.g., "National Highway Rehabilitation")
-│       ├── Category: "Infrastructure"
-│       ├── Status: "ongoing"
-│       │
-│       └── Project Breakdown
-│           ├── Breakdown Item 1
-│           │   ├── Budget: ₱2,000,000
-│           │   ├── Implementing Office: "DPWH"
-│           │   └── Status Chain: 
-│           │       ├── MOA: ✓
-│           │       ├── PCIC: ✓
-│           │       ├── Delivery: ⟳
-│           │       └── Liquidation: ✗
-│           │
-│           └── Breakdown Item 2
-│               └── ...
-│
-└── Another Budget Item...
+â”‚
+â”œâ”€â”€ Budget Item (e.g., "Road Infrastructure")
+â”‚   â”œâ”€â”€ Total Budget Allocated: â‚±10,000,000
+â”‚   â”œâ”€â”€ Total Budget Utilized: â‚±6,000,000
+â”‚   â”‚
+â”‚   â””â”€â”€ Project (e.g., "National Highway Rehabilitation")
+â”‚       â”œâ”€â”€ Category: "Infrastructure"
+â”‚       â”œâ”€â”€ Status: "ongoing"
+â”‚       â”‚
+â”‚       â””â”€â”€ Project Breakdown
+â”‚           â”œâ”€â”€ Breakdown Item 1
+â”‚           â”‚   â”œâ”€â”€ Budget: â‚±2,000,000
+â”‚           â”‚   â”œâ”€â”€ Implementing Office: "DPWH"
+â”‚           â”‚   â””â”€â”€ Status Chain: 
+â”‚           â”‚       â”œâ”€â”€ MOA: âœ“
+â”‚           â”‚       â”œâ”€â”€ PCIC: âœ“
+â”‚           â”‚       â”œâ”€â”€ Delivery: âŸ³
+â”‚           â”‚       â””â”€â”€ Liquidation: âœ—
+â”‚           â”‚
+â”‚           â””â”€â”€ Breakdown Item 2
+â”‚               â””â”€â”€ ...
+â”‚
+â””â”€â”€ Another Budget Item...
 ```
 
 ---
@@ -78,7 +78,7 @@ Fiscal Year (e.g., 2025)
 | Breakdowns | Count of breakdown items |
 | Total Allocated | Sum of all budget allocations |
 | Total Utilized | Sum of all utilized budgets |
-| Utilization Rate | (Utilized / Allocated) × 100 |
+| Utilization Rate | (Utilized / Allocated) Ã— 100 |
 | Project Status | Completed / Ongoing / Delayed counts |
 
 ### Components Used
@@ -88,8 +88,8 @@ import {
   FiscalYearEmptyState,
   FiscalYearCard,
   FiscalYearDeleteDialog,
-} from "@/components/ppdo/fiscal-years";
-import { FiscalYearModal } from "@/components/ppdo/fiscal-years";
+} from "@/components/features/ppdo/fiscal-years";
+import { FiscalYearModal } from "@/components/features/ppdo/fiscal-years";
 ```
 
 ---
@@ -109,34 +109,34 @@ import { FiscalYearModal } from "@/components/ppdo/fiscal-years";
 ### Components Structure
 ```
 [year]/
-├── page.tsx
-├── components/
-│   ├── BudgetPageHeader.tsx
-│   ├── BudgetTrackingTable.tsx
-│   ├── BudgetStatistics.tsx
-│   ├── BudgetModal.tsx
-│   ├── BudgetExpandModal.tsx
-│   ├── BudgetShareModal.tsx
-│   ├── BudgetBulkToggleDialog.tsx
-│   ├── BudgetConfirmationModal.tsx
-│   ├── BudgetViolationModal.tsx
-│   ├── table/
-│   │   ├── BudgetTableHeader.tsx
-│   │   ├── BudgetTableRow.tsx
-│   │   ├── BudgetTableToolbar.tsx
-│   │   ├── BudgetTableTotalsRow.tsx
-│   │   ├── BudgetColumnVisibilityMenu.tsx
-│   │   └── BudgetContextMenu.tsx
-│   ├── form/
-│   │   ├── BudgetItemForm.tsx
-│   │   ├── AllocatedBudgetField.tsx
-│   │   ├── ParticularField.tsx
-│   │   └── ...
-│   └── hooks/
-│       ├── useBudgetData.ts
-│       ├── useBudgetMutations.ts
-│       ├── useBudgetTableState.ts
-│       └── ...
+â”œâ”€â”€ page.tsx
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ BudgetPageHeader.tsx
+â”‚   â”œâ”€â”€ BudgetTrackingTable.tsx
+â”‚   â”œâ”€â”€ BudgetStatistics.tsx
+â”‚   â”œâ”€â”€ BudgetModal.tsx
+â”‚   â”œâ”€â”€ BudgetExpandModal.tsx
+â”‚   â”œâ”€â”€ BudgetShareModal.tsx
+â”‚   â”œâ”€â”€ BudgetBulkToggleDialog.tsx
+â”‚   â”œâ”€â”€ BudgetConfirmationModal.tsx
+â”‚   â”œâ”€â”€ BudgetViolationModal.tsx
+â”‚   â”œâ”€â”€ table/
+â”‚   â”‚   â”œâ”€â”€ BudgetTableHeader.tsx
+â”‚   â”‚   â”œâ”€â”€ BudgetTableRow.tsx
+â”‚   â”‚   â”œâ”€â”€ BudgetTableToolbar.tsx
+â”‚   â”‚   â”œâ”€â”€ BudgetTableTotalsRow.tsx
+â”‚   â”‚   â”œâ”€â”€ BudgetColumnVisibilityMenu.tsx
+â”‚   â”‚   â””â”€â”€ BudgetContextMenu.tsx
+â”‚   â”œâ”€â”€ form/
+â”‚   â”‚   â”œâ”€â”€ BudgetItemForm.tsx
+â”‚   â”‚   â”œâ”€â”€ AllocatedBudgetField.tsx
+â”‚   â”‚   â”œâ”€â”€ ParticularField.tsx
+â”‚   â”‚   â””â”€â”€ ...
+â”‚   â””â”€â”€ hooks/
+â”‚       â”œâ”€â”€ useBudgetData.ts
+â”‚       â”œâ”€â”€ useBudgetMutations.ts
+â”‚       â”œâ”€â”€ useBudgetTableState.ts
+â”‚       â””â”€â”€ ...
 ```
 
 ### Table Features
@@ -179,28 +179,28 @@ const utilizationRate = allocated > 0
 ### Components Structure
 ```
 [particularId]/
-├── page.tsx
-├── components/
-│   ├── ParticularPageHeader.tsx
-│   ├── ProjectsTable.tsx
-│   ├── ProjectForm.tsx
-│   ├── ProjectCategoryCombobox.tsx
-│   ├── ProjectParticularCombobox.tsx
-│   ├── ProjectExpandModal.tsx
-│   ├── ProjectShareModal.tsx
-│   ├── ProjectBulkToggleDialog.tsx
-│   ├── ProjectSummaryStats.tsx
-│   ├── StatusInfoCard.tsx
-│   └── ProjectsTable/
-│       ├── ProjectsTableHeader.tsx
-│       ├── ProjectsTableBody.tsx
-│       ├── ProjectsTableRow.tsx
-│       ├── ProjectsTableToolbar.tsx
-│       ├── ProjectBulkActions.tsx
-│       ├── ProjectCategoryFilter.tsx
-│       ├── ProjectCategoryGroup.tsx
-│       ├── ProjectContextMenu.tsx
-│       └── SortIcon.tsx
+â”œâ”€â”€ page.tsx
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ ParticularPageHeader.tsx
+â”‚   â”œâ”€â”€ ProjectsTable.tsx
+â”‚   â”œâ”€â”€ ProjectForm.tsx
+â”‚   â”œâ”€â”€ ProjectCategoryCombobox.tsx
+â”‚   â”œâ”€â”€ ProjectParticularCombobox.tsx
+â”‚   â”œâ”€â”€ ProjectExpandModal.tsx
+â”‚   â”œâ”€â”€ ProjectShareModal.tsx
+â”‚   â”œâ”€â”€ ProjectBulkToggleDialog.tsx
+â”‚   â”œâ”€â”€ ProjectSummaryStats.tsx
+â”‚   â”œâ”€â”€ StatusInfoCard.tsx
+â”‚   â””â”€â”€ ProjectsTable/
+â”‚       â”œâ”€â”€ ProjectsTableHeader.tsx
+â”‚       â”œâ”€â”€ ProjectsTableBody.tsx
+â”‚       â”œâ”€â”€ ProjectsTableRow.tsx
+â”‚       â”œâ”€â”€ ProjectsTableToolbar.tsx
+â”‚       â”œâ”€â”€ ProjectBulkActions.tsx
+â”‚       â”œâ”€â”€ ProjectCategoryFilter.tsx
+â”‚       â”œâ”€â”€ ProjectCategoryGroup.tsx
+â”‚       â”œâ”€â”€ ProjectContextMenu.tsx
+â”‚       â””â”€â”€ SortIcon.tsx
 ```
 
 ### Project Categories
@@ -228,7 +228,7 @@ const utilizationRate = allocated > 0
 
 ### Features
 - Breakdown items table
-- Status chain tracking (MOA → PCIC → Delivery → Liquidation)
+- Status chain tracking (MOA â†’ PCIC â†’ Delivery â†’ Liquidation)
 - Implementing office selection
 - Budget allocation per breakdown
 - History tracking
@@ -236,30 +236,30 @@ const utilizationRate = allocated > 0
 ### Components Structure
 ```
 [projectbreakdownId]/
-├── page.tsx
-├── components/
-│   ├── BreakdownForm.tsx
-│   ├── BreakdownHistoryTable.tsx
-│   ├── EmptyState.tsx
-│   ├── ImplementingOfficeSelector.tsx
-│   ├── StatusChainCard.tsx
-│   ├── TableHeader.tsx
-│   ├── TableRow.tsx
-│   ├── TableToolbar.tsx
-│   └── TableTotalsRow.tsx
-├── constants/
-│   └── table.constants.ts
-├── hooks/
-│   ├── useColumnDragDrop.ts
-│   ├── useTableResize.ts
-│   └── useTableSettings.ts
-├── types/
-│   └── breakdown.types.ts
-└── utils/
-    ├── formatters.ts
-    ├── helpers.ts
-    ├── navigation.utils.ts
-    └── page-helpers.ts
+â”œâ”€â”€ page.tsx
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ BreakdownForm.tsx
+â”‚   â”œâ”€â”€ BreakdownHistoryTable.tsx
+â”‚   â”œâ”€â”€ EmptyState.tsx
+â”‚   â”œâ”€â”€ ImplementingOfficeSelector.tsx
+â”‚   â”œâ”€â”€ StatusChainCard.tsx
+â”‚   â”œâ”€â”€ TableHeader.tsx
+â”‚   â”œâ”€â”€ TableRow.tsx
+â”‚   â”œâ”€â”€ TableToolbar.tsx
+â”‚   â””â”€â”€ TableTotalsRow.tsx
+â”œâ”€â”€ constants/
+â”‚   â””â”€â”€ table.constants.ts
+â”œâ”€â”€ hooks/
+â”‚   â”œâ”€â”€ useColumnDragDrop.ts
+â”‚   â”œâ”€â”€ useTableResize.ts
+â”‚   â””â”€â”€ useTableSettings.ts
+â”œâ”€â”€ types/
+â”‚   â””â”€â”€ breakdown.types.ts
+â””â”€â”€ utils/
+    â”œâ”€â”€ formatters.ts
+    â”œâ”€â”€ helpers.ts
+    â”œâ”€â”€ navigation.utils.ts
+    â””â”€â”€ page-helpers.ts
 ```
 
 ### Status Chain
@@ -267,10 +267,10 @@ Each breakdown has a status chain tracking progress:
 
 | Status | Description | Icon |
 |--------|-------------|------|
-| MOA | Memorandum of Agreement | ✓/✗/⟳ |
-| PCIC | Performance/Completion Inspection | ✓/✗/⟳ |
-| Delivery | Goods/Services Delivery | ✓/✗/⟳ |
-| Liquidation | Financial Liquidation | ✓/✗/⟳ |
+| MOA | Memorandum of Agreement | âœ“/âœ—/âŸ³ |
+| PCIC | Performance/Completion Inspection | âœ“/âœ—/âŸ³ |
+| Delivery | Goods/Services Delivery | âœ“/âœ—/âŸ³ |
+| Liquidation | Financial Liquidation | âœ“/âœ—/âŸ³ |
 
 Status values: `completed`, `pending`, `ongoing`, `not_started`
 
@@ -320,37 +320,37 @@ Status values: `completed`, `pending`, `ongoing`, `not_started`
 ### Components Structure
 ```
 [projectId]/
-├── page.tsx
-├── components/
-│   ├── Card.tsx
-│   ├── StatCard.tsx
-│   ├── TransactionCard.tsx
-│   ├── FinancialBreakdownCard.tsx
-│   ├── FinancialBreakdownHeader.tsx
-│   ├── FinancialBreakdownItemForm.tsx
-│   ├── FinancialBreakdownMain.tsx
-│   ├── FinancialBreakdownTable.tsx
-│   ├── FinancialBreakdownTabs.tsx
-│   ├── InspectionsDataTable.tsx
-│   ├── InspectionGalleryModal.tsx
-│   ├── InspectionContextMenu.tsx
-│   ├── InspectionViewToggle.tsx
-│   ├── RemarksSection.tsx
-│   ├── tabs/
-│   │   ├── OverviewContent.tsx
-│   │   ├── InspectionContent.tsx
-│   │   ├── AnalyticsContent.tsx
-│   │   └── RemarksContent.tsx
-│   └── modals/
-│       ├── InspectionDetailsModal.tsx
-│       ├── NewInspectionForm.tsx
-│       └── NewRemarkModal.tsx
-├── types/
-│   └── inspection.ts
-├── data.ts
-├── utils.ts
-└── components/
-    └── types.ts
+â”œâ”€â”€ page.tsx
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ Card.tsx
+â”‚   â”œâ”€â”€ StatCard.tsx
+â”‚   â”œâ”€â”€ TransactionCard.tsx
+â”‚   â”œâ”€â”€ FinancialBreakdownCard.tsx
+â”‚   â”œâ”€â”€ FinancialBreakdownHeader.tsx
+â”‚   â”œâ”€â”€ FinancialBreakdownItemForm.tsx
+â”‚   â”œâ”€â”€ FinancialBreakdownMain.tsx
+â”‚   â”œâ”€â”€ FinancialBreakdownTable.tsx
+â”‚   â”œâ”€â”€ FinancialBreakdownTabs.tsx
+â”‚   â”œâ”€â”€ InspectionsDataTable.tsx
+â”‚   â”œâ”€â”€ InspectionGalleryModal.tsx
+â”‚   â”œâ”€â”€ InspectionContextMenu.tsx
+â”‚   â”œâ”€â”€ InspectionViewToggle.tsx
+â”‚   â”œâ”€â”€ RemarksSection.tsx
+â”‚   â”œâ”€â”€ tabs/
+â”‚   â”‚   â”œâ”€â”€ OverviewContent.tsx
+â”‚   â”‚   â”œâ”€â”€ InspectionContent.tsx
+â”‚   â”‚   â”œâ”€â”€ AnalyticsContent.tsx
+â”‚   â”‚   â””â”€â”€ RemarksContent.tsx
+â”‚   â””â”€â”€ modals/
+â”‚       â”œâ”€â”€ InspectionDetailsModal.tsx
+â”‚       â”œâ”€â”€ NewInspectionForm.tsx
+â”‚       â””â”€â”€ NewRemarkModal.tsx
+â”œâ”€â”€ types/
+â”‚   â””â”€â”€ inspection.ts
+â”œâ”€â”€ data.ts
+â”œâ”€â”€ utils.ts
+â””â”€â”€ components/
+    â””â”€â”€ types.ts
 ```
 
 ---
@@ -379,7 +379,7 @@ Located in: `app/dashboard/components/print/GenericPrintPreviewModal.tsx`
 ### Print Adapters
 ```typescript
 // app/dashboard/project/[year]/lib/print-adapters/
-├── BudgetPrintAdapter.ts
+â”œâ”€â”€ BudgetPrintAdapter.ts
 ```
 
 ---

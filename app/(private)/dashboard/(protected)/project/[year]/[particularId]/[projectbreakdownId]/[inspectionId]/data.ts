@@ -2,7 +2,7 @@
 
 import { Project, Remark } from "../../../../../../../../../types/types";
 import { getProjectsByParticular } from "../../../../../../../../../data/data";
-import { FinancialBreakdownItem } from "@/components/ppdo/inspection/types";
+import { FinancialBreakdownItem } from "@/components/features/ppdo/inspection/types";
 
 // Mock remarks data - in production, this would come from an API
 export function getRemarksByProject(projectId: string): Remark[] {

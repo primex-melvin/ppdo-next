@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { TrendingUp, Package, FolderTree } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import AccessDeniedPage from "@/components/AccessDeniedPage";
-import { useBudgetAccess } from "@/components/ppdo/odpp/table-pages/11_project_plan";
-import { LoadingState } from "@/components/ppdo/LoadingState";
+import AccessDeniedPage from "@/components/shared/pages/AccessDeniedPage";
+import { useBudgetAccess } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
+import { LoadingState } from "@/components/features/ppdo/LoadingState";
 import { useAccentColor } from "@/contexts/AccentColorContext";
-import { FiscalYearModal } from "@/components/ppdo/fiscal-years";
+import { FiscalYearModal } from "@/components/features/ppdo/fiscal-years";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
-import { FiscalYearHeader } from "@/components/ppdo/fiscal-years/FiscalYearHeader";
-import { FiscalYearEmptyState } from "@/components/ppdo/fiscal-years/FiscalYearEmptyState";
-import { FiscalYearCard } from "@/components/ppdo/fiscal-years/FiscalYearCard";
-import { FiscalYearDeleteDialog } from "@/components/ppdo/fiscal-years/FiscalYearDeleteDialog";
+import { FiscalYearHeader } from "@/components/features/ppdo/fiscal-years/FiscalYearHeader";
+import { FiscalYearEmptyState } from "@/components/features/ppdo/fiscal-years/FiscalYearEmptyState";
+import { FiscalYearCard } from "@/components/features/ppdo/fiscal-years/FiscalYearCard";
+import { FiscalYearDeleteDialog } from "@/components/features/ppdo/fiscal-years/FiscalYearDeleteDialog";
 
 export default function ProjectDashboardLanding() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function ProjectDashboardLanding() {
   // Fetch fiscal years
   const fiscalYears = useQuery(api.fiscalYears.list, { includeInactive: false });
 
-  // ✅ Fixed: Pass empty object {} to satisfy the required args parameter
+  // âœ… Fixed: Pass empty object {} to satisfy the required args parameter
   const allBudgetItems = useQuery(api.budgetItems.list, {});
   const allProjects = useQuery(api.projects.list, {});
   const allBreakdowns = useQuery(api.govtProjects.getProjectBreakdowns, {});

@@ -1,6 +1,6 @@
 // app/dashboard/project/budget/[particularId]/[projectbreakdownId]/[inspectionId]/utils.ts
 
-import { FinancialBreakdownItem } from "@/components/ppdo/inspection/types";
+import { FinancialBreakdownItem } from "@/components/features/ppdo/inspection/types";
 
 
 // Helper function to recursively find and update an item in hierarchical structure

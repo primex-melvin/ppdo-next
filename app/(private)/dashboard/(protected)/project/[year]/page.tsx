@@ -6,8 +6,8 @@ import { use, useEffect } from "react";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Expand } from "lucide-react";
-import AccessDeniedPage from "@/components/AccessDeniedPage";
-import { TrashBinModal } from "@/components/modals";
+import AccessDeniedPage from "@/components/shared/pages/AccessDeniedPage";
+import { TrashBinModal } from "@/components/shared/modals";
 import {
   BudgetStatistics,
   BudgetTrackingTable,
@@ -16,10 +16,10 @@ import {
   useBudgetData,
   useBudgetMutations,
   YearBudgetPageHeader,
-} from "@/components/ppdo/odpp/table-pages/11_project_plan";
-import { LoadingState } from "@/components/ppdo/LoadingState";
+} from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
+import { LoadingState } from "@/components/features/ppdo/LoadingState";
 import { Button } from "@/components/ui/button";
-import { BudgetItem } from "@/components/ppdo/odpp/table-pages/11_project_plan/types";
+import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 
 interface PageProps {
   params: Promise<{ year: string }>;

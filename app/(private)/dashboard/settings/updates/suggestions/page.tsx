@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { Plus, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { BugsSuggestionsDataTable, MediaThumbnails } from "@/components/ppdo/dashboard/BugsSuggestionsDataTable";
-import { SuggestionModal } from "@/components/maintenance/SuggestionModal";
-import { StatusDropdown } from "@/components/maintenance/StatusDropdown";
+import { BugsSuggestionsDataTable, MediaThumbnails } from "@/components/features/ppdo/dashboard/BugsSuggestionsDataTable";
+import { SuggestionModal } from "@/components/features/maintenance/SuggestionModal";
+import { StatusDropdown } from "@/components/features/maintenance/StatusDropdown";
 
 export default function SuggestionsPage() {
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function SuggestionsPage() {
       header: "Updated By",
       cell: ({ row }) => {
         const updater = row.original.updater;
-        if (!updater) return <span className="text-muted-foreground text-xs">—</span>;
+        if (!updater) return <span className="text-muted-foreground text-xs">â€”</span>;
 
         let name = "Unknown";
         if (updater.firstName || updater.lastName) {
@@ -89,7 +89,7 @@ export default function SuggestionsPage() {
       header: "Last Updated",
       cell: ({ row }) => {
         const updatedAt = row.getValue("updatedAt") as number;
-        if (!updatedAt) return <span className="text-muted-foreground text-xs">—</span>;
+        if (!updatedAt) return <span className="text-muted-foreground text-xs">â€”</span>;
 
         return <span className="text-xs text-muted-foreground whitespace-nowrap">
           {new Date(updatedAt).toLocaleDateString("en-US", {

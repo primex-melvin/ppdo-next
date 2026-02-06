@@ -2,11 +2,11 @@
 "use client";
 
 import { Suspense } from "react";
-import { DashboardFilters } from "@/components/analytics/DashboardFilters";
-import { DashboardContent } from "@/components/analytics/DashboardContent";
+import { DashboardFilters } from "@/components/features/analytics/DashboardFilters";
+import { DashboardContent } from "@/components/features/analytics/DashboardContent";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
-import { DashboardSkeleton } from "@/components/analytics/DashboardSkeleton";
-import { PrintableDashboard } from "@/components/print/PrintableDashboard";
+import { DashboardSkeleton } from "@/components/features/analytics/DashboardSkeleton";
+import { PrintableDashboard } from "@/components/shared/print/PrintableDashboard";
 
 import { use } from "react";
 

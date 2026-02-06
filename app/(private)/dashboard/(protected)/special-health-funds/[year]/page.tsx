@@ -4,9 +4,9 @@
 
 import { use, useState, useMemo } from "react";
 import { useQuery } from "convex/react";
-import { useFundsData, useFundsMutations, FundsPageHeader, FundsStatistics, FundsTable, FundForm, FundsExpandModal, FundsShareModal } from "@/components/ppdo/odpp/table-pages/funds";
+import { useFundsData, useFundsMutations, FundsPageHeader, FundsStatistics, FundsTable, FundForm, FundsExpandModal, FundsShareModal } from "@/components/features/ppdo/odpp/table-pages/funds";
 import { api } from "@/convex/_generated/api";
-import { TrashBinModal } from "@/components/modals";
+import { TrashBinModal } from "@/components/shared/modals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Expand } from "lucide-react";

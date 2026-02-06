@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AccessDeniedPage from "@/components/AccessDeniedPage";
-import { TrashBinModal } from "@/components/modals";
+import AccessDeniedPage from "@/components/shared/pages/AccessDeniedPage";
+import { TrashBinModal } from "@/components/shared/modals";
 
 // Import from reusable component library
 // Note: We use relative imports if we are inside the same feature folder structure, 
@@ -23,7 +23,7 @@ import {
   useParticularAccess,
   getParticularFullName,
   calculateProjectStats
-} from "@/components/ppdo/odpp/table-pages/projects";
+} from "@/components/features/ppdo/odpp/table-pages/projects";
 
 export default function ParticularProjectsPage() {
   const params = useParams();

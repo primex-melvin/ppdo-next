@@ -4,7 +4,7 @@
 
 import { Eye, EyeOff, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ActivityLogSheet } from "@/components/ActivityLogSheet";
+import { ActivityLogSheet } from "@/components/shared/activity/ActivityLogSheet";
 
 interface YearTrustFundsPageHeaderProps {
   year: number;

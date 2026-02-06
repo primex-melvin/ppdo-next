@@ -17,7 +17,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTableState, TableState, TableStateActions } from "./useTableState";
-import { useGenericTableSettings } from "@/components/ppdo/odpp/utilities/shared/hooks/useGenericTableSettings";
+import { useGenericTableSettings } from "@/components/features/ppdo/odpp/utilities/shared/hooks/useGenericTableSettings";
 import { SortDirection } from "../types/table.types";
 
 export interface UseEntityTableOptions<T, TSortField extends string> {

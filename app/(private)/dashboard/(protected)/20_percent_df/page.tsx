@@ -6,13 +6,13 @@ import { TrendingUp, Package, FolderTree } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccentColor } from "@/contexts/AccentColorContext";
-import { FiscalYearModal } from "@/components/ppdo/fiscal-years";
+import { FiscalYearModal } from "@/components/features/ppdo/fiscal-years";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
-import { FiscalYearHeader } from "@/components/ppdo/fiscal-years/FiscalYearHeader";
-import { FiscalYearEmptyState } from "@/components/ppdo/fiscal-years/FiscalYearEmptyState";
-import { FiscalYearCard } from "@/components/ppdo/fiscal-years/FiscalYearCard";
-import { FiscalYearDeleteDialog } from "@/components/ppdo/fiscal-years/FiscalYearDeleteDialog";
+import { FiscalYearHeader } from "@/components/features/ppdo/fiscal-years/FiscalYearHeader";
+import { FiscalYearEmptyState } from "@/components/features/ppdo/fiscal-years/FiscalYearEmptyState";
+import { FiscalYearCard } from "@/components/features/ppdo/fiscal-years/FiscalYearCard";
+import { FiscalYearDeleteDialog } from "@/components/features/ppdo/fiscal-years/FiscalYearDeleteDialog";
 
 export default function TwentyPercentDFLanding() {
     const router = useRouter();

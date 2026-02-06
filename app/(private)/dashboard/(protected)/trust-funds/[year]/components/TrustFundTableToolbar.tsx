@@ -9,4 +9,4 @@
 export {
   TrustFundTableToolbar,
   type TrustFundTableToolbarProps,
-} from "@/components/ppdo/odpp/utilities/table/toolbar/adapters/TrustFundTableToolbar";
+} from "@/components/features/ppdo/odpp/utilities/table/toolbar/adapters/TrustFundTableToolbar";

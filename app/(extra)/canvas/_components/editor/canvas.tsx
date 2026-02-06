@@ -1,4 +1,4 @@
-// app/(extra)/canvas/_components/editor/canvas.tsx
+﻿// app/(extra)/canvas/_components/editor/canvas.tsx
 
 'use client';
 
@@ -8,8 +8,8 @@ import { getPageDimensions, HEADER_HEIGHT, FOOTER_HEIGHT, POINTS_PER_INCH } from
 import TextElementComponent from './text-element';
 import ImageElementComponent from './image-element';
 import HeaderFooterSection from './header-footer-section';
-import { TableResizeOverlay } from '@/components/ppdo/odpp/utilities/table/print-preview/table-resize/TableResizeOverlay';
-import { TableBorderOverlay } from '@/components/ppdo/odpp/utilities/table/print-preview/table-borders/TableBorderOverlay';
+import { TableResizeOverlay } from '@/components/features/ppdo/odpp/utilities/table/print-preview/table-resize/TableResizeOverlay';
+import { TableBorderOverlay } from '@/components/features/ppdo/odpp/utilities/table/print-preview/table-borders/TableBorderOverlay';
 
 type ActiveSection = 'header' | 'page' | 'footer';
 
@@ -56,25 +56,25 @@ export default function Canvas({
   showMarginGuides = false,
   margins,
 }: CanvasProps) {
-  console.group('📋 STEP 7: Canvas Component - Rendering');
-  console.log('📄 Page data:', page);
-  console.log('📄 Page elements count:', page?.elements?.length || 0);
-  console.log('📄 Page size:', page?.size);
-  console.log('📄 Page orientation:', page?.orientation);
-  console.log('📄 Page background:', page?.backgroundColor);
-  console.log('📄 Header elements:', header?.elements?.length || 0);
-  console.log('📄 Footer elements:', footer?.elements?.length || 0);
-  console.log('📄 Page number:', pageNumber);
-  console.log('📄 Total pages:', totalPages);
+  console.group('ðŸ“‹ STEP 7: Canvas Component - Rendering');
+  console.log('ðŸ“„ Page data:', page);
+  console.log('ðŸ“„ Page elements count:', page?.elements?.length || 0);
+  console.log('ðŸ“„ Page size:', page?.size);
+  console.log('ðŸ“„ Page orientation:', page?.orientation);
+  console.log('ðŸ“„ Page background:', page?.backgroundColor);
+  console.log('ðŸ“„ Header elements:', header?.elements?.length || 0);
+  console.log('ðŸ“„ Footer elements:', footer?.elements?.length || 0);
+  console.log('ðŸ“„ Page number:', pageNumber);
+  console.log('ðŸ“„ Total pages:', totalPages);
 
   if (!page) {
-    console.error('❌ CRITICAL: Page prop is undefined!');
+    console.error('âŒ CRITICAL: Page prop is undefined!');
   }
   if (!page?.elements || page.elements.length === 0) {
-    console.warn('⚠️ WARNING: Page has no elements to render!');
+    console.warn('âš ï¸ WARNING: Page has no elements to render!');
   } else {
-    console.log('✅ Page has', page.elements.length, 'elements to render');
-    console.log('📄 First 3 elements:', page.elements.slice(0, 3));
+    console.log('âœ… Page has', page.elements.length, 'elements to render');
+    console.log('ðŸ“„ First 3 elements:', page.elements.slice(0, 3));
   }
 
   console.groupEnd();
@@ -471,7 +471,7 @@ export default function Canvas({
           return null;
         })}
 
-        {/* ✅ DEFAULT TABLE BORDERS - Always visible */}
+        {/* âœ… DEFAULT TABLE BORDERS - Always visible */}
         <TableBorderOverlay elements={page.elements} />
 
         {/* Group outline */}

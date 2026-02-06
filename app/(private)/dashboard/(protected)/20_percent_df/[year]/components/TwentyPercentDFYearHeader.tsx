@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Calendar, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ActivityLogSheet } from "@/components/ActivityLogSheet";
+import { ActivityLogSheet } from "@/components/shared/activity/ActivityLogSheet";
 
 // Define the activity log type - must match ActivityLogType from ActivityLogSheet
 type ActivityLogType =

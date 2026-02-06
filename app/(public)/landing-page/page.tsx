@@ -7,11 +7,11 @@ import { api } from "@/convex/_generated/api";
 
 import Header from "@/components/layout/Header";
 import Navbar from "@/components/layout/Navbar";
-import HeroBanner from "@/components/marketing/HeroBanner";
-import FeaturesSection from "@/components/marketing/FeaturesSection";
+import HeroBanner from "@/components/features/marketing/HeroBanner";
+import FeaturesSection from "@/components/features/marketing/FeaturesSection";
 import GovernorMessage from "@/components/layout/GovernorMessage";
-import AboutSection from "@/components/marketing/AboutSection";
-import ActivitiesSection from "@/components/marketing/ActivitiesSection";
+import AboutSection from "@/components/features/marketing/AboutSection";
+import ActivitiesSection from "@/components/features/marketing/ActivitiesSection";
 import { Footer } from "@/components/layout";
 import FadeIn from "@/components/ui/FadeIn";
 

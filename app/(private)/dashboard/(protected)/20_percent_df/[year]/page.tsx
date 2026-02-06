@@ -6,15 +6,15 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrashBinModal } from "@/components/modals";
+import { TrashBinModal } from "@/components/shared/modals";
 
 // 20% DF Components
-import { TwentyPercentDFTable } from "@/components/ppdo/odpp/table-pages/twenty-percent-df/components/TwentyPercentDFTable";
-import { TwentyPercentDFStatistics } from "@/components/ppdo/odpp/table-pages/twenty-percent-df/components/TwentyPercentDFStatistics";
+import { TwentyPercentDFTable } from "@/components/features/ppdo/odpp/table-pages/twenty-percent-df/components/TwentyPercentDFTable";
+import { TwentyPercentDFStatistics } from "@/components/features/ppdo/odpp/table-pages/twenty-percent-df/components/TwentyPercentDFStatistics";
 import { TwentyPercentDFYearHeader } from "./components/TwentyPercentDFYearHeader";
 
 // Types
-import { TwentyPercentDF } from "@/components/ppdo/odpp/table-pages/twenty-percent-df/types";
+import { TwentyPercentDF } from "@/components/features/ppdo/odpp/table-pages/twenty-percent-df/types";
 
 interface PageProps {
     params: Promise<{ year: string }>;

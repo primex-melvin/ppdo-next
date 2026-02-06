@@ -49,7 +49,7 @@ interface ColumnVisibilityMenuProps {
 Wraps the base `ColumnVisibilityMenu` with project-specific columns.
 
 ```tsx
-import { ColumnVisibilityMenu as BaseColumnVisibilityMenu } from "@/components/ColumnVisibilityMenu";
+import { ColumnVisibilityMenu as BaseColumnVisibilityMenu } from "@/components/shared/table/ColumnVisibilityMenu";
 import { AVAILABLE_COLUMNS } from "../../constants";
 
 export function ColumnVisibilityMenu(props) {

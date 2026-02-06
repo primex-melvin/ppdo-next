@@ -21,13 +21,13 @@ import {
   BreakdownForm,
   Breakdown,
   BreakdownStatistics,
-} from "@/components/ppdo/odpp/table-pages/breakdown";
+} from "@/components/features/ppdo/odpp/table-pages/breakdown";
 
 // Shared Components
-import { TrashBinModal } from "@/components/modals";
-import { TrashConfirmationModal } from "@/components/modals/TrashConfirmationModal";
-import { Modal } from "@/components/ppdo/odpp/table-pages/11_project_plan";
-import { ConfirmationModal } from "@/components/ppdo/odpp/table-pages/11_project_plan";
+import { TrashBinModal } from "@/components/shared/modals";
+import { TrashConfirmationModal } from "@/components/shared/modals/TrashConfirmationModal";
+import { Modal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
+import { ConfirmationModal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
 
 // Shared Hooks
 import { useEntityStats, useEntityMetadata } from "@/lib/hooks/useEntityStats";

@@ -274,7 +274,7 @@ const columns = useTableColumnVisibility("temp-table", {
 "use client";
 
 import { useTableSearch, useTableSelection, useTableColumnVisibility } from "@/hooks";
-import { TableToolbar } from "@/components/ppdo/table/toolbar";
+import { TableToolbar } from "@/components/features/ppdo/table/toolbar";
 
 export function BudgetTable({ data }) {
   // Search

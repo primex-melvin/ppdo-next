@@ -32,10 +32,10 @@ import {
   Edit,
   Archive
 } from "lucide-react";
-import { Modal, ConfirmationModal } from "@/components/ppdo/odpp/table-pages/11_project_plan";
+import { Modal, ConfirmationModal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
 import { TrustFundForm } from "./TrustFundForm";
 import { TrustFund, convertTrustFundFromDB } from "@/types/trustFund.types";
-import { ActivityLogSheet } from "@/components/ActivityLogSheet";
+import { ActivityLogSheet } from "@/components/shared/activity/ActivityLogSheet";
 import {
   DropdownMenu,
   DropdownMenuContent,

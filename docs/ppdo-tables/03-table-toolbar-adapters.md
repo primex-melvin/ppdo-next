@@ -65,7 +65,7 @@ interface BudgetTableToolbarProps {
 
 **Usage**:
 ```tsx
-import { BudgetTableToolbar } from "@/components/ppdo/table/toolbar";
+import { BudgetTableToolbar } from "@/components/features/ppdo/table/toolbar";
 
 <BudgetTableToolbar
   searchQuery={search}
@@ -137,7 +137,7 @@ interface ProjectsTableToolbarProps {
 
 **Usage**:
 ```tsx
-import { ProjectsTableToolbar } from "@/components/ppdo/table/toolbar";
+import { ProjectsTableToolbar } from "@/components/features/ppdo/table/toolbar";
 
 <ProjectsTableToolbar
   searchQuery={search}
@@ -186,7 +186,7 @@ interface FundsTableToolbarProps {
 
 **Usage**:
 ```tsx
-import { FundsTableToolbar } from "@/components/ppdo/table/toolbar";
+import { FundsTableToolbar } from "@/components/features/ppdo/table/toolbar";
 
 <FundsTableToolbar
   title="Trust Funds"
@@ -232,12 +232,12 @@ import {
   BudgetTableToolbar,
   ProjectsTableToolbar,
   FundsTableToolbar
-} from "@/components/ppdo/table/toolbar";
+} from "@/components/features/ppdo/table/toolbar";
 ```
 
 **From Core (Direct Access)**:
 ```tsx
-import { TableToolbar } from "@/components/ppdo/table/toolbar/TableToolbar";
+import { TableToolbar } from "@/components/features/ppdo/table/toolbar/TableToolbar";
 ```
 
 ## Creating a New Adapter

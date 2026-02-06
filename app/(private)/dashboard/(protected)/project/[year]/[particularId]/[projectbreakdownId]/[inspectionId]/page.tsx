@@ -10,10 +10,10 @@ import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useDashboardBreadcrumbs } from "@/lib/hooks/useDashboardBreadcrumbs";
 import { decodeLabel, extractIdFromSlug, extractCleanNameFromSlug, getParticularFullName, formatYearLabel } from "@/lib/utils/breadcrumb-utils";
-import { FinancialBreakdownCard } from "@/components/ppdo/inspection";
-import { FinancialBreakdownHeader, tabs } from "@/components/ppdo/inspection";
-import { FinancialBreakdownMain } from "@/components/ppdo/inspection";
-import { Card } from "@/components/ppdo/inspection";
+import { FinancialBreakdownCard } from "@/components/features/ppdo/inspection";
+import { FinancialBreakdownHeader, tabs } from "@/components/features/ppdo/inspection";
+import { FinancialBreakdownMain } from "@/components/features/ppdo/inspection";
+import { Card } from "@/components/features/ppdo/inspection";
 
 export default function BreakdownDetailPage() {
   const params = useParams();

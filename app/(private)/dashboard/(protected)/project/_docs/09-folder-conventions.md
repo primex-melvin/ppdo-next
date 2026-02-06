@@ -29,11 +29,11 @@ Folders prefixed with underscore (`_`) are excluded from the routing system. Use
 ```
 Before (problematic):
 app/dashboard/project/components/FiscalYearModal.tsx
-→ Creates URL: /dashboard/project/components  ❌
+â†’ Creates URL: /dashboard/project/components  âŒ
 
 After (correct):
 app/dashboard/project/_components/FiscalYearModal.tsx
-→ No URL created, component is private  ✅
+â†’ No URL created, component is private  âœ…
 ```
 
 ---
@@ -42,32 +42,32 @@ app/dashboard/project/_components/FiscalYearModal.tsx
 
 ```
 app/dashboard/project/
-│
-├── page.tsx                          # /dashboard/project
-│
-├── _components/                      # Private: Shared components
-│   └── FiscalYearModal.tsx
-│
-├── _docs/                            # Private: Documentation
-│   └── *.md
-│
-└── [year]/                           # /dashboard/project/:year
-    ├── page.tsx
-    └── [particularId]/               # /dashboard/project/:year/:particularId
-        ├── page.tsx
-        └── [projectbreakdownId]/     # /dashboard/project/:year/:particularId/:projectbreakdownId
-            ├── page.tsx
-            ├── _components/          # Private: Page-specific components
-            │   └── StatusChainCard.tsx
-            ├── _lib/                 # Private: Utilities
-            │   └── page-helpers.ts
-            └── [inspectionId]/       # /dashboard/project/.../:inspectionId
-                ├── page.tsx
-                ├── _lib/             # Private: Data & utils
-                │   ├── data.ts
-                │   └── utils.ts
-                └── _types/           # Private: TypeScript types
-                    └── inspection.ts
+â”‚
+â”œâ”€â”€ page.tsx                          # /dashboard/project
+â”‚
+â”œâ”€â”€ _components/                      # Private: Shared components
+â”‚   â””â”€â”€ FiscalYearModal.tsx
+â”‚
+â”œâ”€â”€ _docs/                            # Private: Documentation
+â”‚   â””â”€â”€ *.md
+â”‚
+â””â”€â”€ [year]/                           # /dashboard/project/:year
+    â”œâ”€â”€ page.tsx
+    â””â”€â”€ [particularId]/               # /dashboard/project/:year/:particularId
+        â”œâ”€â”€ page.tsx
+        â””â”€â”€ [projectbreakdownId]/     # /dashboard/project/:year/:particularId/:projectbreakdownId
+            â”œâ”€â”€ page.tsx
+            â”œâ”€â”€ _components/          # Private: Page-specific components
+            â”‚   â””â”€â”€ StatusChainCard.tsx
+            â”œâ”€â”€ _lib/                 # Private: Utilities
+            â”‚   â””â”€â”€ page-helpers.ts
+            â””â”€â”€ [inspectionId]/       # /dashboard/project/.../:inspectionId
+                â”œâ”€â”€ page.tsx
+                â”œâ”€â”€ _lib/             # Private: Data & utils
+                â”‚   â”œâ”€â”€ data.ts
+                â”‚   â””â”€â”€ utils.ts
+                â””â”€â”€ _types/           # Private: TypeScript types
+                    â””â”€â”€ inspection.ts
 ```
 
 ---
@@ -90,8 +90,8 @@ import { getStatusColor } from "./_lib/page-helpers";
 
 ```tsx
 // Import from shared component library
-import { BreakdownHeader } from "@/components/ppdo/breakdown";
-import { Modal } from "@/components/ppdo/11_project_plan";
+import { BreakdownHeader } from "@/components/features/ppdo/breakdown";
+import { Modal } from "@/components/features/ppdo/11_project_plan";
 
 // Import from shared hooks
 import { useEntityStats } from "@/lib/hooks/useEntityStats";
@@ -104,32 +104,32 @@ import { useEntityStats } from "@/lib/hooks/useEntityStats";
 ### 1. Keep Routes Clean
 
 ```
-❌ Bad:
+âŒ Bad:
 [projectbreakdownId]/
-├── page.tsx
-├── StatusChainCard.tsx      # Creates route!
-├── utils.ts                 # Creates route!
-└── types.ts                 # Creates route!
+â”œâ”€â”€ page.tsx
+â”œâ”€â”€ StatusChainCard.tsx      # Creates route!
+â”œâ”€â”€ utils.ts                 # Creates route!
+â””â”€â”€ types.ts                 # Creates route!
 
-✅ Good:
+âœ… Good:
 [projectbreakdownId]/
-├── page.tsx
-├── _components/
-│   └── StatusChainCard.tsx
-└── _lib/
-    └── page-helpers.ts
+â”œâ”€â”€ page.tsx
+â”œâ”€â”€ _components/
+â”‚   â””â”€â”€ StatusChainCard.tsx
+â””â”€â”€ _lib/
+    â””â”€â”€ page-helpers.ts
 ```
 
 ### 2. Colocate Related Files
 
 ```
 [inspectionId]/
-├── page.tsx                  # Main page
-├── _lib/
-│   ├── data.ts              # Data fetching
-│   └── utils.ts             # Utilities
-└── _types/
-    └── inspection.ts        # Type definitions
+â”œâ”€â”€ page.tsx                  # Main page
+â”œâ”€â”€ _lib/
+â”‚   â”œâ”€â”€ data.ts              # Data fetching
+â”‚   â””â”€â”€ utils.ts             # Utilities
+â””â”€â”€ _types/
+    â””â”€â”€ inspection.ts        # Type definitions
 ```
 
 ### 3. Use `_lib/` for Utilities
@@ -137,10 +137,10 @@ import { useEntityStats } from "@/lib/hooks/useEntityStats";
 Rename `utils/` to `_lib/` to follow Next.js conventions:
 
 ```
-❌ Old:
+âŒ Old:
 utils/page-helpers.ts
 
-✅ New:
+âœ… New:
 _lib/page-helpers.ts
 ```
 

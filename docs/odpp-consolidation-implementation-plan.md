@@ -21,13 +21,13 @@ This plan outlines the consolidation of `components/ppdo/odpp/*` to eliminate re
 ## Phase 1: Component Consolidation
 
 ### 1.1 Modal Components
-**Status:** Partially Complete ✓
+**Status:** Partially Complete âœ“
 
 | Component | Current Locations | Target Location | Action |
 |-----------|------------------|-----------------|--------|
-| ConfirmationModal | `common/`, `projects/`, `twenty-percent-df/` | `common/components/modals/` | ✅ Complete |
-| BudgetViolationModal | `common/`, `projects/`, `twenty-percent-df/`, `11_project_plan/` | `common/components/modals/` | ✅ Complete |
-| Modal | `11_project_plan/`, `projects/`, `twenty-percent-df/` | `common/components/modals/` | 🔧 Consolidate |
+| ConfirmationModal | `common/`, `projects/`, `twenty-percent-df/` | `common/components/modals/` | âœ… Complete |
+| BudgetViolationModal | `common/`, `projects/`, `twenty-percent-df/`, `11_project_plan/` | `common/components/modals/` | âœ… Complete |
+| Modal | `11_project_plan/`, `projects/`, `twenty-percent-df/` | `common/components/modals/` | ðŸ”§ Consolidate |
 
 **Implementation:**
 - Projects/TwentyPercentDF versions are re-exporting (deprecated)
@@ -38,7 +38,7 @@ This plan outlines the consolidation of `components/ppdo/odpp/*` to eliminate re
 
 | Component | Locations | Action |
 |-----------|-----------|--------|
-| AutoCalculateSwitch | `common/` (✓ generic), `projects/`, `twenty-percent-df/`, `11_project_plan/form/` | Migrate all to common version |
+| AutoCalculateSwitch | `common/` (âœ“ generic), `projects/`, `twenty-percent-df/`, `11_project_plan/form/` | Migrate all to common version |
 | AllocatedBudgetField | `common/`, `projects/form/`, `twenty-percent-df/form/`, `11_project_plan/form/`, `breakdown/form/` | Consolidate to common |
 | YearField | `11_project_plan/form/`, `projects/form/`, `twenty-percent-df/form/`, `breakdown/form/`, `common/forms/fields/` | Consolidate to common |
 | RemarksField | Same pattern | Consolidate to common |
@@ -56,7 +56,7 @@ interface FormFieldProps<TFieldValues extends FieldValues> {
 ```
 
 ### 1.3 Statistics Components
-**Status:** ✅ Complete
+**Status:** âœ… Complete
 
 Already consolidated via `EntityStatistics` + `StandardStatisticsGrid`.
 
@@ -87,7 +87,7 @@ breakdown/hooks/
   - useColumnDragDrop.ts
 
 shared/table/hooks/
-  - useGenericTableSettings.ts (✓ good)
+  - useGenericTableSettings.ts (âœ“ good)
   - useTableSettings.ts (duplicate)
   - useTableSelection.ts (duplicate)
   - useResizableColumns.ts
@@ -348,7 +348,7 @@ funds/constants/
 common/constants/
   - tableColumns.ts (exports all column configs)
   - status.ts (single source of truth)
-  - validation.ts (already exists ✓)
+  - validation.ts (already exists âœ“)
 ```
 
 ---
@@ -433,9 +433,9 @@ common/print/
    - Generic cell renderers
    
 2. **Day 3-4:** Create thin wrapper components
-   - FundsTable → wrapper
-   - ProjectsTable → wrapper
-   - BudgetTrackingTable → wrapper
+   - FundsTable â†’ wrapper
+   - ProjectsTable â†’ wrapper
+   - BudgetTrackingTable â†’ wrapper
    
 3. **Day 5:** Remove old table components
    - Delete duplicate implementations
@@ -484,11 +484,11 @@ common/print/
 ### Developer Experience
 ```typescript
 // Before: Different import for each entity
-import { ConfirmationModal } from "@/components/ppdo/projects/components";
-import { BudgetViolationModal } from "@/components/ppdo/11_project_plan/components";
+import { ConfirmationModal } from "@/components/features/ppdo/projects/components";
+import { BudgetViolationModal } from "@/components/features/ppdo/11_project_plan/components";
 
 // After: Single import location
-import { ConfirmationModal, BudgetViolationModal } from "@/components/ppdo/common";
+import { ConfirmationModal, BudgetViolationModal } from "@/components/features/ppdo/common";
 ```
 
 ---

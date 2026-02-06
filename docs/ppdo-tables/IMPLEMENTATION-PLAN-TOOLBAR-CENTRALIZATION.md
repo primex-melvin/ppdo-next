@@ -186,14 +186,14 @@ animatedSearch?: boolean;
 **Option A: Replace with Re-export (Recommended)**
 ```typescript
 // In standalone file, replace entire implementation with:
-export { ProjectsTableToolbar } from "@/components/ppdo/table/toolbar/adapters";
+export { ProjectsTableToolbar } from "@/components/features/ppdo/table/toolbar/adapters";
 ```
 
 **Option B: Deprecate & Redirect**
 ```typescript
 // Mark standalone as deprecated, redirect to adapter
-/** @deprecated Use import from "@/components/ppdo/table/toolbar/adapters" instead */
-export { ProjectsTableToolbar } from "@/components/ppdo/table/toolbar/adapters/ProjectsTableToolbar";
+/** @deprecated Use import from "@/components/features/ppdo/table/toolbar/adapters" instead */
+export { ProjectsTableToolbar } from "@/components/features/ppdo/table/toolbar/adapters/ProjectsTableToolbar";
 ```
 
 ---
@@ -411,48 +411,48 @@ The toolbar centralization is purely a frontend refactoring. All existing:
 ## 9. Architecture Diagram (After Implementation)
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        Unified TableToolbar                              │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │ Core Features:                                                   │    │
-│  │ - Animated Search (Framer Motion)                               │    │
-│  │ - Column Visibility Menu                                         │    │
-│  │ - Bulk Actions (Pluggable)                                       │    │
-│  │ - Custom Bulk Actions Component Slot                             │    │
-│  │ - Kanban Support (Status/Field Visibility)                       │    │
-│  │ - Export Dropdown (Print Preview, Print PDF, Export CSV)         │    │
-│  │ - Admin Share Button                                             │    │
-│  │ - Trash/Recycle Bin                                              │    │
-│  │ - Add New Button                                                 │    │
-│  │ - Responsive More Menu                                           │    │
-│  │ - Feature Toggle Flags                                           │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-                    ▼               ▼               ▼
-        ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-        │    Adapter    │  │    Adapter    │  │    Adapter    │
-        │   (Budget)    │  │  (Projects)   │  │    (Funds)    │
-        └───────────────┘  └───────────────┘  └───────────────┘
-                │                   │                   │
-                ▼                   ▼                   ▼
-        ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-        │ BudgetTable   │  │ ProjectsTable │  │  FundsTable   │
-        │ (Consumer)    │  │  (Consumer)   │  │  (Consumer)   │
-        └───────────────┘  └───────────────┘  └───────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                        Unified TableToolbar                              â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+â”‚  â”‚ Core Features:                                                   â”‚    â”‚
+â”‚  â”‚ - Animated Search (Framer Motion)                               â”‚    â”‚
+â”‚  â”‚ - Column Visibility Menu                                         â”‚    â”‚
+â”‚  â”‚ - Bulk Actions (Pluggable)                                       â”‚    â”‚
+â”‚  â”‚ - Custom Bulk Actions Component Slot                             â”‚    â”‚
+â”‚  â”‚ - Kanban Support (Status/Field Visibility)                       â”‚    â”‚
+â”‚  â”‚ - Export Dropdown (Print Preview, Print PDF, Export CSV)         â”‚    â”‚
+â”‚  â”‚ - Admin Share Button                                             â”‚    â”‚
+â”‚  â”‚ - Trash/Recycle Bin                                              â”‚    â”‚
+â”‚  â”‚ - Add New Button                                                 â”‚    â”‚
+â”‚  â”‚ - Responsive More Menu                                           â”‚    â”‚
+â”‚  â”‚ - Feature Toggle Flags                                           â”‚    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                    â”‚
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    â”‚               â”‚               â”‚
+                    â–¼               â–¼               â–¼
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚    Adapter    â”‚  â”‚    Adapter    â”‚  â”‚    Adapter    â”‚
+        â”‚   (Budget)    â”‚  â”‚  (Projects)   â”‚  â”‚    (Funds)    â”‚
+        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                â”‚                   â”‚                   â”‚
+                â–¼                   â–¼                   â–¼
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚ BudgetTable   â”‚  â”‚ ProjectsTable â”‚  â”‚  FundsTable   â”‚
+        â”‚ (Consumer)    â”‚  â”‚  (Consumer)   â”‚  â”‚  (Consumer)   â”‚
+        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-        ┌───────────────┐  ┌───────────────┐
-        │    Adapter    │  │    Adapter    │
-        │   (20% DF)    │  │ (Trust Fund)  │
-        └───────────────┘  └───────────────┘
-                │                   │
-                ▼                   ▼
-        ┌───────────────┐  ┌───────────────┐
-        │ 20%DFTable    │  │ TrustFundPage │
-        │ (Consumer)    │  │  (Consumer)   │
-        └───────────────┘  └───────────────┘
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚    Adapter    â”‚  â”‚    Adapter    â”‚
+        â”‚   (20% DF)    â”‚  â”‚ (Trust Fund)  â”‚
+        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                â”‚                   â”‚
+                â–¼                   â–¼
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚ 20%DFTable    â”‚  â”‚ TrustFundPage â”‚
+        â”‚ (Consumer)    â”‚  â”‚  (Consumer)   â”‚
+        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---

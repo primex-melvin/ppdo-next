@@ -9,7 +9,7 @@ import {
   ColumnDefinition,
   BudgetTotals
 } from './types';
-import { BudgetItem } from "@/components/ppdo/odpp/table-pages/11_project_plan/types";
+import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 import {
   wrapText,
   calculateWrappedRow,
@@ -31,10 +31,10 @@ const MIN_ROW_HEIGHT = 24;
 const MIN_HEADER_ROW_HEIGHT = 28;
 const LINE_HEIGHT = 1.2;
 
-// ✅ Internal padding for text inside cells (NOT cell spacing)
+// âœ… Internal padding for text inside cells (NOT cell spacing)
 const CELL_TEXT_PADDING = 4; // Small padding so text doesn't touch borders
 
-// ✅ Extra left padding for first column text (spacing from left border)
+// âœ… Extra left padding for first column text (spacing from left border)
 const FIRST_COLUMN_LEFT_PADDING = 20;
 
 /**
@@ -444,7 +444,7 @@ function createTableHeaders(
       groupName,
     });
 
-    currentX += columnWidths[index]; // ✅ NO GAP between columns
+    currentX += columnWidths[index]; // âœ… NO GAP between columns
   });
 
   return elements;
@@ -581,7 +581,7 @@ function createTableRow(
       groupName,
     });
 
-    currentX += columnWidths[index]; // ✅ NO GAP between columns
+    currentX += columnWidths[index]; // âœ… NO GAP between columns
   });
 
   return elements;
@@ -648,7 +648,7 @@ function formatCellValue(item: BudgetItem, key: string): string {
 
   // Currency formatting
   if (key.includes('Budget') || key.includes('budget')) {
-    return `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    return `â‚±${value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   }
 
   // Percentage formatting
@@ -763,7 +763,7 @@ function createTotalsRow(
       });
     }
 
-    currentX += columnWidths[index]; // ✅ NO GAP between columns
+    currentX += columnWidths[index]; // âœ… NO GAP between columns
   });
 
   return elements;

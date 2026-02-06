@@ -15,7 +15,7 @@ import {
   useTableSelection,
   useTableColumnVisibility,
 } from "@/hooks";
-import { TableToolbar } from "@/components/ppdo/table/toolbar";
+import { TableToolbar } from "@/components/features/ppdo/table/toolbar";
 ```
 
 ### Step 2: Define Column Constants
@@ -127,7 +127,7 @@ import {
   useTableSelection,
   useTableColumnVisibility,
 } from "@/hooks";
-import { TableToolbar } from "@/components/ppdo/table/toolbar";
+import { TableToolbar } from "@/components/features/ppdo/table/toolbar";
 import { Calculator } from "lucide-react";
 
 // Types
@@ -329,7 +329,7 @@ If you want to create a domain-specific adapter:
 "use client";
 
 import React from "react";
-import { TableToolbar } from "@/components/ppdo/table/toolbar/TableToolbar";
+import { TableToolbar } from "@/components/features/ppdo/table/toolbar/TableToolbar";
 import { MY_TABLE_COLUMNS } from "./constants";
 
 export interface MyTableToolbarProps {
