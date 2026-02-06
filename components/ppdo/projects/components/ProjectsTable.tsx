@@ -804,7 +804,7 @@ export function ProjectsTable({
         <>
             {/* Main Container with Tabs */}
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="w-full">
-                <div className="print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-visible transition-all duration-300 shadow-sm">
+                <div className={`print-area bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-visible transition-all duration-300 shadow-sm ${viewMode === "table" ? "w-fit max-w-full self-start" : "w-full"}`}>
 
                     {/* Toolbar */}
                     <ProjectsTableToolbar
