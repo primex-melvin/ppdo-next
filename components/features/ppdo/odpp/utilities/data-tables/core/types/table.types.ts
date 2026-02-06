@@ -5,7 +5,17 @@ export type ColumnAlign = "left" | "right" | "center";
 export interface ColumnConfig<T = any> {
   key: keyof T | string;
   label: string;
-  width: number;
+  /**
+   * Flex weight for dynamic width calculation.
+   * Higher values = wider columns.
+   * Total width is distributed proportionally based on flex values.
+   * @example 3 = wide column (particulars), 1 = narrow column (year)
+   */
+  flex: number;
+  /**
+   * Minimum width in pixels to ensure readability
+   */
+  minWidth?: number;
   type: ColumnType;
   align: ColumnAlign;
 }

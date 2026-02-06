@@ -1,7 +1,7 @@
 
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, forwardRef } from "react";
 
 interface ResizableTableContainerProps {
     children: ReactNode;
@@ -17,30 +17,32 @@ interface ResizableTableContainerProps {
  * - Scrolls when content exceeds max dimensions
  * - Sticky header/footer during scroll
  */
-export function ResizableTableContainer({
-    children,
-    toolbar,
-    className = "",
-    maxHeight = "calc(100vh - 280px)",
-}: ResizableTableContainerProps) {
-    return (
-        <div
-            className={`block w-full bg-white dark:bg-zinc-900 border rounded-lg overflow-hidden ${className}`}
-            style={{
-                borderColor: 'rgb(228 228 231 / 1)',
-            }}
-        >
-            {toolbar}
-
+export const ResizableTableContainer = forwardRef<HTMLDivElement, ResizableTableContainerProps>(
+    function ResizableTableContainer({
+        children,
+        toolbar,
+        className = "",
+        maxHeight = "calc(100vh - 280px)",
+    }, ref) {
+        return (
             <div
-                className="overflow-auto border-t border-zinc-200 dark:border-zinc-800"
+                ref={ref}
+                className={`block w-full bg-white dark:bg-zinc-900 border rounded-lg overflow-hidden ${className}`}
                 style={{
-                    maxHeight,
-                    maxWidth: 'calc(100vw - 300px)', // Account for sidebar
+                    borderColor: 'rgb(228 228 231 / 1)',
                 }}
             >
-                {children}
+                {toolbar}
+
+                <div
+                    className="overflow-auto border-t border-zinc-200 dark:border-zinc-800"
+                    style={{
+                        maxHeight,
+                    }}
+                >
+                    {children}
+                </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
+);

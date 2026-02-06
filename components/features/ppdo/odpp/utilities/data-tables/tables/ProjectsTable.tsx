@@ -134,13 +134,15 @@ export function ProjectsTable({
 }: ProjectsTableProps) {
     const {
         columns: allColumns,
+        columnWidths,
         rowHeights,
         canEditLayout,
         startResizeColumn,
         startResizeRow,
         onDragStart,
         onDrop,
-        onDragOver
+        onDragOver,
+        containerRef,
     } = useResizableColumns({
         tableIdentifier: `projectsTable_${particularId || 'default'}`,
         defaultColumns: PROJECT_TABLE_COLUMNS
@@ -248,10 +250,11 @@ export function ProjectsTable({
         : [['default', { category: null, projects }]];
 
     return (
-        <ResizableTableContainer>
+        <ResizableTableContainer ref={containerRef}>
             <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
+                    columnWidths={columnWidths}
                     canEditLayout={canEditLayout}
                     onDragStart={onDragStart}
                     onDragOver={onDragOver}

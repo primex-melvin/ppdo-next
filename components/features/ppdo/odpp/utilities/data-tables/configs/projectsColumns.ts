@@ -1,88 +1,105 @@
 
 import { ColumnConfig } from "../core/types/table.types";
 
+/**
+ * Project table columns with flex weights.
+ * Higher flex = wider column.
+ * All flex values are relative to each other.
+ */
 export const PROJECT_TABLE_COLUMNS: ColumnConfig[] = [
     {
         key: "particulars",
         label: "Project Name",
-        width: 22,  // 22%
+        flex: 5,        // Widest - project names are long
+        minWidth: 200,
         type: "text",
         align: "left"
     },
     {
         key: "implementingOffice",
         label: "Implementing Office",
-        width: 14,  // 14%
+        flex: 3,        // Medium-wide
+        minWidth: 140,
         type: "text",
         align: "left"
     },
     {
         key: "year",
         label: "Year",
-        width: 6,   // 6%
+        flex: 1,        // Narrow - just 4 digits
+        minWidth: 60,
         type: "number",
         align: "center"
     },
     {
         key: "status",
         label: "Status",
-        width: 8,   // 8%
+        flex: 2,        // Medium - status badges
+        minWidth: 100,
         type: "status",
         align: "center"
     },
     {
         key: "totalBudgetAllocated",
         label: "Allocated Budget",
-        width: 10,  // 10%
+        flex: 3,        // Currency needs space
+        minWidth: 130,
         type: "currency",
         align: "right"
     },
     {
         key: "obligatedBudget",
         label: "Obligated Budget",
-        width: 10,  // 10%
+        flex: 3,
+        minWidth: 130,
         type: "currency",
         align: "right"
     },
     {
         key: "totalBudgetUtilized",
         label: "Utilized Budget",
-        width: 10,  // 10%
+        flex: 3,
+        minWidth: 130,
         type: "currency",
         align: "right"
     },
     {
         key: "utilizationRate",
         label: "Utilization Rate",
-        width: 8,   // 8%
+        flex: 2,        // Percentage
+        minWidth: 100,
         type: "percentage",
         align: "right"
     },
     {
         key: "projectCompleted",
         label: "COMPLETED",
-        width: 6,   // 6%
+        flex: 1,        // Small number
+        minWidth: 70,
         type: "number",
         align: "right"
     },
     {
         key: "projectDelayed",
         label: "DELAYED",
-        width: 6,   // 6%
+        flex: 1,
+        minWidth: 70,
         type: "number",
         align: "right"
     },
     {
         key: "projectsOngoing",
         label: "ONGOING",
-        width: 6,   // 6%
+        flex: 1,
+        minWidth: 70,
         type: "number",
         align: "right"
     },
     {
         key: "remarks",
         label: "Remarks",
-        width: 15,  // 15%
+        flex: 4,        // Can be long text
+        minWidth: 150,
         type: "text",
         align: "left"
     },

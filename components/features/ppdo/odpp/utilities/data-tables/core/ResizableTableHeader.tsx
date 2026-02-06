@@ -21,6 +21,9 @@ interface ResizableTableHeaderProps {
     // Customization
     showActionsColumn?: boolean;
     actionsColumnWidth?: number;
+
+    // Dynamic widths calculated from flex
+    columnWidths?: Map<string, number>;
 }
 
 export function ResizableTableHeader({
@@ -35,7 +38,18 @@ export function ResizableTableHeader({
     onSelectAll,
     showActionsColumn = true,
     actionsColumnWidth = 64,
+    columnWidths,
 }: ResizableTableHeaderProps) {
+    // Calculate width for a column (use dynamic width if available, fallback to flex-based)
+    const getColumnWidth = (column: ColumnConfig): number => {
+        if (columnWidths?.has(column.key as string)) {
+            return columnWidths.get(column.key as string)!;
+        }
+        // Fallback: calculate from flex (approximate for SSR)
+        const totalFlex = columns.reduce((sum, c) => sum + c.flex, 0);
+        const avgWidth = 1200 / totalFlex; // Assume 1200px container
+        return Math.round(column.flex * avgWidth);
+    };
     return (
         <thead className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-800">
             <tr>
@@ -80,7 +94,8 @@ export function ResizableTableHeader({
                         className={`relative px-2 sm:px-3 py-2 text-zinc-700 dark:text-zinc-200 ${canEditLayout ? "cursor-move" : ""
                             }`}
                         style={{
-                            width: column.width <= 100 ? `${column.width}%` : `${column.width}px`,
+                            width: `${getColumnWidth(column)}px`,
+                            minWidth: `${column.minWidth || 60}px`,
                             border: '1px solid rgb(228 228 231 / 1)',
                             textAlign: column.align,
                         }}

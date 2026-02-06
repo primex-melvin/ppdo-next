@@ -313,7 +313,7 @@ export function BreakdownHistoryTable({
       const adapter = new BreakdownPrintAdapter(
         breakdowns,
         breakdownId,
-        columns as ColumnConfig[],
+        columns as any[],
         entityName
       );
       setPrintAdapter(adapter);
@@ -358,7 +358,7 @@ export function BreakdownHistoryTable({
   }, [columns, hiddenColumns]);
 
   const gridTemplateColumns = useMemo(() => {
-    return generateGridTemplate(visibleColumns as ColumnConfig[]);
+    return generateGridTemplate(visibleColumns as any[]);
   }, [visibleColumns]);
 
   const filteredRows = useMemo(() => {
@@ -370,7 +370,7 @@ export function BreakdownHistoryTable({
   const isIndeterminate = selectedIds.size > 0 && selectedIds.size < filteredRows.length;
 
   const totals = useMemo(() => {
-    return calculateColumnTotals(filteredRows, visibleColumns as ColumnConfig[]);
+    return calculateColumnTotals(filteredRows, visibleColumns as any[]);
   }, [filteredRows, visibleColumns]);
 
   /* =======================
@@ -385,7 +385,7 @@ export function BreakdownHistoryTable({
 
       exportToCSV(
         selectedItems,
-        createBreakdownExportConfig(columns as ColumnConfig[], hiddenColumns)
+        createBreakdownExportConfig(columns as any[], hiddenColumns)
       );
 
       toast.success(selectedIds.size > 0
@@ -592,7 +592,7 @@ export function BreakdownHistoryTable({
             >
               {/* HEADER */}
               <TableHeader
-                columns={visibleColumns as ColumnConfig[]}
+                columns={visibleColumns as any[]}
                 gridTemplateColumns={gridTemplateColumns}
                 canEditLayout={canEditLayout}
                 onDragStart={onDragStart}
@@ -624,7 +624,7 @@ export function BreakdownHistoryTable({
                         key={breakdown._id}
                         breakdown={breakdown}
                         index={index}
-                        columns={visibleColumns as ColumnConfig[]}
+                        columns={visibleColumns as any[]}
                         gridTemplateColumns={gridTemplateColumns}
                         rowHeight={height}
                         canEditLayout={canEditLayout}
@@ -641,7 +641,7 @@ export function BreakdownHistoryTable({
 
                   {/* TOTALS ROW */}
                   <TableTotalsRow
-                    columns={visibleColumns as ColumnConfig[]}
+                    columns={visibleColumns as any[]}
                     totals={totals}
                     gridTemplateColumns={gridTemplateColumns}
                   />

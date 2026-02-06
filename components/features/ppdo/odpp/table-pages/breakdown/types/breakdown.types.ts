@@ -45,7 +45,8 @@ export type ColumnAlign = "left" | "right" | "center";
 export interface ColumnConfig {
   key: keyof Breakdown;
   label: string;
-  width: number;
+  flex: number;
+  minWidth?: number;
   type: ColumnType;
   align: ColumnAlign;
 }

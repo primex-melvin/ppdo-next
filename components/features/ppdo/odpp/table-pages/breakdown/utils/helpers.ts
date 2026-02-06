@@ -92,17 +92,20 @@ export function calculateColumnTotals(
 
 /**
  * Generates CSS grid template columns string
+ * Uses flex-based fractional widths instead of fixed pixel widths
  */
 export function generateGridTemplate(columns: ColumnConfig[]): string {
+  const totalFlex = columns.reduce((sum, c) => sum + c.flex, 0);
   return [
     "48px", // Row number column
-    ...columns.map(c => `${c.width}px`),
+    ...columns.map(c => `${(c.flex / totalFlex) * 100}fr`),
     "64px" // Actions column
   ].join(" ");
 }
 
 /**
  * Merges saved column settings with default columns
+ * Note: width is deprecated, flex is used for layout now
  */
 export function mergeColumnSettings(
   savedColumns: Array<{ fieldKey: string; width: number }>,
@@ -110,11 +113,11 @@ export function mergeColumnSettings(
 ): ColumnConfig[] {
   const merged: ColumnConfig[] = [];
 
-  // First, add all saved columns with their widths
+  // First, add all saved columns (width ignored, flex used from default)
   savedColumns.forEach(savedCol => {
     const defaultCol = defaultColumns.find(col => col.key === savedCol.fieldKey);
     if (defaultCol) {
-      merged.push({ ...defaultCol, width: savedCol.width });
+      merged.push({ ...defaultCol });
     }
   });
 

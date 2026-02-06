@@ -2,14 +2,15 @@
 /**
  * Centralized Table Resize Hook
  *
- * Handles column and row resizing via mouse drag.
+ * Handles row resizing via mouse drag.
+ * NOTE: Column resizing is disabled - widths are calculated dynamically from flex values.
  */
 
 "use client";
 
 import { useCallback } from "react";
 import { ColumnConfig, RowHeights } from "../types/table.types";
-import { MIN_COLUMN_WIDTH, MIN_ROW_HEIGHT, DEFAULT_ROW_HEIGHT } from "../constants/table.constants";
+import { MIN_ROW_HEIGHT, DEFAULT_ROW_HEIGHT } from "../constants/table.constants";
 
 export interface UseTableResizeProps<T = any> {
     columns: ColumnConfig<T>[];
@@ -17,7 +18,7 @@ export interface UseTableResizeProps<T = any> {
     rowHeights: RowHeights;
     setRowHeights: React.Dispatch<React.SetStateAction<RowHeights>>;
     canEditLayout: boolean;
-    saveLayout: (cols: ColumnConfig<T>[], heights: RowHeights) => void;
+    saveLayout: (heights: RowHeights) => void;
 }
 
 export function useTableResize<T = any>({
@@ -30,41 +31,13 @@ export function useTableResize<T = any>({
 }: UseTableResizeProps<T>) {
 
     /**
-     * Handles column resize via mouse drag
+     * Column resize is disabled - widths are calculated dynamically from flex values.
+     * To resize columns, users can hide/show columns via the Columns toolbar.
      */
     const startResizeColumn = useCallback((e: React.MouseEvent, index: number) => {
-        if (!canEditLayout) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        const startX = e.clientX;
-        const startWidth = columns[index].width;
-
-        const onMove = (ev: MouseEvent) => {
-            const delta = ev.clientX - startX;
-            setColumns(prev => {
-                const next = [...prev];
-                next[index] = {
-                    ...next[index],
-                    width: Math.max(MIN_COLUMN_WIDTH, startWidth + delta)
-                };
-                return next;
-            });
-        };
-
-        const onUp = () => {
-            document.removeEventListener("mousemove", onMove);
-            document.removeEventListener("mouseup", onUp);
-            setColumns(prev => {
-                saveLayout(prev, rowHeights);
-                return prev;
-            });
-        };
-
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-    }, [canEditLayout, columns, rowHeights, saveLayout, setColumns]);
+        // No-op: Column resizing disabled in flex-based layout
+        console.log("Column resizing is disabled in flex-based layout");
+    }, []);
 
     /**
      * Handles row resize via mouse drag
@@ -90,14 +63,14 @@ export function useTableResize<T = any>({
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
             setRowHeights(prev => {
-                saveLayout(columns, prev);
+                saveLayout(prev);
                 return prev;
             });
         };
 
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
-    }, [canEditLayout, rowHeights, columns, saveLayout, setRowHeights]);
+    }, [canEditLayout, rowHeights, saveLayout, setRowHeights]);
 
     return {
         startResizeColumn,

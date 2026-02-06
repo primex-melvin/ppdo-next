@@ -79,7 +79,8 @@ export function TableHeader({
               canEditLayout ? "cursor-move" : ""
             }`}
             style={{
-              width: `${column.width}px`,
+              flex: column.flex,
+              minWidth: column.minWidth ? `${column.minWidth}px` : '80px',
               border: '1px solid rgb(228 228 231 / 1)',
               textAlign: column.align,
             }}
