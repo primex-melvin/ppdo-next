@@ -16,13 +16,10 @@ import { ConfirmationModal } from "./BudgetConfirmationModal";
 import { BudgetItemForm } from "./BudgetItemForm";
 import BudgetShareModal from "./BudgetShareModal";
 import { BudgetTableToolbar } from "@/components/ppdo/table/toolbar";
-import { BudgetTableHeader } from "../table/BudgetTableHeader";
-import { BudgetTableRow } from "../table/BudgetTableRow";
-import { BudgetTableTotalsRow } from "../table/BudgetTableTotalsRow";
-import { BudgetTableEmptyState } from "../table/BudgetTableEmptyState";
 import { BudgetContextMenu } from "../table/BudgetContextMenu";
 import { BudgetBulkToggleDialog } from "./BudgetBulkToggleDialog";
 import { PrintPreviewModal } from "@/components/ppdo/table/print-preview/PrintPreviewModal";
+import { BudgetResizableTable } from "./BudgetResizableTable";
 import { TrashBinModal, TrashConfirmationModal } from "@/components/modals";
 import { BudgetItemKanban } from "./BudgetItemKanban";
 import { Id } from "@/convex/_generated/dataModel";
@@ -45,7 +42,7 @@ import { convertToPrintTotals, getVisibleColumns, formatTimestamp } from "../uti
 import { BUDGET_TABLE_COLUMNS, DEFAULT_COLUMN_WIDTHS } from "@/components/ppdo/11_project_plan/constants";
 import { BudgetItem } from "@/types/types";
 import { BudgetTrackingTableProps } from "../types";
-import { useGenericTableSettings } from "@/components/ppdo/shared/hooks";
+// import { useGenericTableSettings } from "@/components/ppdo/shared/hooks"; // Removed
 
 /**
  * Main BudgetTrackingTable component - Refactored with custom hooks
@@ -93,27 +90,12 @@ export function BudgetTrackingTable({
   // COLUMN WIDTH MANAGEMENT (Convex persistence)
   // ============================================================================
 
-  const {
-    columnWidths,
-    getColumnWidth,
-    startResizeColumn,
-    canEditLayout,
-  } = useGenericTableSettings({
-    tableIdentifier: "budgetItemsTable",
-    defaultColumnWidths: DEFAULT_COLUMN_WIDTHS,
-    minColumnWidth: 100,
-  });
-
-  // Resize handler for table header
-  const handleResizeStart = useCallback((column: string, e: React.MouseEvent) => {
-    const currentWidth = getColumnWidth(column, DEFAULT_COLUMN_WIDTHS[column as keyof typeof DEFAULT_COLUMN_WIDTHS] || 150);
-    startResizeColumn(e, column, currentWidth);
-  }, [getColumnWidth, startResizeColumn]);
+  // Column settings managed by BudgetResizableTable
 
   // ============================================================================
   // TRASH CONFIRMATION STATE
   // ============================================================================
-  
+
   const [showTrashConfirmModal, setShowTrashConfirmModal] = useState(false);
   const [trashTargetItems, setTrashTargetItems] = useState<BudgetItem[]>([]);
   const [isBulkTrash, setIsBulkTrash] = useState(false);
@@ -219,7 +201,7 @@ export function BudgetTrackingTable({
     setTrashTargetItems(items);
     setIsBulkTrash(isBulk);
     setShowTrashConfirmModal(true);
-    
+
     // For single item, fetch preview data from API
     if (items.length === 1) {
       setIsTrashPreviewLoading(true);
@@ -246,7 +228,7 @@ export function BudgetTrackingTable({
         await onDelete(trashTargetItems[0].id);
       }
     }
-    
+
     // Reset state
     setShowTrashConfirmModal(false);
     setTrashTargetItems([]);
@@ -455,15 +437,15 @@ export function BudgetTrackingTable({
   // ============================================================================
   // BUILD PREVIEW DATA FOR MODAL
   // ============================================================================
-  
+
   // Query for single item preview
   const singlePreviewQuery = useQuery(
     api.trash.getTrashPreview,
     showTrashConfirmModal && trashTargetItems.length === 1
-      ? { 
-          entityType: "budgetItem", 
-          entityId: trashTargetItems[0]?.id 
-        }
+      ? {
+        entityType: "budgetItem",
+        entityId: trashTargetItems[0]?.id
+      }
       : "skip"
   );
 
@@ -582,54 +564,25 @@ export function BudgetTrackingTable({
 
           {/* Table View */}
           <TabsContent value="table" className="mt-0">
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
-              <table className="w-full">
-                <BudgetTableHeader
-                  isAdmin={isAdmin}
-                  isAllSelected={isAllSelected}
-                  isIndeterminate={isIndeterminate}
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  yearFilter={yearFilter}
-                  statusFilter={statusFilter}
-                  uniqueYears={uniqueYears}
-                  uniqueStatuses={uniqueStatuses}
-                  showHeaderSkeleton={showHeaderSkeleton}
-                  hiddenColumns={hiddenColumns}
-                  onSelectAll={handleSelectAll}
-                  onSort={handleSort}
-                  onToggleYearFilter={toggleYearFilter}
-                  onToggleStatusFilter={toggleStatusFilter}
-                  columnWidths={columnWidths}
-                  onResizeStart={handleResizeStart}
-                  canEditLayout={canEditLayout}
-                />
-                <tbody>
-                  {filteredAndSortedItems.length === 0 ? (
-                    <BudgetTableEmptyState />
-                  ) : (
-                    <>
-                      {filteredAndSortedItems.map((item) => (
-                        <BudgetTableRow
-                          key={item.id}
-                          item={item}
-                          isAdmin={isAdmin}
-                          isSelected={selectedIds.has(item.id)}
-                          hiddenColumns={hiddenColumns}
-                          onContextMenu={handleContextMenu}
-                          onClick={handleRowClick}
-                          onSelectRow={handleSelectRow}
-                        />
-                      ))}
-                      <BudgetTableTotalsRow
-                        totals={totals}
-                        totalUtilizationRate={totalUtilizationRate}
-                        hiddenColumns={hiddenColumns}
-                      />
-                    </>
-                  )}
-                </tbody>
-              </table>
+            <div className="flex-1 overflow-hidden h-full">
+              <BudgetResizableTable
+                budgetItems={filteredAndSortedItems}
+                hiddenColumns={hiddenColumns}
+                onRowClick={handleRowClick}
+                onEdit={(id, item) => {
+                  setSelectedItem(item);
+                  setShowEditModal(true);
+                }}
+                onDelete={(id) => {
+                  const item = budgetItems.find(i => i.id === id);
+                  if (item) handleShowTrashConfirmation([item], false);
+                }}
+                onPin={handlePin}
+                onToggleAutoCalculate={handleToggleAutoCalculate}
+                selectedIds={selectedIds}
+                onSelectRow={handleSelectRow}
+                onSelectAll={handleSelectAll}
+              />
             </div>
           </TabsContent>
 

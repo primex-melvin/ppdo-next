@@ -14,17 +14,14 @@ import { ActivityLogSheet } from "@/components/ActivityLogSheet";
 import { FundsTableToolbar } from "./toolbar/FundsTableToolbar";
 import { FundsContextMenu } from "./context-menu/FundsContextMenu";
 import { GenericPrintPreviewModal } from "@/components/ppdo/print";
-import { FundsTableColgroup } from "./table/FundsTableColgroup";
-import { FundsTableHeader } from "./table/FundsTableHeader";
-import { FundsTableBody } from "./table/FundsTableBody";
+import { FundsResizableTable } from "./FundsResizableTable";
 import { BaseFund, FundsTableProps, ContextMenuState } from "../types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, Table as TableIcon } from "lucide-react";
 import { FundsKanban } from "./FundsKanban";
 import { exportToCSV, calculateTotals, formatTimestamp } from "../utils";
 import { useTableSort, useTableFilter, useTableSelection, useFundsPrintDraft, FundsPrintAdapter } from "../";
-import { AVAILABLE_COLUMNS, DEFAULT_COLUMN_WIDTHS } from "../constants";
-import { useGenericTableSettings } from "@/components/ppdo/shared/hooks";
+import { AVAILABLE_COLUMNS } from "../constants";
 export function FundsTable<T extends BaseFund>({
     data,
     onAdd,
@@ -122,7 +119,7 @@ export function FundsTable<T extends BaseFund>({
         setVisibleFields(newVisible);
     };
 
-    // Table identifier for Convex persistence
+    // Table identifier for Convex persistence - Passed to FundsResizableTable
     const tableIdentifier = fundType === 'trust'
         ? 'trustFundsTable'
         : fundType === 'specialEducation'
@@ -131,23 +128,7 @@ export function FundsTable<T extends BaseFund>({
                 ? 'specialHealthFundsTable'
                 : 'twentyPercentDFTable';
 
-    // Custom Hooks - using Convex-based persistence
-    const {
-        columnWidths,
-        getColumnWidth,
-        startResizeColumn,
-        canEditLayout,
-    } = useGenericTableSettings({
-        tableIdentifier,
-        defaultColumnWidths: DEFAULT_COLUMN_WIDTHS,
-        minColumnWidth: 150,
-    });
-
-    // Resize handler wrapper for compatibility with existing components
-    const handleResizeStart = (column: string, e: React.MouseEvent) => {
-        const currentWidth = getColumnWidth(column, DEFAULT_COLUMN_WIDTHS[column as keyof typeof DEFAULT_COLUMN_WIDTHS] || 150);
-        startResizeColumn(e, column, currentWidth);
-    };
+    // Column settings managed by FundsResizableTable directly
 
     const { sortField, sortDirection, handleSort } = useTableSort();
     const filteredAndSortedData = useTableFilter(data, searchQuery, sortField, sortDirection);
@@ -353,43 +334,28 @@ export function FundsTable<T extends BaseFund>({
                         />
 
                         <div className="overflow-auto max-h-[calc(100vh-300px)]">
-                            <table className="w-full border-collapse">
-                                <FundsTableColgroup
-                                    isAdmin={isAdmin}
-                                    hiddenColumns={hiddenColumns}
-                                    columnWidths={columnWidths}
-                                />
-                                <FundsTableHeader
-                                    isAdmin={isAdmin}
-                                    hiddenColumns={hiddenColumns}
-                                    columnWidths={columnWidths}
-                                    allSelected={allSelected}
-                                    onToggleAll={toggleAll}
-                                    onSort={handleSort}
-                                    onResizeStart={handleResizeStart}
-                                />
-                                <FundsTableBody
-                                    data={filteredAndSortedData}
-                                    year={year}
-                                    isAdmin={isAdmin}
-                                    selected={selected}
-                                    hiddenColumns={hiddenColumns}
-                                    columnWidths={columnWidths}
-                                    totals={totals}
-                                    updatingStatusIds={updatingStatusIds}
-                                    onToggleSelection={toggleOne}
-                                    onContextMenu={handleContextMenu}
-                                    onStatusChange={handleStatusChange}
-                                    onPin={handlePin}
-                                    onViewLog={handleViewLog}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    canEdit={!!onEdit}
-                                    canDelete={!!onDelete}
-                                    fundType={fundType}
-                                    emptyMessage={emptyMessage}
-                                />
-                            </table>
+                            <FundsResizableTable
+                                data={filteredAndSortedData}
+                                totals={totals}
+                                fundType={fundType}
+                                hiddenColumns={hiddenColumns}
+                                onRowClick={(item) => handleEdit(item)}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onPin={handlePin}
+                                onStatusChange={handleStatusChange}
+                                onToggleAutoCalculate={handleToggleAutoCalculate}
+                                onViewLog={handleViewLog}
+                                selectedIds={new Set(selected)}
+                                onSelectRow={(id) => toggleOne(id)}
+                                onSelectAll={(checked) => {
+                                    if (checked) {
+                                        if (selected.length !== filteredAndSortedData.length) toggleAll();
+                                    } else {
+                                        clearSelection();
+                                    }
+                                }}
+                            />
                         </div>
                     </div>
                 </TabsContent>

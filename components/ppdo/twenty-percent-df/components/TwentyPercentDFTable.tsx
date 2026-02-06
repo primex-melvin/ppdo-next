@@ -20,11 +20,9 @@ import { TwentyPercentDFCategoryCombobox } from "./TwentyPercentDFCategoryCombob
 import { TwentyPercentDFShareModal } from "./TwentyPercentDFShareModal";
 import { TwentyPercentDFCategoryFilter } from "./TwentyPercentDFTable/TwentyPercentDFCategoryFilter";
 import { TwentyPercentDFTableToolbar } from "./TwentyPercentDFTable/TwentyPercentDFTableToolbar";
-import { TwentyPercentDFTableHeader } from "./TwentyPercentDFTable/TwentyPercentDFTableHeader";
-import { TwentyPercentDFTableBody } from "./TwentyPercentDFTable/TwentyPercentDFTableBody";
-import { TwentyPercentDFTableFooter } from "./TwentyPercentDFTable/TwentyPercentDFTableFooter";
 import { TwentyPercentDFContextMenu } from "./TwentyPercentDFTable/TwentyPercentDFContextMenu";
 import { PrintPreviewModal } from "@/components/ppdo/table/print-preview/PrintPreviewModal";
+import { TwentyPercentDFResizableTable } from "./TwentyPercentDFResizableTable";
 
 // Types, Constants, and Utils
 import {
@@ -34,8 +32,7 @@ import {
     TwentyPercentDFSortField,
     TwentyPercentDFContextMenuState,
 } from "../types";
-import { AVAILABLE_COLUMNS, DEFAULT_COLUMN_WIDTHS } from "../constants";
-import { useGenericTableSettings } from "@/components/ppdo/shared/hooks";
+import { AVAILABLE_COLUMNS } from "../constants";
 import {
     groupTwentyPercentDFByCategory,
     calculateTwentyPercentDFTotals,
@@ -141,22 +138,7 @@ export function TwentyPercentDFTable({
     const [isTogglingAutoCalculate, setIsTogglingAutoCalculate] = useState(false);
 
     // ==================== COLUMN WIDTH MANAGEMENT ====================
-    const {
-        columnWidths,
-        getColumnWidth,
-        startResizeColumn,
-        canEditLayout,
-    } = useGenericTableSettings({
-        tableIdentifier: "twentyPercentDFTable",
-        defaultColumnWidths: DEFAULT_COLUMN_WIDTHS,
-        minColumnWidth: 100,
-    });
-
-    // Resize handler for table header
-    const handleResizeStart = useCallback((column: string, e: React.MouseEvent) => {
-        const currentWidth = getColumnWidth(column, DEFAULT_COLUMN_WIDTHS[column as keyof typeof DEFAULT_COLUMN_WIDTHS] || 150);
-        startResizeColumn(e, column, currentWidth);
-    }, [getColumnWidth, startResizeColumn]);
+    // Column settings managed by TwentyPercentDFResizableTable
 
     // ==================== COMPUTED VALUES ====================
     const canManageBulkActions = useMemo(() => {
@@ -731,49 +713,52 @@ export function TwentyPercentDFTable({
                             accentColor={accentColorValue}
                         />
 
-                        <div className="overflow-x-auto max-h-[600px] relative">
-                            <table className="w-full">
-                                <TwentyPercentDFTableHeader
-                                    hiddenColumns={hiddenColumns}
-                                    sortField={sortField}
-                                    sortDirection={sortDirection}
-                                    onSort={handleSort}
-                                    canManageBulkActions={canManageBulkActions}
-                                    isAllSelected={isAllSelected}
-                                    isIndeterminate={isIndeterminate}
-                                    onSelectAll={handleSelectAll}
-                                    onFilterClick={setActiveFilterColumn}
-                                    activeFilterColumn={activeFilterColumn}
-                                    columnWidths={columnWidths}
-                                    onResizeStart={handleResizeStart}
-                                    canEditLayout={canEditLayout}
-                                />
-
-                                <TwentyPercentDFTableBody
-                                    groupedProjects={groupedProjects}
-                                    hiddenColumns={hiddenColumns}
-                                    selectedIds={selectedIds}
-                                    newlyAddedId={newlyAddedProjectId}
-                                    canManageBulkActions={canManageBulkActions}
-                                    totalVisibleColumns={totalVisibleColumns}
-                                    onSelectCategory={handleSelectCategory}
-                                    onSelectRow={handleSelectRow}
-                                    onRowClick={handleRowClick}
-                                    onContextMenu={handleContextMenu}
-                                    accentColor={accentColorValue}
-                                    expandedRemarks={expandedRemarks}
-                                    onToggleRemarks={handleToggleRemarks}
-                                />
-
-                                <tfoot>
-                                    <TwentyPercentDFTableFooter
-                                        totals={totals}
-                                        hiddenColumns={hiddenColumns}
-                                        canManageBulkActions={canManageBulkActions}
-                                        accentColor={accentColorValue}
-                                    />
-                                </tfoot>
-                            </table>
+                        <div className="flex-1 overflow-hidden h-full">
+                            <TwentyPercentDFResizableTable
+                                data={filteredAndSortedProjects}
+                                groupedData={groupedProjects}
+                                totals={totals}
+                                hiddenColumns={hiddenColumns}
+                                onRowClick={handleRowClick}
+                                onEdit={(item) => {
+                                    setSelectedProject(item);
+                                    setShowEditModal(true);
+                                }}
+                                onDelete={(item) => {
+                                    setSelectedProject(item);
+                                    setShowDeleteModal(true);
+                                }}
+                                onPin={async (item) => {
+                                    try {
+                                        await togglePinProject({ id: item.id as Id<"twentyPercentDF"> });
+                                    } catch {
+                                        toast.error("Failed to toggle pin");
+                                    }
+                                }}
+                                onToggleAutoCalculate={async (item) => {
+                                    try {
+                                        await toggleAutoCalculate({
+                                            id: item.id as Id<"twentyPercentDF">,
+                                            autoCalculate: !item.autoCalculateBudgetUtilized
+                                        });
+                                        toast.success(`Switched to ${!item.autoCalculateBudgetUtilized ? 'auto-calculate' : 'manual'} mode`);
+                                    } catch (e) {
+                                        toast.error("Failed to toggle auto-calculate");
+                                    }
+                                }}
+                                onChangeCategory={(item) => {
+                                    setSelectedCategoryProject(item);
+                                    setSingleCategoryId(item.categoryId);
+                                    setShowSingleCategoryModal(true);
+                                }}
+                                onViewLog={(item) => {
+                                    setSelectedLogProject(item);
+                                    setLogSheetOpen(true);
+                                }}
+                                selectedIds={selectedIds}
+                                onSelectRow={handleSelectRow}
+                                onSelectAll={handleSelectAll}
+                            />
                         </div>
                     </div>
                 </TabsContent>
@@ -786,7 +771,7 @@ export function TwentyPercentDFTable({
                             onSearchFocus={handleSearchFocus}
                             searchInputRef={searchInputRef}
                             selectedCount={0}
-                            onClearSelection={() => {}}
+                            onClearSelection={() => { }}
                             canManageBulkActions={canManageBulkActions}
                             onBulkCategoryChange={handleBulkCategoryChange}
                             hiddenColumns={hiddenColumns}
