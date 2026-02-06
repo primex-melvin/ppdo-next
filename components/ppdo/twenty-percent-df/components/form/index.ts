@@ -10,7 +10,22 @@ export { RemarksField } from "./RemarksField";
 export { UtilizationDisplay } from "./UtilizationDisplay";
 export { FormActions } from "./FormActions";
 
-// Utils
+// Utils - Form Validation (module-specific)
 export * from "./utils/formValidation";
-export * from "@/lib/shared/utils/form-helpers";
-export * from "./utils/budgetCalculations";
+
+// Utils - Form Helpers (from shared)
+export { 
+    formatCurrency,
+    formatNumberWithCommas,
+    formatNumberForDisplay,
+    parseFormattedNumber,
+} from "@/lib/shared/utils/form-helpers";
+
+// Utils - Budget Calculations (re-exported from common for backward compatibility)
+export type { BudgetAvailabilityResult } from "./utils/budgetCalculations";
+export { 
+    calculateBudgetAvailability,
+    defaultBudgetAvailability,
+} from "./utils/budgetCalculations";
+// Note: calculateUtilizationRate, calculateBalance, checkAllocationViolation, 
+// checkUtilizationViolation are now available from @/components/ppdo/common
