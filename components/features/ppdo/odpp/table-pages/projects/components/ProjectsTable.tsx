@@ -895,6 +895,7 @@ export function ProjectsTable({
                     <TabsContent value="table" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
                         <ProjectsResizableTable
                             projects={filteredAndSortedProjects}
+                            groupedData={groupedProjects}
                             particularId={particularId}
                             hiddenColumns={hiddenColumns}
                             selectedIds={selectedIds}
@@ -938,6 +939,7 @@ export function ProjectsTable({
                             }}
                             onSelectRow={handleSelectRow}
                             onSelectAll={handleSelectAll}
+                            onSelectCategory={handleSelectCategory}
                         />
                     </TabsContent>
 

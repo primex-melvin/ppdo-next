@@ -1136,3 +1136,58 @@ export const updateStatus = mutation({
     return { success: true, status: args.status };
   },
 });
+
+// ============================================================================
+// BULK RECALCULATION: Admin Only
+// ============================================================================
+
+/**
+ * Recalculate metrics for all projects
+ * Admin only - use when data appears inconsistent
+ */
+export const recalculateAllMetrics = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Check if user is admin
+    const user = await ctx.db.get(userId);
+    if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
+      throw new Error("Admin access required");
+    }
+
+    const allProjects = await ctx.db.query("projects").collect();
+    const results = [];
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const project of allProjects) {
+      try {
+        const result = await recalculateProjectMetrics(ctx, project._id, userId);
+        results.push({
+          id: project._id,
+          particulars: project.particulars,
+          success: true,
+          ...result,
+        });
+        successCount++;
+      } catch (error) {
+        results.push({
+          id: project._id,
+          particulars: project.particulars,
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        errorCount++;
+      }
+    }
+
+    return {
+      totalProcessed: allProjects.length,
+      successCount,
+      errorCount,
+      results,
+    };
+  },
+});

@@ -69,12 +69,17 @@ export function flattenGroupedProjectsForPrint(
 export function getProjectPrintColumns(hiddenColumns: Set<string>): ColumnDefinition[] {
     const allColumns: ColumnDefinition[] = [
         { key: 'particulars', label: 'Particulars', align: 'left' },
-        { key: 'description', label: 'Description', align: 'left' },
+        { key: 'implementingOffice', label: 'Implementing Office', align: 'left' },
+        { key: 'year', label: 'Year', align: 'center' },
         { key: 'status', label: 'Status', align: 'center' },
-        { key: 'budget', label: 'Budget Allocated', align: 'right' },
-        { key: 'obligations', label: 'Obligations', align: 'right' },
-        { key: 'disbursements', label: 'Disbursements', align: 'right' },
-        { key: 'utilizationRate', label: 'Utilization %', align: 'right' },
+        { key: 'totalBudgetAllocated', label: 'Allocated Budget', align: 'right' },
+        { key: 'obligatedBudget', label: 'Obligated Budget', align: 'right' },
+        { key: 'totalBudgetUtilized', label: 'Utilized Budget', align: 'right' },
+        { key: 'utilizationRate', label: 'Utilization Rate', align: 'right' },
+        { key: 'projectCompleted', label: 'COMPLETED', align: 'right' },
+        { key: 'projectDelayed', label: 'DELAYED', align: 'right' },
+        { key: 'projectsOngoing', label: 'ONGOING', align: 'right' },
+        { key: 'remarks', label: 'Remarks', align: 'left' },
     ];
 
     return allColumns.filter(col => !hiddenColumns.has(col.key));

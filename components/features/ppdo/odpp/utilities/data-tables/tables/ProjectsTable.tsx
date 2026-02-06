@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
     ResizableTableContainer,
     ResizableTableHeader,
@@ -19,6 +19,8 @@ import {
 } from "../cells";
 import { Edit, Trash2, Pin, Eye, MoreHorizontal, Calculator, FolderInput } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,10 +29,11 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { formatCurrency, formatPercentage } from "../core/utils/formatters";
-import type { Project } from "@/components/features/ppdo/odpp/table-pages/projects/types";
+import type { Project, ProjectCategory, GroupedProjects } from "@/components/features/ppdo/odpp/table-pages/projects/types";
 
 interface ProjectsTableProps {
     projects: Project[];
+    groupedData?: [string, GroupedProjects][];
     particularId?: string;
     hiddenColumns?: Set<string>;
     onRowClick: (project: Project, e: React.MouseEvent) => void;
@@ -42,6 +45,15 @@ interface ProjectsTableProps {
     selectedIds?: Set<string>;
     onSelectRow?: (id: string, checked: boolean) => void;
     onSelectAll?: (checked: boolean) => void;
+    onSelectCategory?: (projects: Project[], checked: boolean) => void;
+}
+
+// Category header style helper
+function getCategoryHeaderStyle(category: ProjectCategory | null) {
+    if (!category || !category.colorCode) {
+        return { backgroundColor: "#71717a", color: "#fff" };
+    }
+    return { backgroundColor: category.colorCode, color: "#fff" };
 }
 
 // Totals Row Component
@@ -106,6 +118,7 @@ function ProjectsTotalsRow({ columns, projects }: ProjectsTotalsRowProps) {
 
 export function ProjectsTable({
     projects,
+    groupedData,
     particularId,
     hiddenColumns,
     onRowClick,
@@ -117,6 +130,7 @@ export function ProjectsTable({
     selectedIds,
     onSelectRow,
     onSelectAll,
+    onSelectCategory,
 }: ProjectsTableProps) {
     const {
         columns: allColumns,
@@ -229,9 +243,13 @@ export function ProjectsTable({
     const isAllSelected = selectedIds && projects.length > 0 && selectedIds.size === projects.length;
     const isIndeterminate = selectedIds && selectedIds.size > 0 && projects.length > 0 && selectedIds.size < projects.length;
 
+    const groups: [string, GroupedProjects][] = groupedData && groupedData.length > 0
+        ? groupedData
+        : [['default', { category: null, projects }]];
+
     return (
         <ResizableTableContainer>
-            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+            <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
                     canEditLayout={canEditLayout}
@@ -244,22 +262,71 @@ export function ProjectsTable({
                     onSelectAll={onSelectAll}
                 />
                 <tbody>
-                    {projects.map((project, index) => (
-                        <ResizableTableRow
-                            key={project.id}
-                            data={{ ...project, _id: project.id }}
-                            index={index}
-                            columns={visibleColumns}
-                            rowHeight={rowHeights[project.id] ?? DEFAULT_ROW_HEIGHT}
-                            canEditLayout={canEditLayout}
-                            renderCell={renderCell}
-                            renderActions={renderActions}
-                            onRowClick={(item, e) => onRowClick(item as unknown as Project, e)}
-                            onStartRowResize={startResizeRow}
-                            isSelected={selectedIds?.has(project.id)}
-                            onSelectRow={onSelectRow}
-                        />
-                    ))}
+                    {projects.length === 0 ? (
+                        <tr>
+                            <td colSpan={visibleColumns.length + 3} className="px-4 py-8 text-center text-zinc-500">
+                                No projects found
+                            </td>
+                        </tr>
+                    ) : (
+                        groups.map(([categoryId, group]) => {
+                            const groupIds = group.projects.map(p => p.id);
+                            const groupSelectedCount = groupIds.filter(id => selectedIds?.has(id)).length;
+                            const isGroupAllSelected = groupIds.length > 0 && groupSelectedCount === groupIds.length;
+                            const isGroupIndeterminate = groupSelectedCount > 0 && !isGroupAllSelected;
+                            const headerStyle = getCategoryHeaderStyle(group.category);
+                            const showHeader = groupedData && groupedData.length > 0;
+
+                            return (
+                                <React.Fragment key={categoryId}>
+                                    {showHeader && (
+                                        <tr className="bg-zinc-50 dark:bg-zinc-900 border-t-2 border-zinc-100 dark:border-zinc-800">
+                                            {onSelectAll && (
+                                                <td className="px-2 py-2 text-center border-r border-zinc-200 dark:border-zinc-700" style={headerStyle}>
+                                                    <div className="flex justify-center items-center">
+                                                        <Checkbox
+                                                            checked={isGroupAllSelected}
+                                                            onCheckedChange={(checked) => onSelectCategory?.(group.projects, checked as boolean)}
+                                                            className={cn(
+                                                                "border-white/50 data-[state=checked]:bg-white data-[state=checked]:text-black",
+                                                                isGroupIndeterminate ? "opacity-70" : ""
+                                                            )}
+                                                        />
+                                                    </div>
+                                                </td>
+                                            )}
+                                            <td
+                                                colSpan={visibleColumns.length + 2}
+                                                className="px-4 py-2 text-sm font-bold uppercase tracking-wider text-left border-l-0"
+                                                style={headerStyle}
+                                            >
+                                                {group.category ? group.category.fullName : "Uncategorized"}
+                                                <span className="opacity-80 ml-2 font-normal normal-case">
+                                                    ({group.projects.length} {group.projects.length === 1 ? 'project' : 'projects'})
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {group.projects.map((project, index) => (
+                                        <ResizableTableRow
+                                            key={project.id}
+                                            data={{ ...project, _id: project.id }}
+                                            index={index}
+                                            columns={visibleColumns}
+                                            rowHeight={rowHeights[project.id] ?? DEFAULT_ROW_HEIGHT}
+                                            canEditLayout={canEditLayout}
+                                            renderCell={renderCell}
+                                            renderActions={renderActions}
+                                            onRowClick={(item, e) => onRowClick(item as unknown as Project, e)}
+                                            onStartRowResize={startResizeRow}
+                                            isSelected={selectedIds?.has(project.id)}
+                                            onSelectRow={onSelectRow}
+                                        />
+                                    ))}
+                                </React.Fragment>
+                            );
+                        })
+                    )}
                     {projects.length > 0 && (
                         <ProjectsTotalsRow columns={visibleColumns} projects={projects} />
                     )}
