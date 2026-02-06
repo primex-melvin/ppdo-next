@@ -84,3 +84,7 @@ export {
 // Statistics hooks
 export { useCurrencyFormatter } from './useCurrencyFormatter';
 export { useStatusCounts } from './useStatusCounts';
+
+// Table hooks
+export { useEntityTable } from './useEntityTable';
+export type { UseEntityTableOptions, UseEntityTableReturn } from './useEntityTable';
