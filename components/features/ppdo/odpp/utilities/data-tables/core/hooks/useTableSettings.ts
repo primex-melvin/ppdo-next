@@ -130,6 +130,18 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         return ordered;
     }, [defaultColumns, columnOrder, columnWidths, defaultWidths]);
 
+    // Debug logging: Log when columns are loaded
+    useEffect(() => {
+        if (columns.length === 0) return;
+        const widthInfo = columns.map(c => {
+            const savedWidth = columnWidths.get(String(c.key));
+            const source = savedWidth ? 'db' : 'default';
+            return `${String(c.key)}: ${savedWidth || c.width}px (${source})`;
+        }).join(', ');
+        console.log(`[Table:${tableIdentifier}] Loaded ${columns.length} columns`);
+        console.log(`[Table:${tableIdentifier}] Widths: ${widthInfo}`);
+    }, [columns, columnWidths, tableIdentifier]);
+
     // Toggle column visibility
     const toggleColumnVisibility = useCallback((columnKey: string, isVisible: boolean) => {
         setHiddenColumns(prev => {
@@ -158,6 +170,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         
         // Persist to database (debounced in practice)
         if (canEditLayout) {
+            console.log(`[Table:${tableIdentifier}] Saving width: ${columnKey} = ${clamped}px`);
             await updateWidth({ tableIdentifier, columnKey, width: clamped });
         }
     }, [columns, canEditLayout, tableIdentifier, updateWidth]);

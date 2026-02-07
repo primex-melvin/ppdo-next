@@ -12,12 +12,14 @@ export const getSettings = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    return await ctx.db
+    const result = await ctx.db
       .query("userTableSettings")
       .withIndex("by_user_and_table", (q) =>
         q.eq("userId", userId).eq("tableIdentifier", args.tableIdentifier)
       )
       .first();
+    console.log(`[Convex] getSettings | table: ${args.tableIdentifier} | user: ${userId} | found: ${!!result} | columns: ${result?.columns.length || 0}`);
+    return result;
   },
 });
 
@@ -74,6 +76,8 @@ export const saveSettings = mutation({
       )
       .first();
 
+    console.log(`[Convex] saveSettings | table: ${args.tableIdentifier} | columns: ${args.columns.length} | user: ${userId} | operation: ${existing ? 'UPDATE' : 'INSERT'}`);
+
     const now = Date.now();
     const patchData = {
       columns: args.columns,
@@ -116,6 +120,8 @@ export const updateColumnWidth = mutation({
       )
       .first();
 
+    console.log(`[Convex] updateColumnWidth | table: ${args.tableIdentifier} | column: ${args.columnKey} | width: ${args.width}px | user: ${userId}`);
+
     if (!existing) {
       // Get defaults to create initial settings
       const defaults = await ctx.db
@@ -138,6 +144,7 @@ export const updateColumnWidth = mutation({
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
+      console.log(`[Convex] updateColumnWidth | INSERT new settings with ${columns.length} columns`);
     } else {
       // Update existing column width
       const columns = existing.columns.map((c) =>
@@ -148,6 +155,7 @@ export const updateColumnWidth = mutation({
         columns,
         updatedAt: Date.now(),
       });
+      console.log(`[Convex] updateColumnWidth | UPDATE existing settings`);
     }
   },
 });

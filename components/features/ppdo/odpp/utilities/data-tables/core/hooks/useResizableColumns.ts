@@ -77,15 +77,22 @@ export function useResizableColumns({
         const minWidth = col.minWidth ?? 60;
         const maxWidth = col.maxWidth ?? 600;
         
+        console.log(`[Table:${tableIdentifier}] Resize START: ${colKey} (${startWidth}px)`);
+        
         const handleMouseMove = (moveEvent: MouseEvent) => {
             const delta = moveEvent.clientX - startX;
             const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
+            
+            console.log(`[Table:${tableIdentifier}] Resize MOVE: ${colKey} → ${newWidth}px`);
             
             // Optimistic update
             updateColumnWidth(colKey, newWidth);
         };
         
         const handleMouseUp = () => {
+            const finalWidth = columnWidths.get(colKey) ?? col.width ?? 150;
+            console.log(`[Table:${tableIdentifier}] Resize END: ${colKey} → ${finalWidth}px (saved: ${canEditLayout})`);
+            
             setResizingColumn(null);
             document.removeEventListener("mousemove", handleMouseMove);
             document.removeEventListener("mouseup", handleMouseUp);
