@@ -1,118 +1,63 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { TrendingUp, Package, FolderTree } from "lucide-react";
-import { useQuery, useMutation } from "convex/react";
+import { useMemo, useState, useCallback } from "react";
+import { TrendingUp, Package, FolderTree, Folder, ListTree } from "lucide-react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccentColor } from "@/contexts/AccentColorContext";
-import { FiscalYearModal } from "@/components/features/ppdo/fiscal-years";
+import { FundDashboard } from "@/components/features/ppdo/fund-dashboard/FundDashboard";
+import { useFiscalYearDashboard } from "@/hooks/useFiscalYearDashboard";
 import { Id } from "@/convex/_generated/dataModel";
-import { toast } from "sonner";
-import { FiscalYearHeader } from "@/components/features/ppdo/fiscal-years/FiscalYearHeader";
-import { FiscalYearEmptyState } from "@/components/features/ppdo/fiscal-years/FiscalYearEmptyState";
-import { FiscalYearCard } from "@/components/features/ppdo/fiscal-years/FiscalYearCard";
-import { FiscalYearDeleteDialog } from "@/components/features/ppdo/fiscal-years/FiscalYearDeleteDialog";
 
-export default function SpecialHealthFundsLanding() {
-    const router = useRouter();
-    const { accentColorValue } = useAccentColor();
-    const [showFiscalYearModal, setShowFiscalYearModal] = useState(false);
-    const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [yearToDelete, setYearToDelete] = useState<{ id: Id<"fiscalYears">, year: number } | null>(null);
+interface SpecialHealthStats {
+    fundCount: number;
+    totalItems: number;
+    totalReceived: number;
+    totalUtilized: number;
+    totalBalance: number;
+    avgUtilizationRate: number;
+}
 
-    // Fetch fiscal years
-    const fiscalYears = useQuery(api.fiscalYears.list, { includeInactive: false });
-
-    // Fetch all special health funds
+// Component for lazy-loaded expanded content
+function ExpandedCardContent({
+    fiscalYearId,
+    year,
+    accentColor,
+}: {
+    fiscalYearId: Id<"fiscalYears">;
+    year: number;
+    accentColor: string;
+}) {
+    // Lazy load data only when this component mounts (dropdown is opened)
     const allSpecialHealthFunds = useQuery(api.specialHealthFunds.list);
-
-    // Fetch all special health fund breakdowns
     const allBreakdowns = useQuery(api.specialHealthFundBreakdowns.getBreakdowns, {});
 
-    // Delete mutation
-    const deleteFiscalYear = useMutation(api.fiscalYears.remove);
+    const stats = useMemo(() => {
+        if (!allSpecialHealthFunds || !allBreakdowns) return null;
 
-    const isLoadingYears = fiscalYears === undefined;
-    const isLoadingData = allSpecialHealthFunds === undefined;
+        const yearFunds = allSpecialHealthFunds.filter(fund => fund.year === year);
+        const yearFundIds = new Set(yearFunds.map(f => f._id));
+        const yearBreakdowns = allBreakdowns.filter(b => yearFundIds.has(b.specialHealthFundId as Id<"specialHealthFunds">));
 
-    // Calculate statistics per year
-    const yearsWithStats = useMemo(() => {
-        if (!fiscalYears || !allSpecialHealthFunds || !allBreakdowns) return [];
+        const totalReceived = yearFunds.reduce((sum, fund) => sum + fund.received, 0);
+        const totalUtilized = yearFunds.reduce((sum, fund) => sum + fund.utilized, 0);
+        const totalBalance = yearFunds.reduce((sum, fund) => sum + fund.balance, 0);
+        const avgUtilizationRate = yearFunds.length > 0
+            ? yearFunds.reduce((sum, fund) => sum + (fund.utilizationRate || 0), 0) / yearFunds.length
+            : 0;
 
-        return fiscalYears.map((fiscalYear) => {
-            const yearFunds = allSpecialHealthFunds.filter(fund => fund.year === fiscalYear.year);
-            const yearFundIds = new Set(yearFunds.map(f => f._id));
-            const yearBreakdowns = allBreakdowns.filter(b => yearFundIds.has(b.specialHealthFundId));
+        // Calculate total items (breakdown items)
+        const totalItems = yearBreakdowns.length;
 
-            const totalReceived = yearFunds.reduce((sum, fund) => sum + fund.received, 0);
-            const totalUtilized = yearFunds.reduce((sum, fund) => sum + fund.utilized, 0);
-            const totalBalance = yearFunds.reduce((sum, fund) => sum + fund.balance, 0);
-            const avgUtilizationRate = yearFunds.length > 0
-                ? yearFunds.reduce((sum, fund) => sum + (fund.utilizationRate || 0), 0) / yearFunds.length
-                : 0;
-
-            // Calculate total items (grandchildren breakdown items)
-            const totalItems = yearBreakdowns.length;
-
-            return {
-                ...fiscalYear,
-                stats: {
-                    fundCount: yearFunds.length,
-                    totalItems,
-                    totalReceived,
-                    totalUtilized,
-                    totalBalance,
-                    avgUtilizationRate,
-                },
-            };
-        });
-    }, [fiscalYears, allSpecialHealthFunds, allBreakdowns]);
-
-    const sortedYears = useMemo(() => {
-        return [...yearsWithStats].sort((a, b) => b.year - a.year);
-    }, [yearsWithStats]);
-
-    const handleOpenYear = (year: number) => {
-        router.push(`/dashboard/special-health-funds/${year}`);
-    };
-
-    const handleYearCreated = () => {
-        // Refresh handled by Convex automatically
-    };
-
-    const toggleCard = (cardId: string) => {
-        setExpandedCards(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(cardId)) {
-                newSet.delete(cardId);
-            } else {
-                newSet.add(cardId);
-            }
-            return newSet;
-        });
-    };
-
-    const handleDeleteClick = (e: React.MouseEvent, id: Id<"fiscalYears">, year: number) => {
-        e.stopPropagation();
-        setYearToDelete({ id, year });
-        setDeleteDialogOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!yearToDelete) return;
-
-        try {
-            await deleteFiscalYear({ id: yearToDelete.id });
-            toast.success(`Year ${yearToDelete.year} deleted successfully`);
-            setDeleteDialogOpen(false);
-            setYearToDelete(null);
-        } catch (error) {
-            toast.error("Failed to delete year");
-            console.error(error);
-        }
-    };
+        return {
+            fundCount: yearFunds.length,
+            totalItems,
+            totalReceived,
+            totalUtilized,
+            totalBalance,
+            avgUtilizationRate,
+        };
+    }, [allSpecialHealthFunds, allBreakdowns, year]);
 
     const formatCurrency = (amount: number): string => {
         return new Intl.NumberFormat("en-PH", {
@@ -123,159 +68,163 @@ export default function SpecialHealthFundsLanding() {
         }).format(amount);
     };
 
-    if (isLoadingYears || isLoadingData) {
+    if (!stats) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-zinc-300 border-t-transparent dark:border-zinc-700 dark:border-t-transparent mb-4"></div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading years...</p>
-                </div>
+            <div className="flex items-center justify-center py-8">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-3 border-zinc-300 border-t-transparent dark:border-zinc-700 dark:border-t-transparent" />
             </div>
         );
     }
 
     return (
         <>
-            <div className="space-y-6">
-                <FiscalYearHeader
-                    title="Special Health Funds"
-                    subtitle="Select a year to manage special health funds"
-                    onAddYear={() => setShowFiscalYearModal(true)}
-                    onOpenLatest={() => sortedYears.length > 0 && handleOpenYear(sortedYears[0].year)}
-                    hasYears={sortedYears.length > 0}
-                    accentColor={accentColorValue}
-                />
-
-                {sortedYears.length === 0 ? (
-                    <FiscalYearEmptyState
-                        onCreateFirst={() => setShowFiscalYearModal(true)}
-                        accentColor={accentColorValue}
-                    />
-                ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {sortedYears.map((fiscalYear, index) => {
-                            const isExpanded = expandedCards.has(fiscalYear._id);
-
-                            return (
-                                <FiscalYearCard
-                                    key={fiscalYear._id}
-                                    index={index}
-                                    fiscalYear={fiscalYear}
-                                    isExpanded={isExpanded}
-                                    onToggleExpand={() => toggleCard(fiscalYear._id)}
-                                    onOpen={() => handleOpenYear(fiscalYear.year)}
-                                    onDelete={(e) => handleDeleteClick(e, fiscalYear._id, fiscalYear.year)}
-                                    accentColor={accentColorValue}
-                                    openButtonLabel="Open Funds"
-                                    statsContent={
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-center">
-                                                <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                                                    {fiscalYear.stats.fundCount}
-                                                </div>
-                                                <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                                                    SHF Items
-                                                </div>
-                                            </div>
-                                            <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-800" />
-                                            <div className="text-center">
-                                                <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                                                    {fiscalYear.stats.totalItems}
-                                                </div>
-                                                <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                                                    Breakdowns
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                    expandedContent={
-                                        <>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <TrendingUp className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
-                                                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                                                            Total Received
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
-                                                        {formatCurrency(fiscalYear.stats.totalReceived)}
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <Package className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
-                                                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                                                            Total Utilized
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
-                                                        {formatCurrency(fiscalYear.stats.totalUtilized)}
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <FolderTree className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
-                                                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                                                            Avg Utilization
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
-                                                        {fiscalYear.stats.avgUtilizationRate.toFixed(1)}%
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-4 border border-zinc-200 dark:border-zinc-800">
-                                                <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
-                                                    Balance Overview
-                                                </h4>
-                                                <div className="text-center">
-                                                    <div className="text-2xl font-bold" style={{ color: accentColorValue }}>
-                                                        {formatCurrency(fiscalYear.stats.totalBalance)}
-                                                    </div>
-                                                    <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                                                        Available Balance
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </>
-                                    }
-                                />
-                            );
-                        })}
+            {/* Count Cards - Same style as financial cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Folder className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            SHF Items
+                        </span>
                     </div>
-                )}
+                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                        {stats.fundCount}
+                    </div>
+                </div>
+
+                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 mb-1">
+                        <ListTree className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            Breakdowns
+                        </span>
+                    </div>
+                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                        {stats.totalItems}
+                    </div>
+                </div>
             </div>
 
-            <FiscalYearModal
-                isOpen={showFiscalYearModal}
-                onClose={() => setShowFiscalYearModal(false)}
-                onSuccess={handleYearCreated}
-            />
+            {/* Financial Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            Total Received
+                        </span>
+                    </div>
+                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                        {formatCurrency(stats.totalReceived)}
+                    </div>
+                </div>
 
-            <FiscalYearDeleteDialog
-                isOpen={deleteDialogOpen}
-                setIsOpen={setDeleteDialogOpen}
-                yearToDelete={yearToDelete}
-                onConfirm={handleConfirmDelete}
-                itemTypeLabel="special health funds"
-            />
+                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Package className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            Total Utilized
+                        </span>
+                    </div>
+                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                        {formatCurrency(stats.totalUtilized)}
+                    </div>
+                </div>
 
-            <style jsx global>{`
-        @keyframes fadeInSlide {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 mb-1">
+                        <FolderTree className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            Avg Utilization
+                        </span>
+                    </div>
+                    <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                        {stats.avgUtilizationRate.toFixed(1)}%
+                    </div>
+                </div>
+            </div>
+
+            {/* Balance Overview */}
+            <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-4 border border-zinc-200 dark:border-zinc-800">
+                <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
+                    Balance Overview
+                </h4>
+                <div className="text-center">
+                    <div className="text-2xl font-bold" style={{ color: accentColor }}>
+                        {formatCurrency(stats.totalBalance)}
+                    </div>
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                        Available Balance
+                    </div>
+                </div>
+            </div>
         </>
+    );
+}
+
+export default function SpecialHealthFundsLanding() {
+    const { accentColorValue } = useAccentColor();
+
+    // Track which cards are expanded for lazy loading
+    const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+
+    // Use the shared dashboard hook - only fetch fiscal years (lightweight)
+    const {
+        sortedYears: baseSortedYears,
+        isLoadingYears,
+    } = useFiscalYearDashboard({
+        routePrefix: "/dashboard/special-health-funds",
+    });
+
+    const handleToggleExpand = useCallback((cardId: string, isExpanded: boolean) => {
+        setExpandedCards(prev => {
+            const newSet = new Set(prev);
+            if (isExpanded) {
+                newSet.add(cardId);
+            } else {
+                newSet.delete(cardId);
+            }
+            return newSet;
+        });
+    }, []);
+
+    // Sort years descending
+    const sortedYears = useMemo(() => {
+        if (!baseSortedYears) return [];
+        return [...baseSortedYears].sort((a, b) => b.year - a.year);
+    }, [baseSortedYears]);
+
+    return (
+        <FundDashboard
+            title="Special Health Funds"
+            subtitle="Select a year to manage special health funds"
+            routePrefix="/dashboard/special-health-funds"
+            itemTypeLabel="special health funds"
+            accentColor={accentColorValue}
+            sortedYears={sortedYears}
+            isLoading={isLoadingYears}
+            openButtonLabel="Open Funds"
+            // Empty stats content - counts moved to dropdown
+            statsContent={() => null}
+            onToggleExpand={handleToggleExpand}
+            expandedContent={(fiscalYear) => {
+                // Only render expanded content if this card has been expanded
+                // This triggers the lazy loading of data
+                if (!expandedCards.has(fiscalYear._id)) {
+                    return (
+                        <div className="flex items-center justify-center py-8">
+                            <div className="inline-block animate-spin rounded-full h-6 w-6 border-3 border-zinc-300 border-t-transparent dark:border-zinc-700 dark:border-t-transparent" />
+                        </div>
+                    );
+                }
+                return (
+                    <ExpandedCardContent
+                        fiscalYearId={fiscalYear._id}
+                        year={fiscalYear.year}
+                        accentColor={accentColorValue}
+                    />
+                );
+            }}
+        />
     );
 }

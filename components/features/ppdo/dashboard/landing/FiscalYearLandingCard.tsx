@@ -1,7 +1,7 @@
 // components/ppdo/dashboard/landing/FiscalYearLandingCard.tsx
 "use client";
 
-import { ChevronDown, MoreVertical, Trash2 } from "lucide-react";
+import { ChevronDown, MoreVertical, Trash2, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,12 +18,13 @@ interface FiscalYearLandingCardProps {
     _id: string;
     year: number;
     label?: string;
-    stats: FiscalYearStats;
+    stats: FiscalYearStats | null;
   };
   onOpen: () => void;
   onDelete: (e: React.MouseEvent) => void;
   accentColor?: string;
   index?: number;
+  isStatsLoading?: boolean;
 }
 
 export function FiscalYearLandingCard({
@@ -32,8 +33,10 @@ export function FiscalYearLandingCard({
   onDelete,
   accentColor = "#15803D", // Default to green
   index = 0,
+  isStatsLoading = false,
 }: FiscalYearLandingCardProps) {
   const yellowColor = "#EAB308"; // Folders are always yellow
+  const hasStats = fiscalYear.stats !== null;
 
   return (
     <div
@@ -126,40 +129,57 @@ export function FiscalYearLandingCard({
           </DropdownMenu>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-1 mb-1.5">
-          <div className="space-y-0">
-            <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-tight">Projects</p>
-            <p className="text-sm font-black text-zinc-900 dark:text-zinc-50 -mt-0.5">
-              {fiscalYear.stats.projectCount}
-            </p>
-          </div>
-          <div className="text-right space-y-0">
-            <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-tight">Utilized</p>
-            <p className="text-sm font-black text-zinc-900 dark:text-zinc-50 -mt-0.5">
-              ₱{(fiscalYear.stats.totalBudgetUtilized / 1_000_000).toFixed(1)}M
-            </p>
-          </div>
-        </div>
+        {/* Stats - Only show if hasStats is true */}
+        {hasStats ? (
+          <>
+            <div className="grid grid-cols-2 gap-1 mb-1.5">
+              <div className="space-y-0">
+                <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-tight">Projects</p>
+                <p className="text-sm font-black text-zinc-900 dark:text-zinc-50 -mt-0.5">
+                  {fiscalYear.stats!.projectCount}
+                </p>
+              </div>
+              <div className="text-right space-y-0">
+                <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-tight">Utilized</p>
+                <p className="text-sm font-black text-zinc-900 dark:text-zinc-50 -mt-0.5">
+                  ₱{(fiscalYear.stats!.totalBudgetUtilized / 1_000_000).toFixed(1)}M
+                </p>
+              </div>
+            </div>
 
-        {/* Progress */}
-        <div className="space-y-1 mt-auto">
-          <div className="flex justify-between items-center text-[8px] font-bold uppercase text-zinc-500">
-            <span>Utilization</span>
-            <span style={{ color: accentColor }}>
-              {fiscalYear.stats.utilizationRate.toFixed(1)}%
-            </span>
+            {/* Progress */}
+            <div className="space-y-1 mt-auto">
+              <div className="flex justify-between items-center text-[8px] font-bold uppercase text-zinc-500">
+                <span>Utilization</span>
+                <span style={{ color: accentColor }}>
+                  {fiscalYear.stats!.utilizationRate.toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${Math.min(100, fiscalYear.stats!.utilizationRate)}%`,
+                    backgroundColor: accentColor,
+                  }}
+                />
+              </div>
+            </div>
+          </>
+        ) : isStatsLoading ? (
+          /* Loading State */
+          <div className="flex flex-col items-center justify-center py-4 space-y-2">
+            <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+            <p className="text-[8px] text-zinc-500">Loading stats...</p>
           </div>
-          <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${Math.min(100, fiscalYear.stats.utilizationRate)}%`,
-                backgroundColor: accentColor,
-              }}
-            />
+        ) : (
+          /* Empty State - No stats shown */
+          <div className="flex flex-col items-center justify-center py-4">
+            <p className="text-[8px] text-zinc-400 text-center">
+              Click &quot;Show Stats&quot; to view summary
+            </p>
           </div>
-        </div>
+        )}
 
         {/* Footer Link Hint */}
         <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800">
