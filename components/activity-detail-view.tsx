@@ -142,7 +142,7 @@ export function ActivityDetailView({
                   <div className="flex items-center gap-2">
                     {!isEditing && (
                       <>
-                        <Select value={editedStatus} onValueChange={setEditedStatus} disabled={!isEditing}>
+                        <Select value={editedStatus} onValueChange={(val) => setEditedStatus(val as "pending" | "verified")} disabled={!isEditing}>
                           <SelectTrigger
                             className={cn(
                               "w-[140px] h-8 text-[10px] font-black uppercase tracking-widest",

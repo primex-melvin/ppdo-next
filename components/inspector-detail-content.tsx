@@ -9,7 +9,7 @@ import { ImageLightbox } from "@/components/image-lightbox"
 import { AddInspectionModal } from "@/components/add-inspection-modal"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Plus, Clock } from "lucide-react"
-import { Pagination } from "@/components/ui/pagination"
+
 import { ActivitySearchFilter } from "@/components/activity-search-filter"
 import { MapModal } from "@/components/map-modal"
 import Link from "next/link"
@@ -94,25 +94,27 @@ export function InspectorDetailContent({ inspection }: { inspection: Inspection 
 
             {totalPages > 1 && (
               <div className="flex items-center justify-center py-8">
-                <Pagination>
-                  <button
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1 border rounded disabled:opacity-50"
                   >
                     Previous
-                  </button>
+                  </Button>
                   <span className="px-4 py-1 text-sm font-medium">
                     Page {currentPage} of {totalPages}
                   </span>
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1 border rounded disabled:opacity-50"
                   >
                     Next
-                  </button>
-                </Pagination>
+                  </Button>
+                </div>
               </div>
             )}
           </div>

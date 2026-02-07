@@ -169,19 +169,26 @@ export default function InspectionPage() {
     }
   };
 
-  // Loading state
+  // Loading state - Dynamic based on showDetails
   if (!breakdown || !project) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto p-6">
           <div className="animate-pulse space-y-6">
+            {/* Header skeleton */}
             <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3"></div>
             <div className="h-12 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-              <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-              <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-            </div>
+            
+            {/* Statistics skeleton - only show when details are enabled */}
+            {showDetails && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              </div>
+            )}
+            
+            {/* Table skeleton - always show */}
             <div className="h-96 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
           </div>
         </div>

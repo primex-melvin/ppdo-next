@@ -21,7 +21,7 @@ function getLatestInspectionImages(year: number): string[] {
     .map(([_, snapshots]) => {
       const snapshot = snapshots[0]
       const inspection = MOCK_INSPECTIONS.find((insp) => insp.id === snapshot.id)
-      return inspection?.images?.[0] || `/placeholder.svg?height=200&width=300&query=infrastructure inspection`
+      return inspection?.activities?.[0]?.images?.[0] || `/placeholder.svg?height=200&width=300&query=infrastructure inspection`
     })
     .filter((img) => img)
 }

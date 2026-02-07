@@ -9,12 +9,22 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 type InspectionStatus = "pending" | "verified"
 
-export function AddInspectionModal() {
-  const [open, setOpen] = useState(false)
+interface AddInspectionModalProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function AddInspectionModal({ open: externalOpen, onOpenChange }: AddInspectionModalProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = externalOpen ?? internalOpen
+  const setOpen = (value: boolean) => {
+    setInternalOpen(value)
+    onOpenChange?.(value)
+  }
   const [status, setStatus] = useState<InspectionStatus>("pending")
   const [description, setDescription] = useState("")
   const [images, setImages] = useState<File[]>([])
@@ -57,10 +67,7 @@ export function AddInspectionModal() {
     console.log("[v0] Submitting inspection:", { status, description, imageCount: images.length })
 
     // Show success toast
-    toast({
-      title: "Inspection Added Successfully",
-      description: `Your ${status} inspection has been recorded with ${images.length} image(s).`,
-    })
+    toast.success(`Inspection Added Successfully. Your ${status} inspection has been recorded with ${images.length} image(s).`)
 
     // Reset form and close modal
     setStatus("pending")
@@ -72,12 +79,14 @@ export function AddInspectionModal() {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add New Inspection
-          </Button>
-        </DialogTrigger>
+        {!externalOpen && (
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add New Inspection
+            </Button>
+          </DialogTrigger>
+        )}
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">Record New Inspection</DialogTitle>
