@@ -2,10 +2,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useMemo } from "react";
-import { FolderTree, Plus, ArrowLeft } from "lucide-react";
+import { FolderTree, Plus, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FiscalYearModal } from "@/components/features/ppdo/fiscal-years";
 import { FiscalYearDeleteDialog } from "@/components/features/ppdo/fiscal-years/FiscalYearDeleteDialog";
@@ -45,50 +45,55 @@ export function FiscalYearLanding({ onBack }: FiscalYearLandingProps) {
   const [showFiscalYearModal, setShowFiscalYearModal] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showStats, setShowStats] = useState(false); // Toggle for stats visibility
   const [yearToDelete, setYearToDelete] = useState<{
     id: Id<"fiscalYears">;
     year: number;
   } | null>(null);
 
-  // Fetch fiscal years and dashboard summary data
+  // Fetch fiscal years only (lightweight)
   const fiscalYears = useQuery(api.fiscalYears.list, {
     includeInactive: false,
   });
 
-  // Use optimized dashboard query for resource conservation
-  const dashboardData = useQuery(api.dashboard.getSummaryData, {
-    includeInactive: false,
-  });
+  // Only fetch stats data when showStats is true (optimizes loading)
+  const dashboardData = useQuery(
+    api.dashboard.getSummaryData,
+    showStats ? { includeInactive: false } : "skip"
+  );
 
   // Delete mutation
   const deleteFiscalYear = useMutation(api.fiscalYears.remove);
 
-  const isLoading = fiscalYears === undefined || dashboardData === undefined;
+  const isLoading = fiscalYears === undefined;
+  const isStatsLoading = showStats && dashboardData === undefined;
 
   const yellowColor = "#EAB308"; // Tailwind yellow-500
 
   // Calculate statistics per year using pre-computed data
   const yearsWithStats = useMemo(() => {
-    if (!fiscalYears || !dashboardData) return [];
+    if (!fiscalYears) return [];
 
     return fiscalYears.map((fy) => {
-      const yearStats = dashboardData.yearStats[fy.year.toString()] || {
-        projectCount: 0,
-        ongoingCount: 0,
-        completedCount: 0,
-        delayedCount: 0,
-        totalBudgetAllocated: 0,
-        totalBudgetUtilized: 0,
-        utilizationRate: 0,
-        breakdownCount: 0,
-      };
+      const yearStats = showStats && dashboardData
+        ? dashboardData.yearStats[fy.year.toString()] || {
+            projectCount: 0,
+            ongoingCount: 0,
+            completedCount: 0,
+            delayedCount: 0,
+            totalBudgetAllocated: 0,
+            totalBudgetUtilized: 0,
+            utilizationRate: 0,
+            breakdownCount: 0,
+          }
+        : null;
 
       return {
         ...fy,
         stats: yearStats,
       };
     }).sort((a, b) => b.year - a.year);
-  }, [fiscalYears, dashboardData]);
+  }, [fiscalYears, dashboardData, showStats]);
 
   const handleOpenYear = (year: number) => {
     const params = new URLSearchParams();
@@ -172,18 +177,40 @@ export function FiscalYearLanding({ onBack }: FiscalYearLandingProps) {
               Select a year to view detailed analytics and performance metrics
             </p>
           </div>
-          <Button
-            onClick={() => setShowFiscalYearModal(true)}
-            className="w-full md:w-auto"
-            style={{
-              backgroundColor: accentColorValue,
-              color: "#fff",
-              fontWeight: "600"
-            }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Year
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Stats Toggle Button */}
+            <Button
+              variant="outline"
+              onClick={() => setShowStats(!showStats)}
+              className="w-full md:w-auto"
+              title={showStats ? "Hide summary statistics" : "Show summary statistics"}
+            >
+              {showStats ? (
+                <>
+                  <EyeOff className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Hide Stats</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Show Stats</span>
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={() => setShowFiscalYearModal(true)}
+              className="w-full md:w-auto"
+              style={{
+                backgroundColor: accentColorValue,
+                color: "#fff",
+                fontWeight: "600"
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Year
+            </Button>
+          </div>
         </div>
 
         {/* Empty State */}
@@ -206,6 +233,7 @@ export function FiscalYearLanding({ onBack }: FiscalYearLandingProps) {
                     handleDeleteClick(e, fiscalYear._id, fiscalYear.year)
                   }
                   accentColor={accentColorValue}
+                  isStatsLoading={isStatsLoading}
                 />
               );
             })}

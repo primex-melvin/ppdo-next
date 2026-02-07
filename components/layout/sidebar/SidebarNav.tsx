@@ -59,11 +59,17 @@ function SidebarNavItem({
   }, [isExpanded, isMinimized]);
 
   // Check active state
-  // If it's a leaf node (no submenu), specific match.
-  // If it has submenu, check if any child is active.
+  // For leaf nodes: match exact path OR if current path starts with item href + '/'
+  // This ensures parent nav items stay active when navigating to sub-routes
+  // e.g., /dashboard/project stays active for /dashboard/project/2026
+  // Special case: /dashboard only matches exact path (not sub-routes like /dashboard/project)
   const isActive = item.href
-    ? pathname === item.href
-    : item.submenu?.some((sub) => pathname === sub.href) ?? false;
+    ? item.href === "/dashboard"
+      ? pathname === "/dashboard" || pathname === "/dashboard/"
+      : pathname === item.href || pathname.startsWith(item.href + '/')
+    : item.submenu?.some((sub) => 
+        pathname === sub.href || pathname.startsWith(sub.href + '/')
+      ) ?? false;
 
   const tooltipContent = item.name + (("disabled" in item && item.disabled) ? " (Coming soon)" : "");
   const paddingLeft = level > 0 ? `${level * 12 + 12}px` : undefined;
