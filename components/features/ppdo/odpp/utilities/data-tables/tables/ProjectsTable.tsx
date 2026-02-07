@@ -266,7 +266,7 @@ export function ProjectsTable({
 
     return (
         <ResizableTableContainer ref={containerRef}>
-            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: 'fit-content', minWidth: '100%' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
                     columnWidths={columnWidths}
