@@ -279,6 +279,7 @@ export const seedDefaultWidths = internalMutation({
 
       // === FUNDS TABLES (Trust Funds, SEF, SHF) ===
       // Frontend: tableIdentifier: `${fundType}Table` (e.g., "trustFundsTable", "sefTable", "shfTable")
+      { tableId: "trustFundsTable", col: "aipRefCode", width: 140, flex: 2, minW: 100, maxW: 250 },
       { tableId: "trustFundsTable", col: "projectTitle", width: 300, flex: 3, minW: 180, maxW: 600 },
       { tableId: "trustFundsTable", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
       { tableId: "trustFundsTable", col: "received", width: 140, flex: 1.5, minW: 100, maxW: 220 },
@@ -290,6 +291,7 @@ export const seedDefaultWidths = internalMutation({
       { tableId: "trustFundsTable", col: "officeInCharge", width: 180, flex: 1.8, minW: 120, maxW: 300 },
       { tableId: "trustFundsTable", col: "remarks", width: 200, flex: 2, minW: 120, maxW: 400 },
 
+      { tableId: "sefTable", col: "aipRefCode", width: 140, flex: 2, minW: 100, maxW: 250 },
       { tableId: "sefTable", col: "projectTitle", width: 300, flex: 3, minW: 180, maxW: 600 },
       { tableId: "sefTable", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
       { tableId: "sefTable", col: "received", width: 140, flex: 1.5, minW: 100, maxW: 220 },
@@ -301,6 +303,7 @@ export const seedDefaultWidths = internalMutation({
       { tableId: "sefTable", col: "officeInCharge", width: 180, flex: 1.8, minW: 120, maxW: 300 },
       { tableId: "sefTable", col: "remarks", width: 200, flex: 2, minW: 120, maxW: 400 },
 
+      { tableId: "shfTable", col: "aipRefCode", width: 140, flex: 2, minW: 100, maxW: 250 },
       { tableId: "shfTable", col: "projectTitle", width: 300, flex: 3, minW: 180, maxW: 600 },
       { tableId: "shfTable", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
       { tableId: "shfTable", col: "received", width: 140, flex: 1.5, minW: 100, maxW: 220 },

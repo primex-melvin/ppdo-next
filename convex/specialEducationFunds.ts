@@ -103,6 +103,7 @@ export const create = mutation({
   args: {
     projectTitle: v.string(),
     officeInCharge: v.string(),
+    aipRefCode: v.optional(v.string()),
     dateReceived: v.optional(v.number()),
     received: v.number(),
     obligatedPR: v.optional(v.number()),
@@ -159,6 +160,7 @@ export const create = mutation({
     const specialEducationFundId = await ctx.db.insert("specialEducationFunds", {
       projectTitle: args.projectTitle,
       officeInCharge: args.officeInCharge,
+      aipRefCode: args.aipRefCode,
       departmentId: departmentId,
       dateReceived: args.dateReceived,
       received: args.received,
@@ -201,6 +203,7 @@ export const update = mutation({
     id: v.id("specialEducationFunds"),
     projectTitle: v.string(),
     officeInCharge: v.string(),
+    aipRefCode: v.optional(v.string()),
     dateReceived: v.optional(v.number()),
     received: v.number(),
     obligatedPR: v.optional(v.number()),
@@ -268,6 +271,7 @@ export const update = mutation({
     await ctx.db.patch(args.id, {
       projectTitle: args.projectTitle,
       officeInCharge: args.officeInCharge,
+      aipRefCode: args.aipRefCode,
       departmentId: departmentId,
       dateReceived: args.dateReceived,
       received: args.received,

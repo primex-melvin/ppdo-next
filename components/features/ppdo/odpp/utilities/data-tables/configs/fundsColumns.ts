@@ -5,15 +5,25 @@ import { ColumnConfig } from "../core/types/table.types";
  * Funds table columns (Trust Funds, SEF, SHF) with persisted widths.
  */
 export const FUNDS_TABLE_COLUMNS: ColumnConfig[] = [
-    { 
-        key: "projectTitle", 
-        label: "Project Title", 
+    {
+        key: "aipRefCode",
+        label: "AIP Ref. Code",
+        width: 140,
+        flex: 2,
+        minWidth: 100,
+        maxWidth: 250,
+        type: "text",
+        align: "left"
+    },
+    {
+        key: "projectTitle",
+        label: "Project Title",
         width: 300,
-        flex: 4, 
-        minWidth: 200, 
+        flex: 4,
+        minWidth: 200,
         maxWidth: 450,
-        type: "text", 
-        align: "left" 
+        type: "text",
+        align: "left"
     },
     { 
         key: "officeInCharge", 

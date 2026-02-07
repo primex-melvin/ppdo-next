@@ -16,6 +16,13 @@ export const specialEducationFundTables = {
     projectTitle: v.string(),
 
     /**
+     * AIP Reference Code (OPTIONAL)
+     * Stores the AIP (Annual Investment Program) reference code
+     * Accepts any characters
+     */
+    aipRefCode: v.optional(v.string()),
+
+    /**
      * Office In-Charge (connects to implementing agencies OR departments)
      * Uses the same system as projects for consistency
      */
@@ -116,5 +123,6 @@ export const specialEducationFundTables = {
     .index("isDeleted", ["isDeleted"])
     .index("dateReceived", ["dateReceived"])
     .index("yearAndStatus", ["year", "status"])
-    .index("departmentAndYear", ["departmentId", "year"]),
+    .index("departmentAndYear", ["departmentId", "year"])
+    .index("aipRefCode", ["aipRefCode"]),
 };

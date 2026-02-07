@@ -275,6 +275,17 @@
       "dismissed": false,
       "featureId": "feature-1769389031510-kohqm4k92",
       "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "b0c7bb83-b988-4937-bd2c-68c7f9e6c2a4",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"feature-1770457934575-zeqswrlhj\" has been verified and is complete.",
+      "createdAt": "2026-02-07T10:03:00.456Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1770457934575-zeqswrlhj",
+      "projectPath": "C:\\ppdo\\ppdo-next"
     }
   ]
 }

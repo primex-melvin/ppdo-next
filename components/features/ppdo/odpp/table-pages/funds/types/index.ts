@@ -16,6 +16,7 @@ export interface BaseFund {
     id: string;
     _id?: string;
     projectTitle: string;
+    aipRefCode?: string;
     officeInCharge: string;
     dateReceived?: number;
     received: number;
@@ -39,6 +40,7 @@ export interface BaseFund {
  */
 export interface BaseFundFormData {
     projectTitle: string;
+    aipRefCode?: string;
     officeInCharge: string;
     dateReceived?: number;
     received: number;

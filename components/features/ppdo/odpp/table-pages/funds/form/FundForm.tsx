@@ -29,6 +29,7 @@ import { formatCurrency } from "../utils";
 
 const fundSchema = z.object({
     projectTitle: z.string().min(1, { message: "Project title is required" }),
+    aipRefCode: z.string().optional(),
     officeInCharge: z.string().min(1, { message: "Office in charge is required" }),
     dateReceived: z.string().optional(),
     received: z.number().min(0, { message: "Must be 0 or greater" }),
@@ -88,6 +89,7 @@ export function FundForm({ fund, onSave, onCancel, year }: FundFormProps) {
         resolver: zodResolver(fundSchema),
         defaultValues: {
             projectTitle: fund?.projectTitle || "",
+            aipRefCode: fund?.aipRefCode || "",
             officeInCharge: fund?.officeInCharge || "",
             dateReceived: timestampToDateString(fund?.dateReceived),
             received: fund?.received || 0,
@@ -129,6 +131,7 @@ export function FundForm({ fund, onSave, onCancel, year }: FundFormProps) {
 
         const payload = {
             projectTitle: values.projectTitle,
+            aipRefCode: values.aipRefCode || undefined,
             officeInCharge: values.officeInCharge,
             dateReceived: dateReceivedTimestamp,
             received: values.received,
@@ -145,6 +148,26 @@ export function FundForm({ fund, onSave, onCancel, year }: FundFormProps) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="aipRefCode"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-zinc-700 dark:text-zinc-300">
+                                AIP Ref. Code <span className="text-xs text-zinc-500">(Optional)</span>
+                            </FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="Enter AIP reference code..."
+                                    className="bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
                 <FormField
                     control={form.control}
                     name="projectTitle"
