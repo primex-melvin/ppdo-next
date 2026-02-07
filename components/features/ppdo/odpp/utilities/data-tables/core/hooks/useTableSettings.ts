@@ -20,7 +20,7 @@ function useDebouncedCallback<T extends (...args: any[]) => any>(
     delay: number
 ) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    
+
     return useCallback((...args: Parameters<T>) => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -60,11 +60,11 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     useEffect(() => {
         if (!defaultWidths) return;
 
-        if (!userSettings?.columns) {
-            // No saved settings - use defaults
+        if (!userSettings?.columns || userSettings.columns.length === 0) {
+            // No saved settings or empty columns - use defaults
             setHiddenColumns(new Set());
             setColumnOrder(defaultColumns.map(c => String(c.key)));
-            
+
             // Apply default widths from database or fallback to config
             const widths = new Map<string, number>();
             defaultColumns.forEach(col => {
@@ -79,23 +79,23 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         // Restore from saved user settings
         const hidden = new Set<string>();
         const widths = new Map<string, number>();
-        
+
         userSettings.columns.forEach(savedCol => {
             if (!savedCol.isVisible) {
                 hidden.add(savedCol.fieldKey);
             }
             widths.set(savedCol.fieldKey, savedCol.width);
         });
-        
+
         setHiddenColumns(hidden);
         setColumnWidths(widths);
 
         // Restore column order
         const savedOrder = userSettings.columns.map(c => c.fieldKey);
-        const hasAllColumns = defaultColumns.every(col => 
+        const hasAllColumns = defaultColumns.every(col =>
             savedOrder.includes(String(col.key))
         );
-        
+
         if (hasAllColumns) {
             setColumnOrder(savedOrder);
         } else {
@@ -112,18 +112,18 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     // Build final columns with applied widths
     const columns = useMemo((): ColumnConfig[] => {
         const defaultMap = new Map(defaultColumns.map(c => [String(c.key), c]));
-        
+
         const ordered: ColumnConfig[] = [];
-        
+
         columnOrder.forEach(key => {
             const col = defaultMap.get(key);
             if (!col) return;
-            
+
             // Use saved width, or default from DB, or config default
             const savedWidth = columnWidths.get(key);
             const dbDefault = defaultWidths?.[key]?.width;
             const finalWidth = savedWidth ?? dbDefault ?? col.width ?? 150;
-            
+
             ordered.push({
                 ...col,
                 width: finalWidth,
@@ -131,7 +131,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
                 maxWidth: col.maxWidth ?? defaultWidths?.[key]?.maxWidth ?? 600,
             });
         });
-        
+
         // Add any new columns not in saved order
         defaultColumns.forEach(col => {
             const key = String(col.key);
@@ -143,7 +143,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
                 });
             }
         });
-        
+
         return ordered;
     }, [defaultColumns, columnOrder, columnWidths, defaultWidths]);
 
@@ -186,15 +186,15 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     const updateColumnWidth = useCallback((columnKey: string, newWidth: number) => {
         const col = columns.find(c => String(c.key) === columnKey);
         if (!col) return;
-        
+
         // Clamp to min/max bounds
         const minW = col.minWidth ?? 60;
         const maxW = col.maxWidth ?? 600;
         const clamped = Math.max(minW, Math.min(maxW, newWidth));
-        
+
         // Optimistic update - immediate UI update
         setColumnWidths(prev => new Map(prev).set(columnKey, clamped));
-        
+
         // Schedule save to database (debounced)
         saveWidthToDb(columnKey, clamped);
     }, [columns, saveWidthToDb]);
@@ -217,7 +217,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
 
     // Legacy compatibility: setColumns updates column order
     const setColumns = useCallback((updater: React.SetStateAction<ColumnConfig[]>) => {
-        const newColumns = typeof updater === 'function' 
+        const newColumns = typeof updater === 'function'
             ? (updater as (prev: ColumnConfig[]) => ColumnConfig[])(columns)
             : updater;
         setColumnOrder(newColumns.map((c: ColumnConfig) => String(c.key)));
@@ -238,7 +238,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         toggleColumnVisibility,
         updateColumnWidth,
         saveLayout,
-        
+
         // Legacy compatibility
         setColumns,
     };

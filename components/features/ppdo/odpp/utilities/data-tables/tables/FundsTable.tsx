@@ -263,6 +263,7 @@ export function FundsTable<T extends BaseFund>({
                                     data={{ ...item, _id: item.id }}
                                     index={index}
                                     columns={visibleColumns}
+                                    columnWidths={columnWidths}
                                     rowHeight={rowHeights[item.id] ?? DEFAULT_ROW_HEIGHT}
                                     canEditLayout={canEditLayout}
                                     renderCell={(itm, col) => renderCell(itm as T, col)}

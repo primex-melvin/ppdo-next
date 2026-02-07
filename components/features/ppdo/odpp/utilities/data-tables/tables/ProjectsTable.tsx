@@ -316,6 +316,7 @@ export function ProjectsTable({
                                             data={{ ...project, _id: project.id }}
                                             index={index}
                                             columns={visibleColumns}
+                                            columnWidths={columnWidths}
                                             rowHeight={rowHeights[project.id] ?? DEFAULT_ROW_HEIGHT}
                                             canEditLayout={canEditLayout}
                                             renderCell={renderCell}

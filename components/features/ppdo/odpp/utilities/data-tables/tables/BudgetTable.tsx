@@ -273,6 +273,7 @@ export function BudgetTable({
                                     data={{ ...item, _id: item.id }}
                                     index={index}
                                     columns={visibleColumns}
+                                    columnWidths={columnWidths}
                                     rowHeight={rowHeights[item.id] ?? DEFAULT_ROW_HEIGHT}
                                     canEditLayout={canEditLayout}
                                     renderCell={renderCell}
