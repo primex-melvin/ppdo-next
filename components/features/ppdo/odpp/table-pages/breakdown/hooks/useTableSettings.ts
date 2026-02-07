@@ -7,6 +7,7 @@
 
 "use client";
 
+import { useCallback } from "react";
 import { useTableSettings as useGenericTableSettings } from "@/components/features/ppdo/odpp/utilities/data-tables/core/hooks/useTableSettings";
 import { ColumnConfig, RowHeights } from "../types/breakdown.types";
 import {
@@ -27,16 +28,30 @@ interface UseTableSettingsReturn {
   rowHeights: RowHeights;
   setRowHeights: React.Dispatch<React.SetStateAction<RowHeights>>;
   canEditLayout: boolean;
-  saveLayout: (cols: ColumnConfig[], heights: RowHeights) => void;
+  saveLayout: (heights: RowHeights) => void;
+  saveLayoutWithCols: (cols: ColumnConfig[], heights: RowHeights) => void;
 }
 
 export function useTableSettings(options: UseTableSettingsOptions = {}) {
   const { tableIdentifier = TABLE_IDENTIFIER, defaultColumns = DEFAULT_COLUMNS } = options;
 
   // Call the generic version with breakdown-specific defaults
-  // Cast the defaultColumns to any to satisfy the generic hook
-  return useGenericTableSettings({
+  const coreSettings = useGenericTableSettings({
     tableIdentifier,
     defaultColumns: defaultColumns as any,
   });
+
+  // 2-param version for backward compatibility (cols ignored, just for signature)
+  const saveLayoutWithCols = useCallback(
+    (_cols: ColumnConfig[], heights: RowHeights) => {
+      coreSettings.saveLayout(heights);
+    },
+    [coreSettings.saveLayout]
+  );
+
+  return {
+    ...coreSettings,
+    saveLayout: coreSettings.saveLayout, // 1-param version for useTableResize
+    saveLayoutWithCols, // 2-param version for useColumnDragDrop
+  } as UseTableSettingsReturn;
 }

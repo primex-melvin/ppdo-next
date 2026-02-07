@@ -70,7 +70,7 @@ export function TableHeader({
         {/* Data Columns */}
         {columns.map((column, index) => (
           <th
-            key={column.key}
+            key={String(column.key)}
             draggable={canEditLayout}
             onDragStart={() => onDragStart(index)}
             onDragOver={onDragOver}

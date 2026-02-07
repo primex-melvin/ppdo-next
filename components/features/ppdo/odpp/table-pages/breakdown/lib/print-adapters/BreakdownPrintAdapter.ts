@@ -92,14 +92,14 @@ export class BreakdownPrintAdapter implements PrintDataAdapter<Breakdown[]> {
    */
   private getDefaultColumns(): ColumnConfig[] {
     return [
-      { key: 'projectTitle', label: 'Project Name', flex: 3, minWidth: 180, type: 'text', align: 'left' },
-      { key: 'implementingOffice', label: 'Implementing Office', flex: 2, minWidth: 140, type: 'text', align: 'left' },
-      { key: 'allocatedBudget', label: 'Allocated Budget', flex: 1.5, minWidth: 110, type: 'currency', align: 'right' },
-      { key: 'obligatedBudget', label: 'Obligated Budget', flex: 1.5, minWidth: 110, type: 'currency', align: 'right' },
-      { key: 'budgetUtilized', label: 'Budget Utilized', flex: 1.5, minWidth: 110, type: 'currency', align: 'right' },
-      { key: 'utilizationRate', label: 'Utilization Rate', flex: 1.2, minWidth: 100, type: 'number', align: 'right' },
-      { key: 'balance', label: 'Balance', flex: 1.5, minWidth: 110, type: 'currency', align: 'right' },
-      { key: 'status', label: 'Status', flex: 1, minWidth: 90, type: 'status', align: 'center' },
+      { key: 'projectTitle', label: 'Project Name', width: 280, flex: 3, minWidth: 180, maxWidth: 450, type: 'text', align: 'left' },
+      { key: 'implementingOffice', label: 'Implementing Office', width: 180, flex: 2, minWidth: 140, maxWidth: 300, type: 'text', align: 'left' },
+      { key: 'allocatedBudget', label: 'Allocated Budget', width: 150, flex: 1.5, minWidth: 110, maxWidth: 200, type: 'currency', align: 'right' },
+      { key: 'obligatedBudget', label: 'Obligated Budget', width: 150, flex: 1.5, minWidth: 110, maxWidth: 200, type: 'currency', align: 'right' },
+      { key: 'budgetUtilized', label: 'Budget Utilized', width: 150, flex: 1.5, minWidth: 110, maxWidth: 200, type: 'currency', align: 'right' },
+      { key: 'utilizationRate', label: 'Utilization Rate', width: 120, flex: 1.2, minWidth: 100, maxWidth: 160, type: 'number', align: 'right' },
+      { key: 'balance', label: 'Balance', width: 150, flex: 1.5, minWidth: 110, maxWidth: 200, type: 'currency', align: 'right' },
+      { key: 'status', label: 'Status', width: 120, flex: 1, minWidth: 90, maxWidth: 180, type: 'status', align: 'center' },
     ];
   }
 }

@@ -169,12 +169,12 @@ export function TableRow({
 
           {/* Data Cells */}
           {columns.map((column) => {
-            const cellValue = formatCellValue(breakdown[column.key], column, breakdown);
+            const cellValue = formatCellValue(breakdown[String(column.key)], column, breakdown);
             const isStatusColumn = column.key === 'status';
 
             return (
               <td
-                key={column.key}
+                key={String(column.key)}
                 className="px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-900 dark:text-zinc-100"
                 style={{
                   border: '1px solid rgb(228 228 231 / 1)',

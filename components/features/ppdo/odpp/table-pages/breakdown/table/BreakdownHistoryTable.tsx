@@ -188,6 +188,7 @@ export function BreakdownHistoryTable({
     setRowHeights,
     canEditLayout,
     saveLayout,
+    saveLayoutWithCols,
   } = useTableSettings({ tableIdentifier });
 
   const { startResizeColumn, startResizeRow } = useTableResize({
@@ -204,7 +205,7 @@ export function BreakdownHistoryTable({
     setColumns,
     rowHeights,
     canEditLayout,
-    saveLayout,
+    saveLayout: saveLayoutWithCols,
   });
 
   /* =======================

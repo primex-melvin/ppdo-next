@@ -3,7 +3,7 @@
  * Combined Resizable Columns Hook
  *
  * Aggregates settings, resize, and drag-and-drop functionality for tables.
- * Now includes dynamic width calculation based on flex weights.
+ * Now with persisted column widths from database.
  */
 
 "use client";
@@ -12,7 +12,6 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { useTableSettings } from "./useTableSettings";
 import { useTableResize } from "./useTableResize";
 import { useColumnDragDrop } from "./useColumnDragDrop";
-import { useDynamicColumnWidths } from "./useDynamicColumnWidths";
 import { ColumnConfig, RowHeights } from "../types/table.types";
 
 export interface UseResizableColumnsOptions {
@@ -27,6 +26,7 @@ export function useResizableColumns({
     // Ref for measuring container width
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(1200);
+    const [resizingColumn, setResizingColumn] = useState<number | null>(null);
 
     // Measure container width
     useEffect(() => {
@@ -42,27 +42,67 @@ export function useResizableColumns({
         return () => observer.disconnect();
     }, []);
 
-    // 1. Manage Settings (visibility, order, row heights)
+    // 1. Manage Settings (visibility, order, widths, row heights)
     const {
         columns,
         hiddenColumns,
+        columnWidths,
         rowHeights,
         setRowHeights,
         setColumnOrder,
         toggleColumnVisibility,
         canEditLayout,
+        updateColumnWidth,
         saveLayout,
     } = useTableSettings({
         tableIdentifier,
         defaultColumns,
     });
 
-    // 2. Calculate dynamic widths based on flex
-    const columnWidths = useDynamicColumnWidths({
-        columns,
-        hiddenColumns,
-        containerWidth,
-    });
+    // 2. ACTIVE COLUMN RESIZE (now functional with persisted widths!)
+    const startResizeColumn = useCallback((e: React.MouseEvent, index: number) => {
+        if (!canEditLayout) return;
+        if (index < 0 || index >= columns.length) return;
+        
+        const col = columns[index];
+        if (!col) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        setResizingColumn(index);
+        
+        const startX = e.clientX;
+        const colKey = String(col.key);
+        const startWidth = columnWidths.get(colKey) ?? col.width ?? 150;
+        const minWidth = col.minWidth ?? 60;
+        const maxWidth = col.maxWidth ?? 600;
+        
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            const delta = moveEvent.clientX - startX;
+            const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
+            
+            // Optimistic update
+            updateColumnWidth(colKey, newWidth);
+        };
+        
+        const handleMouseUp = () => {
+            setResizingColumn(null);
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+            
+            // Final save (width already saved via updateColumnWidth)
+        };
+        
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+    }, [canEditLayout, columns, columnWidths, updateColumnWidth]);
+
+    // 3. Row resize (for future implementation)
+    const startResizeRow = useCallback((e: React.MouseEvent, rowId: string) => {
+        if (!canEditLayout) return;
+        // Implementation similar to column resize
+        // Save to rowHeights state and persist via saveLayout
+    }, [canEditLayout]);
 
     // Wrapper for useTableResize (expects 1 param: heights)
     const saveLayoutForResize = useCallback((heights: RowHeights) => {
@@ -71,19 +111,8 @@ export function useResizableColumns({
 
     // Wrapper for useColumnDragDrop (expects 2 params: cols, heights)
     const saveLayoutForDragDrop = useCallback((cols: ColumnConfig[], heights: RowHeights) => {
-        // cols parameter is ignored - widths calculated dynamically from flex
         saveLayout(heights);
     }, [saveLayout]);
-
-    // 3. Manage Resizing (disabled for now - needs flex-based resize logic)
-    const { startResizeColumn, startResizeRow } = useTableResize({
-        columns,
-        setColumns: () => {}, // No-op - widths calculated dynamically
-        rowHeights,
-        setRowHeights,
-        canEditLayout,
-        saveLayout: saveLayoutForResize,
-    });
 
     // 4. Manage Drag & Drop
     const { onDragStart, onDrop, onDragOver, draggedCol } = useColumnDragDrop({
@@ -102,7 +131,9 @@ export function useResizableColumns({
         rowHeights,
         canEditLayout,
         draggedCol,
+        resizingColumn,
         containerRef,
+        containerWidth,
 
         // Actions
         setRowHeights,

@@ -2,9 +2,8 @@
 /**
  * Centralized Table Settings Hook
  *
- * Manages column visibility, order, and row heights with persistence via Convex.
- * NOTE: Column widths are now calculated dynamically based on flex values,
- * not saved/restored from database.
+ * Manages column visibility, order, widths, and row heights with persistence via Convex.
+ * Column widths are now loaded from database defaults and user preferences.
  */
 
 "use client";
@@ -18,7 +17,7 @@ import { safeJsonParse } from "../utils/table.utils";
 export interface UseTableSettingsOptions {
     /** Custom table identifier for different table types */
     tableIdentifier: string;
-    /** Default columns - widths are always taken from here (flex values) */
+    /** Default columns with widths */
     defaultColumns: ColumnConfig[];
 }
 
@@ -28,40 +27,59 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     const [rowHeights, setRowHeights] = useState<RowHeights>({});
     const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
     const [columnOrder, setColumnOrder] = useState<string[]>([]);
+    const [columnWidths, setColumnWidths] = useState<Map<string, number>>(new Map());
 
-    // Query settings from database
-    const settings = useQuery(api.tableSettings.getSettings, { tableIdentifier });
+    // Query user settings and defaults from database
+    const userSettings = useQuery(api.tableSettings.getSettings, { tableIdentifier });
+    const defaultWidths = useQuery(api.tableSettings.getDefaultWidths, { tableIdentifier });
     const saveSettings = useMutation(api.tableSettings.saveSettings);
+    const updateWidth = useMutation(api.tableSettings.updateColumnWidth);
 
     // Check user permissions
     const currentUser = useQuery(api.users.current, {});
     const canEditLayout = currentUser?.role === "super_admin" || currentUser?.role === "admin";
 
-    // Load settings when they change
+    // Load settings from database
     useEffect(() => {
-        if (!settings?.columns) {
+        if (!defaultWidths) return;
+
+        if (!userSettings?.columns) {
             // No saved settings - use defaults
             setHiddenColumns(new Set());
             setColumnOrder(defaultColumns.map(c => String(c.key)));
+            
+            // Apply default widths from database or fallback to config
+            const widths = new Map<string, number>();
+            defaultColumns.forEach(col => {
+                const key = String(col.key);
+                const def = defaultWidths[key];
+                widths.set(key, def?.width ?? col.width ?? 150);
+            });
+            setColumnWidths(widths);
             return;
         }
 
-        // Restore visibility from saved settings
-        const savedHidden = new Set<string>();
-        settings.columns.forEach(savedCol => {
+        // Restore from saved user settings
+        const hidden = new Set<string>();
+        const widths = new Map<string, number>();
+        
+        userSettings.columns.forEach(savedCol => {
             if (!savedCol.isVisible) {
-                savedHidden.add(savedCol.fieldKey);
+                hidden.add(savedCol.fieldKey);
             }
+            widths.set(savedCol.fieldKey, savedCol.width);
         });
-        setHiddenColumns(savedHidden);
+        
+        setHiddenColumns(hidden);
+        setColumnWidths(widths);
 
-        // Restore column order if different from default
-        const savedOrder = settings.columns.map(c => c.fieldKey);
+        // Restore column order
+        const savedOrder = userSettings.columns.map(c => c.fieldKey);
         const hasAllColumns = defaultColumns.every(col => 
             savedOrder.includes(String(col.key))
         );
         
-        if (hasAllColumns && savedOrder.length === defaultColumns.length) {
+        if (hasAllColumns) {
             setColumnOrder(savedOrder);
         } else {
             // Reset to default order if schema changed
@@ -69,31 +87,48 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         }
 
         // Restore row heights
-        if (settings.customRowHeights) {
-            const heights = safeJsonParse<RowHeights>(settings.customRowHeights, {});
-            setRowHeights(heights);
+        if (userSettings.customRowHeights) {
+            setRowHeights(safeJsonParse<RowHeights>(userSettings.customRowHeights, {}));
         }
-    }, [settings, defaultColumns]);
+    }, [userSettings, defaultWidths, defaultColumns]);
 
-    // Build final columns - always use flex/width from defaultColumns
-    const columns = useMemo(() => {
-        // Create map of default columns by key
+    // Build final columns with applied widths
+    const columns = useMemo((): ColumnConfig[] => {
         const defaultMap = new Map(defaultColumns.map(c => [String(c.key), c]));
         
-        // Reorder based on columnOrder
-        const ordered = columnOrder
-            .map(key => defaultMap.get(key))
-            .filter((col): col is ColumnConfig => col !== undefined);
+        const ordered: ColumnConfig[] = [];
         
-        // Add any new columns not in order yet
+        columnOrder.forEach(key => {
+            const col = defaultMap.get(key);
+            if (!col) return;
+            
+            // Use saved width, or default from DB, or config default
+            const savedWidth = columnWidths.get(key);
+            const dbDefault = defaultWidths?.[key]?.width;
+            const finalWidth = savedWidth ?? dbDefault ?? col.width ?? 150;
+            
+            ordered.push({
+                ...col,
+                width: finalWidth,
+                minWidth: col.minWidth ?? defaultWidths?.[key]?.minWidth ?? 60,
+                maxWidth: col.maxWidth ?? defaultWidths?.[key]?.maxWidth ?? 600,
+            });
+        });
+        
+        // Add any new columns not in saved order
         defaultColumns.forEach(col => {
-            if (!columnOrder.includes(String(col.key))) {
-                ordered.push(col);
+            const key = String(col.key);
+            if (!columnOrder.includes(key)) {
+                const dbDefault = defaultWidths?.[key]?.width;
+                ordered.push({
+                    ...col,
+                    width: dbDefault ?? col.width ?? 150,
+                });
             }
         });
         
         return ordered;
-    }, [defaultColumns, columnOrder]);
+    }, [defaultColumns, columnOrder, columnWidths, defaultWidths]);
 
     // Toggle column visibility
     const toggleColumnVisibility = useCallback((columnKey: string, isVisible: boolean) => {
@@ -108,26 +143,40 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         });
     }, []);
 
-    // Save layout to database (visibility, order, row heights - NOT widths)
-    const saveLayout = useCallback(
-        (_cols: ColumnConfig[] | RowHeights, heights?: RowHeights) => {
-            if (!canEditLayout) return;
+    // Update single column width (called during resize)
+    const updateColumnWidth = useCallback(async (columnKey: string, newWidth: number) => {
+        const col = columns.find(c => String(c.key) === columnKey);
+        if (!col) return;
+        
+        // Clamp to min/max bounds
+        const minW = col.minWidth ?? 60;
+        const maxW = col.maxWidth ?? 600;
+        const clamped = Math.max(minW, Math.min(maxW, newWidth));
+        
+        // Optimistic update
+        setColumnWidths(prev => new Map(prev).set(columnKey, clamped));
+        
+        // Persist to database (debounced in practice)
+        if (canEditLayout) {
+            await updateWidth({ tableIdentifier, columnKey, width: clamped });
+        }
+    }, [columns, canEditLayout, tableIdentifier, updateWidth]);
 
-            // Handle both signatures: saveLayout(heights) or saveLayout(cols, heights)
-            const actualHeights = heights || (_cols as RowHeights);
+    // Save full layout to database
+    const saveLayout = useCallback((heights: RowHeights) => {
+        if (!canEditLayout) return;
 
-            saveSettings({
-                tableIdentifier,
-                columns: columns.map(c => ({
-                    fieldKey: String(c.key),
-                    width: 0, // Not used anymore, but kept for schema compatibility
-                    isVisible: !hiddenColumns.has(String(c.key)),
-                })),
-                customRowHeights: JSON.stringify(actualHeights),
-            }).catch(console.error);
-        },
-        [saveSettings, canEditLayout, tableIdentifier, columns, hiddenColumns]
-    );
+        saveSettings({
+            tableIdentifier,
+            columns: columns.map(c => ({
+                fieldKey: String(c.key),
+                width: columnWidths.get(String(c.key)) ?? c.width ?? 150,
+                isVisible: !hiddenColumns.has(String(c.key)),
+                flex: c.flex,
+            })),
+            customRowHeights: JSON.stringify(heights),
+        }).catch(console.error);
+    }, [saveSettings, canEditLayout, tableIdentifier, columns, columnWidths, hiddenColumns]);
 
     // Legacy compatibility: setColumns updates column order
     const setColumns = useCallback((updater: React.SetStateAction<ColumnConfig[]>) => {
@@ -141,6 +190,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         // State
         columns,
         hiddenColumns,
+        columnWidths,
         rowHeights,
         canEditLayout,
 
@@ -149,6 +199,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         setHiddenColumns,
         setColumnOrder,
         toggleColumnVisibility,
+        updateColumnWidth,
         saveLayout,
         
         // Legacy compatibility

@@ -37,16 +37,20 @@ export interface Breakdown {
   reportDate?: number;
   batchId?: string;
   fundSource?: string;
+  // Index signature for dynamic column access
+  [key: string]: any;
 }
 
-export type ColumnType = "text" | "number" | "date" | "status" | "currency";
+export type ColumnType = "text" | "number" | "date" | "status" | "currency" | "percentage" | "custom";
 export type ColumnAlign = "left" | "right" | "center";
 
 export interface ColumnConfig {
-  key: keyof Breakdown;
+  key: string | number | symbol; // Column identifier (matches core ColumnConfig)
   label: string;
-  flex: number;
-  minWidth?: number;
+  width: number;        // Default pixel width
+  flex: number;         // For proportional calculations
+  minWidth?: number;    // Minimum allowed width
+  maxWidth?: number;    // Maximum allowed width
   type: ColumnType;
   align: ColumnAlign;
 }

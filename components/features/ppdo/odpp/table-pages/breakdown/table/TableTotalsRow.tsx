@@ -44,15 +44,15 @@ export function TableTotalsRow({
       {columns.map(column => {
         let cellContent = "";
 
-        if (column.type === "currency" && totals[column.key] !== undefined) {
-          cellContent = formatCurrency(totals[column.key]);
-        } else if (column.type === "number" && totals[column.key] !== undefined) {
-          cellContent = formatPercentage(totals[column.key]);
+        if (column.type === "currency" && totals[String(column.key)] !== undefined) {
+          cellContent = formatCurrency(totals[String(column.key)]);
+        } else if (column.type === "number" && totals[String(column.key)] !== undefined) {
+          cellContent = formatPercentage(totals[String(column.key)]);
         }
 
         return (
           <td
-            key={column.key}
+            key={String(column.key)}
             className="px-2 sm:px-3 py-2 font-bold text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-200"
             style={{
               border: '2px solid rgb(228 228 231 / 1)',

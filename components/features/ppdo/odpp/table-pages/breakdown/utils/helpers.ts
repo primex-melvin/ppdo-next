@@ -72,11 +72,11 @@ export function calculateColumnTotals(
   columns.forEach(column => {
     if (column.type === "currency" || column.type === "number") {
       const sum = breakdowns.reduce((acc, row) => {
-        const value = row[column.key];
+        const value = row[String(column.key)];
         return acc + (typeof value === "number" ? value : 0);
       }, 0);
 
-      totals[column.key] = sum;
+      totals[String(column.key)] = sum;
     }
   });
 
