@@ -8,11 +8,28 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ColumnConfig, RowHeights } from "../types/table.types";
 import { safeJsonParse } from "../utils/table.utils";
+
+// Debounce helper
+function useDebouncedCallback<T extends (...args: any[]) => any>(
+    callback: T,
+    delay: number
+) {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    
+    return useCallback((...args: Parameters<T>) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+            callback(...args);
+        }, delay);
+    }, [callback, delay]);
+}
 
 export interface UseTableSettingsOptions {
     /** Custom table identifier for different table types */
@@ -156,7 +173,17 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     }, []);
 
     // Update single column width (called during resize)
-    const updateColumnWidth = useCallback(async (columnKey: string, newWidth: number) => {
+    // Debounced save to prevent too many mutation calls
+    const saveWidthToDb = useDebouncedCallback(
+        async (columnKey: string, width: number) => {
+            if (!canEditLayout) return;
+            console.log(`[Table:${tableIdentifier}] Saving width: ${columnKey} = ${width}px`);
+            await updateWidth({ tableIdentifier, columnKey, width });
+        },
+        300 // 300ms debounce
+    );
+
+    const updateColumnWidth = useCallback((columnKey: string, newWidth: number) => {
         const col = columns.find(c => String(c.key) === columnKey);
         if (!col) return;
         
@@ -165,15 +192,12 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         const maxW = col.maxWidth ?? 600;
         const clamped = Math.max(minW, Math.min(maxW, newWidth));
         
-        // Optimistic update
+        // Optimistic update - immediate UI update
         setColumnWidths(prev => new Map(prev).set(columnKey, clamped));
         
-        // Persist to database (debounced in practice)
-        if (canEditLayout) {
-            console.log(`[Table:${tableIdentifier}] Saving width: ${columnKey} = ${clamped}px`);
-            await updateWidth({ tableIdentifier, columnKey, width: clamped });
-        }
-    }, [columns, canEditLayout, tableIdentifier, updateWidth]);
+        // Schedule save to database (debounced)
+        saveWidthToDb(columnKey, clamped);
+    }, [columns, saveWidthToDb]);
 
     // Save full layout to database
     const saveLayout = useCallback((heights: RowHeights) => {

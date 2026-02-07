@@ -123,6 +123,7 @@ export function FundsTable<T extends BaseFund>({
 }: FundsTableProps<T>) {
     const {
         columns: allColumns,
+        columnWidths,
         rowHeights,
         canEditLayout,
         startResizeColumn,
@@ -237,6 +238,7 @@ export function FundsTable<T extends BaseFund>({
             <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
+                    columnWidths={columnWidths}
                     canEditLayout={canEditLayout}
                     onDragStart={onDragStart}
                     onDragOver={onDragOver}

@@ -139,6 +139,7 @@ export function BudgetTable({
 }: BudgetTableProps) {
     const {
         columns: allColumns,
+        columnWidths,
         rowHeights,
         canEditLayout,
         startResizeColumn,
@@ -251,6 +252,7 @@ export function BudgetTable({
             <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
+                    columnWidths={columnWidths}
                     canEditLayout={canEditLayout}
                     onDragStart={onDragStart}
                     onDragOver={onDragOver}

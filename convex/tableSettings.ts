@@ -145,6 +145,26 @@ export const updateColumnWidth = mutation({
         updatedAt: Date.now(),
       });
       console.log(`[Convex] updateColumnWidth | INSERT new settings with ${columns.length} columns`);
+    } else if (existing.columns.length === 0) {
+      // Settings exist but columns array is empty - populate from defaults
+      const defaults = await ctx.db
+        .query("tableColumnDefaults")
+        .withIndex("by_table", (q) => q.eq("tableIdentifier", args.tableIdentifier))
+        .collect();
+
+      const columns = defaults.map((def) => ({
+        fieldKey: def.columnKey,
+        width: def.columnKey === args.columnKey ? args.width : def.defaultWidth,
+        isVisible: true,
+        flex: def.flex,
+        pinned: null as "left" | "right" | null,
+      }));
+
+      await ctx.db.patch(existing._id, {
+        columns,
+        updatedAt: Date.now(),
+      });
+      console.log(`[Convex] updateColumnWidth | POPULATE empty settings with ${columns.length} columns`);
     } else {
       // Update existing column width
       const columns = existing.columns.map((c) =>

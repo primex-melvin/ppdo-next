@@ -125,6 +125,7 @@ export function TwentyPercentDFTable({
 }: TwentyPercentDFTableProps) {
     const {
         columns: allColumns,
+        columnWidths,
         rowHeights,
         canEditLayout,
         startResizeColumn,
@@ -245,6 +246,7 @@ export function TwentyPercentDFTable({
             <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
+                    columnWidths={columnWidths}
                     canEditLayout={canEditLayout}
                     onDragStart={onDragStart}
                     onDragOver={onDragOver}
