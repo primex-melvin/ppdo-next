@@ -48,6 +48,11 @@ import {
   logBreakdownNavigation
 } from "../utils/navigation.utils";
 
+import {
+  buildInspectionUrl,
+  logInspectionNavigation
+} from "../utils/inspection-navigation.utils";
+
 // Import hooks
 import { useTableSettings } from "../hooks/useTableSettings";
 import { useTableResize } from "../hooks/useTableResize";
@@ -86,6 +91,8 @@ export function BreakdownHistoryTable({
   navigationParams,
   onStatusChange,
   entityName,
+  enableInspectionNavigation = false,
+  onNavigateToInspections,
 }: BreakdownHistoryTableProps) {
   const router = useRouter();
   const params = useParams();
@@ -337,8 +344,6 @@ export function BreakdownHistoryTable({
       return;
     }
 
-    logBreakdownNavigation(breakdown);
-
     // Build navigation params from props or URL params
     const navParams: NavigationParams = navigationParams || {
       particularId: (params as any).particularId as string,
@@ -347,9 +352,23 @@ export function BreakdownHistoryTable({
       slug: ((params as any).slug || (params as any).trustfundbreakdownId) as string, // Fallback for backward compat if needed, otherwise just slug
     };
 
+    // If inspection navigation is enabled, navigate to inspections instead
+    if (enableInspectionNavigation) {
+      if (onNavigateToInspections) {
+        onNavigateToInspections(breakdown);
+      } else {
+        const inspectionPath = buildInspectionUrl(breakdown, navParams, entityType);
+        logInspectionNavigation(breakdown, inspectionPath);
+        router.push(inspectionPath);
+      }
+      return;
+    }
+
+    // Default: navigate to breakdown details
+    logBreakdownNavigation(breakdown);
     const path = buildBreakdownDetailPath(breakdown, navParams, entityType);
     router.push(path);
-  }, [params, navigationParams, router, entityType]);
+  }, [params, navigationParams, router, entityType, enableInspectionNavigation, onNavigateToInspections]);
 
   /* =======================
      COMPUTED VALUES

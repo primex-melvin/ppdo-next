@@ -298,6 +298,8 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
                         onOpenTrash={() => setShowTrashModal(true)}
                         entityType="twentyPercentDF"
                         entityName={fund?.particulars}
+                        enableInspectionNavigation={true}
+                        navigationParams={{ year, slug: slugWithId }}
                     />
                 )}
             </div>

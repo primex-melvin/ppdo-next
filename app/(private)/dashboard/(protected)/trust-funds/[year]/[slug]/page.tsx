@@ -305,6 +305,8 @@ export default function TrustFundBreakdownPage() {
             onOpenTrash={() => setShowTrashModal(true)}
             entityType="trustfund"
             entityName={trustFund?.projectTitle}
+            enableInspectionNavigation={true}
+            navigationParams={{ year, slug: slugWithId }}
           />
         )}
       </div>

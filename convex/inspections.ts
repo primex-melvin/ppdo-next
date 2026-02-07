@@ -9,7 +9,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
  */
 export const createInspection = mutation({
   args: {
-    projectId: v.id("projects"),
+    projectId: v.optional(v.id("projects")),
     budgetItemId: v.optional(v.id("budgetItems")),
     programNumber: v.string(),
     title: v.string(),
@@ -530,7 +530,7 @@ export const getRecentInspections = query({
     // Enrich with project info
     const enrichedInspections = await Promise.all(
       inspections.map(async (inspection) => {
-        const project = await ctx.db.get(inspection.projectId);
+        const project = inspection.projectId ? await ctx.db.get(inspection.projectId) : null;
         const creator = await ctx.db.get(inspection.createdBy);
 
         return {
@@ -542,5 +542,491 @@ export const getRecentInspections = query({
     );
 
     return enrichedInspections;
+  },
+});
+
+/**
+ * ============================================================================
+ * FUND-SPECIFIC INSPECTION QUERIES AND MUTATIONS
+ * ============================================================================
+ */
+
+/**
+ * List inspections for a Trust Fund
+ */
+export const listInspectionsByTrustFund = query({
+  args: {
+    trustFundId: v.id("trustFunds"),
+    status: v.optional(
+      v.union(
+        v.literal("completed"),
+        v.literal("in_progress"),
+        v.literal("pending"),
+        v.literal("cancelled")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    let inspectionsQuery = ctx.db
+      .query("inspections")
+      .withIndex("trustFundId", (q) => q.eq("trustFundId", args.trustFundId));
+
+    const inspections = await inspectionsQuery.collect();
+
+    // Filter by status if provided
+    const filteredInspections = args.status
+      ? inspections.filter((i) => i.status === args.status)
+      : inspections;
+
+    // Sort by inspection date descending
+    const sortedInspections = filteredInspections.sort(
+      (a, b) => b.inspectionDateTime - a.inspectionDateTime
+    );
+
+    // Enrich with creator and images
+    const enrichedInspections = await Promise.all(
+      sortedInspections.map(async (inspection) => {
+        const creator = await ctx.db.get(inspection.createdBy);
+
+        // Get images if uploadSessionId exists
+        let imageCount = 0;
+        let thumbnails: string[] = [];
+
+        if (inspection.uploadSessionId) {
+          const images = await ctx.db
+            .query("media")
+            .withIndex("uploadSessionId", (q) =>
+              q.eq("uploadSessionId", inspection.uploadSessionId)
+            )
+            .collect();
+
+          imageCount = images.length;
+
+          // Get first 4 image URLs for thumbnails
+          const imageUrls = await Promise.all(
+            images.slice(0, 4).map(async (img) => {
+              const url = await ctx.storage.getUrl(img.storageId);
+              return url || "";
+            })
+          );
+          thumbnails = imageUrls.filter((url) => url !== "");
+        }
+
+        return {
+          ...inspection,
+          creator,
+          imageCount,
+          thumbnails,
+        };
+      })
+    );
+
+    return enrichedInspections;
+  },
+});
+
+/**
+ * List inspections for a Special Education Fund
+ */
+export const listInspectionsBySpecialEducationFund = query({
+  args: {
+    specialEducationFundId: v.id("specialEducationFunds"),
+    status: v.optional(
+      v.union(
+        v.literal("completed"),
+        v.literal("in_progress"),
+        v.literal("pending"),
+        v.literal("cancelled")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    let inspectionsQuery = ctx.db
+      .query("inspections")
+      .withIndex("specialEducationFundId", (q) =>
+        q.eq("specialEducationFundId", args.specialEducationFundId)
+      );
+
+    const inspections = await inspectionsQuery.collect();
+
+    // Filter by status if provided
+    const filteredInspections = args.status
+      ? inspections.filter((i) => i.status === args.status)
+      : inspections;
+
+    // Sort by inspection date descending
+    const sortedInspections = filteredInspections.sort(
+      (a, b) => b.inspectionDateTime - a.inspectionDateTime
+    );
+
+    // Enrich with creator and images
+    const enrichedInspections = await Promise.all(
+      sortedInspections.map(async (inspection) => {
+        const creator = await ctx.db.get(inspection.createdBy);
+
+        let imageCount = 0;
+        let thumbnails: string[] = [];
+
+        if (inspection.uploadSessionId) {
+          const images = await ctx.db
+            .query("media")
+            .withIndex("uploadSessionId", (q) =>
+              q.eq("uploadSessionId", inspection.uploadSessionId)
+            )
+            .collect();
+
+          imageCount = images.length;
+
+          const imageUrls = await Promise.all(
+            images.slice(0, 4).map(async (img) => {
+              const url = await ctx.storage.getUrl(img.storageId);
+              return url || "";
+            })
+          );
+          thumbnails = imageUrls.filter((url) => url !== "");
+        }
+
+        return {
+          ...inspection,
+          creator,
+          imageCount,
+          thumbnails,
+        };
+      })
+    );
+
+    return enrichedInspections;
+  },
+});
+
+/**
+ * List inspections for a Special Health Fund
+ */
+export const listInspectionsBySpecialHealthFund = query({
+  args: {
+    specialHealthFundId: v.id("specialHealthFunds"),
+    status: v.optional(
+      v.union(
+        v.literal("completed"),
+        v.literal("in_progress"),
+        v.literal("pending"),
+        v.literal("cancelled")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    let inspectionsQuery = ctx.db
+      .query("inspections")
+      .withIndex("specialHealthFundId", (q) =>
+        q.eq("specialHealthFundId", args.specialHealthFundId)
+      );
+
+    const inspections = await inspectionsQuery.collect();
+
+    // Filter by status if provided
+    const filteredInspections = args.status
+      ? inspections.filter((i) => i.status === args.status)
+      : inspections;
+
+    // Sort by inspection date descending
+    const sortedInspections = filteredInspections.sort(
+      (a, b) => b.inspectionDateTime - a.inspectionDateTime
+    );
+
+    // Enrich with creator and images
+    const enrichedInspections = await Promise.all(
+      sortedInspections.map(async (inspection) => {
+        const creator = await ctx.db.get(inspection.createdBy);
+
+        let imageCount = 0;
+        let thumbnails: string[] = [];
+
+        if (inspection.uploadSessionId) {
+          const images = await ctx.db
+            .query("media")
+            .withIndex("uploadSessionId", (q) =>
+              q.eq("uploadSessionId", inspection.uploadSessionId)
+            )
+            .collect();
+
+          imageCount = images.length;
+
+          const imageUrls = await Promise.all(
+            images.slice(0, 4).map(async (img) => {
+              const url = await ctx.storage.getUrl(img.storageId);
+              return url || "";
+            })
+          );
+          thumbnails = imageUrls.filter((url) => url !== "");
+        }
+
+        return {
+          ...inspection,
+          creator,
+          imageCount,
+          thumbnails,
+        };
+      })
+    );
+
+    return enrichedInspections;
+  },
+});
+
+/**
+ * List inspections for a 20% Development Fund
+ */
+export const listInspectionsByTwentyPercentDF = query({
+  args: {
+    twentyPercentDFId: v.id("twentyPercentDFs"),
+    status: v.optional(
+      v.union(
+        v.literal("completed"),
+        v.literal("in_progress"),
+        v.literal("pending"),
+        v.literal("cancelled")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    let inspectionsQuery = ctx.db
+      .query("inspections")
+      .withIndex("twentyPercentDFId", (q) =>
+        q.eq("twentyPercentDFId", args.twentyPercentDFId)
+      );
+
+    const inspections = await inspectionsQuery.collect();
+
+    // Filter by status if provided
+    const filteredInspections = args.status
+      ? inspections.filter((i) => i.status === args.status)
+      : inspections;
+
+    // Sort by inspection date descending
+    const sortedInspections = filteredInspections.sort(
+      (a, b) => b.inspectionDateTime - a.inspectionDateTime
+    );
+
+    // Enrich with creator and images
+    const enrichedInspections = await Promise.all(
+      sortedInspections.map(async (inspection) => {
+        const creator = await ctx.db.get(inspection.createdBy);
+
+        let imageCount = 0;
+        let thumbnails: string[] = [];
+
+        if (inspection.uploadSessionId) {
+          const images = await ctx.db
+            .query("media")
+            .withIndex("uploadSessionId", (q) =>
+              q.eq("uploadSessionId", inspection.uploadSessionId)
+            )
+            .collect();
+
+          imageCount = images.length;
+
+          const imageUrls = await Promise.all(
+            images.slice(0, 4).map(async (img) => {
+              const url = await ctx.storage.getUrl(img.storageId);
+              return url || "";
+            })
+          );
+          thumbnails = imageUrls.filter((url) => url !== "");
+        }
+
+        return {
+          ...inspection,
+          creator,
+          imageCount,
+          thumbnails,
+        };
+      })
+    );
+
+    return enrichedInspections;
+  },
+});
+
+/**
+ * Create inspection for Trust Fund
+ */
+export const createInspectionForTrustFund = mutation({
+  args: {
+    trustFundId: v.id("trustFunds"),
+    programNumber: v.string(),
+    title: v.string(),
+    category: v.string(),
+    inspectionDateTime: v.number(),
+    remarks: v.string(),
+    status: v.union(
+      v.literal("completed"),
+      v.literal("in_progress"),
+      v.literal("pending"),
+      v.literal("cancelled")
+    ),
+    uploadSessionId: v.optional(v.id("uploadSessions")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const now = Date.now();
+
+    const inspectionId = await ctx.db.insert("inspections", {
+      trustFundId: args.trustFundId,
+      programNumber: args.programNumber,
+      title: args.title,
+      category: args.category,
+      inspectionDateTime: args.inspectionDateTime,
+      remarks: args.remarks,
+      status: args.status,
+      viewCount: 0,
+      uploadSessionId: args.uploadSessionId,
+      createdBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return inspectionId;
+  },
+});
+
+/**
+ * Create inspection for Special Education Fund
+ */
+export const createInspectionForSpecialEducationFund = mutation({
+  args: {
+    specialEducationFundId: v.id("specialEducationFunds"),
+    programNumber: v.string(),
+    title: v.string(),
+    category: v.string(),
+    inspectionDateTime: v.number(),
+    remarks: v.string(),
+    status: v.union(
+      v.literal("completed"),
+      v.literal("in_progress"),
+      v.literal("pending"),
+      v.literal("cancelled")
+    ),
+    uploadSessionId: v.optional(v.id("uploadSessions")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const now = Date.now();
+
+    const inspectionId = await ctx.db.insert("inspections", {
+      specialEducationFundId: args.specialEducationFundId,
+      programNumber: args.programNumber,
+      title: args.title,
+      category: args.category,
+      inspectionDateTime: args.inspectionDateTime,
+      remarks: args.remarks,
+      status: args.status,
+      viewCount: 0,
+      uploadSessionId: args.uploadSessionId,
+      createdBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return inspectionId;
+  },
+});
+
+/**
+ * Create inspection for Special Health Fund
+ */
+export const createInspectionForSpecialHealthFund = mutation({
+  args: {
+    specialHealthFundId: v.id("specialHealthFunds"),
+    programNumber: v.string(),
+    title: v.string(),
+    category: v.string(),
+    inspectionDateTime: v.number(),
+    remarks: v.string(),
+    status: v.union(
+      v.literal("completed"),
+      v.literal("in_progress"),
+      v.literal("pending"),
+      v.literal("cancelled")
+    ),
+    uploadSessionId: v.optional(v.id("uploadSessions")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const now = Date.now();
+
+    const inspectionId = await ctx.db.insert("inspections", {
+      specialHealthFundId: args.specialHealthFundId,
+      programNumber: args.programNumber,
+      title: args.title,
+      category: args.category,
+      inspectionDateTime: args.inspectionDateTime,
+      remarks: args.remarks,
+      status: args.status,
+      viewCount: 0,
+      uploadSessionId: args.uploadSessionId,
+      createdBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return inspectionId;
+  },
+});
+
+/**
+ * Create inspection for 20% Development Fund
+ */
+export const createInspectionForTwentyPercentDF = mutation({
+  args: {
+    twentyPercentDFId: v.id("twentyPercentDFs"),
+    programNumber: v.string(),
+    title: v.string(),
+    category: v.string(),
+    inspectionDateTime: v.number(),
+    remarks: v.string(),
+    status: v.union(
+      v.literal("completed"),
+      v.literal("in_progress"),
+      v.literal("pending"),
+      v.literal("cancelled")
+    ),
+    uploadSessionId: v.optional(v.id("uploadSessions")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const now = Date.now();
+
+    const inspectionId = await ctx.db.insert("inspections", {
+      twentyPercentDFId: args.twentyPercentDFId,
+      programNumber: args.programNumber,
+      title: args.title,
+      category: args.category,
+      inspectionDateTime: args.inspectionDateTime,
+      remarks: args.remarks,
+      status: args.status,
+      viewCount: 0,
+      uploadSessionId: args.uploadSessionId,
+      createdBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return inspectionId;
   },
 });

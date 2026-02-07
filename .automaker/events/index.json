@@ -2,6 +2,13 @@
   "version": 1,
   "events": [
     {
+      "id": "evt-1770460125308-71846361",
+      "trigger": "feature_success",
+      "timestamp": "2026-02-07T10:28:45.308Z",
+      "featureName": "Implement modular inspection pages for all fund types",
+      "featureId": "feature-1770458911296-zt7egg3hj"
+    },
+    {
       "id": "evt-1770459204010-7466fce1",
       "trigger": "feature_success",
       "timestamp": "2026-02-07T10:13:24.010Z",

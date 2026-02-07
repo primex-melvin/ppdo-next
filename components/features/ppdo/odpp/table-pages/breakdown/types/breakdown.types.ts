@@ -69,6 +69,10 @@ export interface BreakdownHistoryTableProps {
   navigationParams?: NavigationParams;
   /** Name of the entity (project name, fund title, etc.) for print preview */
   entityName?: string;
+  /** Enable inspection navigation on row click (adds inspection icon/button) */
+  enableInspectionNavigation?: boolean;
+  /** Callback when navigating to inspections (alternative to row click) */
+  onNavigateToInspections?: (breakdown: Breakdown) => void;
 }
 
 export interface RowHeights {

@@ -9,9 +9,17 @@ export const inspectionTables = {
    */
   inspections: defineTable({
     // ============================================================================
-    // REQUIRED CORE FIELDS (Unchanged)
+    // FUND TYPE IDENTIFICATION (One required)
     // ============================================================================
-    projectId: v.id("projects"),
+    projectId: v.optional(v.id("projects")),
+    trustFundId: v.optional(v.id("trustFunds")),
+    specialEducationFundId: v.optional(v.id("specialEducationFunds")),
+    specialHealthFundId: v.optional(v.id("specialHealthFunds")),
+    twentyPercentDFId: v.optional(v.id("twentyPercentDFs")),
+
+    // ============================================================================
+    // CORE FIELDS
+    // ============================================================================
     budgetItemId: v.optional(v.id("budgetItems")),
     programNumber: v.string(),
     title: v.string(),
@@ -67,7 +75,12 @@ export const inspectionTables = {
     // ============================================================================
     // INDEXES
     // ============================================================================
+    // Fund type indexes
     .index("projectId", ["projectId"])
+    .index("trustFundId", ["trustFundId"])
+    .index("specialEducationFundId", ["specialEducationFundId"])
+    .index("specialHealthFundId", ["specialHealthFundId"])
+    .index("twentyPercentDFId", ["twentyPercentDFId"])
     .index("budgetItemId", ["budgetItemId"])
     .index("status", ["status"])
     .index("category", ["category"])
@@ -82,7 +95,10 @@ export const inspectionTables = {
     .index("createdBy", ["createdBy"])
     .index("createdAt", ["createdAt"])
     .index("programNumber", ["programNumber"])
+    // Compound indexes
     .index("projectAndStatus", ["projectId", "status"])
     .index("projectAndDate", ["projectId", "inspectionDateTime"])
+    .index("trustFundAndStatus", ["trustFundId", "status"])
+    .index("trustFundAndDate", ["trustFundId", "inspectionDateTime"])
     .index("categoryAndStatus", ["category", "status"]),
 };

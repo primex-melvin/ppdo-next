@@ -293,6 +293,8 @@ export default function SpecialHealthFundBreakdownPage({ params }: PageProps) {
                         onOpenTrash={() => setShowTrashModal(true)}
                         entityType="specialhealthfund"
                         entityName={fund?.projectTitle}
+                        enableInspectionNavigation={true}
+                        navigationParams={{ year, slug: slugWithId }}
                     />
                 )}
             </div>
