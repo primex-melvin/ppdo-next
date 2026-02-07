@@ -612,7 +612,7 @@ export function BreakdownHistoryTable({
                 <tbody>
                   <tr>
                     <td colSpan={visibleColumns.length + 3}>
-                      <EmptyState />
+                      <EmptyState asTableRow={false} />
                     </td>
                   </tr>
                 </tbody>
