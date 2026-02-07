@@ -84,7 +84,17 @@ export function useTableSettings(options: UseTableSettingsOptions) {
             if (!savedCol.isVisible) {
                 hidden.add(savedCol.fieldKey);
             }
-            widths.set(savedCol.fieldKey, savedCol.width);
+            // Only use saved width if it's a valid positive number
+            // Otherwise, fall back to DB default or config default
+            if (savedCol.width && savedCol.width > 0) {
+                widths.set(savedCol.fieldKey, savedCol.width);
+            } else {
+                // Find the default column config for this key
+                const colConfig = defaultColumns.find(c => String(c.key) === savedCol.fieldKey);
+                const dbWidth = defaultWidths?.[savedCol.fieldKey]?.width;
+                const fallbackWidth = dbWidth ?? colConfig?.width ?? 150;
+                widths.set(savedCol.fieldKey, fallbackWidth);
+            }
         });
 
         setHiddenColumns(hidden);

@@ -129,8 +129,8 @@ export function BreakdownHistoryTable({
 
   // Determine entity ID for share modal
   const shareEntityId = useMemo(() => {
-    if (entityType === "trustfund" || entityType === "specialeducationfund" || 
-        entityType === "specialhealthfund" || entityType === "twentyPercentDF") {
+    if (entityType === "trustfund" || entityType === "specialeducationfund" ||
+      entityType === "specialhealthfund" || entityType === "twentyPercentDF") {
       return navigationParams?.slug || (params as any).slug as string;
     }
     return navigationParams?.projectbreakdownId || (params as any).projectbreakdownId as string;
@@ -189,15 +189,17 @@ export function BreakdownHistoryTable({
     canEditLayout,
     saveLayout,
     saveLayoutWithCols,
+    updateColumnWidth,
   } = useTableSettings({ tableIdentifier });
 
   const { startResizeColumn, startResizeRow } = useTableResize({
     columns,
-    setColumns,
     rowHeights,
     setRowHeights,
     canEditLayout,
     saveLayout,
+    updateColumnWidth,
+    setColumns, // Legacy fallback
   });
 
   const { onDragStart, onDrop, onDragOver } = useColumnDragDrop({
@@ -405,7 +407,7 @@ export function BreakdownHistoryTable({
   const handleBulkTrash = useCallback(async () => {
     if (selectedIds.size === 0) return;
 
-    const ids = Array.from(selectedIds) as Id<"govtProjectBreakdowns">[] | 
+    const ids = Array.from(selectedIds) as Id<"govtProjectBreakdowns">[] |
       Id<"trustFundBreakdowns">[] | Id<"specialEducationFundBreakdowns">[] |
       Id<"specialHealthFundBreakdowns">[] | Id<"twentyPercentDFBreakdowns">[];
 
@@ -441,8 +443,8 @@ export function BreakdownHistoryTable({
       toast.error("Failed to move items to trash");
       console.error(error);
     }
-  }, [selectedIds, entityType, bulkMoveToTrashProject, bulkMoveToTrashTrustFund, 
-      bulkMoveToTrashSEF, bulkMoveToTrashSHF, bulkMoveToTrash20DF]);
+  }, [selectedIds, entityType, bulkMoveToTrashProject, bulkMoveToTrashTrustFund,
+    bulkMoveToTrashSEF, bulkMoveToTrashSHF, bulkMoveToTrash20DF]);
 
   /* =======================
      RENDER

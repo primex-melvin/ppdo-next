@@ -504,7 +504,7 @@ export function BudgetTrackingTable({
     <>
       {/* Main Table Container with Tabs */}
       <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="w-full">
-        <div className="print-area inline-block max-w-full bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div className="print-area inline-block max-w-full bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-x-auto">
 
           {/* Toolbar */}
           <BudgetTableToolbar
@@ -590,7 +590,7 @@ export function BudgetTrackingTable({
 
           {/* Table View */}
           <TabsContent value="table" className="mt-0">
-            <div className="overflow-hidden">
+            <div className="overflow-auto">
               <BudgetResizableTable
                 budgetItems={filteredAndSortedItems}
                 hiddenColumns={hiddenColumns}

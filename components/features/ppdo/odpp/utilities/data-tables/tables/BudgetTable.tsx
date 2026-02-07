@@ -249,7 +249,7 @@ export function BudgetTable({
 
     return (
         <ResizableTableContainer>
-            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: 'fit-content', minWidth: '100%' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
                     columnWidths={columnWidths}

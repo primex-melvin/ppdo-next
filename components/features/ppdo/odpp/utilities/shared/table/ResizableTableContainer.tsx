@@ -37,7 +37,7 @@ export function ResizableTableContainer({
                 className="overflow-auto border-t border-zinc-200 dark:border-zinc-800"
                 style={{
                     maxHeight,
-                    maxWidth: 'calc(100vw - 300px)', // Account for sidebar
+                    maxWidth: 'calc(100vw - 280px)', // Account for sidebar
                 }}
             >
                 {children}
