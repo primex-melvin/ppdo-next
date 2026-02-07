@@ -123,3 +123,51 @@ export {
     TwentyPercentDFStatusCell,
     TwentyPercentDFAmountCell,
 } from "./cells";
+
+// ===== ADAPTER SYSTEM (NEW - Recommended for new tables) =====
+export {
+    // Hooks
+    useColumnResizeAdapter,
+    useActionDropdown,
+    useTotalsCalculator,
+    // Components
+    UnifiedTable,
+    GenericTotalsRow,
+    ActionDropdown,
+    // Utilities
+    defaultCellRenderers,
+    getCellRenderer,
+    createCellRenderer,
+    cellRendererRegistry,
+    sumAggregator,
+    avgAggregator,
+    countAggregator,
+    getAggregator,
+    calculateColumnTotal,
+    calculateAllTotals,
+    buildActionMenu,
+    mapVisibleColumns,
+    createColumnMap,
+    getColumnIndex,
+    isColumnVisible,
+    toggleColumnVisibility,
+} from "./adapter";
+
+// Adapter types
+export type {
+    ColumnResizeAdapterOptions,
+    ColumnResizeAdapterReturn,
+    CellRendererRegistry,
+    CellRendererType,
+    ActionConfig,
+    AggregatorType,
+    TotalsColumnConfig,
+    TotalsConfig,
+    UnifiedTableProps,
+    GenericTotalsRowProps,
+    ActionDropdownProps,
+    WithId,
+    CellRenderFn,
+    AggregationFn,
+    ActionMenuItem,
+} from "./adapter";

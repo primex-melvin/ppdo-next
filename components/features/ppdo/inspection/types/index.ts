@@ -53,6 +53,7 @@ export interface InspectionFormData {
   title: string
   category: string
   date: string
+  time?: string
   remarks: string
   images: File[]
   uploadSessionId?: Id<"uploadSessions">

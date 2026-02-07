@@ -39,3 +39,13 @@ export { useMigration } from "./useMigration";
 // Trash hooks
 export { useTrashConfirmation } from "./useTrashConfirmation";
 export type { PendingTrashItem, TrashPreviewResult } from "./useTrashConfirmation";
+
+// Fiscal Year Dashboard hooks
+export {
+  useFiscalYearDashboard,
+  type FiscalYearWithStats,
+  type RawFiscalYear,
+  type YearToDelete,
+  type UseFiscalYearDashboardOptions,
+  type UseFiscalYearDashboardReturn,
+} from "./useFiscalYearDashboard";

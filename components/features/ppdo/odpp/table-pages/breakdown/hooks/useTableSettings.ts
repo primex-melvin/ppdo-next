@@ -30,6 +30,7 @@ interface UseTableSettingsReturn {
   canEditLayout: boolean;
   saveLayout: (heights: RowHeights) => void;
   saveLayoutWithCols: (cols: ColumnConfig[], heights: RowHeights) => void;
+  updateColumnWidth: (columnKey: string, newWidth: number) => void;
 }
 
 export function useTableSettings(options: UseTableSettingsOptions = {}) {

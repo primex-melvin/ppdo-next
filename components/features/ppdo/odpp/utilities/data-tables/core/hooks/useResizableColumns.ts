@@ -27,6 +27,9 @@ export function useResizableColumns({
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(1200);
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
+    
+    // Use a ref to track the latest column width during resize to avoid stale closures
+    const currentWidthRef = useRef<number>(0);
 
     // Measure container width
     useEffect(() => {
@@ -77,11 +80,17 @@ export function useResizableColumns({
         const minWidth = col.minWidth ?? 60;
         const maxWidth = col.maxWidth ?? 600;
         
+        // Initialize the ref with the starting width
+        currentWidthRef.current = startWidth;
+        
         console.log(`[Table:${tableIdentifier}] Resize START: ${colKey} (${startWidth}px)`);
         
         const handleMouseMove = (moveEvent: MouseEvent) => {
             const delta = moveEvent.clientX - startX;
             const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
+            
+            // Update the ref with the current width
+            currentWidthRef.current = newWidth;
             
             console.log(`[Table:${tableIdentifier}] Resize MOVE: ${colKey} → ${newWidth}px`);
             
@@ -90,19 +99,21 @@ export function useResizableColumns({
         };
         
         const handleMouseUp = () => {
-            const finalWidth = columnWidths.get(colKey) ?? col.width ?? 150;
+            // Use the ref to get the final width instead of columnWidths state
+            // This avoids stale closure issues
+            const finalWidth = currentWidthRef.current;
             console.log(`[Table:${tableIdentifier}] Resize END: ${colKey} → ${finalWidth}px (saved: ${canEditLayout})`);
             
             setResizingColumn(null);
             document.removeEventListener("mousemove", handleMouseMove);
             document.removeEventListener("mouseup", handleMouseUp);
             
-            // Final save (width already saved via updateColumnWidth)
+            // Final width is already saved via updateColumnWidth during drag
         };
         
         document.addEventListener("mousemove", handleMouseMove);
         document.addEventListener("mouseup", handleMouseUp);
-    }, [canEditLayout, columns, columnWidths, updateColumnWidth]);
+    }, [canEditLayout, columns, columnWidths, updateColumnWidth, tableIdentifier]);
 
     // 3. Row resize (for future implementation)
     const startResizeRow = useCallback((e: React.MouseEvent, rowId: string) => {

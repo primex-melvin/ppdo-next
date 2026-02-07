@@ -60,9 +60,10 @@ function getCategoryHeaderStyle(category: ProjectCategory | null) {
 interface ProjectsTotalsRowProps {
     columns: ColumnConfig[];
     projects: Project[];
+    columnWidths?: Map<string, number>;
 }
 
-function ProjectsTotalsRow({ columns, projects }: ProjectsTotalsRowProps) {
+function ProjectsTotalsRow({ columns, projects, columnWidths }: ProjectsTotalsRowProps) {
     const totals = projects.reduce((acc, project) => {
         acc.allocatedBudget = (acc.allocatedBudget || 0) + (project.totalBudgetAllocated || 0);
         acc.obligatedBudget = (acc.obligatedBudget || 0) + (project.obligatedBudget || 0);
@@ -77,10 +78,16 @@ function ProjectsTotalsRow({ columns, projects }: ProjectsTotalsRowProps) {
         ? (totals.utilization / totals.allocatedBudget) * 100
         : 0;
 
+    const getColumnWidth = (column: ColumnConfig) => {
+        const key = column.key as string;
+        const savedWidth = columnWidths?.get(key);
+        return savedWidth ?? column.width ?? 150;
+    };
+
     return (
         <tr className="sticky bottom-0 bg-zinc-50 dark:bg-zinc-800 font-bold z-20 shadow-[0_-1px_0_0_rgba(0,0,0,0.1)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.1)]">
-            <td className="text-center py-2" style={{ border: '2px solid rgb(228 228 231 / 1)' }} />
-            <td className="text-center py-2 text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-200" style={{ border: '2px solid rgb(228 228 231 / 1)' }} />
+            <td className="text-center py-2" style={{ border: '2px solid rgb(228 228 231 / 1)', width: '40px' }} />
+            <td className="text-center py-2 text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-200" style={{ border: '2px solid rgb(228 228 231 / 1)', width: '40px' }} />
             {columns.map(column => {
                 let cellContent = "";
                 if (column.key === "totalBudgetAllocated") {
@@ -101,17 +108,25 @@ function ProjectsTotalsRow({ columns, projects }: ProjectsTotalsRowProps) {
                     cellContent = "TOTALS";
                 }
 
+                const width = getColumnWidth(column);
+
                 return (
                     <td
                         key={column.key as string}
                         className="px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200"
-                        style={{ border: '2px solid rgb(228 228 231 / 1)', textAlign: column.align }}
+                        style={{
+                            border: '2px solid rgb(228 228 231 / 1)',
+                            textAlign: column.align,
+                            width: `${width}px`,
+                            minWidth: `${column.minWidth ?? 60}px`,
+                            maxWidth: `${column.maxWidth ?? 600}px`,
+                        }}
                     >
                         {cellContent}
                     </td>
                 );
             })}
-            <td className="text-center" style={{ border: '2px solid rgb(228 228 231 / 1)' }} />
+            <td className="text-center" style={{ border: '2px solid rgb(228 228 231 / 1)', width: '64px' }} />
         </tr>
     );
 }
@@ -251,7 +266,7 @@ export function ProjectsTable({
 
     return (
         <ResizableTableContainer ref={containerRef}>
-            <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: 'fit-content', minWidth: '100%' }}>
                 <ResizableTableHeader
                     columns={visibleColumns}
                     columnWidths={columnWidths}
@@ -316,6 +331,7 @@ export function ProjectsTable({
                                             data={{ ...project, _id: project.id }}
                                             index={index}
                                             columns={visibleColumns}
+                                            columnWidths={columnWidths}
                                             rowHeight={rowHeights[project.id] ?? DEFAULT_ROW_HEIGHT}
                                             canEditLayout={canEditLayout}
                                             renderCell={renderCell}
@@ -331,7 +347,7 @@ export function ProjectsTable({
                         })
                     )}
                     {projects.length > 0 && (
-                        <ProjectsTotalsRow columns={visibleColumns} projects={projects} />
+                        <ProjectsTotalsRow columns={visibleColumns} projects={projects} columnWidths={columnWidths} />
                     )}
                 </tbody>
             </table>

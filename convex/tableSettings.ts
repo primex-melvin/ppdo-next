@@ -214,86 +214,163 @@ export const seedDefaultWidths = internalMutation({
   args: {},
   handler: async (ctx) => {
     const allDefaults = [
-      // === PROJECTS TABLE ===
-      { tableId: "projects", col: "particular", width: 320, flex: 3, minW: 180 },
-      { tableId: "projects", col: "particularCategoryId", width: 160, flex: 1.5, minW: 100 },
-      { tableId: "projects", col: "implementingOffice", width: 200, flex: 2, minW: 120 },
-      { tableId: "projects", col: "allocatedBudget", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "projects", col: "obligatedBudget", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "projects", col: "budgetUtilized", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "projects", col: "utilizationRate", width: 100, flex: 1, minW: 80 },
-      { tableId: "projects", col: "balance", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "projects", col: "year", width: 80, flex: 0.8, minW: 60 },
-      { tableId: "projects", col: "remarks", width: 250, flex: 2.5, minW: 150 },
-      { tableId: "projects", col: "status", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "projects", col: "actions", width: 64, flex: 0.5, minW: 64 },
-      { tableId: "projects", col: "rowNumber", width: 48, flex: 0.4, minW: 48 },
+      // === BUDGET ITEMS TABLE (main list page) ===
+      // Frontend: tableIdentifier: "budgetItemsTable_v2"
+      { tableId: "budgetItemsTable_v2", col: "particular", width: 280, flex: 2.8, minW: 180, maxW: 600 },
+      { tableId: "budgetItemsTable_v2", col: "year", width: 80, flex: 0.8, minW: 60, maxW: 120 },
+      { tableId: "budgetItemsTable_v2", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
+      { tableId: "budgetItemsTable_v2", col: "totalBudgetAllocated", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "budgetItemsTable_v2", col: "obligatedBudget", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "budgetItemsTable_v2", col: "totalBudgetUtilized", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "budgetItemsTable_v2", col: "utilizationRate", width: 110, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "budgetItemsTable_v2", col: "projectCompleted", width: 100, flex: 1, minW: 70, maxW: 150 },
+      { tableId: "budgetItemsTable_v2", col: "projectDelayed", width: 100, flex: 1, minW: 70, maxW: 150 },
+      { tableId: "budgetItemsTable_v2", col: "projectsOngoing", width: 100, flex: 1, minW: 70, maxW: 150 },
 
       // === 20% DF TABLE ===
-      { tableId: "twentyPercentDF", col: "fundTitle", width: 300, flex: 3, minW: 180 },
-      { tableId: "twentyPercentDF", col: "fundCategoryId", width: 160, flex: 1.5, minW: 100 },
-      { tableId: "twentyPercentDF", col: "sourceOfFund", width: 180, flex: 1.8, minW: 120 },
-      { tableId: "twentyPercentDF", col: "allocatedFund", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "twentyPercentDF", col: "obligatedFund", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "twentyPercentDF", col: "utilizedFund", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "twentyPercentDF", col: "utilizationRate", width: 100, flex: 1, minW: 80 },
-      { tableId: "twentyPercentDF", col: "balance", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "twentyPercentDF", col: "completed", width: 110, flex: 1.1, minW: 80 },
-      { tableId: "twentyPercentDF", col: "ongoing", width: 110, flex: 1.1, minW: 80 },
-      { tableId: "twentyPercentDF", col: "delayed", width: 110, flex: 1.1, minW: 80 },
-      { tableId: "twentyPercentDF", col: "year", width: 80, flex: 0.8, minW: 60 },
-      { tableId: "twentyPercentDF", col: "remarks", width: 250, flex: 2.5, minW: 150 },
-      { tableId: "twentyPercentDF", col: "actions", width: 64, flex: 0.5, minW: 64 },
-      { tableId: "twentyPercentDF", col: "rowNumber", width: 48, flex: 0.4, minW: 48 },
+      // Frontend: tableIdentifier: "twentyPercentDFTable_v2"
+      { tableId: "twentyPercentDFTable_v2", col: "particulars", width: 300, flex: 3, minW: 180, maxW: 600 },
+      { tableId: "twentyPercentDFTable_v2", col: "year", width: 80, flex: 0.8, minW: 60, maxW: 120 },
+      { tableId: "twentyPercentDFTable_v2", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
+      { tableId: "twentyPercentDFTable_v2", col: "totalBudgetAllocated", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "twentyPercentDFTable_v2", col: "totalBudgetUtilized", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "twentyPercentDFTable_v2", col: "utilizationRate", width: 110, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "twentyPercentDFTable_v2", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "twentyPercentDFTable_v2", col: "remarks", width: 200, flex: 2, minW: 120, maxW: 400 },
 
-      // === BUDGET TABLE ===
-      { tableId: "budget", col: "particular", width: 280, flex: 2.8, minW: 180 },
-      { tableId: "budget", col: "particularType", width: 140, flex: 1.4, minW: 100 },
-      { tableId: "budget", col: "year", width: 80, flex: 0.8, minW: 60 },
-      { tableId: "budget", col: "annualBudget", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "budget", col: "cumulativeAllotment", width: 150, flex: 1.5, minW: 100 },
-      { tableId: "budget", col: "totalObligation", width: 150, flex: 1.5, minW: 100 },
-      { tableId: "budget", col: "totalExpenditure", width: 150, flex: 1.5, minW: 100 },
-      { tableId: "budget", col: "unobligatedBalance", width: 160, flex: 1.6, minW: 110 },
-      { tableId: "budget", col: "fundStatus", width: 130, flex: 1.3, minW: 90 },
-      { tableId: "budget", col: "remarks", width: 250, flex: 2.5, minW: 150 },
-      { tableId: "budget", col: "actions", width: 64, flex: 0.5, minW: 64 },
-      { tableId: "budget", col: "rowNumber", width: 48, flex: 0.4, minW: 48 },
+      // === PROJECTS TABLE (breakdown) ===
+      // Frontend: tableIdentifier: `projectsTable_${particularId || 'default'}`
+      { tableId: "projectsTable_default", col: "particulars", width: 320, flex: 3, minW: 180, maxW: 600 },
+      { tableId: "projectsTable_default", col: "year", width: 80, flex: 0.8, minW: 60, maxW: 120 },
+      { tableId: "projectsTable_default", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
+      { tableId: "projectsTable_default", col: "implementingOffice", width: 200, flex: 2, minW: 120, maxW: 300 },
+      { tableId: "projectsTable_default", col: "totalBudgetAllocated", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "projectsTable_default", col: "obligatedBudget", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "projectsTable_default", col: "totalBudgetUtilized", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "projectsTable_default", col: "utilizationRate", width: 110, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "projectsTable_default", col: "remarks", width: 200, flex: 2, minW: 120, maxW: 400 },
 
-      // === FUNDS TABLE (Trust/SEF/SHF) ===
-      { tableId: "funds", col: "fundTitle", width: 300, flex: 3, minW: 180 },
-      { tableId: "funds", col: "sourceOfFund", width: 180, flex: 1.8, minW: 120 },
-      { tableId: "funds", col: "implementingOffice", width: 180, flex: 1.8, minW: 120 },
-      { tableId: "funds", col: "allocatedFund", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "funds", col: "obligatedFund", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "funds", col: "utilizedFund", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "funds", col: "balance", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "funds", col: "utilizationRate", width: 100, flex: 1, minW: 80 },
-      { tableId: "funds", col: "dateStarted", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "funds", col: "targetDate", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "funds", col: "completionDate", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "funds", col: "projectAccomplishment", width: 130, flex: 1.3, minW: 90 },
-      { tableId: "funds", col: "status", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "funds", col: "remarks", width: 250, flex: 2.5, minW: 150 },
-      { tableId: "funds", col: "actions", width: 64, flex: 0.5, minW: 64 },
-      { tableId: "funds", col: "rowNumber", width: 48, flex: 0.4, minW: 48 },
+      // === FUNDS TABLES (Trust Funds, SEF, SHF) ===
+      // Frontend: tableIdentifier: `${fundType}Table` (e.g., "trustFundsTable", "sefTable", "shfTable")
+      { tableId: "trustFundsTable", col: "projectTitle", width: 300, flex: 3, minW: 180, maxW: 600 },
+      { tableId: "trustFundsTable", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
+      { tableId: "trustFundsTable", col: "received", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "trustFundsTable", col: "obligatedPR", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "trustFundsTable", col: "utilized", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "trustFundsTable", col: "balance", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "trustFundsTable", col: "utilizationRate", width: 110, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "trustFundsTable", col: "dateReceived", width: 120, flex: 1.2, minW: 90, maxW: 180 },
+      { tableId: "trustFundsTable", col: "officeInCharge", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "trustFundsTable", col: "remarks", width: 200, flex: 2, minW: 120, maxW: 400 },
 
-      // === BREAKDOWN TABLE ===
-      { tableId: "breakdown", col: "projectTitle", width: 280, flex: 2.8, minW: 180 },
-      { tableId: "breakdown", col: "implementingOffice", width: 180, flex: 1.8, minW: 120 },
-      { tableId: "breakdown", col: "allocatedBudget", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "breakdown", col: "obligatedBudget", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "breakdown", col: "budgetUtilized", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "breakdown", col: "utilizationRate", width: 100, flex: 1, minW: 80 },
-      { tableId: "breakdown", col: "balance", width: 140, flex: 1.5, minW: 100 },
-      { tableId: "breakdown", col: "dateStarted", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "breakdown", col: "targetDate", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "breakdown", col: "completionDate", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "breakdown", col: "projectAccomplishment", width: 130, flex: 1.3, minW: 90 },
-      { tableId: "breakdown", col: "status", width: 120, flex: 1.2, minW: 90 },
-      { tableId: "breakdown", col: "remarks", width: 250, flex: 2.5, minW: 150 },
-      { tableId: "breakdown", col: "actions", width: 64, flex: 0.5, minW: 64 },
-      { tableId: "breakdown", col: "rowNumber", width: 48, flex: 0.4, minW: 48 },
+      { tableId: "sefTable", col: "projectTitle", width: 300, flex: 3, minW: 180, maxW: 600 },
+      { tableId: "sefTable", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
+      { tableId: "sefTable", col: "received", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "sefTable", col: "obligatedPR", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "sefTable", col: "utilized", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "sefTable", col: "balance", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "sefTable", col: "utilizationRate", width: 110, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "sefTable", col: "dateReceived", width: 120, flex: 1.2, minW: 90, maxW: 180 },
+      { tableId: "sefTable", col: "officeInCharge", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "sefTable", col: "remarks", width: 200, flex: 2, minW: 120, maxW: 400 },
+
+      { tableId: "shfTable", col: "projectTitle", width: 300, flex: 3, minW: 180, maxW: 600 },
+      { tableId: "shfTable", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },
+      { tableId: "shfTable", col: "received", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "shfTable", col: "obligatedPR", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "shfTable", col: "utilized", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "shfTable", col: "balance", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "shfTable", col: "utilizationRate", width: 110, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "shfTable", col: "dateReceived", width: 120, flex: 1.2, minW: 90, maxW: 180 },
+      { tableId: "shfTable", col: "officeInCharge", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "shfTable", col: "remarks", width: 200, flex: 2, minW: 120, maxW: 400 },
+
+      // === BREAKDOWN TABLE (legacy identifier) ===
+      { tableId: "breakdown", col: "projectTitle", width: 280, flex: 2.8, minW: 180, maxW: 600 },
+      { tableId: "breakdown", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "breakdown", col: "allocatedBudget", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "breakdown", col: "obligatedBudget", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "breakdown", col: "budgetUtilized", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "breakdown", col: "utilizationRate", width: 100, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "breakdown", col: "balance", width: 140, flex: 1.5, minW: 100, maxW: 220 },
+      { tableId: "breakdown", col: "status", width: 120, flex: 1.2, minW: 90, maxW: 200 },
+      { tableId: "breakdown", col: "remarks", width: 250, flex: 2.5, minW: 150, maxW: 400 },
+
+      // === GOVT PROJECT BREAKDOWNS (grandchildren breakdown table) ===
+      // Frontend: tableIdentifier: "govtProjectBreakdowns"
+      { tableId: "govtProjectBreakdowns", col: "projectTitle", width: 280, flex: 2.8, minW: 180, maxW: 600 },
+      { tableId: "govtProjectBreakdowns", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "govtProjectBreakdowns", col: "allocatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "govtProjectBreakdowns", col: "obligatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "govtProjectBreakdowns", col: "budgetUtilized", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "govtProjectBreakdowns", col: "utilizationRate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "govtProjectBreakdowns", col: "balance", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "govtProjectBreakdowns", col: "dateStarted", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "govtProjectBreakdowns", col: "targetDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "govtProjectBreakdowns", col: "completionDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "govtProjectBreakdowns", col: "projectAccomplishment", width: 100, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "govtProjectBreakdowns", col: "status", width: 120, flex: 1.2, minW: 90, maxW: 200 },
+      { tableId: "govtProjectBreakdowns", col: "remarks", width: 250, flex: 2.5, minW: 150, maxW: 400 },
+
+      // === TRUST FUND BREAKDOWNS ===
+      { tableId: "trustFundBreakdowns", col: "projectTitle", width: 280, flex: 2.8, minW: 180, maxW: 600 },
+      { tableId: "trustFundBreakdowns", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "trustFundBreakdowns", col: "allocatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "trustFundBreakdowns", col: "obligatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "trustFundBreakdowns", col: "budgetUtilized", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "trustFundBreakdowns", col: "utilizationRate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "trustFundBreakdowns", col: "balance", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "trustFundBreakdowns", col: "dateStarted", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "trustFundBreakdowns", col: "targetDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "trustFundBreakdowns", col: "completionDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "trustFundBreakdowns", col: "projectAccomplishment", width: 100, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "trustFundBreakdowns", col: "status", width: 120, flex: 1.2, minW: 90, maxW: 200 },
+      { tableId: "trustFundBreakdowns", col: "remarks", width: 250, flex: 2.5, minW: 150, maxW: 400 },
+
+      // === SPECIAL EDUCATION FUND BREAKDOWNS ===
+      { tableId: "specialEducationFundBreakdowns", col: "projectTitle", width: 280, flex: 2.8, minW: 180, maxW: 600 },
+      { tableId: "specialEducationFundBreakdowns", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "specialEducationFundBreakdowns", col: "allocatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialEducationFundBreakdowns", col: "obligatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialEducationFundBreakdowns", col: "budgetUtilized", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialEducationFundBreakdowns", col: "utilizationRate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialEducationFundBreakdowns", col: "balance", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialEducationFundBreakdowns", col: "dateStarted", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialEducationFundBreakdowns", col: "targetDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialEducationFundBreakdowns", col: "completionDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialEducationFundBreakdowns", col: "projectAccomplishment", width: 100, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "specialEducationFundBreakdowns", col: "status", width: 120, flex: 1.2, minW: 90, maxW: 200 },
+      { tableId: "specialEducationFundBreakdowns", col: "remarks", width: 250, flex: 2.5, minW: 150, maxW: 400 },
+
+      // === SPECIAL HEALTH FUND BREAKDOWNS ===
+      { tableId: "specialHealthFundBreakdowns", col: "projectTitle", width: 280, flex: 2.8, minW: 180, maxW: 600 },
+      { tableId: "specialHealthFundBreakdowns", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "specialHealthFundBreakdowns", col: "allocatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialHealthFundBreakdowns", col: "obligatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialHealthFundBreakdowns", col: "budgetUtilized", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialHealthFundBreakdowns", col: "utilizationRate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialHealthFundBreakdowns", col: "balance", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "specialHealthFundBreakdowns", col: "dateStarted", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialHealthFundBreakdowns", col: "targetDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialHealthFundBreakdowns", col: "completionDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "specialHealthFundBreakdowns", col: "projectAccomplishment", width: 100, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "specialHealthFundBreakdowns", col: "status", width: 120, flex: 1.2, minW: 90, maxW: 200 },
+      { tableId: "specialHealthFundBreakdowns", col: "remarks", width: 250, flex: 2.5, minW: 150, maxW: 400 },
+
+      // === TWENTY PERCENT DF BREAKDOWNS ===
+      { tableId: "twentyPercentDFBreakdowns", col: "projectTitle", width: 280, flex: 2.8, minW: 180, maxW: 600 },
+      { tableId: "twentyPercentDFBreakdowns", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "twentyPercentDFBreakdowns", col: "allocatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "twentyPercentDFBreakdowns", col: "obligatedBudget", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "twentyPercentDFBreakdowns", col: "budgetUtilized", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "twentyPercentDFBreakdowns", col: "utilizationRate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "twentyPercentDFBreakdowns", col: "balance", width: 150, flex: 1.5, minW: 110, maxW: 220 },
+      { tableId: "twentyPercentDFBreakdowns", col: "dateStarted", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "twentyPercentDFBreakdowns", col: "targetDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "twentyPercentDFBreakdowns", col: "completionDate", width: 120, flex: 1.2, minW: 100, maxW: 180 },
+      { tableId: "twentyPercentDFBreakdowns", col: "projectAccomplishment", width: 100, flex: 1, minW: 80, maxW: 160 },
+      { tableId: "twentyPercentDFBreakdowns", col: "status", width: 120, flex: 1.2, minW: 90, maxW: 200 },
+      { tableId: "twentyPercentDFBreakdowns", col: "remarks", width: 250, flex: 2.5, minW: 150, maxW: 400 },
     ];
 
     // Clear existing defaults first (idempotent)
@@ -310,14 +387,14 @@ export const seedDefaultWidths = internalMutation({
         columnKey: def.col,
         defaultWidth: def.width,
         minWidth: def.minW,
-        maxWidth: Math.floor(def.width * 2),
+        maxWidth: def.maxW ?? Math.floor(def.width * 2),
         flex: def.flex,
         updatedAt: Date.now(),
       });
       inserted.push(id);
     }
 
-    return { 
+    return {
       inserted: inserted.length,
       tables: [...new Set(allDefaults.map(d => d.tableId))],
     };
@@ -335,5 +412,29 @@ export const clearDefaultWidths = internalMutation({
       await ctx.db.delete(e._id);
     }
     return { deleted: existing.length };
+  },
+});
+
+/**
+ * Clear corrupted user settings that have zero-width columns
+ * Run this to fix settings that were saved with width: 0
+ */
+export const clearCorruptedSettings = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const allSettings = await ctx.db.query("userTableSettings").collect();
+    let deleted = 0;
+
+    for (const settings of allSettings) {
+      // Check if any column has zero width
+      const hasZeroWidth = settings.columns?.some(col => col.width === 0);
+      if (hasZeroWidth) {
+        await ctx.db.delete(settings._id);
+        deleted++;
+        console.log(`[Convex] Deleted corrupted settings: ${settings.tableIdentifier} for user ${settings.userId}`);
+      }
+    }
+
+    return { deleted, total: allSettings.length };
   },
 });

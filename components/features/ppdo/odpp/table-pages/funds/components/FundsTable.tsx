@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useRef, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -19,7 +20,7 @@ import { BaseFund, FundsTableProps, ContextMenuState } from "../types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, Table as TableIcon } from "lucide-react";
 import { FundsKanban } from "./FundsKanban";
-import { exportToCSV, calculateTotals, formatTimestamp } from "../utils";
+import { exportToCSV, calculateTotals, formatTimestamp, createFundSlug } from "../utils";
 import { useTableSort, useTableFilter, useTableSelection, useFundsPrintDraft, FundsPrintAdapter } from "..";
 import { AVAILABLE_COLUMNS } from "../constants";
 export function FundsTable<T extends BaseFund>({
@@ -40,6 +41,7 @@ export function FundsTable<T extends BaseFund>({
     pendingRequestsCount,
     onOpenShare,
 }: FundsTableProps<T>) {
+    const router = useRouter();
     const { accentColorValue } = useAccentColor();
 
     // Determine which API to use based on fundType
@@ -212,6 +214,29 @@ export function FundsTable<T extends BaseFund>({
         setLogSheetOpen(true);
     };
 
+    // Navigate to breakdown page on row click
+    const handleRowClick = (item: T, e: React.MouseEvent) => {
+        // Don't navigate if clicking on interactive elements (checkboxes, buttons, etc.)
+        if (
+            (e.target as HTMLElement).closest("button") ||
+            (e.target as HTMLElement).closest("input") ||
+            (e.target as HTMLElement).closest("[role='menuitem']") ||
+            (e.target as HTMLElement).closest("[data-radix-dropdown-menu-content]")
+        ) {
+            return;
+        }
+
+        const slug = createFundSlug(item.projectTitle, item.id);
+        const basePath = fundType === 'trust'
+            ? 'trust-funds'
+            : fundType === 'specialEducation'
+                ? 'special-education-funds'
+                : fundType === 'specialHealth'
+                    ? 'special-health-funds'
+                    : '20_percent_df';
+        router.push(`/dashboard/${basePath}/${year}/${slug}`);
+    };
+
     const handleContextMenu = (item: T, e: React.MouseEvent) => {
         e.preventDefault();
         setContextMenu({ x: e.clientX, y: e.clientY, entity: item });
@@ -339,7 +364,7 @@ export function FundsTable<T extends BaseFund>({
                                 totals={totals}
                                 fundType={fundType}
                                 hiddenColumns={hiddenColumns}
-                                onRowClick={(item) => handleEdit(item)}
+                                onRowClick={handleRowClick}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                                 onPin={handlePin}

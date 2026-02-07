@@ -115,11 +115,10 @@ export function TableRow({
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <tr
-          className={`cursor-pointer transition-colors ${
-            isSelected
+          className={`cursor-pointer transition-colors ${isSelected
               ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
               : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
-          }`}
+            }`}
           style={{ height: rowHeight }}
           onClick={(e) => onRowClick(breakdown, e)}
         >
@@ -177,6 +176,9 @@ export function TableRow({
                 key={String(column.key)}
                 className="px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-900 dark:text-zinc-100"
                 style={{
+                  width: `${column.width}px`,
+                  minWidth: column.minWidth ? `${column.minWidth}px` : '80px',
+                  maxWidth: column.maxWidth ? `${column.maxWidth}px` : '450px',
                   border: '1px solid rgb(228 228 231 / 1)',
                   textAlign: column.align,
                 }}

@@ -55,6 +55,9 @@ export function TableTotalsRow({
             key={String(column.key)}
             className="px-2 sm:px-3 py-2 font-bold text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-200"
             style={{
+              width: `${column.width}px`,
+              minWidth: column.minWidth ? `${column.minWidth}px` : '80px',
+              maxWidth: column.maxWidth ? `${column.maxWidth}px` : '450px',
               border: '2px solid rgb(228 228 231 / 1)',
               textAlign: column.align,
             }}
