@@ -13,6 +13,7 @@ import { BudgetViolationModal } from "./BudgetViolationModal";
 
 // Subcomponents
 import {
+    AipRefCodeField,
     ParticularField,
     CategoryField,
     ImplementingOfficeField,
@@ -85,6 +86,7 @@ export function ProjectForm({
     const form = useForm<ProjectFormValues>({
         resolver: zodResolver(projectSchema),
         defaultValues: savedDraft || {
+            aipRefCode: project?.aipRefCode || "",
             particulars: project?.particulars || "",
             implementingOffice: project?.implementingOffice || "",
             categoryId: project?.categoryId || undefined,
@@ -189,6 +191,8 @@ export function ProjectForm({
         <>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <AipRefCodeField form={form} />
+
                     <ParticularField
                         form={form}
                         isEditMode={!!project}

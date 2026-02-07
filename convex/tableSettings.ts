@@ -167,9 +167,35 @@ export const updateColumnWidth = mutation({
       console.log(`[Convex] updateColumnWidth | POPULATE empty settings with ${columns.length} columns`);
     } else {
       // Update existing column width
-      const columns = existing.columns.map((c) =>
-        c.fieldKey === args.columnKey ? { ...c, width: args.width } : c
-      );
+      const existingColumn = existing.columns.find((c) => c.fieldKey === args.columnKey);
+      
+      let columns;
+      if (existingColumn) {
+        // Column exists - update its width
+        columns = existing.columns.map((c) =>
+          c.fieldKey === args.columnKey ? { ...c, width: args.width } : c
+        );
+      } else {
+        // Column doesn't exist in saved settings - add it
+        // Get default values from tableColumnDefaults
+        const columnDefault = await ctx.db
+          .query("tableColumnDefaults")
+          .withIndex("by_table_column", (q) =>
+            q.eq("tableIdentifier", args.tableIdentifier).eq("columnKey", args.columnKey)
+          )
+          .first();
+        
+        columns = [
+          ...existing.columns,
+          {
+            fieldKey: args.columnKey,
+            width: args.width,
+            isVisible: true,
+            flex: columnDefault?.flex ?? 1,
+            pinned: null as "left" | "right" | null,
+          },
+        ];
+      }
 
       await ctx.db.patch(existing._id, {
         columns,
@@ -240,6 +266,7 @@ export const seedDefaultWidths = internalMutation({
 
       // === PROJECTS TABLE (breakdown) ===
       // Frontend: tableIdentifier: `projectsTable_${particularId || 'default'}`
+      { tableId: "projectsTable_default", col: "aipRefCode", width: 140, flex: 2, minW: 100, maxW: 250 },
       { tableId: "projectsTable_default", col: "particulars", width: 320, flex: 3, minW: 180, maxW: 600 },
       { tableId: "projectsTable_default", col: "year", width: 80, flex: 0.8, minW: 60, maxW: 120 },
       { tableId: "projectsTable_default", col: "status", width: 130, flex: 1.3, minW: 90, maxW: 200 },

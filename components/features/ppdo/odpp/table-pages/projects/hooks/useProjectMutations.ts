@@ -55,6 +55,7 @@ export function useProjectMutations({
             const toastId = toast.loading("Creating project...");
 
             const response = await createProject({
+                aipRefCode: projectData.aipRefCode || undefined,
                 particulars: projectData.particulars,
                 budgetItemId,
                 categoryId: projectData.categoryId || undefined,
@@ -116,6 +117,7 @@ export function useProjectMutations({
 
             const response = await updateProject({
                 id: id as Id<"projects">,
+                aipRefCode: projectData.aipRefCode || undefined,
                 particulars: projectData.particulars,
                 budgetItemId,
                 categoryId: projectData.categoryId || undefined,

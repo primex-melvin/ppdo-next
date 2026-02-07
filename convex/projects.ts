@@ -297,6 +297,7 @@ export const create = mutation({
     targetDateCompletion: v.optional(v.number()),
     projectManagerId: v.optional(v.id("users")),
     autoCalculateBudgetUtilized: v.optional(v.boolean()), // 🆕 NEW FLAG
+    aipRefCode: v.optional(v.string()), // 🆕 AIP Reference Code
   },
   handler: async (ctx, args) => {
     try {
@@ -429,6 +430,7 @@ export const create = mutation({
         autoCalculateBudgetUtilized: args.autoCalculateBudgetUtilized !== undefined
           ? args.autoCalculateBudgetUtilized
           : true, // 🆕 Default to TRUE for new projects
+        aipRefCode: args.aipRefCode, // 🆕 AIP Reference Code
         createdBy: userId,
         createdAt: now,
         updatedAt: now,
@@ -512,6 +514,7 @@ export const update = mutation({
     targetDateCompletion: v.optional(v.number()),
     projectManagerId: v.optional(v.id("users")),
     autoCalculateBudgetUtilized: v.optional(v.boolean()), // 🆕 NEW FLAG
+    aipRefCode: v.optional(v.string()), // 🆕 AIP Reference Code
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -644,6 +647,7 @@ export const update = mutation({
       targetDateCompletion: args.targetDateCompletion,
       projectManagerId: args.projectManagerId,
       autoCalculateBudgetUtilized: args.autoCalculateBudgetUtilized, // 🆕 NEW FLAG
+      aipRefCode: args.aipRefCode, // 🆕 AIP Reference Code
       updatedAt: now,
       updatedBy: userId,
     });

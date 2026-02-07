@@ -77,6 +77,13 @@ export const projectTables = {
     year: v.optional(v.number()),
 
     /**
+     * 🆕 AIP Reference Code (OPTIONAL)
+     * Stores the AIP (Annual Investment Program) reference code
+     * Accepts any characters
+     */
+    aipRefCode: v.optional(v.string()),
+
+    /**
      * Project status - determines how it's counted in parent budgetItem
      * STRICT 3 OPTIONS: completed, delayed, ongoing
      */
@@ -134,7 +141,8 @@ export const projectTables = {
     .index("year", ["year"])
     .index("departmentAndStatus", ["departmentId", "status"])
     // 🆕 Index for auto-calculation flag
-    .index("autoCalculate", ["autoCalculateBudgetUtilized"]),
+    .index("autoCalculate", ["autoCalculateBudgetUtilized"])
+    .index("aipRefCode", ["aipRefCode"]),
 
   /**
    * Remarks.

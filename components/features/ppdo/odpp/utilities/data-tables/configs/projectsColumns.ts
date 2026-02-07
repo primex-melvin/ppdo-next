@@ -12,6 +12,16 @@ import { ColumnConfig } from "../core/types/table.types";
  */
 export const PROJECT_TABLE_COLUMNS: ColumnConfig[] = [
     {
+        key: "aipRefCode",
+        label: "AIP Ref. Code",
+        width: 140,
+        flex: 2,
+        minWidth: 100,
+        maxWidth: 250,
+        type: "text",
+        align: "left"
+    },
+    {
         key: "particulars",
         label: "Project Name",
         width: 320,         // Default width in pixels

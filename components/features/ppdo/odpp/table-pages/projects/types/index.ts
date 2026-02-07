@@ -38,6 +38,7 @@ export interface Project {
     projectManagerId?: string | Id<"users">;
     _creationTime?: number;
     autoCalculateBudgetUtilized?: boolean;
+    aipRefCode?: string;
 }
 
 // ============================================================================
@@ -66,6 +67,7 @@ export interface ProjectFormData {
     projectManagerId?: string | Id<"users">;
     _creationTime?: number;
     autoCalculateBudgetUtilized?: boolean;
+    aipRefCode?: string;
 }
 
 // ============================================================================

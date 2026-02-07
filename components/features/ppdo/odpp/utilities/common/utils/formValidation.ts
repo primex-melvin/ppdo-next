@@ -36,6 +36,7 @@ export const baseProjectSchema = z
         remarks: z.string().optional(),
         year: yearField,
         autoCalculateBudgetUtilized: autoCalculateField,
+        aipRefCode: z.string().optional(),
     })
     .refine(
         validateObligatedNotExceedAllocated('totalBudgetAllocated'),
