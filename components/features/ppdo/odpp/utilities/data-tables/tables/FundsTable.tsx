@@ -121,6 +121,15 @@ export function FundsTable<T extends BaseFund>({
     onSelectRow,
     onSelectAll,
 }: FundsTableProps<T>) {
+    // Map fundType to the correct table identifier used in backend defaults
+    const tableIdentifier = fundType === 'trust' 
+        ? 'trustFundsTable' 
+        : fundType === 'specialEducation' 
+            ? 'sefTable' 
+            : fundType === 'specialHealth' 
+                ? 'shfTable' 
+                : `${fundType}Table`;
+
     const {
         columns: allColumns,
         columnWidths,
@@ -132,7 +141,7 @@ export function FundsTable<T extends BaseFund>({
         onDrop,
         onDragOver
     } = useResizableColumns({
-        tableIdentifier: `${fundType}Table`,
+        tableIdentifier,
         defaultColumns: FUNDS_TABLE_COLUMNS
     });
 
