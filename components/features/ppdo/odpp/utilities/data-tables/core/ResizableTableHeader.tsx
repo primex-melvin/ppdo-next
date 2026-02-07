@@ -115,15 +115,16 @@ export function ResizableTableHeader({
 
                         {canEditLayout && (
                             <div
-                                className="absolute right-0 top-0 h-full cursor-col-resize z-10"
+                                className="absolute right-0 top-0 h-full cursor-col-resize z-10 hover:bg-blue-400/50"
                                 onMouseDown={e => onStartResize(e, index)}
                                 style={{
-                                    width: '4px',
-                                    marginRight: '-2px',
+                                    width: '6px',
+                                    marginRight: '-3px',
                                     backgroundColor: 'transparent',
+                                    transition: 'background-color 0.15s',
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = 'rgb(59 130 246 / 0.5)';
+                                    e.currentTarget.style.backgroundColor = 'rgb(59 130 246 / 0.6)';
                                 }}
                                 onMouseLeave={(e) => {
                                     e.currentTarget.style.backgroundColor = 'transparent';
