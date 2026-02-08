@@ -4,6 +4,7 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { logSpecialHealthFundActivity } from "./lib/specialHealthFundActivityLogger";
 import { recalculateFundMetrics } from "./lib/fundAggregation";
+import { indexEntity } from "./search/index";
 
 /**
  * Get all ACTIVE special health funds (excludes deleted)
@@ -191,6 +192,18 @@ export const create = mutation({
             reason: "Initial creation"
         });
 
+        // 🔍 Add to search index
+        await indexEntity(ctx, {
+            entityType: "specialHealthFund",
+            entityId: specialHealthFundId,
+            primaryText: args.projectTitle,
+            secondaryText: args.officeInCharge,
+            departmentId: departmentId,
+            status: args.status,
+            year: args.year || args.fiscalYear,
+            isDeleted: false,
+        });
+
         return specialHealthFundId;
     },
 });
@@ -301,6 +314,18 @@ export const update = mutation({
             reason: args.reason
         });
 
+        // 🔍 Update search index
+        await indexEntity(ctx, {
+            entityType: "specialHealthFund",
+            entityId: args.id,
+            primaryText: args.projectTitle,
+            secondaryText: args.officeInCharge,
+            departmentId: departmentId,
+            status: args.status,
+            year: args.year || args.fiscalYear,
+            isDeleted: false,
+        });
+
         return args.id;
     },
 });
@@ -339,6 +364,18 @@ export const moveToTrash = mutation({
             reason: args.reason || "Moved to trash"
         });
 
+        // 🔍 Update search index - mark as deleted
+        await indexEntity(ctx, {
+            entityType: "specialHealthFund",
+            entityId: args.id,
+            primaryText: existing.projectTitle,
+            secondaryText: existing.officeInCharge,
+            departmentId: existing.departmentId,
+            status: existing.status,
+            year: existing.year || existing.fiscalYear,
+            isDeleted: true,
+        });
+
         return { success: true, message: "Moved to trash" };
     },
 });
@@ -370,6 +407,18 @@ export const restoreFromTrash = mutation({
             previousValues: existing,
             newValues: { ...existing, isDeleted: false },
             reason: "Restored from trash"
+        });
+
+        // 🔍 Update search index - restore from trash
+        await indexEntity(ctx, {
+            entityType: "specialHealthFund",
+            entityId: args.id,
+            primaryText: existing.projectTitle,
+            secondaryText: existing.officeInCharge,
+            departmentId: existing.departmentId,
+            status: existing.status,
+            year: existing.year || existing.fiscalYear,
+            isDeleted: false,
         });
 
         return { success: true, message: "Restored from trash" };

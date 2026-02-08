@@ -2,6 +2,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { indexEntity, removeFromIndex } from "./search/index";
 
 /**
  * ============================================================================
@@ -459,6 +460,17 @@ export const create = mutation({
       updatedAt: now,
     });
 
+    // Add to search index
+    await indexEntity(ctx, {
+      entityType: "agency",
+      entityId: agencyId,
+      primaryText: args.fullName,
+      secondaryText: args.code,
+      departmentId: args.departmentId,
+      status: "active",
+      isDeleted: false,
+    });
+
     return agencyId;
   },
 });
@@ -554,6 +566,17 @@ export const update = mutation({
       updatedBy: userId,
     });
 
+    // Update search index
+    await indexEntity(ctx, {
+      entityType: "agency",
+      entityId: args.id,
+      primaryText: args.fullName || existing.fullName,
+      secondaryText: args.code || existing.code,
+      departmentId: args.departmentId !== undefined ? args.departmentId : existing.departmentId,
+      status: existing.isActive ? "active" : "inactive",
+      isDeleted: false,
+    });
+
     return args.id;
   },
 });
@@ -640,6 +663,11 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(args.id);
+
+    // Remove from search index
+    await removeFromIndex(ctx, {
+      entityId: args.id,
+    });
 
     return { success: true };
   },

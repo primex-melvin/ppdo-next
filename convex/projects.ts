@@ -6,6 +6,7 @@ import { recalculateBudgetItemMetrics } from "./lib/budgetAggregation";
 import { recalculateProjectMetrics } from "./lib/projectAggregation";
 import { logProjectActivity } from "./lib/projectActivityLogger";
 import { internal } from "./_generated/api";
+import { indexEntity } from "./search/index";
 
 /**
  * Get ACTIVE projects (Hidden Trash)
@@ -152,6 +153,18 @@ export const moveToTrash = mutation({
       reason: args.reason || "Moved to trash"
     });
 
+    // 🔍 Update search index - mark as deleted
+    await indexEntity(ctx, {
+      entityType: "project",
+      entityId: args.id,
+      primaryText: existing.particulars,
+      secondaryText: existing.implementingOffice,
+      departmentId: existing.departmentId,
+      status: existing.status,
+      year: existing.year,
+      isDeleted: true,
+    });
+
     return { success: true, message: "Project moved to trash" };
   },
 });
@@ -229,6 +242,18 @@ export const restoreFromTrash = mutation({
 
     // Also recalculate the project itself to ensure its totals from restored breakdowns are correct
     await recalculateProjectMetrics(ctx, args.id, userId);
+
+    // 🔍 Update search index - restore from trash
+    await indexEntity(ctx, {
+      entityType: "project",
+      entityId: args.id,
+      primaryText: existing.particulars,
+      secondaryText: existing.implementingOffice,
+      departmentId: existing.departmentId,
+      status: existing.status,
+      year: existing.year,
+      isDeleted: false,
+    });
 
     return { success: true, message: "Project restored" };
   },
@@ -466,6 +491,18 @@ export const create = mutation({
         reason: "New project creation"
       });
 
+      // 🔍 Add to search index
+      await indexEntity(ctx, {
+        entityType: "project",
+        entityId: projectId,
+        primaryText: args.particulars,
+        secondaryText: args.implementingOffice,
+        departmentId: departmentId,
+        status: "ongoing",
+        year: args.year,
+        isDeleted: false,
+      });
+
       // ✅ RECALCULATE PARENT BUDGET ITEM
       if (args.budgetItemId) {
         await recalculateBudgetItemMetrics(ctx, args.budgetItemId, userId);
@@ -678,6 +715,18 @@ export const update = mutation({
 
     // Also trigger project internal aggregation to ensure it's consistent with its own breakdowns
     await recalculateProjectMetrics(ctx, args.id, userId);
+
+    // 🔍 Update search index
+    await indexEntity(ctx, {
+      entityType: "project",
+      entityId: args.id,
+      primaryText: args.particulars,
+      secondaryText: args.implementingOffice,
+      departmentId: departmentId,
+      status: updatedProject?.status || "ongoing",
+      year: args.year,
+      isDeleted: false,
+    });
 
     return args.id;
   },

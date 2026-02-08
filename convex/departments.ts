@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { indexEntity, removeFromIndex } from "./search/index";
 
 /**
  * Get all departments
@@ -201,12 +202,23 @@ export const create = mutation({
       performedBy: userId,
       targetDepartmentId: departmentId,
       action: "department_created",
-      newValues: JSON.stringify({ 
-        name: args.name, 
+      newValues: JSON.stringify({
+        name: args.name,
         code: args.code,
-        isActive: args.isActive 
+        isActive: args.isActive
       }),
       timestamp: now,
+    });
+
+    // 🔍 Add to search index
+    await indexEntity(ctx, {
+      entityType: "department",
+      entityId: departmentId,
+      primaryText: args.name,
+      secondaryText: args.code,
+      departmentId: departmentId,
+      status: args.isActive ? "active" : "inactive",
+      isDeleted: false,
     });
 
     return departmentId;
@@ -303,17 +315,28 @@ export const update = mutation({
       performedBy: userId,
       targetDepartmentId: args.id,
       action: "department_updated",
-      previousValues: JSON.stringify({ 
-        name: existingDept.name, 
+      previousValues: JSON.stringify({
+        name: existingDept.name,
         code: existingDept.code,
-        isActive: existingDept.isActive 
+        isActive: existingDept.isActive
       }),
-      newValues: JSON.stringify({ 
-        name: args.name, 
+      newValues: JSON.stringify({
+        name: args.name,
         code: args.code,
-        isActive: args.isActive 
+        isActive: args.isActive
       }),
       timestamp: now,
+    });
+
+    // 🔍 Update search index
+    await indexEntity(ctx, {
+      entityType: "department",
+      entityId: args.id,
+      primaryText: args.name,
+      secondaryText: args.code,
+      departmentId: args.id,
+      status: args.isActive ? "active" : "inactive",
+      isDeleted: false,
     });
 
     return args.id;
@@ -383,11 +406,16 @@ export const remove = mutation({
       performedBy: userId,
       targetDepartmentId: args.id,
       action: "department_deleted",
-      previousValues: JSON.stringify({ 
-        name: existingDept.name, 
-        code: existingDept.code 
+      previousValues: JSON.stringify({
+        name: existingDept.name,
+        code: existingDept.code
       }),
       timestamp: now,
+    });
+
+    // 🔍 Remove from search index
+    await removeFromIndex(ctx, {
+      entityId: args.id,
     });
 
     return args.id;

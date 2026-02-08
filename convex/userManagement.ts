@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { formatFullName, ensureUserName } from "./lib/nameUtils";
+import { indexEntity, removeFromIndex } from "./search/index";
 
 /**
  * Create a new user (admin and super_admin only)
@@ -122,6 +123,17 @@ export const createUser = mutation({
         status: args.status || "active",
       }),
       timestamp: now,
+    });
+
+    // Add to search index
+    await indexEntity(ctx, {
+      entityType: "user",
+      entityId: userId,
+      primaryText: fullName,
+      secondaryText: args.email,
+      departmentId: args.departmentId,
+      status: "active",
+      isDeleted: false,
     });
 
     return { userId, success: true };
@@ -252,6 +264,26 @@ export const updateUserProfile = mutation({
       timestamp: now,
     });
 
+    // Update search index
+    const updatedFirstName = args.firstName ?? targetUser.firstName ?? "";
+    const updatedLastName = args.lastName ?? targetUser.lastName ?? "";
+    const updatedFullName = formatFullName(
+      updatedFirstName,
+      args.middleName ?? targetUser.middleName,
+      updatedLastName,
+      args.nameExtension ?? targetUser.nameExtension
+    );
+
+    await indexEntity(ctx, {
+      entityType: "user",
+      entityId: args.userId,
+      primaryText: updatedFullName,
+      secondaryText: targetUser.email,
+      departmentId: targetUser.departmentId,
+      status: targetUser.status || "active",
+      isDeleted: false,
+    });
+
     return { success: true };
   },
 });
@@ -367,6 +399,12 @@ export const deleteUser = mutation({
 
     // Finally, delete the user
     await ctx.db.delete(args.userId);
+
+    // Remove from search index
+    await removeFromIndex(ctx, {
+      entityId: args.userId,
+    });
+
     return { success: true };
   },
 });

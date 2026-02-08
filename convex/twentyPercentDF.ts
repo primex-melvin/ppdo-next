@@ -5,6 +5,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
 import { recalculateTwentyPercentDFMetrics } from "./lib/twentyPercentDFAggregation";
 import { logTwentyPercentDFActivity } from "./lib/twentyPercentDFActivityLogger";
+import { indexEntity } from "./search/index";
 
 // ============================================================================
 // QUERY: LIST
@@ -143,6 +144,18 @@ export const create = mutation({
             newValues: created,
         });
 
+        // 🔍 Add to search index
+        await indexEntity(ctx, {
+            entityType: "twentyPercentDF",
+            entityId: id,
+            primaryText: args.particulars,
+            secondaryText: args.implementingOffice,
+            departmentId: args.departmentId,
+            status: "ongoing",
+            year: args.year,
+            isDeleted: false,
+        });
+
         return { id };
     },
 });
@@ -211,6 +224,18 @@ export const update = mutation({
             reason,
         });
 
+        // 🔍 Update search index
+        await indexEntity(ctx, {
+            entityType: "twentyPercentDF",
+            entityId: id,
+            primaryText: updated?.particulars || previous.particulars,
+            secondaryText: updated?.implementingOffice || previous.implementingOffice,
+            departmentId: updated?.departmentId || previous.departmentId,
+            status: updated?.status || previous.status,
+            year: updated?.year || previous.year,
+            isDeleted: false,
+        });
+
         return { success: true };
     },
 });
@@ -247,6 +272,18 @@ export const moveToTrash = mutation({
             twentyPercentDFId: args.id,
             previousValues: record,
             reason: args.reason,
+        });
+
+        // 🔍 Update search index - mark as deleted
+        await indexEntity(ctx, {
+            entityType: "twentyPercentDF",
+            entityId: args.id,
+            primaryText: record.particulars,
+            secondaryText: record.implementingOffice,
+            departmentId: record.departmentId,
+            status: record.status,
+            year: record.year,
+            isDeleted: true,
         });
 
         return { success: true };
@@ -289,6 +326,18 @@ export const bulkMoveToTrash = mutation({
                 twentyPercentDFId: id,
                 previousValues: record,
                 reason: args.reason || "Bulk delete",
+            });
+
+            // 🔍 Update search index - mark as deleted
+            await indexEntity(ctx, {
+                entityType: "twentyPercentDF",
+                entityId: id,
+                primaryText: record.particulars,
+                secondaryText: record.implementingOffice,
+                departmentId: record.departmentId,
+                status: record.status,
+                year: record.year,
+                isDeleted: true,
             });
 
             results.push({ id, success: true });
@@ -334,6 +383,18 @@ export const restoreFromTrash = mutation({
             action: "restored",
             twentyPercentDFId: args.id,
             previousValues: record,
+        });
+
+        // 🔍 Update search index - restore from trash
+        await indexEntity(ctx, {
+            entityType: "twentyPercentDF",
+            entityId: args.id,
+            primaryText: record.particulars,
+            secondaryText: record.implementingOffice,
+            departmentId: record.departmentId,
+            status: record.status,
+            year: record.year,
+            isDeleted: false,
         });
 
         return { success: true };
