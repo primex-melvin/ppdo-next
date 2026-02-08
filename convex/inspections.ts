@@ -778,7 +778,7 @@ export const listInspectionsBySpecialHealthFund = query({
  */
 export const listInspectionsByTwentyPercentDF = query({
   args: {
-    twentyPercentDFId: v.id("twentyPercentDFs"),
+    twentyPercentDFId: v.id("twentyPercentDF"),
     status: v.optional(
       v.union(
         v.literal("completed"),
