@@ -29,6 +29,8 @@ import {
   Trash2,
   BarChart3,
   Loader2,
+  Bug,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -75,9 +77,13 @@ export default function SearchAdminPage() {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [clearEntityType, setClearEntityType] = useState<EntityType | null>(null);
   const [lastReindexResult, setLastReindexResult] = useState<ReindexStats[] | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Fetch index statistics
   const stats = useQuery(api.search.getIndexStats);
+  
+  // Fetch sample index entries for debugging
+  const sampleEntries = useQuery(api.search.getIndexedEntities, { entityType: "project", limit: 3 });
 
   // Mutations
   const reindexByType = useMutation(api.search.reindexByType);
@@ -378,6 +384,66 @@ export default function SearchAdminPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Debug Section - Sample Index Entries */}
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Bug className="size-5 text-muted-foreground" />
+              <div>
+                <CardTitle className="text-lg">Debug: Sample Index Entries</CardTitle>
+                <CardDescription>
+                  Verify createdBy field is populated correctly
+                </CardDescription>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowDebug(!showDebug)}>
+              {showDebug ? "Hide" : "Show"}
+            </Button>
+          </div>
+        </CardHeader>
+        {showDebug && (
+          <CardContent>
+            <div className="space-y-3">
+              {sampleEntries && sampleEntries.length > 0 ? (
+                sampleEntries.map((entry: any) => (
+                  <div key={entry._id} className="p-3 bg-muted rounded-lg text-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">{entry.primaryText}</span>
+                      <Badge variant="outline">{entry.entityType}</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div>
+                        <span className="font-medium">createdBy:</span>{" "}
+                        {entry.createdBy ? (
+                          <span className="text-green-600 font-mono">{entry.createdBy}</span>
+                        ) : (
+                          <span className="text-red-500">MISSING</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-medium">createdAt:</span>{" "}
+                        {new Date(entry.createdAt).toLocaleDateString()}
+                      </div>
+                      <div>
+                        <span className="font-medium">updatedAt:</span>{" "}
+                        {new Date(entry.updatedAt).toLocaleDateString()}
+                      </div>
+                      <div>
+                        <span className="font-medium">entityId:</span>{" "}
+                        <span className="font-mono">{entry.entityId}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No sample entries found</p>
+              )}
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
       {/* Clear Index Dialog */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
