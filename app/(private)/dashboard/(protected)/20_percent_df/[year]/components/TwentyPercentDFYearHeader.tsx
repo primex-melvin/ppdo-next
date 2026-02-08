@@ -79,12 +79,12 @@ export function TwentyPercentDFYearHeader({
             {showDetails ? (
               <>
                 <EyeOff className="h-4 w-4" />
-                Hide Details
+                Hide Statistics
               </>
             ) : (
               <>
                 <Eye className="h-4 w-4" />
-                Show Details
+                Show Statistics
               </>
             )}
           </Button>

@@ -63,12 +63,12 @@ export function ParticularPageHeader({
                         {showDetails ? (
                             <>
                                 <EyeOff className="w-4 h-4" />
-                                <span className="hidden sm:inline">Hide Details</span>
+                                <span className="hidden sm:inline">Hide Statistics</span>
                             </>
                         ) : (
                             <>
                                 <Eye className="w-4 h-4" />
-                                <span className="hidden sm:inline">Show Details</span>
+                                <span className="hidden sm:inline">Show Statistics</span>
                             </>
                         )}
                     </Button>

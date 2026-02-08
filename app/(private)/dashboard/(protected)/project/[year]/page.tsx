@@ -44,6 +44,7 @@ export default function YearBudgetPage({ params }: PageProps) {
 
   const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
   const [showTrashModal, setShowTrashModal] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Filter budget items by year
   const yearFilteredItems = useMemo(() => {
@@ -127,16 +128,22 @@ export default function YearBudgetPage({ params }: PageProps) {
 
   return (
     <>
-      <YearBudgetPageHeader year={year} />
-
-      <BudgetStatistics
-        totalAllocated={yearStatistics.totalAllocated}
-        totalUtilized={yearStatistics.totalUtilized}
-        totalObligated={yearStatistics.totalObligated}
-        averageUtilizationRate={yearStatistics.averageUtilizationRate}
-        totalProjects={yearStatistics.totalProjects}
-        items={yearFilteredItems}
+      <YearBudgetPageHeader
+        year={year}
+        showDetails={showDetails}
+        onToggleDetails={() => setShowDetails(!showDetails)}
       />
+
+      {showDetails && (
+        <BudgetStatistics
+          totalAllocated={yearStatistics.totalAllocated}
+          totalUtilized={yearStatistics.totalUtilized}
+          totalObligated={yearStatistics.totalObligated}
+          averageUtilizationRate={yearStatistics.averageUtilizationRate}
+          totalProjects={yearStatistics.totalProjects}
+          items={yearFilteredItems}
+        />
+      )}
 
       <div className="mb-6">
         <BudgetTrackingTable

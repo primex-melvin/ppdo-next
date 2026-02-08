@@ -34,7 +34,7 @@ export default function YearTrustFundsPage({ params }: PageProps) {
   });
 
   const [showTrashModal, setShowTrashModal] = useState(false);
-  const [showDetails, setShowDetails] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
   const [showExpandModal, setShowExpandModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 

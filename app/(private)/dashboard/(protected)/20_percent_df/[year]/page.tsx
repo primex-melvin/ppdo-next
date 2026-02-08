@@ -41,7 +41,7 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
     const moveToTrash = useMutation(api.twentyPercentDF.moveToTrash);
 
     const [showTrashModal, setShowTrashModal] = useState(false);
-    const [showDetails, setShowDetails] = useState(true);
+    const [showDetails, setShowDetails] = useState(false);
 
     // Calculate statistics
     const yearStatistics = useMemo(() => {

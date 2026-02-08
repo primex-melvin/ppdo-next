@@ -39,19 +39,9 @@ export default function ParticularProjectsPage() {
   // ============================================================================
   // EXISTING STATE
   // ============================================================================
-  const [showDetails, setShowDetails] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("showBudgetDetails");
-      return saved ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
+  const [showDetails, setShowDetails] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("showBudgetDetails", JSON.stringify(showDetails));
-    }
-  }, [showDetails]);
+
 
   const [showTrashModal, setShowTrashModal] = useState(false);
   const [newlyAddedProjectId, setNewlyAddedProjectId] = useState<string | null>(null);
