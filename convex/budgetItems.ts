@@ -221,8 +221,7 @@ export const getByParticulars = query({
       .withIndex("particulars", (q) => q.eq("particulars", args.particulars))
       .filter(q => q.neq(q.field("isDeleted"), true))
       .first();
-    if (!budgetItem) throw new Error("Budget item not found");
-    return budgetItem;
+    return budgetItem ?? null;
   },
 });
 

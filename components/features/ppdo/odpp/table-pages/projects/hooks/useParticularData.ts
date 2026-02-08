@@ -6,12 +6,23 @@ import { Project } from "../types";
 
 interface UseParticularDataOptions {
     particular: string;
+    budgetItemId?: string;
 }
 
-export function useParticularData({ particular }: UseParticularDataOptions) {
-    const budgetItem = useQuery(api.budgetItems.getByParticulars, {
-        particulars: particular,
-    });
+export function useParticularData({ particular, budgetItemId }: UseParticularDataOptions) {
+    // If we have a direct ID (from slug-based navigation like search results), use get by ID
+    const budgetItemById = useQuery(
+        api.budgetItems.get,
+        budgetItemId ? { id: budgetItemId as Id<"budgetItems"> } : "skip"
+    );
+
+    // Otherwise fall back to name-based lookup (normal navigation)
+    const budgetItemByName = useQuery(
+        api.budgetItems.getByParticulars,
+        budgetItemId ? "skip" : { particulars: particular }
+    );
+
+    const budgetItem = budgetItemId ? budgetItemById : budgetItemByName;
 
     const breakdownStats = useQuery(api.govtProjects.getBreakdownStats, {
         budgetItemId: budgetItem?._id,

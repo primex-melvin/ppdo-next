@@ -7,6 +7,7 @@ import { Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AccessDeniedPage from "@/components/shared/pages/AccessDeniedPage";
 import { TrashBinModal } from "@/components/shared/modals";
+import { extractIdFromSlug } from "@/lib/utils/breadcrumb-utils";
 
 // Import from reusable component library
 // Note: We use relative imports if we are inside the same feature folder structure, 
@@ -28,29 +29,35 @@ import {
 export default function ParticularProjectsPage() {
   const params = useParams();
   const router = useRouter();
-  const particular = decodeURIComponent(params.particularId as string);
+  const rawParam = decodeURIComponent(params.particularId as string);
   const year = params.year as string;
+
+  // Detect if the URL param is a slug (from search navigation) or a raw particular name
+  // Slugs contain hyphens and end with a long alphanumeric ID (e.g., "drug-testing-laboratory-k5781w0ghb46yjy2ypf7...")
+  const extractedId = rawParam.includes('-') ? extractIdFromSlug(rawParam) : undefined;
+  const isSlugFormat = !!(extractedId && extractedId !== rawParam && extractedId.length > 15);
+  const budgetItemId = isSlugFormat ? extractedId : undefined;
+
+  // ============================================================================
+  // DATA FETCHING (moved before access check so we can use actual particulars)
+  // ============================================================================
+  const [showDetails, setShowDetails] = useState(false);
+  const [showTrashModal, setShowTrashModal] = useState(false);
+  const [newlyAddedProjectId, setNewlyAddedProjectId] = useState<string | null>(null);
+  const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
+
+  const { budgetItem, breakdownStats, projects, isLoading: isLoadingData } = useParticularData({
+    particular: rawParam,
+    budgetItemId,
+  });
+
+  // Use the actual particulars from budget item when available (handles slug-based navigation)
+  const particular = budgetItem?.particulars ?? rawParam;
 
   // ============================================================================
   // ACCESS CONTROL - Check if user can access this particular
   // ============================================================================
   const { accessCheck, isLoading: isLoadingAccess, canAccess } = useParticularAccess(particular);
-
-  // ============================================================================
-  // EXISTING STATE
-  // ============================================================================
-  const [showDetails, setShowDetails] = useState(false);
-
-
-
-  const [showTrashModal, setShowTrashModal] = useState(false);
-  const [newlyAddedProjectId, setNewlyAddedProjectId] = useState<string | null>(null);
-  const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
-
-  // ============================================================================
-  // DATA FETCHING
-  // ============================================================================
-  const { budgetItem, breakdownStats, projects, isLoading: isLoadingData } = useParticularData({ particular });
 
   const { handleAddProject, handleEditProject, handleDeleteProject, handleRecalculate } =
     useProjectMutations({ budgetItemId: budgetItem?._id });
@@ -88,8 +95,9 @@ export default function ParticularProjectsPage() {
 
   // ============================================================================
   // LOADING STATE - Checking Access
+  // For slug-based navigation, wait for budget item to load before checking access
   // ============================================================================
-  if (isLoadingAccess) {
+  if (isLoadingAccess || (isSlugFormat && !budgetItem)) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
