@@ -947,6 +947,7 @@ export function ProjectsTable({
                             onSelectRow={handleSelectRow}
                             onSelectAll={handleSelectAll}
                             onSelectCategory={handleSelectCategory}
+                            isHighlighted={isHighlighted}
                         />
                     </TabsContent>
 

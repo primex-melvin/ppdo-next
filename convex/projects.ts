@@ -7,7 +7,7 @@ import { recalculateProjectMetrics } from "./lib/projectAggregation";
 import { logProjectActivity } from "./lib/projectActivityLogger";
 import { internal } from "./_generated/api";
 import { indexEntity } from "./search/index";
-import { buildSlug } from "./lib/searchUtils";
+// buildSlug no longer needed - project page uses encodeURIComponent(particulars) for URLs
 
 /**
  * Get ACTIVE projects (Hidden Trash)
@@ -172,7 +172,7 @@ export const moveToTrash = mutation({
       status: existing.status,
       year: existing.year,
       parentSlug: parentBudgetItem
-        ? buildSlug(parentBudgetItem.particulars, parentBudgetItem._id)
+        ? encodeURIComponent(parentBudgetItem.particulars)
         : undefined,
       parentId: parentBudgetItem ? parentBudgetItem._id : undefined,
       isDeleted: true,
@@ -274,7 +274,7 @@ export const restoreFromTrash = mutation({
       status: existing.status,
       year: existing.year,
       parentSlug: parentBudgetItemForRestore
-        ? buildSlug(parentBudgetItemForRestore.particulars, parentBudgetItemForRestore._id)
+        ? encodeURIComponent(parentBudgetItemForRestore.particulars)
         : undefined,
       parentId: parentBudgetItemForRestore ? parentBudgetItemForRestore._id : undefined,
       isDeleted: false,
@@ -529,7 +529,7 @@ export const create = mutation({
         status: "ongoing",
         year: args.year,
         parentSlug: parentBudgetItem
-          ? buildSlug(parentBudgetItem.particulars, parentBudgetItem._id as string)
+          ? encodeURIComponent(parentBudgetItem.particulars)
           : undefined,
         parentId: parentBudgetItem ? (parentBudgetItem._id as string) : undefined,
         isDeleted: false,
@@ -766,7 +766,7 @@ export const update = mutation({
       status: updatedProject?.status || "ongoing",
       year: args.year,
       parentSlug: parentBudgetItemForUpdate
-        ? buildSlug(parentBudgetItemForUpdate.particulars, parentBudgetItemForUpdate._id)
+        ? encodeURIComponent(parentBudgetItemForUpdate.particulars)
         : undefined,
       parentId: parentBudgetItemForUpdate ? parentBudgetItemForUpdate._id : undefined,
       isDeleted: false,

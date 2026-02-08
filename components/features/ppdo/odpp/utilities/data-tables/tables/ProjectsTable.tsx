@@ -46,6 +46,7 @@ interface ProjectsTableProps {
     onSelectRow?: (id: string, checked: boolean) => void;
     onSelectAll?: (checked: boolean) => void;
     onSelectCategory?: (projects: Project[], checked: boolean) => void;
+    isHighlighted?: (id: string) => boolean;
 }
 
 // Category header style helper
@@ -146,6 +147,7 @@ export function ProjectsTable({
     onSelectRow,
     onSelectAll,
     onSelectCategory,
+    isHighlighted,
 }: ProjectsTableProps) {
     const {
         columns: allColumns,
@@ -340,6 +342,7 @@ export function ProjectsTable({
                                             onStartRowResize={startResizeRow}
                                             isSelected={selectedIds?.has(project.id)}
                                             onSelectRow={onSelectRow}
+                                            isHighlighted={isHighlighted?.(project.id)}
                                         />
                                     ))}
                                 </React.Fragment>

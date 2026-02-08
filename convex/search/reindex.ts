@@ -95,13 +95,14 @@ async function reindexProjectItems(ctx: MutationCtx): Promise<ReindexStats> {
 
   for (const project of projects) {
     try {
-      // Fetch parent budget item for slug generation
+      // Fetch parent budget item for URL generation
+      // Project page uses URL-encoded particular name (not slug) as route param
       let parentSlug: string | undefined;
       let parentId: string | undefined;
       if (project.budgetItemId) {
         const budgetItem = await ctx.db.get(project.budgetItemId);
         if (budgetItem) {
-          parentSlug = buildSlug(budgetItem.particulars, budgetItem._id as string);
+          parentSlug = encodeURIComponent(budgetItem.particulars);
           parentId = budgetItem._id as string;
         }
       }
@@ -156,14 +157,35 @@ async function reindexProjectBreakdowns(ctx: MutationCtx): Promise<ReindexStats>
 
   for (const breakdown of breakdowns) {
     try {
+      // Lookup parent project and grandparent budget item for year and URL generation
+      let parentSlug: string | undefined;
+      let parentId: string | undefined;
+      let year: number | undefined;
+      if (breakdown.projectId) {
+        const project = await ctx.db.get(breakdown.projectId);
+        if (project) {
+          year = project.year;
+          parentId = project._id as string;
+          if (project.budgetItemId) {
+            const budgetItem = await ctx.db.get(project.budgetItemId);
+            if (budgetItem) {
+              // 3rd page URL: /dashboard/project/{year}/{encoded-particular}/{project-slug}
+              parentSlug = `${encodeURIComponent(budgetItem.particulars)}/${buildSlug(project.particulars, project._id as string)}`;
+            }
+          }
+        }
+      }
+
       await indexEntity(ctx, {
         entityType: "projectBreakdown",
         entityId: breakdown._id,
         primaryText: breakdown.projectName || "",
         secondaryText: breakdown.implementingOffice,
-        departmentId: undefined, // Breakdowns don't have departmentId
+        departmentId: undefined,
         status: breakdown.status,
-        year: undefined, // Breakdowns don't have year
+        year,
+        parentSlug,
+        parentId,
         isDeleted: false,
         createdBy: breakdown.createdBy,
         createdAt: breakdown.createdAt,
@@ -252,14 +274,29 @@ async function reindexTwentyPercentDFItems(ctx: MutationCtx): Promise<ReindexSta
 
   for (const item of items) {
     try {
+      // Lookup parent 20% DF for year and URL generation
+      let parentSlug: string | undefined;
+      let parentId: string | undefined;
+      let year: number | undefined;
+      if (item.twentyPercentDFId) {
+        const parentDF = await ctx.db.get(item.twentyPercentDFId);
+        if (parentDF) {
+          year = parentDF.year;
+          parentId = parentDF._id as string;
+          parentSlug = buildSlug(parentDF.particulars, parentDF._id as string);
+        }
+      }
+
       await indexEntity(ctx, {
         entityType: "twentyPercentDFItem",
         entityId: item._id,
         primaryText: item.projectName || "",
         secondaryText: item.implementingOffice,
-        departmentId: undefined, // Breakdowns don't have departmentId
+        departmentId: undefined,
         status: item.status,
-        year: undefined, // Breakdowns don't have year
+        year,
+        parentSlug,
+        parentId,
         isDeleted: false,
         createdBy: item.createdBy,
         createdAt: item.createdAt,
@@ -348,14 +385,29 @@ async function reindexTrustFundItems(ctx: MutationCtx): Promise<ReindexStats> {
 
   for (const item of items) {
     try {
+      // Lookup parent trust fund for year and URL generation
+      let parentSlug: string | undefined;
+      let parentId: string | undefined;
+      let year: number | undefined;
+      if (item.trustFundId) {
+        const parentFund = await ctx.db.get(item.trustFundId);
+        if (parentFund) {
+          year = parentFund.year;
+          parentId = parentFund._id as string;
+          parentSlug = buildSlug(parentFund.projectTitle, parentFund._id as string);
+        }
+      }
+
       await indexEntity(ctx, {
         entityType: "trustFundItem",
         entityId: item._id,
         primaryText: item.projectName || "",
         secondaryText: item.implementingOffice,
-        departmentId: undefined, // Breakdowns don't have departmentId
+        departmentId: undefined,
         status: item.status,
-        year: undefined, // Breakdowns don't have year
+        year,
+        parentSlug,
+        parentId,
         isDeleted: false,
         createdBy: item.createdBy,
         createdAt: item.createdAt,
@@ -444,14 +496,29 @@ async function reindexSpecialEducationFundItems(ctx: MutationCtx): Promise<Reind
 
   for (const item of items) {
     try {
+      // Lookup parent special education fund for year and URL generation
+      let parentSlug: string | undefined;
+      let parentId: string | undefined;
+      let year: number | undefined;
+      if (item.specialEducationFundId) {
+        const parentFund = await ctx.db.get(item.specialEducationFundId);
+        if (parentFund) {
+          year = parentFund.year;
+          parentId = parentFund._id as string;
+          parentSlug = buildSlug(parentFund.projectTitle, parentFund._id as string);
+        }
+      }
+
       await indexEntity(ctx, {
         entityType: "specialEducationFundItem",
         entityId: item._id,
         primaryText: item.projectName || "",
         secondaryText: item.implementingOffice,
-        departmentId: undefined, // Breakdowns don't have departmentId
+        departmentId: undefined,
         status: item.status,
-        year: undefined, // Breakdowns don't have year
+        year,
+        parentSlug,
+        parentId,
         isDeleted: false,
         createdBy: item.createdBy,
         createdAt: item.createdAt,
@@ -540,14 +607,29 @@ async function reindexSpecialHealthFundItems(ctx: MutationCtx): Promise<ReindexS
 
   for (const item of items) {
     try {
+      // Lookup parent special health fund for year and URL generation
+      let parentSlug: string | undefined;
+      let parentId: string | undefined;
+      let year: number | undefined;
+      if (item.specialHealthFundId) {
+        const parentFund = await ctx.db.get(item.specialHealthFundId);
+        if (parentFund) {
+          year = parentFund.year;
+          parentId = parentFund._id as string;
+          parentSlug = buildSlug(parentFund.projectTitle, parentFund._id as string);
+        }
+      }
+
       await indexEntity(ctx, {
         entityType: "specialHealthFundItem",
         entityId: item._id,
         primaryText: item.projectName || "",
         secondaryText: item.implementingOffice,
-        departmentId: undefined, // Breakdowns don't have departmentId
+        departmentId: undefined,
         status: item.status,
-        year: undefined, // Breakdowns don't have year
+        year,
+        parentSlug,
+        parentId,
         isDeleted: false,
         createdBy: item.createdBy,
         createdAt: item.createdAt,
