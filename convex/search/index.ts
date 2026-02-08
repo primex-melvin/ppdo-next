@@ -4,6 +4,8 @@ import { v } from "convex/values";
 import { mutation, query, MutationCtx, QueryCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { EntityType } from "./types";
+import { calculateRelevance, RankingContext } from "./ranking";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -355,6 +357,29 @@ export const search = query({
     const offset = args.offset || 0;
     const excludeDeleted = args.excludeDeleted ?? true;
 
+    // Get current user's department information for proximity scoring
+    let userDepartmentId: string | undefined;
+    let userParentDepartmentId: string | undefined;
+
+    try {
+      const userId = await getAuthUserId(ctx);
+      if (userId) {
+        const user = await ctx.db.get(userId);
+        if (user && user.departmentId) {
+          userDepartmentId = user.departmentId;
+
+          // Get user's department to find parent department
+          const userDept = await ctx.db.get(user.departmentId as Id<"departments">);
+          if (userDept?.parentDepartmentId) {
+            userParentDepartmentId = userDept.parentDepartmentId;
+          }
+        }
+      }
+    } catch (error) {
+      // If not authenticated, continue without user context
+      // This allows search to work for unauthenticated users
+    }
+
     // Normalize and tokenize query
     const normalizedQuery = normalizeText(args.query);
     const queryTokens = tokenizeText(args.query);
@@ -410,51 +435,76 @@ export const search = query({
       );
     }
 
-    // Search and rank results
+    // Get parent department IDs for all filtered entries (for proximity scoring)
+    const departmentParents = new Map<string, string | undefined>();
+    const uniqueDeptIds = new Set(
+      filtered.map((e) => e.departmentId).filter((id): id is string => !!id)
+    );
+
+    for (const deptId of uniqueDeptIds) {
+      try {
+        const dept = await ctx.db.get(deptId as Id<"departments">);
+        if (dept?.parentDepartmentId) {
+          departmentParents.set(deptId, dept.parentDepartmentId);
+        }
+      } catch (error) {
+        // Department not found or error, continue without parent info
+      }
+    }
+
+    // Search and rank results using new relevance scoring
     const rankedResults = filtered
       .map((entry) => {
-        let matchScore = 0;
-        const matchedFields: string[] = [];
+        // Build ranking context
+        const rankingContext: RankingContext = {
+          query: args.query,
+          queryTokens,
+          document: {
+            primaryText: entry.primaryText,
+            normalizedPrimaryText: entry.normalizedPrimaryText,
+            secondaryText: entry.secondaryText,
+            normalizedSecondaryText: entry.normalizedSecondaryText,
+            tokens: entry.tokens,
+          },
+          userDepartmentId,
+          entityDepartmentId: entry.departmentId,
+          entityCreatedAt: entry.createdAt,
+          entityUpdatedAt: entry.updatedAt,
+          parentDepartmentId: entry.departmentId
+            ? departmentParents.get(entry.departmentId)
+            : undefined,
+          userParentDepartmentId,
+        };
 
-        // Check exact match in primary text
+        // Calculate relevance score (0-1)
+        const relevanceScore = calculateRelevance(rankingContext);
+
+        // Determine matched fields for display
+        const matchedFields: string[] = [];
         if (entry.normalizedPrimaryText.includes(normalizedQuery)) {
-          matchScore += 50;
           matchedFields.push("primaryText");
         }
-
-        // Check exact match in secondary text
         if (
           entry.normalizedSecondaryText &&
           entry.normalizedSecondaryText.includes(normalizedQuery)
         ) {
-          matchScore += 30;
           matchedFields.push("secondaryText");
         }
-
-        // Check token matches
         const matchedTokens = queryTokens.filter((token) =>
           entry.tokens.includes(token)
         );
-        if (matchedTokens.length > 0) {
-          matchScore += (matchedTokens.length / queryTokens.length) * 40;
-          if (!matchedFields.includes("primaryText")) {
-            matchedFields.push("tokens");
-          }
-        }
-
-        // Add relevance score bonus
-        if (entry.relevanceScore) {
-          matchScore += entry.relevanceScore * 0.1; // 10% weight for relevance
+        if (matchedTokens.length > 0 && !matchedFields.includes("primaryText")) {
+          matchedFields.push("tokens");
         }
 
         return {
           entry,
-          matchScore,
+          relevanceScore, // 0-1 normalized score
           matchedFields,
         };
       })
-      .filter((result) => result.matchScore > 0)
-      .sort((a, b) => b.matchScore - a.matchScore);
+      .filter((result) => result.relevanceScore > 0)
+      .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     // Apply pagination
     const paginatedResults = rankedResults.slice(offset, offset + limit);
@@ -462,7 +512,7 @@ export const search = query({
     return {
       results: paginatedResults.map((r) => ({
         indexEntry: r.entry,
-        matchScore: r.matchScore,
+        relevanceScore: r.relevanceScore, // Return normalized 0-1 score
         matchedFields: r.matchedFields,
       })),
       totalCount: rankedResults.length,
