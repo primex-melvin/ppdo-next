@@ -73,12 +73,14 @@ function DefaultResultCard<T>({
     }
   };
 
-  // Use indexEntry fields
+  // Use indexEntry fields with highlights
   const entry = result.indexEntry;
   const entityType = entry?.entityType;
-  const title = entry?.primaryText;
-  const description = entry?.secondaryText;
   const matchScore = result.relevanceScore;
+  
+  // Use highlighted text if available, otherwise fall back to plain text
+  const titleHtml = result.highlights?.primaryText || entry?.primaryText || "";
+  const descriptionHtml = result.highlights?.secondaryText || entry?.secondaryText || "";
 
   return (
     <Card
@@ -102,27 +104,16 @@ function DefaultResultCard<T>({
           </div>
         </div>
 
-        <h3 className="font-semibold text-base mb-1 line-clamp-2">
-          {title}
-        </h3>
+        <h3 
+          className="font-semibold text-base mb-1 line-clamp-2"
+          dangerouslySetInnerHTML={{ __html: titleHtml }}
+        />
 
-        {description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-            {description}
-          </p>
-        )}
-
-        {result.matchedFields && result.matchedFields.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {result.matchedFields.slice(0, 3).map((field, index) => (
-              <span
-                key={index}
-                className="text-xs px-2 py-0.5 rounded-md bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-              >
-                {field}
-              </span>
-            ))}
-          </div>
+        {descriptionHtml && (
+          <p 
+            className="text-sm text-muted-foreground line-clamp-2 mb-2"
+            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+          />
         )}
       </CardContent>
     </Card>

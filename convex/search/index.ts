@@ -25,6 +25,38 @@ function normalizeText(text: string): string {
 }
 
 /**
+ * Create highlighted text by wrapping matched query terms in <mark> tags
+ * Returns the original text with matched terms highlighted
+ */
+function createHighlight(text: string, queryTokens: string[]): string {
+  if (!text || queryTokens.length === 0) return text;
+
+  // Escape special regex characters in tokens
+  const escapedTokens = queryTokens.map(token => 
+    token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  );
+
+  // Create regex that matches any of the query tokens (case-insensitive)
+  // Use word boundaries to match whole words only
+  const pattern = new RegExp(
+    `(${escapedTokens.join('|')})`,
+    'gi'
+  );
+
+  // Replace matches with <mark> tags
+  return text.replace(pattern, '<mark>$1</mark>');
+}
+
+/**
+ * Check if text contains any of the query tokens
+ */
+function containsQueryTokens(text: string, queryTokens: string[]): boolean {
+  if (!text || queryTokens.length === 0) return false;
+  const normalizedText = normalizeText(text);
+  return queryTokens.some(token => normalizedText.includes(token));
+}
+
+/**
  * Tokenize text into searchable keywords
  * Splits on whitespace and special characters, removes common stop words
  */
@@ -479,31 +511,48 @@ export const search = query({
         // Calculate relevance score (0-1)
         const relevanceScore = calculateRelevance(rankingContext);
 
-        // Determine matched fields for display
+        // Determine matched fields and create highlights
         const matchedFields: string[] = [];
-        if (entry.normalizedPrimaryText.includes(normalizedQuery)) {
+        let primaryTextHighlighted: string | undefined;
+        let secondaryTextHighlighted: string | undefined;
+
+        // Check primary text for matches
+        const primaryTextMatches = containsQueryTokens(entry.primaryText, queryTokens);
+        if (primaryTextMatches) {
           matchedFields.push("primaryText");
+          primaryTextHighlighted = createHighlight(entry.primaryText, queryTokens);
         }
-        if (
-          entry.normalizedSecondaryText &&
-          entry.normalizedSecondaryText.includes(normalizedQuery)
-        ) {
+
+        // Check secondary text for matches
+        const secondaryTextMatches = entry.secondaryText && 
+          containsQueryTokens(entry.secondaryText, queryTokens);
+        if (secondaryTextMatches && entry.secondaryText) {
           matchedFields.push("secondaryText");
+          secondaryTextHighlighted = createHighlight(entry.secondaryText, queryTokens);
         }
+
+        // If no direct text matches, check tokens (for partial/fuzzy matches)
         const matchedTokens = queryTokens.filter((token) =>
           entry.tokens.includes(token)
         );
-        if (matchedTokens.length > 0 && !matchedFields.includes("primaryText")) {
+        if (matchedTokens.length > 0 && matchedFields.length === 0) {
           matchedFields.push("tokens");
+          // Still highlight in primary text even if only tokens matched
+          primaryTextHighlighted = createHighlight(entry.primaryText, queryTokens);
         }
 
         return {
           entry,
           relevanceScore, // 0-1 normalized score
           matchedFields,
+          highlights: {
+            primaryText: primaryTextHighlighted || entry.primaryText,
+            secondaryText: secondaryTextHighlighted || entry.secondaryText,
+          },
         };
       })
-      .filter((result) => result.relevanceScore > 0)
+      // Filter out results with no text matches (must have matched at least one field)
+      .filter((result) => result.matchedFields.length > 0)
       .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     // Apply pagination
@@ -514,6 +563,7 @@ export const search = query({
         indexEntry: r.entry,
         relevanceScore: r.relevanceScore, // Return normalized 0-1 score
         matchedFields: r.matchedFields,
+        highlights: r.highlights,
       })),
       totalCount: rankedResults.length,
       offset,

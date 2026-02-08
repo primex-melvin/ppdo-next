@@ -595,3 +595,17 @@ h6 {
   scrollbar-width: thin;
   scrollbar-color: #15803D transparent;
 }
+
+/* Search highlight styling */
+mark {
+  background-color: rgb(254 240 138);
+  color: rgb(133 77 14);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+}
+
+.dark mark {
+  background-color: rgb(161 98 7);
+  color: rgb(254 252 232);
+}
