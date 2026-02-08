@@ -183,7 +183,14 @@ export const InspectionContent: React.FC<InspectionContentProps> = ({ projectId,
         </div>
       ) : viewMode === "table" ? (
         <InspectionsDataTable
-          data={inspections}
+          data={inspections.map(i => ({
+            ...i,
+            projectId: i.projectId || "",
+            creator: i.creator ? {
+              ...i.creator,
+              _id: i.creator._id as string
+            } : null
+          }))}
           isLoading={false}
           onViewDetails={handleViewDetails}
         />

@@ -91,7 +91,6 @@ export const STATIC_NAV_ITEMS: NavItem[] = [
             {
                 name: "Search Admin",
                 href: "/admin/search",
-                icon: <Search size={16} />,
             },
             {
                 name: "Updates",
