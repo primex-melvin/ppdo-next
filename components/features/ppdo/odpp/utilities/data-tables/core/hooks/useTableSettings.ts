@@ -158,16 +158,17 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     }, [defaultColumns, columnOrder, columnWidths, defaultWidths]);
 
     // Debug logging: Log when columns are loaded
-    useEffect(() => {
-        if (columns.length === 0) return;
-        const widthInfo = columns.map(c => {
-            const savedWidth = columnWidths.get(String(c.key));
-            const source = savedWidth ? 'db' : 'default';
-            return `${String(c.key)}: ${savedWidth || c.width}px (${source})`;
-        }).join(', ');
-        console.log(`[Table:${tableIdentifier}] Loaded ${columns.length} columns`);
-        console.log(`[Table:${tableIdentifier}] Widths: ${widthInfo}`);
-    }, [columns, columnWidths, tableIdentifier]);
+    // NOTE: Temporarily disabled to reduce console noise during search debug
+    // useEffect(() => {
+    //     if (columns.length === 0) return;
+    //     const widthInfo = columns.map(c => {
+    //         const savedWidth = columnWidths.get(String(c.key));
+    //         const source = savedWidth ? 'db' : 'default';
+    //         return `${String(c.key)}: ${savedWidth || c.width}px (${source})`;
+    //     }).join(', ');
+    //     console.log(`[Table:${tableIdentifier}] Loaded ${columns.length} columns`);
+    //     console.log(`[Table:${tableIdentifier}] Widths: ${widthInfo}`);
+    // }, [columns, columnWidths, tableIdentifier]);
 
     // Toggle column visibility
     const toggleColumnVisibility = useCallback((columnKey: string, isVisible: boolean) => {
@@ -187,7 +188,8 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     const saveWidthToDb = useDebouncedCallback(
         async (columnKey: string, width: number) => {
             if (!canEditLayout) return;
-            console.log(`[Table:${tableIdentifier}] Saving width: ${columnKey} = ${width}px`);
+            // NOTE: Temporarily disabled to reduce console noise during search debug
+            // console.log(`[Table:${tableIdentifier}] Saving width: ${columnKey} = ${width}px`);
             await updateWidth({ tableIdentifier, columnKey, width });
         },
         300 // 300ms debounce

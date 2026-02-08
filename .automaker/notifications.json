@@ -407,6 +407,17 @@
       "dismissed": false,
       "featureId": "feature-1770556779397-fr125v0e3",
       "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "530db2cd-599e-424a-a6a1-703b7f7492a1",
+      "type": "feature_waiting_approval",
+      "title": "Feature Ready for Review",
+      "message": "\"feature-1770557382566-3jxyam9ag\" is ready for your review and approval.",
+      "createdAt": "2026-02-08T13:46:47.593Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1770557382566-3jxyam9ag",
+      "projectPath": "C:\\ppdo\\ppdo-next"
     }
   ]
 }

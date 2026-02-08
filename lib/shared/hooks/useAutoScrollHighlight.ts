@@ -90,24 +90,58 @@ export function useAutoScrollHighlight(
 
   // Main effect for scroll and highlight
   useEffect(() => {
+    console.log('[SearchDebug] 🎯 useAutoScrollHighlight effect triggered', {
+      highlightId,
+      dataIdsCount: dataIds.length,
+      hasAlreadyScrolled: hasScrolledRef.current === highlightId,
+      timestamp: new Date().toISOString(),
+    });
+
     // Skip if no highlight ID or already scrolled to this ID
     if (!highlightId || hasScrolledRef.current === highlightId) {
+      console.log('[SearchDebug] ⏭️ Skipping - no highlightId or already scrolled', {
+        highlightId,
+        hasScrolledRef: hasScrolledRef.current,
+      });
       return;
     }
 
     // Skip if the target ID is not in the data yet (data might still be loading)
     if (!dataIds.includes(highlightId)) {
+      console.log('[SearchDebug] ⏳ Waiting - highlightId not in dataIds yet', {
+        highlightId,
+        dataIdsPreview: dataIds.slice(0, 5),
+        totalDataIds: dataIds.length,
+      });
       return;
     }
+
+    console.log('[SearchDebug] ✅ HighlightId found in dataIds, proceeding with scroll', {
+      highlightId,
+    });
 
     // Mark that we've started processing this highlight ID
     hasScrolledRef.current = highlightId;
 
     // Delay scroll slightly to ensure DOM is ready
     const scrollTimeout = setTimeout(() => {
-      const element = document.getElementById(`row-${highlightId}`);
+      const elementId = `row-${highlightId}`;
+      const element = document.getElementById(elementId);
+
+      console.log('[SearchDebug] 🔍 Looking for element', {
+        elementId,
+        found: !!element,
+        scrollDelay,
+      });
 
       if (element) {
+        console.log('[SearchDebug] 📜 Scrolling to element', {
+          elementId,
+          headerOffset,
+          scrollBehavior,
+          scrollBlock,
+        });
+
         // Scroll the element into view
         // Note: For sticky headers, we might need custom scroll logic
         if (headerOffset > 0) {
@@ -120,24 +154,33 @@ export function useAutoScrollHighlight(
             top: middle,
             behavior: scrollBehavior,
           });
+          console.log('[SearchDebug] 📜 Custom scroll with offset executed');
         } else {
           // Standard scrollIntoView
           element.scrollIntoView({
             behavior: scrollBehavior,
             block: scrollBlock,
           });
+          console.log('[SearchDebug] 📜 Standard scrollIntoView executed');
         }
 
         // Activate highlight
         setActiveHighlightId(highlightId);
+        console.log('[SearchDebug] 💡 Highlight activated for:', highlightId);
 
         // Clean up URL param after a short delay
-        setTimeout(cleanupUrlParam, 500);
+        setTimeout(() => {
+          cleanupUrlParam();
+          console.log('[SearchDebug] 🧹 URL param cleaned up');
+        }, 500);
 
         // Clear highlight after duration
         timeoutRef.current = setTimeout(() => {
           setActiveHighlightId(null);
+          console.log('[SearchDebug] ⏰ Highlight expired after', highlightDuration, 'ms');
         }, highlightDuration);
+      } else {
+        console.log('[SearchDebug] ❌ Element NOT found in DOM:', elementId);
       }
     }, scrollDelay);
 

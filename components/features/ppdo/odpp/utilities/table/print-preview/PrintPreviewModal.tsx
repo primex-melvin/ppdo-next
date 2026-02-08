@@ -552,16 +552,18 @@ export function PrintPreviewModal({
 
   // Main Initialization Logic
   useEffect(() => {
-    console.log('ðŸ”„ Main initialization effect triggered', {
-      isOpen,
-      hasInitialized: state.hasInitialized,
-      initializationStarted: initializationStartedRef.current,
-      existingDraft: !!existingDraft,
-    });
+    // NOTE: Temporarily disabled to reduce console noise during search debug
+    // console.log('ðŸ”„ Main initialization effect triggered', {
+    //   isOpen,
+    //   hasInitialized: state.hasInitialized,
+    //   initializationStarted: initializationStartedRef.current,
+    //   existingDraft: !!existingDraft,
+    // });
 
     // Reset when modal closes
     if (!isOpen) {
-      console.log('ðŸšª Modal closed, resetting all state...');
+      // NOTE: Temporarily disabled to reduce console noise during search debug
+      // console.log('ðŸšª Modal closed, resetting all state...');
       state.setHasInitialized(false);
       state.setDocumentTitle('');
       setSavedTemplate(null);
@@ -577,7 +579,8 @@ export function PrintPreviewModal({
 
     // Prevent re-initialization if already started or completed
     if (state.hasInitialized || initializationStartedRef.current) {
-      console.log('â¸ï¸ Initialization already started or completed, skipping...');
+      // NOTE: Temporarily disabled to reduce console noise during search debug
+      // console.log('â¸ï¸ Initialization already started or completed, skipping...');
       return;
     }
 
@@ -586,12 +589,14 @@ export function PrintPreviewModal({
 
     // Case 1: Existing draft with template
     if (existingDraft) {
-      console.log('ðŸ“¦ Existing draft detected');
+      // NOTE: Temporarily disabled to reduce console noise during search debug
+      // console.log('ðŸ“¦ Existing draft detected');
       const draftTitle = existingDraft.documentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
       state.setDocumentTitle(draftTitle);
 
       if (existingDraft.appliedTemplate) {
-        console.log('ðŸŽ¨ Existing draft has template, showing template application modal...');
+        // NOTE: Temporarily disabled to reduce console noise during search debug
+        // console.log('ðŸŽ¨ Existing draft has template, showing template application modal...');
         setSavedTemplate(existingDraft.appliedTemplate);
         setShowTemplateApplicationModal(true);
         // Don't set hasInitialized yet - wait for user choice
@@ -599,7 +604,8 @@ export function PrintPreviewModal({
       }
 
       // No template in draft, load as-is
-      console.log('ðŸ“„ Loading existing draft without template...');
+      // NOTE: Temporarily disabled to reduce console noise during search debug
+      // console.log('ðŸ“„ Loading existing draft without template...');
       state.setPages(existingDraft.canvasState.pages);
       state.setHeader(existingDraft.canvasState.header);
       state.setFooter(existingDraft.canvasState.footer);
@@ -611,7 +617,8 @@ export function PrintPreviewModal({
     }
 
     // Case 2: No existing draft - show setup wizard
-    console.log('ðŸ†• New draft, showing setup wizard...');
+    // NOTE: Temporarily disabled to reduce console noise during search debug
+    // console.log('ðŸ†• New draft, showing setup wizard...');
     const defaultTitle = particular ? `Budget ${year} - ${particular}` : `Budget ${year}`;
     state.setDocumentTitle(defaultTitle);
     setShowSetupModal(true);
