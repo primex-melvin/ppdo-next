@@ -55,6 +55,9 @@ async function reindexProjects(ctx: MutationCtx): Promise<ReindexStats> {
         status: project.status,
         year: project.year,
         isDeleted: false,
+        createdBy: project.createdBy,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
       });
       stats.indexed++;
     } catch (error) {
@@ -100,6 +103,9 @@ async function reindexTwentyPercentDF(ctx: MutationCtx): Promise<ReindexStats> {
         status: item.status,
         year: item.year,
         isDeleted: false,
+        createdBy: item.createdBy,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       });
       stats.indexed++;
     } catch (error) {
@@ -145,6 +151,9 @@ async function reindexTrustFunds(ctx: MutationCtx): Promise<ReindexStats> {
         status: item.status,
         year: item.year,
         isDeleted: false,
+        createdBy: item.createdBy,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       });
       stats.indexed++;
     } catch (error) {
@@ -190,6 +199,9 @@ async function reindexSpecialEducationFunds(ctx: MutationCtx): Promise<ReindexSt
         status: item.status,
         year: item.year,
         isDeleted: false,
+        createdBy: item.createdBy,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       });
       stats.indexed++;
     } catch (error) {
@@ -235,6 +247,9 @@ async function reindexSpecialHealthFunds(ctx: MutationCtx): Promise<ReindexStats
         status: item.status,
         year: item.year,
         isDeleted: false,
+        createdBy: item.createdBy,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       });
       stats.indexed++;
     } catch (error) {
@@ -279,6 +294,9 @@ async function reindexDepartments(ctx: MutationCtx): Promise<ReindexStats> {
         departmentId: item._id,
         status: item.isActive ? "active" : "inactive",
         isDeleted: false,
+        createdBy: item.createdBy,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       });
       stats.indexed++;
     } catch (error) {
@@ -323,6 +341,9 @@ async function reindexAgencies(ctx: MutationCtx): Promise<ReindexStats> {
         departmentId: item.departmentId,
         status: item.isActive ? "active" : "inactive",
         isDeleted: false,
+        createdBy: item.createdBy,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       });
       stats.indexed++;
     } catch (error) {
@@ -370,6 +391,9 @@ async function reindexUsers(ctx: MutationCtx): Promise<ReindexStats> {
         departmentId: item.departmentId,
         status: item.status,
         isDeleted: false,
+        createdBy: item._id, // Users are their own creators
+        createdAt: item._creationTime,
+        updatedAt: item.updatedAt || item._creationTime,
       });
       stats.indexed++;
     } catch (error) {
