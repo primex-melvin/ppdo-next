@@ -265,6 +265,16 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
             </>
           )}
         </div>
+
+        {/* Source URL Display */}
+        {sourceUrl && sourceUrl !== "#" && (
+          <div className="pt-2 flex items-center gap-1.5">
+            <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs text-muted-foreground truncate font-mono">
+              {sourceUrl}
+            </span>
+          </div>
+        )}
       </CardContent>
 
       {/* Card Footer - Source Link Button */}
