@@ -145,6 +145,9 @@ export interface SearchIndexEntry {
   createdAt: number;
   updatedAt: number;
   isDeleted?: boolean;
+  
+  // Author reference (for displaying creator info)
+  createdBy?: string; // User ID who created the original entity
 
   // Ranking factors
   relevanceScore?: number;
@@ -454,6 +457,9 @@ export interface SearchApiResult {
   createdAt: number;
   updatedAt: number;
   pageDepthText: string; // e.g., "Found in 1st page"
+  // Author information (fetched during query - Option B)
+  authorName?: string;
+  authorImage?: string;
 }
 
 /**

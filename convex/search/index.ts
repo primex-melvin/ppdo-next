@@ -193,9 +193,17 @@ export async function indexEntity(
     status?: string;
     year?: number;
     isDeleted?: boolean;
+    createdBy?: string; // User ID who created the entity (optional for backward compat)
+    createdAt?: number; // Original entity creation timestamp (optional for backward compat)
+    updatedAt?: number; // Original entity update timestamp (optional for backward compat)
   }
 ) {
   const now = Date.now();
+  
+  // Use provided timestamps or fallback to now
+  const createdAt = args.createdAt ?? now;
+  const updatedAt = args.updatedAt ?? now;
+  const createdBy = args.createdBy ?? ""; // Empty string if not provided
 
   // Remove existing index entries for this entity
   const existingEntries = await ctx.db
@@ -226,10 +234,10 @@ export async function indexEntity(
     : args.primaryText;
   const tokens = tokenizeText(combinedText);
 
-  // Calculate relevance score
+  // Calculate relevance score using original timestamps
   const relevanceScore = calculateRelevanceScore({
-    createdAt: now,
-    updatedAt: now,
+    createdAt,
+    updatedAt,
     status: args.status,
     accessCount: 0,
   });
@@ -246,8 +254,9 @@ export async function indexEntity(
     departmentId: args.departmentId,
     status: args.status,
     year: args.year,
-    createdAt: now,
-    updatedAt: now,
+    createdAt, // Original creation date (or now if not provided)
+    updatedAt, // Original update date (or now if not provided)
+    createdBy, // Original creator (or empty string if not provided)
     isDeleted: false,
     relevanceScore,
     accessCount: 0,
@@ -317,6 +326,9 @@ export const indexEntityMutation = mutation({
     status: v.optional(v.string()),
     year: v.optional(v.number()),
     isDeleted: v.optional(v.boolean()),
+    createdBy: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return await indexEntity(ctx, args);
@@ -596,17 +608,42 @@ export const search = query({
     // Apply pagination
     const paginatedResults = rankedResults.slice(offset, offset + limit);
 
+    // Fetch author information for each result (Option B: Join During Search Query)
+    const resultsWithAuthors = await Promise.all(
+      paginatedResults.map(async (r) => {
+        let authorName: string | undefined;
+        let authorImage: string | undefined;
+
+        // Fetch user info if createdBy is available
+        if (r.entry.createdBy) {
+          try {
+            const user = await ctx.db.get(r.entry.createdBy as Id<"users">);
+            if (user) {
+              authorName = user.name || user.email || undefined;
+              authorImage = user.image || undefined;
+            }
+          } catch (error) {
+            // User not found or error, leave author fields undefined
+          }
+        }
+
+        return {
+          indexEntry: r.entry,
+          relevanceScore: r.relevanceScore,
+          matchedFields: r.matchedFields,
+          highlights: r.highlights,
+          sourceUrl: getEntityUrl(r.entry.entityType, r.entry.entityId, r.entry.year),
+          createdAt: r.entry.createdAt,
+          updatedAt: r.entry.updatedAt,
+          pageDepthText: getPageDepthDisplay(r.entry.entityType),
+          authorName,
+          authorImage,
+        };
+      })
+    );
+
     return {
-      results: paginatedResults.map((r) => ({
-        indexEntry: r.entry,
-        relevanceScore: r.relevanceScore, // Return normalized 0-1 score
-        matchedFields: r.matchedFields,
-        highlights: r.highlights,
-        sourceUrl: getEntityUrl(r.entry.entityType, r.entry.entityId, r.entry.year),
-        createdAt: r.entry.createdAt,
-        updatedAt: r.entry.updatedAt,
-        pageDepthText: getPageDepthDisplay(r.entry.entityType),
-      })),
+      results: resultsWithAuthors,
       totalCount: rankedResults.length,
       offset,
       limit,

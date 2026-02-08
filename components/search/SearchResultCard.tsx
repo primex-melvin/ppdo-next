@@ -2,11 +2,18 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, User, FileText, Link as LinkIcon } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
 
 import type { SearchResult, SearchApiResult, EntityType } from "@/convex/search/types";
@@ -124,6 +131,10 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
   // Page depth indicator (e.g., "Found in 1st page")
   const pageDepthText = apiResult.pageDepthText;
   
+  // Author information
+  const authorName = apiResult.authorName;
+  const authorImage = apiResult.authorImage;
+  
   const { entityType, primaryText, secondaryText, createdAt, updatedAt } = indexEntry;
 
   /**
@@ -148,6 +159,28 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
     e.stopPropagation();
     handleClick();
   };
+  
+  /**
+   * Handle copy link to clipboard
+   */
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (sourceUrl && sourceUrl !== "#") {
+      const fullUrl = `${window.location.origin}${sourceUrl}`;
+      await navigator.clipboard.writeText(fullUrl);
+      // Could show toast notification here
+    }
+  };
+  
+  /**
+   * Handle open in new tab
+   */
+  const handleOpenInNewTab = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (sourceUrl && sourceUrl !== "#") {
+      window.open(sourceUrl, "_blank", "noopener,noreferrer");
+    }
+  };
 
   // Calculate animation delay based on index for cascade effect
   const animationDelay = `${index * 100}ms`;
@@ -156,27 +189,29 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
   const matchScorePercentage = Math.min(100, Math.max(0, matchScore));
 
   return (
-    <Card
-      className={cn(
-        "relative cursor-pointer transition-all duration-300",
-        "min-h-[120px] sm:min-h-[140px]",
-        "hover:shadow-lg hover:border-[#15803D]/30",
-        "animate-fade-in-up",
-        "touch-manipulation", // Optimize for touch devices
-        isLoading && "pointer-events-none opacity-80"
-      )}
-      style={{ animationDelay }}
-      onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      aria-label={`Search result: ${primaryText}`}
-    >
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <Card
+          className={cn(
+            "relative cursor-pointer transition-all duration-300",
+            "min-h-[120px] sm:min-h-[140px]",
+            "hover:shadow-lg hover:border-[#15803D]/30",
+            "animate-fade-in-up",
+            "touch-manipulation", // Optimize for touch devices
+            isLoading && "pointer-events-none opacity-80"
+          )}
+          style={{ animationDelay }}
+          onClick={handleClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleClick();
+            }
+          }}
+          aria-label={`Search result: ${primaryText}`}
+        >
       {/* Loading Overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-black/50 rounded-xl">
@@ -264,18 +299,40 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
           </div>
         )}
 
-        {/* Date Metadata */}
-        <div className="flex items-center gap-3 pt-1 text-xs text-muted-foreground">
-          <span>
-            Created: <time dateTime={new Date(createdAt).toISOString()}>{formatDate(createdAt)}</time>
-          </span>
+        {/* Date & Author Metadata */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-1">
+          {/* Creation Date with icon */}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <FileText className="h-3 w-3" />
+            <span>Created: <time dateTime={new Date(createdAt).toISOString()}>{formatDate(createdAt)}</time></span>
+          </div>
+          
+          {/* Author Info */}
+          {authorName && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="hidden sm:inline">•</span>
+              <span>by</span>
+              {authorImage ? (
+                <img 
+                  src={authorImage} 
+                  alt={authorName}
+                  className="w-4 h-4 rounded-full border border-stone-200 dark:border-stone-700"
+                />
+              ) : (
+                <div className="w-4 h-4 rounded-full bg-stone-200 dark:bg-stone-700 flex items-center justify-center">
+                  <User className="w-2.5 h-2.5 text-stone-500" />
+                </div>
+              )}
+              <span className="font-medium">{authorName}</span>
+            </div>
+          )}
+          
+          {/* Updated Date (if different) */}
           {updatedAt !== createdAt && (
-            <>
-              <span className="text-stone-300 dark:text-stone-600">•</span>
-              <span>
-                Updated: <time dateTime={new Date(updatedAt).toISOString()}>{formatDate(updatedAt)}</time>
-              </span>
-            </>
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>•</span>
+              <span>Updated: <time dateTime={new Date(updatedAt).toISOString()}>{formatDate(updatedAt)}</time></span>
+            </div>
           )}
         </div>
 
@@ -321,6 +378,37 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
         </Button>
       </CardFooter>
     </Card>
+      </ContextMenuTrigger>
+      
+      {/* Context Menu */}
+      <ContextMenuContent className="w-48">
+        <ContextMenuItem 
+          onClick={handleCopyLink}
+          disabled={!sourceUrl || sourceUrl === "#"}
+          className="cursor-pointer"
+        >
+          <LinkIcon className="mr-2 h-4 w-4" />
+          Copy link
+        </ContextMenuItem>
+        <ContextMenuItem 
+          onClick={handleOpenInNewTab}
+          disabled={!sourceUrl || sourceUrl === "#"}
+          className="cursor-pointer"
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          Open in new tab
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem 
+          onClick={handleClick}
+          disabled={!sourceUrl || sourceUrl === "#"}
+          className="cursor-pointer"
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          View details
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 

@@ -107,6 +107,12 @@ export const searchIndexTables = {
      * Used for freshness ranking
      */
     updatedAt: v.number(),
+    
+    /**
+     * User ID who created the original entity
+     * Used to display author information in search results
+     */
+    createdBy: v.optional(v.string()),
 
     /**
      * Soft delete flag
