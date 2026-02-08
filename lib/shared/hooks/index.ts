@@ -35,6 +35,9 @@ export {
   useYearFilter,
 } from './useURLParams';
 
+// Auto-scroll & highlight for search deep-linking
+export { useAutoScrollHighlight } from './useAutoScrollHighlight';
+
 // Data fetching hooks
 export {
   useFilteredQuery,

@@ -41,6 +41,8 @@ interface BudgetTableProps {
     selectedIds?: Set<string>;
     onSelectRow?: (id: string, checked: boolean) => void;
     onSelectAll?: (checked: boolean) => void;
+    /** Callback to check if a row is highlighted (from useAutoScrollHighlight) */
+    isHighlighted?: (id: string) => boolean;
 }
 
 // Empty State Component
@@ -136,6 +138,7 @@ export function BudgetTable({
     selectedIds,
     onSelectRow,
     onSelectAll,
+    isHighlighted,
 }: BudgetTableProps) {
     const {
         columns: allColumns,
@@ -282,6 +285,7 @@ export function BudgetTable({
                                     onStartRowResize={startResizeRow}
                                     isSelected={selectedIds?.has(item.id)}
                                     onSelectRow={onSelectRow}
+                                    isHighlighted={isHighlighted?.(item.id)}
                                 />
                             ))}
                             <BudgetResizableTotalsRow columns={visibleColumns} budgetItems={budgetItems} />

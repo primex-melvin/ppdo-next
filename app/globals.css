@@ -640,3 +640,81 @@ mark {
   background-color: rgba(214, 177, 12, 0.879); /* yellow-700 with 50% opacity */
   color: rgb(254 252 232); /* yellow-100 */
 }
+
+/* ============================================================================
+ * Auto-Scroll & Highlight Feature - Search Engine V2
+ * ============================================================================
+ *
+ * Yellow outline animation for deep-linked search results.
+ * Applied via useAutoScrollHighlight hook when navigating from search.
+ */
+
+/* Keyframe animation for highlight fade-out effect */
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.9), 0 0 20px 4px rgba(250, 204, 21, 0.4);
+    background-color: rgba(254, 249, 195, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(250, 204, 21, 1), 0 0 25px 6px rgba(250, 204, 21, 0.5);
+    background-color: rgba(254, 249, 195, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.9), 0 0 20px 4px rgba(250, 204, 21, 0.4);
+    background-color: rgba(254, 249, 195, 0.3);
+  }
+}
+
+@keyframes highlight-fade-out {
+  0% {
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.9), 0 0 20px 4px rgba(250, 204, 21, 0.4);
+    background-color: rgba(254, 249, 195, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0);
+    background-color: transparent;
+  }
+}
+
+/* Active highlight state - applied via useAutoScrollHighlight */
+.highlight-row-active {
+  position: relative;
+  z-index: 10;
+  animation:
+    highlight-pulse 0.6s ease-in-out 2,
+    highlight-fade-out 0.5s ease-out 2.5s forwards;
+  border-radius: 0.25rem;
+}
+
+/* Dark mode adjustments for highlight */
+.dark .highlight-row-active {
+  animation:
+    highlight-pulse-dark 0.6s ease-in-out 2,
+    highlight-fade-out-dark 0.5s ease-out 2.5s forwards;
+}
+
+@keyframes highlight-pulse-dark {
+  0% {
+    box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.9), 0 0 20px 4px rgba(202, 138, 4, 0.4);
+    background-color: rgba(113, 63, 18, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(202, 138, 4, 1), 0 0 25px 6px rgba(202, 138, 4, 0.5);
+    background-color: rgba(113, 63, 18, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.9), 0 0 20px 4px rgba(202, 138, 4, 0.4);
+    background-color: rgba(113, 63, 18, 0.3);
+  }
+}
+
+@keyframes highlight-fade-out-dark {
+  0% {
+    box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.9), 0 0 20px 4px rgba(202, 138, 4, 0.4);
+    background-color: rgba(113, 63, 18, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(202, 138, 4, 0);
+    background-color: transparent;
+  }
+}

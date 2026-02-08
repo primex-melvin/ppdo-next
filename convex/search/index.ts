@@ -154,43 +154,64 @@ function calculateRelevanceScore(args: {
 
 /**
  * Generate source URL for navigation based on entity type
+ * Includes highlight parameter for auto-scroll & highlight feature
  */
 function getEntityUrl(entityType: string, entityId: string, year?: number): string {
+  // Build base URL
+  let baseUrl: string;
+
   switch (entityType) {
     // 1st page - List/Container views
     case "budgetItem":
-      return year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      break;
     case "twentyPercentDF":
-      return year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+      baseUrl = year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+      break;
     case "trustFund":
-      return year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+      baseUrl = year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+      break;
     case "specialEducationFund":
-      return year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+      baseUrl = year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+      break;
     case "specialHealthFund":
-      return year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+      baseUrl = year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+      break;
     case "department":
-      return `/dashboard/departments`;
+      baseUrl = `/dashboard/departments`;
+      break;
     case "agency":
-      return `/dashboard/office`;
+      baseUrl = `/dashboard/office`;
+      break;
     case "user":
-      return `/dashboard/settings/user-management`;
+      baseUrl = `/dashboard/settings/user-management`;
+      break;
     // 2nd page - Detail views
     case "projectItem":
-      return year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      break;
     case "twentyPercentDFItem":
-      return year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+      baseUrl = year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+      break;
     case "trustFundItem":
-      return year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+      baseUrl = year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+      break;
     case "specialEducationFundItem":
-      return year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+      baseUrl = year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+      break;
     case "specialHealthFundItem":
-      return year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+      baseUrl = year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+      break;
     // 3rd page - Breakdown views
     case "projectBreakdown":
-      return year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      break;
     default:
-      return `/dashboard`;
+      baseUrl = `/dashboard`;
   }
+
+  // Append highlight parameter for deep linking and auto-scroll
+  return `${baseUrl}?highlight=${entityId}`;
 }
 
 /**

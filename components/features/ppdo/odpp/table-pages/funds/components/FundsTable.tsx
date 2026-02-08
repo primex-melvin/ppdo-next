@@ -23,6 +23,7 @@ import { FundsKanban } from "./FundsKanban";
 import { exportToCSV, calculateTotals, formatTimestamp, createFundSlug } from "../utils";
 import { useTableSort, useTableFilter, useTableSelection, useFundsPrintDraft, FundsPrintAdapter } from "..";
 import { AVAILABLE_COLUMNS } from "../constants";
+import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighlight";
 export function FundsTable<T extends BaseFund>({
     data,
     onAdd,
@@ -140,6 +141,12 @@ export function FundsTable<T extends BaseFund>({
 
     // Calculate totals
     const totals = useMemo(() => calculateTotals(filteredAndSortedData), [filteredAndSortedData]);
+
+    // Auto-scroll & highlight for search deep-linking (Search Engine V2)
+    const { isHighlighted } = useAutoScrollHighlight(
+        filteredAndSortedData.map(item => item.id),
+        { scrollDelay: 200 } // Allow data to load before scrolling
+    );
 
     // Handlers
     const handlePin = async (item: T) => {
@@ -380,6 +387,7 @@ export function FundsTable<T extends BaseFund>({
                                         clearSelection();
                                     }
                                 }}
+                                isHighlighted={isHighlighted}
                             />
                         </div>
                     </div>

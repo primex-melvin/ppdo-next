@@ -32,6 +32,7 @@ import { useBudgetTableSelection } from "../hooks/useBudgetTableSelection";
 import { useBudgetTableActions } from "../hooks/useBudgetTableActions";
 import { useBudgetTablePrint } from "../hooks/useBudgetTablePrint";
 import { usePrintDraft } from "../hooks/usePrintDraft";
+import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighlight";
 
 // Utils
 import { applyFilters, createBudgetFilterConfig } from "@/services";
@@ -190,6 +191,15 @@ export function BudgetTrackingTable({
     isAllSelected,
     isIndeterminate,
   } = useBudgetTableSelection(filteredAndSortedItems);
+
+  // ============================================================================
+  // AUTO-SCROLL & HIGHLIGHT (Search Engine V2)
+  // ============================================================================
+
+  const { isHighlighted } = useAutoScrollHighlight(
+    filteredAndSortedItems.map(item => item.id),
+    { scrollDelay: 200 } // Allow data to load before scrolling
+  );
 
   // ============================================================================
   // TRASH CONFIRMATION HANDLERS
@@ -608,6 +618,7 @@ export function BudgetTrackingTable({
                 selectedIds={selectedIds}
                 onSelectRow={handleSelectRow}
                 onSelectAll={handleSelectAll}
+                isHighlighted={isHighlighted}
               />
             </div>
           </TabsContent>

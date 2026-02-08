@@ -52,6 +52,8 @@ interface FundsTableProps<T extends BaseFund> {
     selectedIds?: Set<string>;
     onSelectRow?: (id: string, checked: boolean) => void;
     onSelectAll?: (checked: boolean) => void;
+    /** Callback to check if a row is highlighted (from useAutoScrollHighlight) */
+    isHighlighted?: (id: string) => boolean;
 }
 
 // Totals Row Component
@@ -120,6 +122,7 @@ export function FundsTable<T extends BaseFund>({
     selectedIds,
     onSelectRow,
     onSelectAll,
+    isHighlighted,
 }: FundsTableProps<T>) {
     // Map fundType to the correct table identifier used in backend defaults
     const tableIdentifier = fundType === 'trust' 
@@ -281,6 +284,7 @@ export function FundsTable<T extends BaseFund>({
                                     onStartRowResize={startResizeRow}
                                     isSelected={selectedIds?.has(item.id)}
                                     onSelectRow={onSelectRow}
+                                    isHighlighted={isHighlighted?.(item.id)}
                                 />
                             ))}
                             <FundsResizableTotalsRow columns={visibleColumns} totals={totals} />

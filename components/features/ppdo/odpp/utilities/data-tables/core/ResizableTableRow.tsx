@@ -25,6 +25,9 @@ interface ResizableTableRowProps<T extends { _id: string }> {
 
     // Customization
     className?: string;
+
+    // Highlight support for search deep-linking
+    isHighlighted?: boolean;
 }
 
 export function ResizableTableRow<T extends { _id: string }>({
@@ -41,6 +44,7 @@ export function ResizableTableRow<T extends { _id: string }>({
     onSelectRow,
     columnWidths,
     className = "",
+    isHighlighted = false,
 }: ResizableTableRowProps<T>) {
     // Helper to get column width (use resized width if available, fallback to column config)
     const getColumnWidth = (column: ColumnConfig): number => {
@@ -53,10 +57,11 @@ export function ResizableTableRow<T extends { _id: string }>({
 
     return (
         <tr
+            id={`row-${data._id}`}
             className={`cursor-pointer transition-colors ${isSelected
                 ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                 : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
-                } ${className}`}
+                } ${isHighlighted ? "highlight-row-active" : ""} ${className}`}
             style={{ height: rowHeight }}
             onClick={(e) => onRowClick?.(data, e)}
         >
