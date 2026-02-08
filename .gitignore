@@ -46,5 +46,9 @@ next-env.d.ts
 
 copy.txt
 
+# playwright
+/test-results/
+/playwright-report/
+
 # windows reserved device files
 nul
