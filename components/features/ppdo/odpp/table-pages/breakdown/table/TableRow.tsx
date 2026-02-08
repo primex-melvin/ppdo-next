@@ -43,6 +43,8 @@ interface TableRowProps {
   /** Selection props */
   isSelected?: boolean;
   onSelectRow?: (id: string, checked: boolean) => void;
+  /** Highlight support for search deep-linking */
+  isHighlighted?: boolean;
 }
 
 export function TableRow({
@@ -59,6 +61,7 @@ export function TableRow({
   entityType = "project",
   isSelected = false,
   onSelectRow,
+  isHighlighted = false,
 }: TableRowProps) {
   const [isHoveringStatus, setIsHoveringStatus] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
@@ -115,10 +118,11 @@ export function TableRow({
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <tr
+          id={`row-${breakdown._id}`}
           className={`cursor-pointer transition-colors ${isSelected
-              ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-              : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
-            }`}
+            ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+            : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+            } ${isHighlighted ? "highlight-row-active" : ""}`}
           style={{ height: rowHeight }}
           onClick={(e) => onRowClick(breakdown, e)}
         >

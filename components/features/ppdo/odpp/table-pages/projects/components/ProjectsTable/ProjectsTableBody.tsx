@@ -21,6 +21,7 @@ interface ProjectsTableBodyProps {
     accentColor: string;
     expandedRemarks: Set<string>; // 🆕 NEW PROP
     onToggleRemarks: (projectId: string, e: React.MouseEvent) => void; // 🆕 NEW PROP
+    isHighlighted?: (id: string) => boolean; // 🔍 For search result highlighting
 }
 
 /**
@@ -40,6 +41,7 @@ export function ProjectsTableBody({
     accentColor,
     expandedRemarks, // 🆕 NEW PROP
     onToggleRemarks, // 🆕 NEW PROP
+    isHighlighted, // 🔍 For search result highlighting
 }: ProjectsTableBodyProps) {
     // No outer motion wrapper here to preserve valid table structure.
     if (groupedProjects.length === 0) {
@@ -77,6 +79,7 @@ export function ProjectsTableBody({
                     accentColor={accentColor}
                     expandedRemarks={expandedRemarks} // 🆕 PASS DOWN
                     onToggleRemarks={onToggleRemarks} // 🆕 PASS DOWN
+                    isHighlighted={isHighlighted} // 🔍 PASS DOWN
                 />
             ))}
         </tbody>

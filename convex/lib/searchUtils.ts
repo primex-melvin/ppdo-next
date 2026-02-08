@@ -402,3 +402,39 @@ export function generateIndexData(
     tokens: tokenize(allText),
   };
 }
+
+/**
+ * Build a URL-safe slug from a name and entity ID
+ * Format: "{slugified-name}-{id}"
+ * 
+ * The slug is used for human-readable URLs that also contain the entity ID.
+ * The ID is extracted from the slug on the receiving page using extractIdFromSlug().
+ *
+ * @param name - Human-readable entity name (e.g., "Road Infrastructure Project")
+ * @param entityId - Convex entity ID (e.g., "kd7418m7pjppaghd9ghb8sv8x5801c9r")
+ * @returns URL-safe slug (e.g., "road-infrastructure-project-kd7418m7pjppaghd9ghb8sv8x5801c9r")
+ *
+ * @example
+ * buildSlug("Road Infrastructure Project", "kd7418m7pjppaghd9ghb8sv8x5801c9r")
+ * // "road-infrastructure-project-kd7418m7pjppaghd9ghb8sv8x5801c9r"
+ *
+ * buildSlug("20% Development Fund", "abc123")
+ * // "20-development-fund-abc123"
+ */
+export function buildSlug(name: string, entityId: string): string {
+  if (!name || !entityId) {
+    return entityId || "";
+  }
+
+  // Normalize: lowercase, remove diacritics
+  const normalized = removeDiacritics(name.toLowerCase().trim());
+
+  // Replace special characters with hyphens, collapse multiple hyphens
+  const slugified = normalized
+    .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens
+    .replace(/-+/g, "-") // Collapse multiple hyphens
+    .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+
+  // Combine with entity ID
+  return slugified ? `${slugified}-${entityId}` : entityId;
+}

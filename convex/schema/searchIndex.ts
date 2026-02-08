@@ -111,6 +111,19 @@ export const searchIndexTables = {
     year: v.optional(v.number()),
 
     /**
+     * Parent entity slug (for 2nd/3rd level entities)
+     * Used to build nested URLs for navigation
+     * Example: For projectItem, this would be the budget item's slug
+     */
+    parentSlug: v.optional(v.string()),
+
+    /**
+     * Parent entity ID (for 2nd/3rd level entities)
+     * Used to reference the parent when reindexing
+     */
+    parentId: v.optional(v.string()),
+
+    /**
      * Entity creation timestamp
      * Used for recency-based ranking
      */
@@ -121,7 +134,7 @@ export const searchIndexTables = {
      * Used for freshness ranking
      */
     updatedAt: v.number(),
-    
+
     /**
      * User ID who created the original entity
      * Used to display author information in search results

@@ -57,6 +57,7 @@ import {
 import { useTableSettings } from "../hooks/useTableSettings";
 import { useTableResize } from "../hooks/useTableResize";
 import { useColumnDragDrop } from "../hooks/useColumnDragDrop";
+import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighlight";
 
 // Import shared table components
 import {
@@ -216,6 +217,14 @@ export function BreakdownHistoryTable({
     canEditLayout,
     saveLayout: saveLayoutWithCols,
   });
+
+  // Auto-scroll highlight hook
+  // We need to pass the list of IDs currently in the table to the hook
+  // so it knows when the target item has loaded.
+  const { isHighlighted } = useAutoScrollHighlight(
+    useMemo(() => breakdowns.map(b => b._id), [breakdowns]),
+    { scrollDelay: 200 }
+  );
 
   /* =======================
      COLUMN VISIBILITY HANDLERS
@@ -657,6 +666,7 @@ export function BreakdownHistoryTable({
                         entityType={entityType}
                         isSelected={selectedIds.has(breakdown._id)}
                         onSelectRow={handleSelectRow}
+                        isHighlighted={isHighlighted(breakdown._id)}
                       />
                     );
                   })}

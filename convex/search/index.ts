@@ -32,7 +32,7 @@ function createHighlight(text: string, queryTokens: string[]): string {
   if (!text || queryTokens.length === 0) return text;
 
   // Escape special regex characters in tokens
-  const escapedTokens = queryTokens.map(token => 
+  const escapedTokens = queryTokens.map(token =>
     token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   );
 
@@ -155,13 +155,14 @@ function calculateRelevanceScore(args: {
 /**
  * Generate source URL for navigation based on entity type
  * Includes highlight parameter for auto-scroll & highlight feature
+ * For nested entities (2nd/3rd level), parentSlug is required for correct URL
  */
-function getEntityUrl(entityType: string, entityId: string, year?: number): string {
+function getEntityUrl(entityType: string, entityId: string, year?: number, parentSlug?: string): string {
   // Build base URL
   let baseUrl: string;
 
   switch (entityType) {
-    // 1st page - List/Container views
+    // 1st page - List/Container views (no parentSlug needed)
     case "budgetItem":
       baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
       break;
@@ -186,25 +187,50 @@ function getEntityUrl(entityType: string, entityId: string, year?: number): stri
     case "user":
       baseUrl = `/dashboard/settings/user-management`;
       break;
-    // 2nd page - Detail views
+    // 2nd page - Detail views (require parentSlug for nested URL)
     case "projectItem":
-      baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      if (parentSlug) {
+        baseUrl = year ? `/dashboard/project/${year}/${parentSlug}` : `/dashboard/project`;
+      } else {
+        // Fallback to 1st page if parentSlug missing
+        baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      }
       break;
     case "twentyPercentDFItem":
-      baseUrl = year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+      if (parentSlug) {
+        baseUrl = year ? `/dashboard/20_percent_df/${year}/${parentSlug}` : `/dashboard/20_percent_df`;
+      } else {
+        baseUrl = year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+      }
       break;
     case "trustFundItem":
-      baseUrl = year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+      if (parentSlug) {
+        baseUrl = year ? `/dashboard/trust-funds/${year}/${parentSlug}` : `/dashboard/trust-funds`;
+      } else {
+        baseUrl = year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+      }
       break;
     case "specialEducationFundItem":
-      baseUrl = year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+      if (parentSlug) {
+        baseUrl = year ? `/dashboard/special-education-funds/${year}/${parentSlug}` : `/dashboard/special-education-funds`;
+      } else {
+        baseUrl = year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+      }
       break;
     case "specialHealthFundItem":
-      baseUrl = year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+      if (parentSlug) {
+        baseUrl = year ? `/dashboard/special-health-funds/${year}/${parentSlug}` : `/dashboard/special-health-funds`;
+      } else {
+        baseUrl = year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+      }
       break;
-    // 3rd page - Breakdown views
+    // 3rd page - Breakdown views (require parentSlug which encodes both budget item and project)
     case "projectBreakdown":
-      baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      if (parentSlug) {
+        baseUrl = year ? `/dashboard/project/${year}/${parentSlug}` : `/dashboard/project`;
+      } else {
+        baseUrl = year ? `/dashboard/project/${year}` : `/dashboard/project`;
+      }
       break;
     default:
       baseUrl = `/dashboard`;
@@ -228,6 +254,8 @@ export async function indexEntity(
     departmentId?: string;
     status?: string;
     year?: number;
+    parentSlug?: string; // Slug of parent entity for nested URL generation
+    parentId?: string; // ID of parent entity for reference
     isDeleted?: boolean;
     createdBy?: string; // User ID who created the entity (optional for backward compat)
     createdAt?: number; // Original entity creation timestamp (optional for backward compat)
@@ -235,7 +263,7 @@ export async function indexEntity(
   }
 ) {
   const now = Date.now();
-  
+
   // Use provided timestamps or fallback to now
   const createdAt = args.createdAt ?? now;
   const updatedAt = args.updatedAt ?? now;
@@ -290,6 +318,8 @@ export async function indexEntity(
     departmentId: args.departmentId,
     status: args.status,
     year: args.year,
+    parentSlug: args.parentSlug, // For nested URL generation
+    parentId: args.parentId, // For reference
     createdAt, // Original creation date (or now if not provided)
     updatedAt, // Original update date (or now if not provided)
     createdBy, // Original creator (or empty string if not provided)
@@ -625,7 +655,7 @@ export const search = query({
         }
 
         // Check secondary text for matches using already normalized text
-        const secondaryTextMatches = entry.normalizedSecondaryText && 
+        const secondaryTextMatches = entry.normalizedSecondaryText &&
           containsQueryTokens(entry.normalizedSecondaryText, queryTokens);
         if (secondaryTextMatches && entry.secondaryText) {
           matchedFields.push("secondaryText");
@@ -635,19 +665,19 @@ export const search = query({
         // Also check if normalized query is a substring of normalized text (for exact phrase matches)
         const exactPhraseMatch = entry.normalizedPrimaryText.includes(normalizedQuery) ||
           (entry.normalizedSecondaryText && entry.normalizedSecondaryText.includes(normalizedQuery));
-        
+
         // Check token matches - this handles cases where tokenization differs
         const matchedTokens = queryTokens.filter((token) =>
           entry.tokens.includes(token)
         );
-        
+
         // Add token match info if tokens matched but we haven't recorded a match yet
         if (matchedTokens.length > 0 && matchedFields.length === 0) {
           matchedFields.push("tokens");
           // Still highlight in primary text even if only tokens matched
           primaryTextHighlighted = createHighlight(entry.primaryText, queryTokens);
         }
-        
+
         // If we have an exact phrase match but no field match yet, add primaryText
         if (exactPhraseMatch && matchedFields.length === 0) {
           matchedFields.push("primaryText");
@@ -695,7 +725,7 @@ export const search = query({
           relevanceScore: r.relevanceScore,
           matchedFields: r.matchedFields,
           highlights: r.highlights,
-          sourceUrl: getEntityUrl(r.entry.entityType, r.entry.entityId, r.entry.year),
+          sourceUrl: getEntityUrl(r.entry.entityType, r.entry.entityId, r.entry.year, r.entry.parentSlug),
           createdAt: r.entry.createdAt,
           updatedAt: r.entry.updatedAt,
           pageDepthText: getPageDepthDisplay(r.entry.entityType),

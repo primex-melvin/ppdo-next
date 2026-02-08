@@ -9,6 +9,7 @@ import { mutation, query, MutationCtx, QueryCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { EntityType } from "./types";
 import { indexEntity } from "./index";
+import { buildSlug } from "../lib/searchUtils";
 
 // ============================================================================
 // TYPES
@@ -94,6 +95,17 @@ async function reindexProjectItems(ctx: MutationCtx): Promise<ReindexStats> {
 
   for (const project of projects) {
     try {
+      // Fetch parent budget item for slug generation
+      let parentSlug: string | undefined;
+      let parentId: string | undefined;
+      if (project.budgetItemId) {
+        const budgetItem = await ctx.db.get(project.budgetItemId);
+        if (budgetItem) {
+          parentSlug = buildSlug(budgetItem.particulars, budgetItem._id as string);
+          parentId = budgetItem._id as string;
+        }
+      }
+
       await indexEntity(ctx, {
         entityType: "projectItem",
         entityId: project._id,
@@ -102,6 +114,8 @@ async function reindexProjectItems(ctx: MutationCtx): Promise<ReindexStats> {
         departmentId: project.departmentId,
         status: project.status,
         year: project.year,
+        parentSlug,
+        parentId,
         isDeleted: false,
         createdBy: project.createdBy,
         createdAt: project.createdAt,

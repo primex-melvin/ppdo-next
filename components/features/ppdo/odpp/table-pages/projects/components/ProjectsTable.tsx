@@ -58,6 +58,7 @@ import {
 } from "../utils/printAdapters";
 import { BudgetTotals, PrintDraft } from "@/lib/print-canvas/types";
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
+import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighlight";
 
 export function ProjectsTable({
     projects,
@@ -266,6 +267,12 @@ export function ProjectsTable({
     const totalVisibleColumns = AVAILABLE_COLUMNS.filter(
         col => !hiddenColumns.has(col.id)
     ).length;
+
+    // 🔍 Auto-scroll and highlight for search results navigation
+    const { isHighlighted } = useAutoScrollHighlight(
+        filteredAndSortedProjects.map(p => p.id),
+        { scrollDelay: 200 } // Allow data to load before scrolling
+    );
 
     // ==================== URL SYNC HELPER ====================
     const updateURL = (key: string, values: string[]) => {

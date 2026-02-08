@@ -15,6 +15,7 @@ interface ProjectsTableRowProps {
     hiddenColumns: Set<string>;
     isSelected: boolean;
     isNewlyAdded: boolean;
+    isHighlighted?: boolean; // 🔍 For search result highlighting
     canManageBulkActions: boolean;
     onSelect: (checked: boolean) => void;
     onClick: (e: React.MouseEvent) => void;
@@ -34,6 +35,7 @@ export function ProjectsTableRow({
     hiddenColumns,
     isSelected,
     isNewlyAdded,
+    isHighlighted = false, // 🔍 For search result highlighting
     canManageBulkActions,
     onSelect,
     onClick,
@@ -51,10 +53,12 @@ export function ProjectsTableRow({
     hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-colors
     ${project.isPinned ? 'bg-amber-50 dark:bg-amber-950/20' : ''}
     ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
+    ${isHighlighted ? 'bg-yellow-100 dark:bg-yellow-900/30 ring-2 ring-yellow-400 dark:ring-yellow-600' : ''}
   `;
 
     return (
         <motion.tr
+            id={`row-${project.id}`}
             ref={rowRef}
             initial={animationConfig.shouldAnimate && isNewlyAdded ? {
                 boxShadow: `0 0 0 3px ${accentColor}`,

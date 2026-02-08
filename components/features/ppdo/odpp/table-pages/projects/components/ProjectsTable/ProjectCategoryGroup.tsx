@@ -26,6 +26,7 @@ interface ProjectCategoryGroupProps {
     accentColor: string;
     expandedRemarks: Set<string>; // 🆕 NEW PROP
     onToggleRemarks: (projectId: string, e: React.MouseEvent) => void; // 🆕 NEW PROP
+    isHighlighted?: (id: string) => boolean; // 🔍 For search result highlighting
 }
 
 /**
@@ -47,6 +48,7 @@ export function ProjectCategoryGroup({
     accentColor,
     expandedRemarks, // 🆕 NEW PROP
     onToggleRemarks, // 🆕 NEW PROP
+    isHighlighted, // 🔍 For search result highlighting
 }: ProjectCategoryGroupProps) {
 
     // Calculate selection state for this category
@@ -113,6 +115,7 @@ export function ProjectCategoryGroup({
                             hiddenColumns={hiddenColumns}
                             isSelected={isSelected}
                             isNewlyAdded={isNewProject}
+                            isHighlighted={isHighlighted?.(project.id)} // 🔍 Pass highlight state
                             canManageBulkActions={canManageBulkActions}
                             onSelect={(checked) => onSelectRow(project.id, checked)}
                             onClick={(e) => onRowClick(project, e)}
