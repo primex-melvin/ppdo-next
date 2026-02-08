@@ -113,10 +113,10 @@ export function SearchInput({
 
       case "Enter":
         e.preventDefault();
+        // Always close suggestions on Enter, regardless of selection
+        setShowSuggestions(false);
         if (selectedIndex >= 0 && suggestions[selectedIndex]) {
           handleSuggestionClick(suggestions[selectedIndex] as SuggestionItem);
-        } else {
-          setShowSuggestions(false);
         }
         break;
 
