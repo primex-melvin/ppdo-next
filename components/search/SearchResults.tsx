@@ -73,6 +73,13 @@ function DefaultResultCard<T>({
     }
   };
 
+  // Use indexEntry fields
+  const entry = result.indexEntry;
+  const entityType = entry?.entityType;
+  const title = entry?.primaryText;
+  const description = entry?.secondaryText;
+  const matchScore = result.relevanceScore;
+
   return (
     <Card
       className={cn(
@@ -84,35 +91,36 @@ function DefaultResultCard<T>({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={getEntityTypeColor(result.entityType)}>
-              {getEntityTypeLabel(result.entityType)}
+            <Badge className={getEntityTypeColor(entityType)}>
+              {getEntityTypeLabel(entityType)}
             </Badge>
-            {result.matchScore && (
+            {matchScore !== undefined && (
               <Badge variant="outline" className="text-xs">
-                {Math.round(result.matchScore)}% match
+                {Math.round(matchScore * 100)}% match
               </Badge>
             )}
           </div>
         </div>
 
         <h3 className="font-semibold text-base mb-1 line-clamp-2">
-          {result.title}
+          {title}
         </h3>
 
-        {result.description && (
+        {description && (
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-            {result.description}
+            {description}
           </p>
         )}
 
-        {result.highlights && result.highlights.length > 0 && (
+        {result.matchedFields && result.matchedFields.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {result.highlights.slice(0, 3).map((highlight, index) => (
+            {result.matchedFields.slice(0, 3).map((field, index) => (
               <span
                 key={index}
                 className="text-xs px-2 py-0.5 rounded-md bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-                dangerouslySetInnerHTML={{ __html: highlight }}
-              />
+              >
+                {field}
+              </span>
             ))}
           </div>
         )}
@@ -227,8 +235,8 @@ export function SearchResults<T = any>({
   return (
     <div className={cn("space-y-3", className)}>
       {/* Results */}
-      {results.map((result) => (
-        <div key={result.entityId}>
+      {results.map((result, index) => (
+        <div key={`${result.indexEntry?.entityType || 'unknown'}-${result.indexEntry?.entityId || index}`}>
           {renderCard ? (
             renderCard(result)
           ) : (

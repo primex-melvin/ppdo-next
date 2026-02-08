@@ -83,15 +83,19 @@ function SearchContent({ children }: { children: React.ReactNode }) {
           />
         )}
 
+        {/* Sticky Breadcrumb Bar */}
+        <div className="sticky top-0 z-40 bg-[#f8f8f8] dark:bg-zinc-950 border-b px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Breadcrumbs />
+            </div>
+            <TimeLocation />
+          </div>
+        </div>
+
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 lg:p-8">
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="flex-1">
-                <Breadcrumbs />
-              </div>
-              <TimeLocation />
-            </div>
             {children}
           </div>
         </main>

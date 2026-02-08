@@ -2,6 +2,19 @@
   "version": 1,
   "events": [
     {
+      "id": "evt-1770536885919-ab2dd753",
+      "trigger": "feature_error",
+      "timestamp": "2026-02-08T07:48:05.919Z",
+      "featureName": "Add search reindexing for existing database entities",
+      "featureId": "feature-1770536629471-v8rwomvi3"
+    },
+    {
+      "id": "evt-1770536629699-297492c1",
+      "trigger": "feature_created",
+      "timestamp": "2026-02-08T07:43:49.699Z",
+      "featureId": "feature-1770536629471-v8rwomvi3"
+    },
+    {
       "id": "evt-1770534916020-a24e9492",
       "trigger": "auto_mode_complete",
       "timestamp": "2026-02-08T07:15:16.020Z"

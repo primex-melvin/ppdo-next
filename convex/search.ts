@@ -10,4 +10,12 @@ export {
   search,
   categoryCounts,
   suggestions,
+  getIndexedEntities,
 } from "./search/index";
+
+export {
+  reindexByType,
+  reindexAll,
+  getIndexStats,
+  clearIndex,
+} from "./search/reindex";

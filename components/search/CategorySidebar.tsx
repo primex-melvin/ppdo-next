@@ -122,7 +122,7 @@ export function CategorySidebar({
   return (
     <aside
       className={cn(
-        "fixed right-0 top-0 h-screen w-64 bg-background border-l border-input overflow-y-auto",
+        "fixed right-0 top-0 pt-36 h-screen w-64 bg-background border-l border-input overflow-y-auto",
         "dark:bg-gray-950/50 dark:border-gray-800",
         className
       )}

@@ -10,6 +10,7 @@ import {
     GraduationCap,
     HeartPulse,
     TrendingUp,
+    Search,
 } from "lucide-react";
 import { NavItem } from "./types";
 import { BugsBadge, SuggestionsBadge } from "./badges/UpdatesBadges";
@@ -86,6 +87,11 @@ export const STATIC_NAV_ITEMS: NavItem[] = [
             {
                 name: "User Management",
                 href: "/dashboard/settings/user-management",
+            },
+            {
+                name: "Search Admin",
+                href: "/admin/search",
+                icon: <Search size={16} />,
             },
             {
                 name: "Updates",

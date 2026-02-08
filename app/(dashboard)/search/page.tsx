@@ -155,7 +155,6 @@ export default function SearchPage() {
               </Sheet>
             </div>
           </header>
-
           {/* Search Input */}
           <div className="mb-4 sm:mb-6">
             <SearchInput
@@ -245,8 +244,8 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Category Sidebar (Fixed on Right - Desktop Only) */}
-      <div className="hidden lg:block">
+      {/* Category Sidebar (Static on Right - Desktop Only) - No overlap */}
+      <div className="hidden lg:block mt-32">
         <CategorySidebar
           activeCategory={activeCategoryForSidebar}
           counts={counts}

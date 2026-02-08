@@ -88,7 +88,7 @@ export function TimeLocation() {
   }, []);
 
   return (
-    <div className="hidden sm:flex items-center gap-4">
+    <div className="hidden sm:flex items-center gap-4 z-1">
       <div className="flex items-center gap-2">
         <svg
           className="w-4 h-4 text-zinc-500 dark:text-zinc-400"
