@@ -52,6 +52,68 @@ export const ENTITY_TYPE_PLURALS: Record<EntityType, string> = {
 };
 
 // ============================================================================
+// PAGE DEPTH UTILITIES
+// ============================================================================
+
+/**
+ * Page depth levels for entity types
+ * Maps each entity type to its navigation depth in the app
+ * Used to display "Found in X page" in search results
+ * 
+ * 1st page = List views (e.g., /dashboard/project/2026)
+ * 2nd page = Detail views (e.g., /dashboard/project/2026/[particularId])
+ * 3rd page = Breakdown views (e.g., /dashboard/project/.../[breakdownId])
+ */
+export const ENTITY_PAGE_DEPTHS: Record<EntityType, number> = {
+  // 1st page - List/table views
+  project: 1,
+  twentyPercentDF: 1,
+  trustFund: 1,
+  specialEducationFund: 1,
+  specialHealthFund: 1,
+  department: 1,
+  agency: 1,
+  user: 1,
+};
+
+/**
+ * Get the page depth level for an entity type
+ * Returns 1, 2, or 3
+ */
+export function getEntityPageDepth(entityType: EntityType): number {
+  return ENTITY_PAGE_DEPTHS[entityType] || 1;
+}
+
+/**
+ * Get ordinal suffix for a number (1st, 2nd, 3rd, 4th, etc.)
+ */
+export function getOrdinalSuffix(n: number): string {
+  const suffixes: Record<number, string> = {
+    1: "st",
+    2: "nd",
+    3: "rd",
+  };
+  
+  // Special case for 11, 12, 13 (they use "th")
+  if (n >= 11 && n <= 13) {
+    return `${n}th`;
+  }
+  
+  const lastDigit = n % 10;
+  return `${n}${suffixes[lastDigit] || "th"}`;
+}
+
+/**
+ * Get display text for page depth
+ * Example: "Found in 1st page", "Found in 2nd page"
+ */
+export function getPageDepthDisplay(entityType: EntityType): string {
+  const depth = getEntityPageDepth(entityType);
+  const ordinal = getOrdinalSuffix(depth);
+  return `Found in ${ordinal} page`;
+}
+
+// ============================================================================
 // SEARCH INDEX ENTRY
 // ============================================================================
 
@@ -391,6 +453,7 @@ export interface SearchApiResult {
   sourceUrl: string;
   createdAt: number;
   updatedAt: number;
+  pageDepthText: string; // e.g., "Found in 1st page"
 }
 
 /**

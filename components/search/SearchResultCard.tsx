@@ -121,6 +121,9 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
   // Support both displayUrl (legacy) and sourceUrl (new)
   const sourceUrl = apiResult.sourceUrl || legacyResult.displayUrl || legacyResult.sourceUrl || "#";
   
+  // Page depth indicator (e.g., "Found in 1st page")
+  const pageDepthText = apiResult.pageDepthText;
+  
   const { entityType, primaryText, secondaryText, createdAt, updatedAt } = indexEntry;
 
   /**
@@ -184,16 +187,26 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
         </div>
       )}
 
-      {/* Card Header - Entity Type Badge + Match Score */}
+      {/* Card Header - Entity Type Badge + Page Depth + Match Score */}
       <div className="px-3 sm:px-6 pt-3 sm:pt-5 pb-2">
         <div className="flex items-center justify-between gap-3">
-          {/* Entity Type Badge */}
-          <Badge
-            variant="secondary"
-            className="bg-[#15803D]/10 text-[#15803D] hover:bg-[#15803D]/20 font-medium text-xs sm:text-sm px-2.5 py-1 sm:py-0.5"
-          >
-            {getEntityTypeLabel(entityType)}
-          </Badge>
+          {/* Left side: Entity Type Badge + Page Depth */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Entity Type Badge */}
+            <Badge
+              variant="secondary"
+              className="bg-[#15803D]/10 text-[#15803D] hover:bg-[#15803D]/20 font-medium text-xs sm:text-sm px-2.5 py-1 sm:py-0.5"
+            >
+              {getEntityTypeLabel(entityType)}
+            </Badge>
+            
+            {/* Page Depth Indicator */}
+            {pageDepthText && (
+              <span className="text-xs text-muted-foreground/80 italic">
+                {pageDepthText}
+              </span>
+            )}
+          </div>
 
           {/* Match Score */}
           <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">

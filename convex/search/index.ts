@@ -3,7 +3,7 @@
 import { v } from "convex/values";
 import { mutation, query, MutationCtx, QueryCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
-import { EntityType } from "./types";
+import { EntityType, getPageDepthDisplay } from "./types";
 import { calculateRelevance, RankingContext } from "./ranking";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
@@ -605,6 +605,7 @@ export const search = query({
         sourceUrl: getEntityUrl(r.entry.entityType, r.entry.entityId, r.entry.year),
         createdAt: r.entry.createdAt,
         updatedAt: r.entry.updatedAt,
+        pageDepthText: getPageDepthDisplay(r.entry.entityType),
       })),
       totalCount: rankedResults.length,
       offset,
