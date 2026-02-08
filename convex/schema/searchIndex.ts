@@ -22,16 +22,30 @@ export const searchIndexTables = {
     /**
      * Entity type being indexed
      * Determines which table this entry references
+     *
+     * HIERARCHY:
+     * - 1st page: List/Container views
+     * - 2nd page: Detail views
+     * - 3rd page: Breakdown views
      */
     entityType: v.union(
-      v.literal("project"),
+      // 1st page - List/Container views
+      v.literal("budgetItem"),
       v.literal("twentyPercentDF"),
       v.literal("trustFund"),
       v.literal("specialEducationFund"),
       v.literal("specialHealthFund"),
       v.literal("department"),
       v.literal("agency"),
-      v.literal("user")
+      v.literal("user"),
+      // 2nd page - Detail views
+      v.literal("projectItem"),
+      v.literal("twentyPercentDFItem"),
+      v.literal("trustFundItem"),
+      v.literal("specialEducationFundItem"),
+      v.literal("specialHealthFundItem"),
+      // 3rd page - Breakdown views
+      v.literal("projectBreakdown")
     ),
 
     /**

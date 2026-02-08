@@ -35,7 +35,8 @@ import { toast } from "sonner";
 
 // Entity type display names
 const ENTITY_TYPE_NAMES: Record<EntityType, string> = {
-  project: "Projects",
+  // 1st page
+  budgetItem: "Budget Items",
   twentyPercentDF: "20% Development Fund",
   trustFund: "Trust Funds",
   specialEducationFund: "Special Education Funds",
@@ -43,6 +44,14 @@ const ENTITY_TYPE_NAMES: Record<EntityType, string> = {
   department: "Departments",
   agency: "Agencies/Offices",
   user: "Users",
+  // 2nd page
+  projectItem: "Projects",
+  twentyPercentDFItem: "20% DF Items",
+  trustFundItem: "Trust Fund Items",
+  specialEducationFundItem: "SEF Items",
+  specialHealthFundItem: "SHF Items",
+  // 3rd page
+  projectBreakdown: "Project Breakdowns",
 };
 
 // Entity type icons/colors
@@ -50,7 +59,8 @@ const ENTITY_TYPE_STYLES: Record<
   EntityType,
   { color: string; bgColor: string }
 > = {
-  project: { color: "text-blue-600", bgColor: "bg-blue-50" },
+  // 1st page
+  budgetItem: { color: "text-blue-600", bgColor: "bg-blue-50" },
   twentyPercentDF: { color: "text-emerald-600", bgColor: "bg-emerald-50" },
   trustFund: { color: "text-purple-600", bgColor: "bg-purple-50" },
   specialEducationFund: { color: "text-orange-600", bgColor: "bg-orange-50" },
@@ -58,6 +68,14 @@ const ENTITY_TYPE_STYLES: Record<
   department: { color: "text-cyan-600", bgColor: "bg-cyan-50" },
   agency: { color: "text-indigo-600", bgColor: "bg-indigo-50" },
   user: { color: "text-slate-600", bgColor: "bg-slate-50" },
+  // 2nd page
+  projectItem: { color: "text-blue-600", bgColor: "bg-blue-50" },
+  twentyPercentDFItem: { color: "text-emerald-600", bgColor: "bg-emerald-50" },
+  trustFundItem: { color: "text-purple-600", bgColor: "bg-purple-50" },
+  specialEducationFundItem: { color: "text-orange-600", bgColor: "bg-orange-50" },
+  specialHealthFundItem: { color: "text-pink-600", bgColor: "bg-pink-50" },
+  // 3rd page
+  projectBreakdown: { color: "text-blue-600", bgColor: "bg-blue-50" },
 };
 
 interface ReindexStats {

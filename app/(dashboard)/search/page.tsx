@@ -108,8 +108,9 @@ export default function SearchPage() {
   const getActiveCategoryLabel = useCallback(() => {
     if (!activeCategory) return "All Results";
     switch (activeCategory) {
-      case "project":
-        return "Projects";
+      // 1st page
+      case "budgetItem":
+        return "Budget Items";
       case "twentyPercentDF":
         return "20% DF";
       case "trustFund":
@@ -124,6 +125,20 @@ export default function SearchPage() {
         return "Agencies/Offices";
       case "user":
         return "Users";
+      // 2nd page
+      case "projectItem":
+        return "Projects";
+      case "twentyPercentDFItem":
+        return "20% DF Items";
+      case "trustFundItem":
+        return "Trust Fund Items";
+      case "specialEducationFundItem":
+        return "SEF Items";
+      case "specialHealthFundItem":
+        return "SHF Items";
+      // 3rd page
+      case "projectBreakdown":
+        return "Project Breakdowns";
       default:
         return activeCategory;
     }

@@ -79,7 +79,8 @@ export function useCategoryFilter(
 
     // Get all entity types with their counts
     const allCategories: EntityType[] = [
-      "project",
+      // 1st page
+      "budgetItem",
       "twentyPercentDF",
       "trustFund",
       "specialEducationFund",
@@ -87,6 +88,14 @@ export function useCategoryFilter(
       "department",
       "agency",
       "user",
+      // 2nd page
+      "projectItem",
+      "twentyPercentDFItem",
+      "trustFundItem",
+      "specialEducationFundItem",
+      "specialHealthFundItem",
+      // 3rd page
+      "projectBreakdown",
     ];
 
     return allCategories

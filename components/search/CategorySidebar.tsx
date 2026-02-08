@@ -41,9 +41,10 @@ const categories: CategoryConfig[] = [
     bgColor: "bg-gray-100 dark:bg-gray-900/30",
     ringColor: "ring-gray-400 dark:ring-gray-500",
   },
+  // 1st page - List/Container views
   {
-    type: "project",
-    label: "Project (11 plans)",
+    type: "budgetItem",
+    label: "Budget Items",
     icon: Folder,
     color: "text-blue-700 dark:text-blue-300",
     bgColor: "bg-blue-100 dark:bg-blue-900/30",
@@ -104,6 +105,56 @@ const categories: CategoryConfig[] = [
     color: "text-orange-700 dark:text-orange-300",
     bgColor: "bg-orange-100 dark:bg-orange-900/30",
     ringColor: "ring-orange-400 dark:ring-orange-500",
+  },
+  // 2nd page - Detail views
+  {
+    type: "projectItem",
+    label: "Projects (11 plans)",
+    icon: Folder,
+    color: "text-blue-700 dark:text-blue-300",
+    bgColor: "bg-blue-100 dark:bg-blue-900/30",
+    ringColor: "ring-blue-400 dark:ring-blue-500",
+  },
+  {
+    type: "twentyPercentDFItem",
+    label: "20% DF Items",
+    icon: Percent,
+    color: "text-emerald-700 dark:text-emerald-300",
+    bgColor: "bg-emerald-100 dark:bg-emerald-900/30",
+    ringColor: "ring-emerald-400 dark:ring-emerald-500",
+  },
+  {
+    type: "trustFundItem",
+    label: "Trust Fund Items",
+    icon: Wallet,
+    color: "text-purple-700 dark:text-purple-300",
+    bgColor: "bg-purple-100 dark:bg-purple-900/30",
+    ringColor: "ring-purple-400 dark:ring-purple-500",
+  },
+  {
+    type: "specialEducationFundItem",
+    label: "SEF Items",
+    icon: GraduationCap,
+    color: "text-amber-700 dark:text-amber-300",
+    bgColor: "bg-amber-100 dark:bg-amber-900/30",
+    ringColor: "ring-amber-400 dark:ring-amber-500",
+  },
+  {
+    type: "specialHealthFundItem",
+    label: "SHF Items",
+    icon: HeartPulse,
+    color: "text-rose-700 dark:text-rose-300",
+    bgColor: "bg-rose-100 dark:bg-rose-900/30",
+    ringColor: "ring-rose-400 dark:ring-rose-500",
+  },
+  // 3rd page - Breakdown views
+  {
+    type: "projectBreakdown",
+    label: "Project Breakdowns",
+    icon: Folder,
+    color: "text-blue-700 dark:text-blue-300",
+    bgColor: "bg-blue-100 dark:bg-blue-900/30",
+    ringColor: "ring-blue-400 dark:ring-blue-500",
   },
 ];
 

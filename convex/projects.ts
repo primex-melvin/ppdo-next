@@ -155,7 +155,7 @@ export const moveToTrash = mutation({
 
     // 🔍 Update search index - mark as deleted
     await indexEntity(ctx, {
-      entityType: "project",
+      entityType: "projectItem",
       entityId: args.id,
       primaryText: existing.particulars,
       secondaryText: existing.implementingOffice,
@@ -245,7 +245,7 @@ export const restoreFromTrash = mutation({
 
     // 🔍 Update search index - restore from trash
     await indexEntity(ctx, {
-      entityType: "project",
+      entityType: "projectItem",
       entityId: args.id,
       primaryText: existing.particulars,
       secondaryText: existing.implementingOffice,
@@ -493,7 +493,7 @@ export const create = mutation({
 
       // 🔍 Add to search index
       await indexEntity(ctx, {
-        entityType: "project",
+        entityType: "projectItem",
         entityId: projectId,
         primaryText: args.particulars,
         secondaryText: args.implementingOffice,
@@ -718,7 +718,7 @@ export const update = mutation({
 
     // 🔍 Update search index
     await indexEntity(ctx, {
-      entityType: "project",
+      entityType: "projectItem",
       entityId: args.id,
       primaryText: args.particulars,
       secondaryText: args.implementingOffice,

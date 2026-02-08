@@ -157,7 +157,8 @@ function calculateRelevanceScore(args: {
  */
 function getEntityUrl(entityType: string, entityId: string, year?: number): string {
   switch (entityType) {
-    case "project":
+    // 1st page - List/Container views
+    case "budgetItem":
       return year ? `/dashboard/project/${year}` : `/dashboard/project`;
     case "twentyPercentDF":
       return year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
@@ -173,6 +174,20 @@ function getEntityUrl(entityType: string, entityId: string, year?: number): stri
       return `/dashboard/office`;
     case "user":
       return `/dashboard/settings/user-management`;
+    // 2nd page - Detail views
+    case "projectItem":
+      return year ? `/dashboard/project/${year}` : `/dashboard/project`;
+    case "twentyPercentDFItem":
+      return year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+    case "trustFundItem":
+      return year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+    case "specialEducationFundItem":
+      return year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+    case "specialHealthFundItem":
+      return year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+    // 3rd page - Breakdown views
+    case "projectBreakdown":
+      return year ? `/dashboard/project/${year}` : `/dashboard/project`;
     default:
       return `/dashboard`;
   }
@@ -310,14 +325,23 @@ export async function removeFromIndex(
 export const indexEntityMutation = mutation({
   args: {
     entityType: v.union(
-      v.literal("project"),
+      // 1st page
+      v.literal("budgetItem"),
       v.literal("twentyPercentDF"),
       v.literal("trustFund"),
       v.literal("specialEducationFund"),
       v.literal("specialHealthFund"),
       v.literal("department"),
       v.literal("agency"),
-      v.literal("user")
+      v.literal("user"),
+      // 2nd page
+      v.literal("projectItem"),
+      v.literal("twentyPercentDFItem"),
+      v.literal("trustFundItem"),
+      v.literal("specialEducationFundItem"),
+      v.literal("specialHealthFundItem"),
+      // 3rd page
+      v.literal("projectBreakdown")
     ),
     entityId: v.string(),
     primaryText: v.string(),
@@ -356,14 +380,23 @@ export const incrementAccessCount = mutation({
   args: {
     entityId: v.string(),
     entityType: v.union(
-      v.literal("project"),
+      // 1st page
+      v.literal("budgetItem"),
       v.literal("twentyPercentDF"),
       v.literal("trustFund"),
       v.literal("specialEducationFund"),
       v.literal("specialHealthFund"),
       v.literal("department"),
       v.literal("agency"),
-      v.literal("user")
+      v.literal("user"),
+      // 2nd page
+      v.literal("projectItem"),
+      v.literal("twentyPercentDFItem"),
+      v.literal("trustFundItem"),
+      v.literal("specialEducationFundItem"),
+      v.literal("specialHealthFundItem"),
+      // 3rd page
+      v.literal("projectBreakdown")
     ),
   },
   handler: async (ctx, args) => {
@@ -404,14 +437,23 @@ export const search = query({
     entityTypes: v.optional(
       v.array(
         v.union(
-          v.literal("project"),
+          // 1st page
+          v.literal("budgetItem"),
           v.literal("twentyPercentDF"),
           v.literal("trustFund"),
           v.literal("specialEducationFund"),
           v.literal("specialHealthFund"),
           v.literal("department"),
           v.literal("agency"),
-          v.literal("user")
+          v.literal("user"),
+          // 2nd page
+          v.literal("projectItem"),
+          v.literal("twentyPercentDFItem"),
+          v.literal("trustFundItem"),
+          v.literal("specialEducationFundItem"),
+          v.literal("specialHealthFundItem"),
+          // 3rd page
+          v.literal("projectBreakdown")
         )
       )
     ),
@@ -671,7 +713,8 @@ export const categoryCounts = query({
 
     if (queryTokens.length === 0) {
       return {
-        project: 0,
+        // 1st page
+        budgetItem: 0,
         twentyPercentDF: 0,
         trustFund: 0,
         specialEducationFund: 0,
@@ -679,6 +722,14 @@ export const categoryCounts = query({
         department: 0,
         agency: 0,
         user: 0,
+        // 2nd page
+        projectItem: 0,
+        twentyPercentDFItem: 0,
+        trustFundItem: 0,
+        specialEducationFundItem: 0,
+        specialHealthFundItem: 0,
+        // 3rd page
+        projectBreakdown: 0,
       };
     }
 
@@ -734,7 +785,8 @@ export const categoryCounts = query({
 
     // Count by entity type
     const counts: Record<EntityType, number> = {
-      project: 0,
+      // 1st page
+      budgetItem: 0,
       twentyPercentDF: 0,
       trustFund: 0,
       specialEducationFund: 0,
@@ -742,6 +794,14 @@ export const categoryCounts = query({
       department: 0,
       agency: 0,
       user: 0,
+      // 2nd page
+      projectItem: 0,
+      twentyPercentDFItem: 0,
+      trustFundItem: 0,
+      specialEducationFundItem: 0,
+      specialHealthFundItem: 0,
+      // 3rd page
+      projectBreakdown: 0,
     };
 
     for (const entry of matched) {
@@ -763,14 +823,23 @@ export const suggestions = query({
     entityTypes: v.optional(
       v.array(
         v.union(
-          v.literal("project"),
+          // 1st page
+          v.literal("budgetItem"),
           v.literal("twentyPercentDF"),
           v.literal("trustFund"),
           v.literal("specialEducationFund"),
           v.literal("specialHealthFund"),
           v.literal("department"),
           v.literal("agency"),
-          v.literal("user")
+          v.literal("user"),
+          // 2nd page
+          v.literal("projectItem"),
+          v.literal("twentyPercentDFItem"),
+          v.literal("trustFundItem"),
+          v.literal("specialEducationFundItem"),
+          v.literal("specialHealthFundItem"),
+          // 3rd page
+          v.literal("projectBreakdown")
         )
       )
     ),
@@ -827,14 +896,23 @@ export const suggestions = query({
 export const getIndexedEntities = query({
   args: {
     entityType: v.union(
-      v.literal("project"),
+      // 1st page
+      v.literal("budgetItem"),
       v.literal("twentyPercentDF"),
       v.literal("trustFund"),
       v.literal("specialEducationFund"),
       v.literal("specialHealthFund"),
       v.literal("department"),
       v.literal("agency"),
-      v.literal("user")
+      v.literal("user"),
+      // 2nd page
+      v.literal("projectItem"),
+      v.literal("twentyPercentDFItem"),
+      v.literal("trustFundItem"),
+      v.literal("specialEducationFundItem"),
+      v.literal("specialHealthFundItem"),
+      // 3rd page
+      v.literal("projectBreakdown")
     ),
     limit: v.optional(v.number()),
   },

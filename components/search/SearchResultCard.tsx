@@ -26,11 +26,20 @@ import type { SearchResult, SearchApiResult, EntityType } from "@/convex/search/
  * Entity types that should show "Found in X page" indicator
  */
 const ENTITY_TYPES_WITH_PAGE_DEPTH: EntityType[] = [
-  "project",
+  // 1st page
+  "budgetItem",
   "twentyPercentDF",
   "trustFund",
   "specialEducationFund",
   "specialHealthFund",
+  // 2nd page
+  "projectItem",
+  "twentyPercentDFItem",
+  "trustFundItem",
+  "specialEducationFundItem",
+  "specialHealthFundItem",
+  // 3rd page
+  "projectBreakdown",
 ];
 
 /**
@@ -45,7 +54,8 @@ function shouldShowPageDepth(entityType: EntityType): boolean {
  */
 function getEntityTypeLabel(entityType: EntityType): string {
   const labels: Record<EntityType, string> = {
-    project: "Project",
+    // 1st page
+    budgetItem: "Budget Item",
     twentyPercentDF: "20% DF",
     trustFund: "Trust Fund",
     specialEducationFund: "Special Education Fund",
@@ -53,6 +63,14 @@ function getEntityTypeLabel(entityType: EntityType): string {
     department: "Department",
     agency: "Agency",
     user: "User",
+    // 2nd page
+    projectItem: "Project",
+    twentyPercentDFItem: "20% DF",
+    trustFundItem: "Trust Fund",
+    specialEducationFundItem: "Special Education Fund",
+    specialHealthFundItem: "Special Health Fund",
+    // 3rd page
+    projectBreakdown: "Project Breakdown",
   };
   return labels[entityType] || entityType;
 }
