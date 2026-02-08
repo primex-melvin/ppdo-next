@@ -129,7 +129,7 @@ export function SearchResults<T = any>({
   // Show loading skeletons on initial load
   if (isLoading && results.length === 0) {
     return (
-      <div className={cn("space-y-3", className)}>
+      <div className={cn("space-y-3 lg:space-y-6", className)}>
         {Array.from({ length: 5 }).map((_, index) => (
           <ResultSkeleton key={index} />
         ))}
@@ -143,7 +143,7 @@ export function SearchResults<T = any>({
   }
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-3 lg:space-y-6", className)}>
       {/* Results */}
       {results.map((result, index) => (
         <div key={`${result.indexEntry?.entityType || 'unknown'}-${result.indexEntry?.entityId || index}`}>

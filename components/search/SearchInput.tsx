@@ -40,6 +40,7 @@ export function SearchInput({
   const inputRef = React.useRef<HTMLInputElement>(null);
   const suggestionsRef = React.useRef<HTMLDivElement>(null);
   const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = React.useRef(false);
 
   // Fetch suggestions with debounce
   const suggestions = useQuery(
@@ -47,14 +48,18 @@ export function SearchInput({
     localValue.length >= 2 ? { query: localValue, limit: 8 } : "skip"
   );
 
-  // Update local value when prop changes
+  // Update local value when prop changes (only if not actively typing)
   React.useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
+    // Only sync if we're not currently typing to prevent cursor jumps
+    if (!isTypingRef.current && value !== localValue) {
+      setLocalValue(value);
+    }
+  }, [value, localValue]);
 
   // Debounced onChange
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    isTypingRef.current = true;
     setLocalValue(newValue);
     setSelectedIndex(-1);
 
@@ -71,11 +76,16 @@ export function SearchInput({
       } else {
         setShowSuggestions(false);
       }
+      // Reset typing state after debounce completes
+      setTimeout(() => {
+        isTypingRef.current = false;
+      }, 100);
     }, 300);
   };
 
   // Clear search
   const handleClear = () => {
+    isTypingRef.current = false;
     setLocalValue("");
     onChange("");
     setShowSuggestions(false);
