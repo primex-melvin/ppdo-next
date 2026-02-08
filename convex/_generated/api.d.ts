@@ -52,6 +52,7 @@ import type * as lib_projectActivityLogger from "../lib/projectActivityLogger.js
 import type * as lib_projectAggregation from "../lib/projectAggregation.js";
 import type * as lib_rbac from "../lib/rbac.js";
 import type * as lib_scrypt from "../lib/scrypt.js";
+import type * as lib_searchUtils from "../lib/searchUtils.js";
 import type * as lib_specialEducationFundActivityLogger from "../lib/specialEducationFundActivityLogger.js";
 import type * as lib_specialEducationFundBreakdownActivityLogger from "../lib/specialEducationFundBreakdownActivityLogger.js";
 import type * as lib_specialHealthFundActivityLogger from "../lib/specialHealthFundActivityLogger.js";
@@ -100,6 +101,8 @@ import type * as schema_projectActivities from "../schema/projectActivities.js";
 import type * as schema_projectCategories from "../schema/projectCategories.js";
 import type * as schema_projectParticulars from "../schema/projectParticulars.js";
 import type * as schema_projects from "../schema/projects.js";
+import type * as schema_searchFacets from "../schema/searchFacets.js";
+import type * as schema_searchIndex from "../schema/searchIndex.js";
 import type * as schema_security from "../schema/security.js";
 import type * as schema_shared_baseBreakdown from "../schema/shared/baseBreakdown.js";
 import type * as schema_specialEducationFundActivities from "../schema/specialEducationFundActivities.js";
@@ -127,6 +130,7 @@ import type * as schema_twentyPercentDFActivities from "../schema/twentyPercentD
 import type * as schema_twentyPercentDFBreakdowns from "../schema/twentyPercentDFBreakdowns.js";
 import type * as schema_twentyPercentDFSharedAccess from "../schema/twentyPercentDFSharedAccess.js";
 import type * as schema_users from "../schema/users.js";
+import type * as search_types from "../search/types.js";
 import type * as seedData from "../seedData.js";
 import type * as specialEducationFundAccess from "../specialEducationFundAccess.js";
 import type * as specialEducationFundActivities from "../specialEducationFundActivities.js";
@@ -209,6 +213,7 @@ declare const fullApi: ApiFromModules<{
   "lib/projectAggregation": typeof lib_projectAggregation;
   "lib/rbac": typeof lib_rbac;
   "lib/scrypt": typeof lib_scrypt;
+  "lib/searchUtils": typeof lib_searchUtils;
   "lib/specialEducationFundActivityLogger": typeof lib_specialEducationFundActivityLogger;
   "lib/specialEducationFundBreakdownActivityLogger": typeof lib_specialEducationFundBreakdownActivityLogger;
   "lib/specialHealthFundActivityLogger": typeof lib_specialHealthFundActivityLogger;
@@ -257,6 +262,8 @@ declare const fullApi: ApiFromModules<{
   "schema/projectCategories": typeof schema_projectCategories;
   "schema/projectParticulars": typeof schema_projectParticulars;
   "schema/projects": typeof schema_projects;
+  "schema/searchFacets": typeof schema_searchFacets;
+  "schema/searchIndex": typeof schema_searchIndex;
   "schema/security": typeof schema_security;
   "schema/shared/baseBreakdown": typeof schema_shared_baseBreakdown;
   "schema/specialEducationFundActivities": typeof schema_specialEducationFundActivities;
@@ -284,6 +291,7 @@ declare const fullApi: ApiFromModules<{
   "schema/twentyPercentDFBreakdowns": typeof schema_twentyPercentDFBreakdowns;
   "schema/twentyPercentDFSharedAccess": typeof schema_twentyPercentDFSharedAccess;
   "schema/users": typeof schema_users;
+  "search/types": typeof search_types;
   seedData: typeof seedData;
   specialEducationFundAccess: typeof specialEducationFundAccess;
   specialEducationFundActivities: typeof specialEducationFundActivities;

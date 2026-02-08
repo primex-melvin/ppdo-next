@@ -52,6 +52,8 @@ import { breakdownSharedAccessTables } from "./schema/breakdownSharedAccess";
 import { specialEducationFundRemarkTables } from "./schema/specialEducationFundRemarks";
 import { specialHealthFundRemarkTables } from "./schema/specialHealthFundRemarks";
 import { trustFundRemarkTables } from "./schema/trustFundRemarks";
+import { searchIndexTables } from "./schema/searchIndex";
+import { searchFacetTables } from "./schema/searchFacets";
 
 export default defineSchema({
   ...authTables,
@@ -105,4 +107,6 @@ export default defineSchema({
   ...specialEducationFundRemarkTables,
   ...specialHealthFundRemarkTables,
   ...trustFundRemarkTables,
+  ...searchIndexTables,
+  ...searchFacetTables,
 });
