@@ -15,7 +15,7 @@ export const inspectionTables = {
     trustFundId: v.optional(v.id("trustFunds")),
     specialEducationFundId: v.optional(v.id("specialEducationFunds")),
     specialHealthFundId: v.optional(v.id("specialHealthFunds")),
-    twentyPercentDFId: v.optional(v.id("twentyPercentDFs")),
+    twentyPercentDFId: v.optional(v.id("twentyPercentDF")),
 
     // ============================================================================
     // CORE FIELDS

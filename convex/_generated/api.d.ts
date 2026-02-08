@@ -131,6 +131,7 @@ import type * as schema_twentyPercentDFSharedAccess from "../schema/twentyPercen
 import type * as schema_users from "../schema/users.js";
 import type * as search from "../search.js";
 import type * as search_index from "../search/index.js";
+import type * as search_ranking from "../search/ranking.js";
 import type * as search_types from "../search/types.js";
 import type * as seedData from "../seedData.js";
 import type * as specialEducationFundAccess from "../specialEducationFundAccess.js";
@@ -293,6 +294,7 @@ declare const fullApi: ApiFromModules<{
   "schema/users": typeof schema_users;
   search: typeof search;
   "search/index": typeof search_index;
+  "search/ranking": typeof search_ranking;
   "search/types": typeof search_types;
   seedData: typeof seedData;
   specialEducationFundAccess: typeof specialEducationFundAccess;

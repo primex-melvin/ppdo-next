@@ -990,7 +990,7 @@ export const createInspectionForSpecialHealthFund = mutation({
  */
 export const createInspectionForTwentyPercentDF = mutation({
   args: {
-    twentyPercentDFId: v.id("twentyPercentDFs"),
+    twentyPercentDFId: v.id("twentyPercentDF"),
     programNumber: v.string(),
     title: v.string(),
     category: v.string(),
