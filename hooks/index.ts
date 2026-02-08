@@ -8,7 +8,7 @@
 export { useDashboardFilters } from "./useDashboardFilters";
 
 // Utility hooks
-export { useDebounce } from "./use-debounce";
+export { useDebounce, useDebounceWithFlush } from "./use-debounce";
 
 // Auth hooks
 export { useCurrentUser } from "./useCurrentUser";
@@ -49,3 +49,18 @@ export {
   type UseFiscalYearDashboardOptions,
   type UseFiscalYearDashboardReturn,
 } from "./useFiscalYearDashboard";
+
+// Search hooks
+export {
+  useSearchRouter,
+  useCategoryFilter,
+  useInfiniteSearch,
+  usePaginatedSearch,
+  type SearchState,
+  type SearchRouterReturn,
+  type CategoryCount,
+  type CategoryFilterOptions,
+  type CategoryFilterReturn,
+  type SearchOptions,
+  type InfiniteSearchReturn,
+} from "./search";
