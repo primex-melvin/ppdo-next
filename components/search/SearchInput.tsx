@@ -7,12 +7,22 @@ import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { SearchSuggestion } from "@/convex/search/types";
+import type { EntityType } from "@/convex/search/types";
+
+// Suggestion item from API (partial SearchSuggestion)
+interface SuggestionItem {
+  text: string;
+  normalizedText: string;
+  entityType?: EntityType;
+  entityId?: string;
+  secondaryText?: string;
+  relevanceScore?: number;
+}
 
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSuggestionSelect?: (suggestion: SearchSuggestion) => void;
+  onSuggestionSelect?: (suggestion: SuggestionItem) => void;
   placeholder?: string;
   className?: string;
 }
@@ -29,7 +39,7 @@ export function SearchInput({
   const [selectedIndex, setSelectedIndex] = React.useState(-1);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const suggestionsRef = React.useRef<HTMLDivElement>(null);
-  const debounceTimerRef = React.useRef<NodeJS.Timeout>();
+  const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch suggestions with debounce
   const suggestions = useQuery(
@@ -74,7 +84,7 @@ export function SearchInput({
   };
 
   // Handle suggestion selection
-  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+  const handleSuggestionClick = (suggestion: SuggestionItem) => {
     setLocalValue(suggestion.text);
     onChange(suggestion.text);
     setShowSuggestions(false);
@@ -104,7 +114,7 @@ export function SearchInput({
       case "Enter":
         e.preventDefault();
         if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-          handleSuggestionClick(suggestions[selectedIndex]);
+          handleSuggestionClick(suggestions[selectedIndex] as SuggestionItem);
         } else {
           setShowSuggestions(false);
         }
@@ -147,7 +157,7 @@ export function SearchInput({
   }, []);
 
   // Get suggestion type badge color
-  const getSuggestionBadgeColor = (type: SearchSuggestion["type"]) => {
+  const getSuggestionBadgeColor = (type: string) => {
     switch (type) {
       case "entity":
         return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
@@ -178,7 +188,7 @@ export function SearchInput({
             }
           }}
           placeholder={placeholder}
-          className="pl-10 pr-10 h-12 text-base"
+          className="pl-10 pr-10 h-12 sm:h-14 text-base w-full"
           aria-label="Search"
           aria-autocomplete="list"
           aria-controls="search-suggestions"
@@ -189,7 +199,7 @@ export function SearchInput({
             variant="ghost"
             size="icon-sm"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 sm:h-9 sm:w-9"
             aria-label="Clear search"
           >
             <X className="size-4" />
@@ -207,13 +217,13 @@ export function SearchInput({
         >
           {suggestions.map((suggestion, index) => (
             <button
-              key={`${suggestion.type}-${suggestion.text}-${index}`}
+              key={`suggestion-${suggestion.text}-${index}`}
               role="option"
               aria-selected={index === selectedIndex}
-              onClick={() => handleSuggestionClick(suggestion)}
+              onClick={() => handleSuggestionClick(suggestion as SuggestionItem)}
               onMouseEnter={() => setSelectedIndex(index)}
               className={cn(
-                "w-full px-4 py-3 text-left flex items-center justify-between gap-3 transition-colors",
+                "w-full px-4 py-3 sm:py-3.5 text-left flex items-center justify-between gap-3 transition-colors min-h-[48px]",
                 "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
                 index === selectedIndex &&
                   "bg-accent text-accent-foreground dark:bg-accent/50"
@@ -221,15 +231,15 @@ export function SearchInput({
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Search className="size-4 text-muted-foreground shrink-0" />
-                <span className="truncate">{suggestion.text}</span>
+                <span className="truncate text-sm sm:text-base">{suggestion.text}</span>
               </div>
               <span
                 className={cn(
                   "text-xs px-2 py-0.5 rounded-full shrink-0",
-                  getSuggestionBadgeColor(suggestion.type)
+                  getSuggestionBadgeColor("entity")
                 )}
               >
-                {suggestion.type}
+                entity
               </span>
             </button>
           ))}

@@ -9,7 +9,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import type { EntityType } from "@/convex/search/types";
+import type { EntityType, SearchApiResult } from "@/convex/search/types";
 
 export interface SearchOptions {
   query: string;
@@ -23,7 +23,7 @@ export interface SearchOptions {
 
 export interface InfiniteSearchReturn {
   // Results
-  results: any[];
+  results: SearchApiResult[];
   totalCount: number;
 
   // Pagination
@@ -65,7 +65,7 @@ export function useInfiniteSearch(
 
   // State
   const [currentPage, setCurrentPage] = useState(0);
-  const [allResults, setAllResults] = useState<any[]>([]);
+  const [allResults, setAllResults] = useState<SearchApiResult[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 

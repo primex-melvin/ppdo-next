@@ -121,6 +121,16 @@ export interface SearchResult<T = any> {
   displaySubtitle?: string; // Formatted subtitle for UI
   displayUrl?: string; // URL to navigate to this entity
   displayIcon?: string; // Icon name or emoji for UI
+
+  // Navigation URL (from backend getEntityUrl)
+  sourceUrl?: string;
+  
+  // Timestamps
+  createdAt?: number;
+  updatedAt?: number;
+  
+  // Relevance score (0-1 from ranking algorithm)
+  relevanceScore?: number;
 }
 
 // ============================================================================
@@ -362,3 +372,34 @@ export type EntityIdMap = {
  */
 export type EntityId<T extends EntityType> = EntityIdMap[T];
 
+// ============================================================================
+// API RESPONSE TYPES (for Convex queries)
+// ============================================================================
+
+/**
+ * Raw search result from Convex API
+ * Matches exactly what the search query returns
+ */
+export interface SearchApiResult {
+  indexEntry: SearchIndexEntry;
+  relevanceScore: number;
+  matchedFields: string[];
+  highlights: {
+    primaryText?: string;
+    secondaryText?: string;
+  };
+  sourceUrl: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Search API response structure
+ */
+export interface SearchApiResponse {
+  results: SearchApiResult[];
+  totalCount: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+}

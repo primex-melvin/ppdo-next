@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Filter, X, Search } from "lucide-react";
 import { useSearchRouter } from "@/hooks/search/useSearchRouter";
 import { useInfiniteSearch } from "@/hooks/search/useInfiniteSearch";
@@ -14,9 +15,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import type { SearchSuggestion, EntityType } from "@/convex/search/types";
+import type { EntityType, SearchApiResult, SearchResult } from "@/convex/search/types";
+
+// Local interface for suggestion items from SearchInput
+interface SuggestionItem {
+  text: string;
+  normalizedText: string;
+  entityType?: EntityType;
+  entityId?: string;
+  secondaryText?: string;
+  relevanceScore?: number;
+}
 
 export default function SearchPage() {
+  const router = useRouter();
   const { state, setQuery, setCategory, clearFilters } = useSearchRouter();
   const { query, category } = state;
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -59,7 +71,7 @@ export default function SearchPage() {
   }, [setQuery]);
 
   // Handle suggestion selection
-  const handleSuggestionSelect = useCallback((suggestion: SearchSuggestion) => {
+  const handleSuggestionSelect = useCallback((suggestion: SuggestionItem) => {
     setQuery(suggestion.text);
   }, [setQuery]);
 
@@ -81,6 +93,16 @@ export default function SearchPage() {
   const handleSuggestionClick = useCallback((suggestion: string) => {
     setQuery(suggestion);
   }, [setQuery]);
+
+  // Handle result click - navigate to sourceUrl
+  const handleResultClick = useCallback((result: SearchApiResult | SearchResult) => {
+    const apiResult = result as SearchApiResult;
+    if (apiResult.sourceUrl) {
+      router.push(apiResult.sourceUrl);
+    } else if ((result as SearchResult).displayUrl) {
+      router.push((result as SearchResult).displayUrl!);
+    }
+  }, [router]);
 
   // Get active category label
   const getActiveCategoryLabel = useCallback(() => {
@@ -114,13 +136,13 @@ export default function SearchPage() {
     <div className="min-h-screen bg-background">
       {/* Main Content Area (with right margin for sidebar on desktop) */}
       <div className="lg:mr-64 transition-all duration-200">
-        <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-5xl">
           {/* Header */}
-          <header className="mb-6 sm:mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Search</h1>
-                <p className="text-sm sm:text-base text-muted-foreground">
+          <header className="mb-4 sm:mb-6 lg:mb-8">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">Search</h1>
+                <p className="text-sm sm:text-base text-muted-foreground truncate">
                   Search across projects, departments, users, and more
                 </p>
               </div>
@@ -131,16 +153,16 @@ export default function SearchPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="lg:hidden relative"
+                    className="lg:hidden relative shrink-0 h-10 w-10"
                     aria-label="Open filters"
                   >
                     <Filter className="size-5" />
                     {hasActiveFilters && (
-                      <span className="absolute -top-1 -right-1 size-3 bg-primary rounded-full" />
+                      <span className="absolute -top-1 -right-1 size-3 bg-green-600 rounded-full border-2 border-background" />
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80 p-0">
+                <SheetContent side="right" className="w-72 sm:w-80 p-0">
                   <div className="p-4 border-b">
                     <h2 className="font-semibold">Filter Results</h2>
                   </div>
@@ -155,7 +177,8 @@ export default function SearchPage() {
               </Sheet>
             </div>
           </header>
-          {/* Search Input */}
+          
+          {/* Search Input - Full width on mobile */}
           <div className="mb-4 sm:mb-6">
             <SearchInput
               value={query}
@@ -179,7 +202,7 @@ export default function SearchPage() {
               <Badge
                 variant="secondary"
                 className={cn(
-                  "transition-all duration-200",
+                  "transition-all duration-200 text-xs sm:text-sm",
                   isLoading && "animate-pulse"
                 )}
               >
@@ -190,7 +213,7 @@ export default function SearchPage() {
             {hasActiveFilters && (
               <button
                 onClick={() => handleCategoryChange("all")}
-                className="text-sm text-primary hover:underline flex items-center gap-1 self-start sm:self-auto"
+                className="text-sm text-primary hover:underline flex items-center gap-1 self-start sm:self-auto min-h-[44px] sm:min-h-0 px-2 -ml-2 sm:px-0 sm:ml-0"
               >
                 <X className="size-3" />
                 Clear filter
@@ -199,7 +222,7 @@ export default function SearchPage() {
           </div>
 
           {/* Results Area */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             {query ? (
               isEmpty && !isLoading ? (
                 <NoResultsState
@@ -215,6 +238,7 @@ export default function SearchPage() {
                   isLoading={isLoading}
                   hasMore={hasMore}
                   onLoadMore={loadMore}
+                  onResultClick={handleResultClick}
                   emptyStateMessage={
                     !activeCategory
                       ? "No results found. Try different search terms."
@@ -224,8 +248,8 @@ export default function SearchPage() {
               )
             ) : (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                <div className="rounded-full bg-muted p-6 mb-4">
-                  <Search className="size-12 text-muted-foreground" />
+                <div className="rounded-full bg-muted p-5 sm:p-6 mb-4">
+                  <Search className="size-10 sm:size-12 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Start searching</h3>
                 <p className="text-sm text-muted-foreground max-w-md">

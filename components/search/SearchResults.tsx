@@ -5,21 +5,24 @@ import { Loader2, Search, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import type { SearchResult, EntityType } from "@/convex/search/types";
+import type { SearchResult, SearchApiResult } from "@/convex/search/types";
+import { SearchResultCard } from "./SearchResultCard";
 
 interface SearchResultsProps<T = any> {
-  results: SearchResult<T>[];
+  results: SearchApiResult[] | SearchResult<T>[];
   isLoading: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
-  onResultClick?: (result: SearchResult<T>) => void;
-  renderCard?: (result: SearchResult<T>) => React.ReactNode;
+  onResultClick?: (result: SearchApiResult | SearchResult<T>) => void;
+  renderCard?: (result: SearchApiResult | SearchResult<T>) => React.ReactNode;
   emptyStateMessage?: string;
   className?: string;
 }
 
-// Default card renderer
+/**
+ * @deprecated Use SearchResultCard from ./SearchResultCard instead.
+ * This component is kept for backward compatibility with custom renderCard implementations.
+ */
 function DefaultResultCard<T>({
   result,
   onClick,
@@ -27,96 +30,12 @@ function DefaultResultCard<T>({
   result: SearchResult<T>;
   onClick?: () => void;
 }) {
-  const getEntityTypeColor = (type: EntityType) => {
-    switch (type) {
-      case "project":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
-      case "twentyPercentDF":
-        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
-      case "trustFund":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300";
-      case "specialEducationFund":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300";
-      case "specialHealthFund":
-        return "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
-      case "department":
-        return "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300";
-      case "agency":
-        return "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300";
-      case "user":
-        return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300";
-      default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300";
-    }
-  };
-
-  const getEntityTypeLabel = (type: EntityType) => {
-    switch (type) {
-      case "project":
-        return "Project";
-      case "twentyPercentDF":
-        return "20% DF";
-      case "trustFund":
-        return "Trust Fund";
-      case "specialEducationFund":
-        return "Special Education";
-      case "specialHealthFund":
-        return "Special Health";
-      case "department":
-        return "Department";
-      case "agency":
-        return "Agency";
-      case "user":
-        return "User";
-      default:
-        return type;
-    }
-  };
-
-  // Use indexEntry fields with highlights
-  const entry = result.indexEntry;
-  const entityType = entry?.entityType;
-  const matchScore = result.relevanceScore;
-  
-  // Use highlighted text if available, otherwise fall back to plain text
-  const titleHtml = result.highlights?.primaryText || entry?.primaryText || "";
-  const descriptionHtml = result.highlights?.secondaryText || entry?.secondaryText || "";
-
   return (
-    <Card
-      className={cn(
-        "transition-all hover:shadow-md",
-        onClick && "cursor-pointer"
-      )}
-      onClick={onClick}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={getEntityTypeColor(entityType)}>
-              {getEntityTypeLabel(entityType)}
-            </Badge>
-            {matchScore !== undefined && (
-              <Badge variant="outline" className="text-xs">
-                {Math.round(matchScore * 100)}% match
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <h3 
-          className="font-semibold text-base mb-1 line-clamp-2"
-          dangerouslySetInnerHTML={{ __html: titleHtml }}
-        />
-
-        {descriptionHtml && (
-          <p 
-            className="text-sm text-muted-foreground line-clamp-2 mb-2"
-            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-          />
-        )}
-      </CardContent>
-    </Card>
+    <SearchResultCard
+      result={result}
+      index={0}
+      onClick={onClick ? () => onClick() : undefined}
+    />
   );
 }
 
@@ -231,9 +150,10 @@ export function SearchResults<T = any>({
           {renderCard ? (
             renderCard(result)
           ) : (
-            <DefaultResultCard
+            <SearchResultCard
               result={result}
-              onClick={() => onResultClick?.(result)}
+              index={index}
+              onClick={onResultClick ? () => onResultClick(result) : undefined}
             />
           )}
         </div>

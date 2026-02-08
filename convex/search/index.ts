@@ -48,11 +48,11 @@ function createHighlight(text: string, queryTokens: string[]): string {
 }
 
 /**
- * Check if text contains any of the query tokens
+ * Check if normalized text contains any of the query tokens
+ * Uses the already normalized text from the index (faster and more reliable)
  */
-function containsQueryTokens(text: string, queryTokens: string[]): boolean {
-  if (!text || queryTokens.length === 0) return false;
-  const normalizedText = normalizeText(text);
+function containsQueryTokens(normalizedText: string, queryTokens: string[]): boolean {
+  if (!normalizedText || queryTokens.length === 0) return false;
   return queryTokens.some(token => normalizedText.includes(token));
 }
 
@@ -151,6 +151,32 @@ function calculateRelevanceScore(args: {
 // ============================================================================
 // HELPER FUNCTIONS (for internal use)
 // ============================================================================
+
+/**
+ * Generate source URL for navigation based on entity type
+ */
+function getEntityUrl(entityType: string, entityId: string, year?: number): string {
+  switch (entityType) {
+    case "project":
+      return year ? `/dashboard/project/${year}` : `/dashboard/project`;
+    case "twentyPercentDF":
+      return year ? `/dashboard/20_percent_df/${year}` : `/dashboard/20_percent_df`;
+    case "trustFund":
+      return year ? `/dashboard/trust-funds/${year}` : `/dashboard/trust-funds`;
+    case "specialEducationFund":
+      return year ? `/dashboard/special-education-funds/${year}` : `/dashboard/special-education-funds`;
+    case "specialHealthFund":
+      return year ? `/dashboard/special-health-funds/${year}` : `/dashboard/special-health-funds`;
+    case "department":
+      return `/dashboard/departments`;
+    case "agency":
+      return `/dashboard/office`;
+    case "user":
+      return `/dashboard/settings/user-management`;
+    default:
+      return `/dashboard`;
+  }
+}
 
 /**
  * Helper function to index or update an entity in the search index
@@ -516,28 +542,40 @@ export const search = query({
         let primaryTextHighlighted: string | undefined;
         let secondaryTextHighlighted: string | undefined;
 
-        // Check primary text for matches
-        const primaryTextMatches = containsQueryTokens(entry.primaryText, queryTokens);
+        // Check primary text for matches using already normalized text
+        const primaryTextMatches = containsQueryTokens(entry.normalizedPrimaryText, queryTokens);
         if (primaryTextMatches) {
           matchedFields.push("primaryText");
           primaryTextHighlighted = createHighlight(entry.primaryText, queryTokens);
         }
 
-        // Check secondary text for matches
-        const secondaryTextMatches = entry.secondaryText && 
-          containsQueryTokens(entry.secondaryText, queryTokens);
+        // Check secondary text for matches using already normalized text
+        const secondaryTextMatches = entry.normalizedSecondaryText && 
+          containsQueryTokens(entry.normalizedSecondaryText, queryTokens);
         if (secondaryTextMatches && entry.secondaryText) {
           matchedFields.push("secondaryText");
           secondaryTextHighlighted = createHighlight(entry.secondaryText, queryTokens);
         }
 
-        // If no direct text matches, check tokens (for partial/fuzzy matches)
+        // Also check if normalized query is a substring of normalized text (for exact phrase matches)
+        const exactPhraseMatch = entry.normalizedPrimaryText.includes(normalizedQuery) ||
+          (entry.normalizedSecondaryText && entry.normalizedSecondaryText.includes(normalizedQuery));
+        
+        // Check token matches - this handles cases where tokenization differs
         const matchedTokens = queryTokens.filter((token) =>
           entry.tokens.includes(token)
         );
+        
+        // Add token match info if tokens matched but we haven't recorded a match yet
         if (matchedTokens.length > 0 && matchedFields.length === 0) {
           matchedFields.push("tokens");
           // Still highlight in primary text even if only tokens matched
+          primaryTextHighlighted = createHighlight(entry.primaryText, queryTokens);
+        }
+        
+        // If we have an exact phrase match but no field match yet, add primaryText
+        if (exactPhraseMatch && matchedFields.length === 0) {
+          matchedFields.push("primaryText");
           primaryTextHighlighted = createHighlight(entry.primaryText, queryTokens);
         }
 
@@ -564,6 +602,9 @@ export const search = query({
         relevanceScore: r.relevanceScore, // Return normalized 0-1 score
         matchedFields: r.matchedFields,
         highlights: r.highlights,
+        sourceUrl: getEntityUrl(r.entry.entityType, r.entry.entityId, r.entry.year),
+        createdAt: r.entry.createdAt,
+        updatedAt: r.entry.updatedAt,
       })),
       totalCount: rankedResults.length,
       offset,
