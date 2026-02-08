@@ -9,7 +9,9 @@
       "Bash(npx convex codegen:*)",
       "Bash(dir:*)",
       "Bash(ls:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(npx next build:*)",
+      "Bash(git status:*)"
     ]
   }
 }

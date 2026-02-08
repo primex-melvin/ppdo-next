@@ -15,6 +15,7 @@
 | [Print & Export Specialist](#7-print--export-specialist) | Documents | PDF generation, media, canvas |
 | [DevOps & Performance Agent](#8-devops--performance-agent) | Operations | Deployment, CI/CD, monitoring |
 | [Product & Documentation Lead](#9-product--documentation-lead) | Product Mgmt | Requirements, docs, PPDO domain |
+| [Search Engine Specialist](#10-search-engine-specialist) | Search Systems | Full-text search, facets, indexing |
 
 ---
 
@@ -33,22 +34,22 @@
 │         │                  │                                    │
 │         ▼                  ▼                                    │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
-│  │  Security   │    │    Data     │    │   Print     │         │
-│  │   & Auth    │◄──►│  & Business │◄──►│  & Export   │         │
+│  │  Security   │    │    Data     │    │    Print    │         │
+│  │   & Auth    │◄──►│  & Business │◄──►│   & Export  │         │
 │  │ Specialist  │    │   Logic     │    │ Specialist  │         │
-│  └──────┬──────┘    └──────┬──────┘    └─────────────┘         │
-│         │                  │                                    │
-│         ▼                  ▼                                    │
-│  ┌─────────────┐    ┌─────────────┐                            │
-│  │     QA      │    │   DevOps    │                            │
-│  │  & Testing  │◄──►│ & Perform.  │                            │
-│  │    Agent    │    │    Agent    │                            │
-│  └─────────────┘    └─────────────┘                            │
+│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘         │
+│         │                  │                  │                │
+│         ▼                  ▼                  ▼                │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │     QA      │    │   DevOps    │    │   Search    │         │
+│  │  & Testing  │◄──►│ & Perform.  │◄──►│   Engine    │         │
+│  │    Agent    │    │    Agent    │    │ Specialist  │         │
+│  └─────────────┘    └─────────────┘    └─────────────┘         │
 │                                                                 │
 │              ┌─────────────────────────┐                        │
 │              │  Product & Documentation │                       │
-│              │         Lead            │                       │
-│              │   (Team Coordinator)    │                       │
+│              │         Lead            │                        │
+│              │   (Team Coordinator)    │                        │
 │              └─────────────────────────┘                        │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -302,6 +303,42 @@ DOCS/                         # Project documentation
 
 ---
 
+### 10. Search Engine Specialist
+**File:** [`search-engine-specialist.md`](./search-engine-specialist.md)
+
+**Expertise:**
+- Polymorphic search index architecture
+- Relevance ranking algorithms (TF-IDF + organizational proximity)
+- Typeahead/predictive search
+- Faceted search with dynamic filters
+- URL-first state management
+- Real-time search with Convex
+
+**Key Areas:**
+```
+convex/
+├── search/                   # Search queries & indexing
+│   ├── index.ts
+│   ├── ranking.ts
+│   └── facets.ts
+├── lib/searchIndex.ts        # Index management
+└── schema.ts                 # Search tables
+
+components/search/
+├── SearchInput.tsx           # Global typeahead
+├── SearchResults.tsx         # Polymorphic feed
+├── FacetSidebar.tsx          # Dynamic filters
+└── hooks/
+    ├── useSearchRouter.ts    # URL state sync
+    └── useFacetEngine.ts     # Filter logic
+
+app/(dashboard)/search/       # Search page
+```
+
+**When to Use:** Building search functionality, implementing filters, optimizing search performance, relevance tuning.
+
+---
+
 ## Agent Collaboration Matrix
 
 Shows which agents commonly work together:
@@ -314,6 +351,7 @@ Shows which agents commonly work together:
 | Add authentication | Security Specialist | Backend, Frontend |
 | Business calculations | Data Engineer | Backend Architect |
 | PDF export feature | Print Specialist | Frontend, Data Engineer |
+| **Search functionality** | **Search Specialist** | **Backend, Frontend, UI/UX** |
 | Write tests | QA Agent | All agents |
 | Deploy to production | DevOps Agent | All agents |
 | Define requirements | Product Lead | All agents |
@@ -335,6 +373,11 @@ Shows which agents commonly work together:
 - **Database:** Convex
 - **Auth:** @convex-dev/auth
 - **File Storage:** Convex Storage
+
+### Search
+- **Architecture:** Polymorphic index with sharded verticals
+- **Ranking:** TF-IDF + Organizational Proximity + Recency
+- **UI Pattern:** Three-pane layout (Typeahead, Sidebar, Feed)
 
 ### Export/Media
 - **PDF:** jsPDF
@@ -366,6 +409,16 @@ Shows which agents commonly work together:
 5. **QA Agent** - Write tests
 6. **DevOps Agent** - Deploy
 
+### Example: Implementing Global Search
+
+1. **Search Specialist** - Design index schema and ranking algorithm
+2. **Backend Architect** - Implement search indexes in Convex
+3. **UI/UX Designer** - Design search interface components
+4. **Frontend Specialist** - Build search page with URL state
+5. **Security Agent** - Add RBAC to search results
+6. **QA Agent** - Test search functionality
+7. **DevOps Agent** - Monitor search performance
+
 ---
 
 ## Quick Commands
@@ -393,9 +446,10 @@ npm test -- --coverage   # With coverage report
 - **Next.js Docs:** https://nextjs.org/docs
 - **Shadcn/ui:** https://ui.shadcn.com
 - **Tailwind CSS:** https://tailwindcss.com
+- **Search Architecture Reference:** See `docs/search-system/` documentation
 
 ---
 
-*Last updated: January 2025*
-*Team size: 9 specialized agents*
-*Project: PPDO Next.js + Convex*
+*Last updated: February 2025*
+*Team size: 10 specialized agents*
+*Project: PPDO Next.js + Convex with Facebook-class Search*
