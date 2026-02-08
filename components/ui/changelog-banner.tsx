@@ -90,7 +90,7 @@ export function ChangelogBanner({
   return (
     <div
       className={cn(
-        "relative w-full border-b transition-all duration-300",
+        "relative w-full border-b transition-all duration-300 z-[9999]",
         "bg-green-700 border-green-800",
         "dark:bg-green-700 dark:border-green-800",
         className
