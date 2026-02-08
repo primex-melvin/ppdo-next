@@ -23,6 +23,24 @@ import type { SearchResult, SearchApiResult, EntityType } from "@/convex/search/
 // ============================================================================
 
 /**
+ * Entity types that should show "Found in X page" indicator
+ */
+const ENTITY_TYPES_WITH_PAGE_DEPTH: EntityType[] = [
+  "project",
+  "twentyPercentDF",
+  "trustFund",
+  "specialEducationFund",
+  "specialHealthFund",
+];
+
+/**
+ * Check if entity type should show page depth indicator
+ */
+function shouldShowPageDepth(entityType: EntityType): boolean {
+  return ENTITY_TYPES_WITH_PAGE_DEPTH.includes(entityType);
+}
+
+/**
  * Get display label for entity type
  */
 function getEntityTypeLabel(entityType: EntityType): string {
@@ -235,8 +253,8 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
               {getEntityTypeLabel(entityType)}
             </Badge>
             
-            {/* Page Depth Indicator */}
-            {pageDepthText && (
+            {/* Page Depth Indicator - only for specific entity types */}
+            {pageDepthText && shouldShowPageDepth(entityType) && (
               <span className="text-xs text-muted-foreground/80 italic">
                 {pageDepthText}
               </span>
