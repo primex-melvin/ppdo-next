@@ -20,9 +20,9 @@ export const twentyPercentDFAdapter: InspectionAdapter = {
 
   useGetParent: (breakdown: any) => {
     return useQuery(
-      api.twentyPercentDFs.get,
+      api.twentyPercentDF.get,
       breakdown?.twentyPercentDFId
-        ? { id: breakdown.twentyPercentDFId as Id<"twentyPercentDFs"> }
+        ? { id: breakdown.twentyPercentDFId as Id<"twentyPercentDF"> }
         : "skip"
     );
   },
@@ -30,7 +30,7 @@ export const twentyPercentDFAdapter: InspectionAdapter = {
   useListInspections: (parentId: string) => {
     return useQuery(
       api.inspections.listInspectionsByTwentyPercentDF,
-      parentId ? { twentyPercentDFId: parentId as Id<"twentyPercentDFs"> } : "skip"
+      parentId ? { twentyPercentDFId: parentId as Id<"twentyPercentDF"> } : "skip"
     );
   },
 

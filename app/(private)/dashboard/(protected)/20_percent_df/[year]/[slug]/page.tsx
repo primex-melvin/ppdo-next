@@ -299,7 +299,7 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
                         entityType="twentyPercentDF"
                         entityName={fund?.particulars}
                         enableInspectionNavigation={true}
-                        navigationParams={{ year, slug: slugWithId }}
+                        navigationParams={{ year, slug }}
                     />
                 )}
             </div>

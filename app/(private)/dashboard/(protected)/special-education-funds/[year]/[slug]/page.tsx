@@ -294,7 +294,7 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
                         entityType="specialeducationfund"
                         entityName={fund?.projectTitle}
                         enableInspectionNavigation={true}
-                        navigationParams={{ year, slug: slugWithId }}
+                        navigationParams={{ year, slug }}
                     />
                 )}
             </div>

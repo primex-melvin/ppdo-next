@@ -268,6 +268,7 @@ export default function ProjectBreakdownPage() {
             onDelete={handleDelete}
             onOpenTrash={() => setShowTrashModal(true)}
             entityName={project?.particulars}
+            enableInspectionNavigation={true}
           />
         )}
       </div>

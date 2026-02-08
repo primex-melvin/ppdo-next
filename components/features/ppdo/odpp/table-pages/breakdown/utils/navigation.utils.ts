@@ -41,8 +41,8 @@ export function buildBreakdownDetailPath(
   }
 
   // Default: project breakdown
-  const { particularId, projectbreakdownId } = params;
-  return `/dashboard/project/budget/${particularId}/${projectbreakdownId}/${breakdownSlug}`;
+  const { year, particularId, projectbreakdownId } = params;
+  return `/dashboard/project/${year}/${particularId}/${projectbreakdownId}/${breakdownSlug}`;
 }
 
 /**

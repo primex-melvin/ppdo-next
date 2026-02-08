@@ -16,6 +16,16 @@ const statusValidator = v.union(
 );
 
 /**
+ * GET: Single breakdown by ID
+ */
+export const getBreakdown = query({
+    args: { id: v.id("twentyPercentDFBreakdowns") },
+    handler: async (ctx, args) => {
+        return await ctx.db.get(args.id);
+    },
+});
+
+/**
  * CREATE: Single breakdown row
  */
 export const createBreakdown = mutation({

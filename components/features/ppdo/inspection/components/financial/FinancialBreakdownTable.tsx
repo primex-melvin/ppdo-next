@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { flattenFinancialBreakdown } from "@/app/(private)/dashboard/(protected)/project/[year]/[particularId]/[projectbreakdownId]/[inspectionId]/data";
+import { flattenFinancialBreakdown } from "@/app/(private)/dashboard/(protected)/project/[year]/[particularId]/[projectbreakdownId]/[breakdownId]/data";
 import { FinancialBreakdownItemForm } from "./FinancialBreakdownItemForm";
 import { FinancialBreakdownItem } from "../../types";
 import { useAccentColor } from "@/contexts/AccentColorContext";

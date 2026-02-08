@@ -199,7 +199,7 @@ export const getInspection = query({
     }
 
     // Get related data
-    const project = await ctx.db.get(inspection.projectId);
+    const project = inspection.projectId ? await ctx.db.get(inspection.projectId) : null;
     const budgetItem = inspection.budgetItemId
       ? await ctx.db.get(inspection.budgetItemId)
       : null;
@@ -330,7 +330,7 @@ export const listInspectionsByBudgetItem = query({
     const enrichedInspections = await Promise.all(
       sortedInspections.map(async (inspection) => {
         const creator = await ctx.db.get(inspection.createdBy);
-        const project = await ctx.db.get(inspection.projectId);
+        const project = inspection.projectId ? await ctx.db.get(inspection.projectId) : null;
         
         let imageCount = 0;
         if (inspection.uploadSessionId) {
@@ -405,7 +405,7 @@ export const listAllInspections = query({
     const enrichedInspections = await Promise.all(
       inspections.map(async (inspection) => {
         const creator = await ctx.db.get(inspection.createdBy);
-        const project = await ctx.db.get(inspection.projectId);
+        const project = inspection.projectId ? await ctx.db.get(inspection.projectId) : null;
         
         let imageCount = 0;
         if (inspection.uploadSessionId) {
@@ -595,8 +595,8 @@ export const listInspectionsByTrustFund = query({
         if (inspection.uploadSessionId) {
           const images = await ctx.db
             .query("media")
-            .withIndex("uploadSessionId", (q) =>
-              q.eq("uploadSessionId", inspection.uploadSessionId)
+            .withIndex("sessionId", (q) =>
+              q.eq("sessionId", inspection.uploadSessionId!)
             )
             .collect();
 
@@ -670,8 +670,8 @@ export const listInspectionsBySpecialEducationFund = query({
         if (inspection.uploadSessionId) {
           const images = await ctx.db
             .query("media")
-            .withIndex("uploadSessionId", (q) =>
-              q.eq("uploadSessionId", inspection.uploadSessionId)
+            .withIndex("sessionId", (q) =>
+              q.eq("sessionId", inspection.uploadSessionId!)
             )
             .collect();
 
@@ -744,8 +744,8 @@ export const listInspectionsBySpecialHealthFund = query({
         if (inspection.uploadSessionId) {
           const images = await ctx.db
             .query("media")
-            .withIndex("uploadSessionId", (q) =>
-              q.eq("uploadSessionId", inspection.uploadSessionId)
+            .withIndex("sessionId", (q) =>
+              q.eq("sessionId", inspection.uploadSessionId!)
             )
             .collect();
 
@@ -818,8 +818,8 @@ export const listInspectionsByTwentyPercentDF = query({
         if (inspection.uploadSessionId) {
           const images = await ctx.db
             .query("media")
-            .withIndex("uploadSessionId", (q) =>
-              q.eq("uploadSessionId", inspection.uploadSessionId)
+            .withIndex("sessionId", (q) =>
+              q.eq("sessionId", inspection.uploadSessionId!)
             )
             .collect();
 
