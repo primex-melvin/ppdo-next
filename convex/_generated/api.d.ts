@@ -22,7 +22,6 @@ import type * as bugReports from "../bugReports.js";
 import type * as config from "../config.js";
 import type * as config_onboardingConfig from "../config/onboardingConfig.js";
 import type * as dashboard from "../dashboard.js";
-import type * as dashboardSearch from "../dashboardSearch.js";
 import type * as departments from "../departments.js";
 import type * as fiscalYears from "../fiscalYears.js";
 import type * as govtProjectActivities from "../govtProjectActivities.js";
@@ -185,7 +184,6 @@ declare const fullApi: ApiFromModules<{
   config: typeof config;
   "config/onboardingConfig": typeof config_onboardingConfig;
   dashboard: typeof dashboard;
-  dashboardSearch: typeof dashboardSearch;
   departments: typeof departments;
   fiscalYears: typeof fiscalYears;
   govtProjectActivities: typeof govtProjectActivities;

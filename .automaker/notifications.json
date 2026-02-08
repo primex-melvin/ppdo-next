@@ -308,6 +308,39 @@
       "dismissed": false,
       "featureId": "feature-1770458911296-zt7egg3hj",
       "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "bb16cb3d-4322-4e2e-9a38-00388a21b4a7",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"feature-1770518913971-xb74ihfpl\" has been verified and is complete.",
+      "createdAt": "2026-02-08T03:00:48.937Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1770518913971-xb74ihfpl",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "51fabe08-3cfc-42c6-a9e4-474ffb5c58e2",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"feature-1770519023809-54zf3oow5\" has been verified and is complete.",
+      "createdAt": "2026-02-08T03:21:34.988Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1770519023809-54zf3oow5",
+      "projectPath": "C:\\ppdo\\ppdo-next"
+    },
+    {
+      "id": "8d1393da-c35c-4057-962e-12f9fbdcc80b",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"feature-1770519106111-ys475512w\" has been verified and is complete.",
+      "createdAt": "2026-02-08T03:40:45.576Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "feature-1770519106111-ys475512w",
+      "projectPath": "C:\\ppdo\\ppdo-next"
     }
   ]
 }

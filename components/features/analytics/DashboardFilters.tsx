@@ -17,7 +17,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
-import { GlobalSearch } from "./GlobalSearch";
+// Note: GlobalSearch removed - new search system in development
 import { api } from "@/convex/_generated/api";
 import type { Id, Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -143,8 +143,7 @@ export function DashboardFilters({
                         onChange={(value) => onChange("quarter", value)}
                     />
 
-                    {/* Global Search */}
-                    <GlobalSearch />
+                    {/* Global Search - Removed: New search system in development */}
 
                     {/* Project Status Filter - Hidden for now */}
                     {/* <StatusFilter

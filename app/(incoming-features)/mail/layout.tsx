@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header/Header";
 import { Breadcrumbs } from "@/components/layout/navigation";
 import { TimeLocation } from "@/components/shared";
 
-import { SearchProvider } from "@/contexts/SearchContext";
+
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { AccentColorProvider } from "@/contexts/AccentColorContext";
 import { BreadcrumbProvider } from "@/contexts/BreadcrumbContext";
@@ -49,15 +49,13 @@ export default function MailLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SearchProvider>
-      <SidebarProvider>
-        <AccentColorProvider>
-          <BreadcrumbProvider>
-            <MailContent>{children}</MailContent>
-          </BreadcrumbProvider>
-        </AccentColorProvider>
-      </SidebarProvider>
-    </SearchProvider>
+    <SidebarProvider>
+      <AccentColorProvider>
+        <BreadcrumbProvider>
+          <MailContent>{children}</MailContent>
+        </BreadcrumbProvider>
+      </AccentColorProvider>
+    </SidebarProvider>
   );
 }
 

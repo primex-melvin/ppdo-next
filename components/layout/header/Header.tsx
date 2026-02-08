@@ -8,9 +8,7 @@ import { useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Bug, Loader2, Eye, EyeOff, Search } from "lucide-react";
-import { DashboardSearch } from "@/components/features/ppdo/dashboard/DashboardSearch";
-import { AnimatePresence } from "framer-motion";
+import { Bug, Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AccountModal } from "@/components/features/account/AccountModal";
 import { UserDropdown } from "./UserDropdown";
@@ -22,6 +20,7 @@ import { ConcernModal } from "./ConcernModal";
 import { ScreenshotZoom } from "./ScreenshotZoom";
 // import { MigrationContainer } from "@/components/features/migration/MigrationContainer";
 
+// HeaderProps interface kept for compatibility
 interface HeaderProps {
   onSearchChange?: (query: string) => void;
   searchQuery?: string;
@@ -29,8 +28,9 @@ interface HeaderProps {
 
 export function Header({ onSearchChange, searchQuery }: HeaderProps) {
   const [showAccountModal, setShowAccountModal] = useState(false);
-  const [isSearchActive, setIsSearchActive] = useState(false);
   const [accountModalTab, setAccountModalTab] = useState<"profile" | "security">("profile");
+  // Note: search-related props (onSearchChange, searchQuery) are kept for API compatibility
+  // but not used until new search is implemented
   const { isMinimized, toggleMinimize } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
@@ -62,18 +62,7 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
     };
   }, []);
 
-  // Handle keyboard shortcut for search
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "/" && !isSearchActive) {
-        event.preventDefault();
-        setIsSearchActive(true);
-      }
-    };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isSearchActive]);
 
   const toggleBugReport = () => {
     const newState = !showBugReport;
@@ -269,23 +258,6 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
 
             {/* Right section - Actions */}
             <div className="flex items-center gap-3">
-              {/* Search Trigger */}
-              <button
-                onClick={() => setIsSearchActive(true)}
-                className={cn(
-                  "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm",
-                  "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700",
-                  "text-zinc-600 dark:text-zinc-400",
-                  "transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
-                )}
-              >
-                <Search className="w-4 h-4" />
-                <span className="hidden md:inline">Search...</span>
-                <kbd className="ml-1 px-1.5 py-0.5 text-xs rounded bg-zinc-200 dark:bg-zinc-700 font-mono">
-                  /
-                </kbd>
-              </button>
-
               {/* Email Dropdown */}
               <EmailDropdown />
 
@@ -330,28 +302,6 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
         screenshot={screenshotUrl}
       />
 
-      {/* Search Overlay */}
-      <AnimatePresence>
-        {isSearchActive && (
-          <>
-            {/* Backdrop */}
-            <div 
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-              onClick={() => setIsSearchActive(false)}
-            />
-            
-            {/* Search Container */}
-            <div className="fixed inset-x-4 top-20 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-4xl z-50">
-              <div className="bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-md rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-6">
-                <DashboardSearch 
-                  isActive={isSearchActive} 
-                  onClose={() => setIsSearchActive(false)} 
-                />
-              </div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
     </>
   );
 }
