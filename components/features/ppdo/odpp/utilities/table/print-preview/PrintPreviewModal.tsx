@@ -151,12 +151,8 @@ export function PrintPreviewModal({
     }))
   }], [columns, columnLabelOverrides]);
 
-  // Filter and redistribute canvas elements based on hidden columns
+  // Filter and redistribute canvas elements based on hidden columns and margins
   const visibleElements = useMemo(() => {
-    if (hiddenCanvasColumns.size === 0) {
-      return state.currentPage.elements;
-    }
-
     // Group elements by row (same Y position) to identify table structure
     const tableElements = state.currentPage.elements.filter(
       el => el.groupId && el.groupName?.toLowerCase().includes('table')
@@ -208,12 +204,12 @@ export function PrintPreviewModal({
       return state.currentPage.elements;
     }
 
-    // Calculate total available width (full canvas width minus margins)
+    // Calculate total available width based on current ruler margins
     const pageSize = state.currentPage.size || 'A4';
     const orientation = state.currentPage.orientation || 'portrait';
-    const MARGIN = 20; // Same as tableToCanvas.ts
+    const marginLeft = rulerState.margins.left;
+    const marginRight = rulerState.margins.right;
 
-    // Page dimensions
     const PAGE_SIZES = {
       A4: { width: 595, height: 842 },
       Short: { width: 612, height: 792 },
@@ -225,8 +221,9 @@ export function PrintPreviewModal({
       ? { width: baseSize.height, height: baseSize.width }
       : baseSize;
 
-    const totalAvailableWidth = size.width - (MARGIN * 2);
-    const firstColumnX = allColumns[0][1].originalX;
+    const totalAvailableWidth = size.width - marginLeft - marginRight;
+    const firstColumnX = marginLeft;
+    const oldLeftEdge = allColumns[0][1].originalX;
 
     // Create new width and position map for visible columns
     // Distribute full available width among visible columns proportionally
@@ -246,6 +243,9 @@ export function PrintPreviewModal({
       currentX += newWidth;
     });
 
+    // Scale factor for non-column table elements (e.g., category headers)
+    const scaleX = totalVisibleOriginalWidth > 0 ? totalAvailableWidth / totalVisibleOriginalWidth : 1;
+
     // Apply transformations to elements
     return state.currentPage.elements.map(el => {
       // Non-table elements pass through unchanged
@@ -255,7 +255,15 @@ export function PrintPreviewModal({
 
       // Extract column key from element ID
       const columnKey = extractColumnKey(el.id);
-      if (!columnKey) return el;
+
+      // Non-column table elements (e.g., category headers) - scale proportionally
+      if (!columnKey) {
+        return {
+          ...el,
+          x: marginLeft + (el.x - oldLeftEdge) * scaleX,
+          width: el.width * scaleX,
+        };
+      }
 
       // Hide if column is hidden
       if (hiddenColumnsSet.has(columnKey)) {
@@ -275,7 +283,7 @@ export function PrintPreviewModal({
 
       return el;
     });
-  }, [state.currentPage.elements, hiddenCanvasColumns, state.currentPage.size, state.currentPage.orientation]);
+  }, [state.currentPage.elements, hiddenCanvasColumns, state.currentPage.size, state.currentPage.orientation, rulerState.margins]);
 
   // Calculate column widths and table dimensions from visible elements
   const { columnWidths, tableDimensions } = useMemo(() => {

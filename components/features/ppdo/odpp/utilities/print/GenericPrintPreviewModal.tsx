@@ -177,10 +177,6 @@ export function GenericPrintPreviewModal({
     const currentPage = pages[currentPageIndex];
     if (!currentPage) return [];
 
-    if (hiddenCanvasColumns.size === 0) {
-      return currentPage.elements;
-    }
-
     const tableElements = currentPage.elements.filter(
       el => el.groupId && el.groupName?.toLowerCase().includes('table')
     );
@@ -227,7 +223,8 @@ export function GenericPrintPreviewModal({
 
     const pageSize = currentPage.size || 'A4';
     const orientation = currentPage.orientation || 'portrait';
-    const MARGIN = 20;
+    const marginLeft = rulerState.margins.left;
+    const marginRight = rulerState.margins.right;
 
     const PAGE_SIZES = {
       A4: { width: 595, height: 842 },
@@ -240,10 +237,12 @@ export function GenericPrintPreviewModal({
       ? { width: baseSize.height, height: baseSize.width }
       : baseSize;
 
-    const totalAvailableWidth = size.width - (MARGIN * 2);
-    const firstColumnX = allColumns[0][1].originalX;
+    const totalAvailableWidth = size.width - marginLeft - marginRight;
+    const firstColumnX = marginLeft;
+    const oldLeftEdge = allColumns[0][1].originalX;
 
     const totalVisibleOriginalWidth = visibleColumns.reduce((sum, [, info]) => sum + info.originalWidth, 0);
+    const scaleX = totalVisibleOriginalWidth > 0 ? totalAvailableWidth / totalVisibleOriginalWidth : 1;
     const newColumnLayout = new Map<string, { x: number; width: number }>();
     let currentX = firstColumnX;
 
@@ -257,13 +256,20 @@ export function GenericPrintPreviewModal({
     return currentPage.elements.map(el => {
       if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) return el;
       const columnKey = extractColumnKey(el.id);
-      if (!columnKey) return el;
+      // Non-column table elements (e.g., category headers) - scale proportionally
+      if (!columnKey) {
+        return {
+          ...el,
+          x: marginLeft + (el.x - oldLeftEdge) * scaleX,
+          width: el.width * scaleX,
+        };
+      }
       if (hiddenColumnsSet.has(columnKey)) return { ...el, visible: false };
       const newLayout = newColumnLayout.get(columnKey);
       if (newLayout) return { ...el, x: newLayout.x, width: newLayout.width, visible: true };
       return el;
     });
-  }, [pages, currentPageIndex, hiddenCanvasColumns]);
+  }, [pages, currentPageIndex, hiddenCanvasColumns, rulerState.margins]);
 
   const { columnWidths, tableDimensions } = useMemo(() => {
     const tableElements = visibleElements.filter(
