@@ -28,6 +28,9 @@ interface ResizableTableRowProps<T extends { _id: string }> {
 
     // Highlight support for search deep-linking
     isHighlighted?: boolean;
+
+    // Right-click context menu
+    onContextMenu?: (item: T, event: React.MouseEvent) => void;
 }
 
 export function ResizableTableRow<T extends { _id: string }>({
@@ -45,6 +48,7 @@ export function ResizableTableRow<T extends { _id: string }>({
     columnWidths,
     className = "",
     isHighlighted = false,
+    onContextMenu,
 }: ResizableTableRowProps<T>) {
     // Helper to get column width (use resized width if available, fallback to column config)
     const getColumnWidth = (column: ColumnConfig): number => {
@@ -64,6 +68,7 @@ export function ResizableTableRow<T extends { _id: string }>({
                 } ${isHighlighted ? "highlight-row-active" : ""} ${className}`}
             style={{ height: rowHeight }}
             onClick={(e) => onRowClick?.(data, e)}
+            onContextMenu={onContextMenu ? (e) => onContextMenu(data, e) : undefined}
         >
             {/* Checkbox */}
             <td

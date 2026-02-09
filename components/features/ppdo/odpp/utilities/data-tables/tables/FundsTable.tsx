@@ -54,6 +54,7 @@ interface FundsTableProps<T extends BaseFund> {
     onSelectAll?: (checked: boolean) => void;
     /** Callback to check if a row is highlighted (from useAutoScrollHighlight) */
     isHighlighted?: (id: string) => boolean;
+    onContextMenu?: (item: T, e: React.MouseEvent) => void;
 }
 
 // Totals Row Component
@@ -123,6 +124,7 @@ export function FundsTable<T extends BaseFund>({
     onSelectRow,
     onSelectAll,
     isHighlighted,
+    onContextMenu,
 }: FundsTableProps<T>) {
     // Map fundType to the correct table identifier used in backend defaults
     const tableIdentifier = fundType === 'trust' 
@@ -281,6 +283,7 @@ export function FundsTable<T extends BaseFund>({
                                     renderCell={(itm, col) => renderCell(itm as T, col)}
                                     renderActions={(itm) => renderActions(itm as T)}
                                     onRowClick={(rowItem, e) => onRowClick(rowItem as T, e)}
+                                    onContextMenu={onContextMenu ? (rowItem, e) => onContextMenu(rowItem as T, e) : undefined}
                                     onStartRowResize={startResizeRow}
                                     isSelected={selectedIds?.has(item.id)}
                                     onSelectRow={onSelectRow}

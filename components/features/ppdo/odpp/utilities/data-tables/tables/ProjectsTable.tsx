@@ -47,6 +47,7 @@ interface ProjectsTableProps {
     onSelectAll?: (checked: boolean) => void;
     onSelectCategory?: (projects: Project[], checked: boolean) => void;
     isHighlighted?: (id: string) => boolean;
+    onContextMenu?: (project: Project, e: React.MouseEvent) => void;
 }
 
 // Category header style helper
@@ -148,6 +149,7 @@ export function ProjectsTable({
     onSelectAll,
     onSelectCategory,
     isHighlighted,
+    onContextMenu,
 }: ProjectsTableProps) {
     const {
         columns: allColumns,
@@ -339,6 +341,7 @@ export function ProjectsTable({
                                             renderCell={renderCell}
                                             renderActions={renderActions}
                                             onRowClick={(item, e) => onRowClick(item as unknown as Project, e)}
+                                            onContextMenu={onContextMenu ? (item, e) => onContextMenu(item as unknown as Project, e) : undefined}
                                             onStartRowResize={startResizeRow}
                                             isSelected={selectedIds?.has(project.id)}
                                             onSelectRow={onSelectRow}

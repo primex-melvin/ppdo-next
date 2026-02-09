@@ -948,6 +948,7 @@ export function ProjectsTable({
                             onSelectAll={handleSelectAll}
                             onSelectCategory={handleSelectCategory}
                             isHighlighted={isHighlighted}
+                            onContextMenu={handleContextMenu}
                         />
                     </TabsContent>
 

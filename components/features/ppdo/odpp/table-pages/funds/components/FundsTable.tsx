@@ -388,6 +388,7 @@ export function FundsTable<T extends BaseFund>({
                                     }
                                 }}
                                 isHighlighted={isHighlighted}
+                                onContextMenu={handleContextMenu}
                             />
                         </div>
                     </div>

@@ -766,6 +766,7 @@ export function TwentyPercentDFTable({
                                 onSelectRow={handleSelectRow}
                                 onSelectAll={handleSelectAll}
                                 isHighlighted={isHighlighted}
+                                onContextMenu={handleContextMenu}
                             />
                         </div>
                     </div>
