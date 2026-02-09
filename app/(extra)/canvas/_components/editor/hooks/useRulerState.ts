@@ -7,7 +7,7 @@ import { RULER_STORAGE_KEY, DEFAULT_MARGINS } from '../constants';
 const DEFAULT_RULER_STATE: RulerState = {
   visible: false,
   showVertical: true,
-  showMarginGuides: false,
+  showMarginGuides: true,
   unit: 'inches',
   margins: { ...DEFAULT_MARGINS },
   indents: {

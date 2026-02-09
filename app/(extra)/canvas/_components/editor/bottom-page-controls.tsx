@@ -96,7 +96,7 @@ export default function BottomPageControls({
 
   return (
     <>
-      <div className="z-40 fixed ml-18 bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-sm">
+      <div className="z-40 fixed ml-18 bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-stone-200 dark:border-zinc-700 shadow-sm">
         <div className="flex items-center px-6 py-3 justify-between">
           <div className="flex items-center gap-2">
             {isEditorMode && (

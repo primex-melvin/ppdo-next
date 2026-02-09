@@ -506,19 +506,53 @@ export default function Canvas({
           />
         )}
 
-        {/* Marginal Guides */}
-        {showMarginGuides && (
-          <div
-            className="absolute inset-0 pointer-events-none z-[100]"
-            style={{
-              marginTop: `${(margins?.top || 0.5) * POINTS_PER_INCH}pt`,
-              marginBottom: `${(margins?.bottom || 0.5) * POINTS_PER_INCH}pt`,
-              marginLeft: `${(margins?.left || 0.5) * POINTS_PER_INCH}pt`,
-              marginRight: `${(margins?.right || 0.5) * POINTS_PER_INCH}pt`,
-              border: '1px dashed #3b82f6',
-              opacity: 0.5,
-            }}
-          />
+        {/* Margin Guides - visual overlays + dashed content boundary */}
+        {showMarginGuides && margins && (
+          <>
+            {/* Top margin overlay */}
+            <div
+              className="absolute top-0 left-0 right-0 pointer-events-none z-[100]"
+              style={{
+                height: `${margins.top}px`,
+                background: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(59,130,246,0.06) 3px, rgba(59,130,246,0.06) 6px)',
+              }}
+            />
+            {/* Bottom margin overlay */}
+            <div
+              className="absolute bottom-0 left-0 right-0 pointer-events-none z-[100]"
+              style={{
+                height: `${margins.bottom}px`,
+                background: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(59,130,246,0.06) 3px, rgba(59,130,246,0.06) 6px)',
+              }}
+            />
+            {/* Left margin overlay */}
+            <div
+              className="absolute top-0 bottom-0 left-0 pointer-events-none z-[100]"
+              style={{
+                width: `${margins.left}px`,
+                background: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(59,130,246,0.06) 3px, rgba(59,130,246,0.06) 6px)',
+              }}
+            />
+            {/* Right margin overlay */}
+            <div
+              className="absolute top-0 bottom-0 right-0 pointer-events-none z-[100]"
+              style={{
+                width: `${margins.right}px`,
+                background: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(59,130,246,0.06) 3px, rgba(59,130,246,0.06) 6px)',
+              }}
+            />
+            {/* Dashed border at content area edge */}
+            <div
+              className="absolute inset-0 pointer-events-none z-[100]"
+              style={{
+                marginTop: `${margins.top}px`,
+                marginBottom: `${margins.bottom}px`,
+                marginLeft: `${margins.left}px`,
+                marginRight: `${margins.right}px`,
+                border: '1px dashed rgba(59,130,246,0.35)',
+              }}
+            />
+          </>
         )}
       </div>
 

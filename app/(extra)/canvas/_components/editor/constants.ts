@@ -29,12 +29,12 @@ export const PAGE_SIZES_INCHES = {
   Long: { width: 8.5, height: 13 },
 } as const;
 
-// Default margins in pixels (approximately 1 inch = 72px)
+// Default margins in pixels (0.3 inches * 72 points/inch ≈ 22px)
 export const DEFAULT_MARGINS = {
-  left: 72,
-  right: 72,
-  top: 72,
-  bottom: 72,
+  left: 22,
+  right: 22,
+  top: 22,
+  bottom: 22,
 } as const;
 
 // Tab stop types

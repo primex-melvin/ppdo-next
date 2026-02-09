@@ -223,7 +223,7 @@ export default function HorizontalRuler({
   return (
     <div
       ref={rulerRef}
-      className="relative bg-stone-100 border-b border-stone-300 select-none overflow-hidden"
+      className="relative bg-stone-100 dark:bg-zinc-800 border-b border-stone-300 dark:border-zinc-700 select-none overflow-hidden"
       style={{
         height: RULER_HEIGHT,
         width: scaledWidth,

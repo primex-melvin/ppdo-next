@@ -16,7 +16,7 @@ import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/pri
 import { Page, HeaderFooter, ImageElement, CanvasElement } from '@/app/(extra)/canvas/_components/editor/types';
 import { PrintDataAdapter } from '@/lib/print/adapters/types';
 import { usePrintClipboard } from '@/app/(extra)/canvas/_components/editor/hooks/usePrintClipboard';
-import { getPageDimensions, RULER_WIDTH, RULER_HEIGHT } from '@/app/(extra)/canvas/_components/editor/constants';
+import { getPageDimensions, RULER_WIDTH, RULER_HEIGHT, POINTS_PER_INCH } from '@/app/(extra)/canvas/_components/editor/constants';
 import { TemplateSelector } from '@/components/features/ppdo/odpp/utilities/table/print-preview/TemplateSelector';
 import { TemplateApplicationModal } from '@/components/features/ppdo/odpp/utilities/table/print-preview/TemplateApplicationModal';
 import { ColumnVisibilityPanel } from '@/components/features/ppdo/odpp/utilities/table/print-preview/ColumnVisibilityPanel';
@@ -123,37 +123,39 @@ export function GenericPrintPreviewModal({
     return false;
   });
 
-  // Calculate canvas offset for ruler positioning
-  const updateCanvasOffset = useCallback(() => {
-    if (canvasContainerRef.current && canvasScrollRef.current) {
-      const scrollContainer = canvasScrollRef.current;
+  // Calculate canvas offset for ruler positioning using ResizeObserver
+  // This automatically handles: window resize, sidebar collapse/expand transitions, page size changes
+  useEffect(() => {
+    const scrollEl = canvasScrollRef.current;
+    if (!scrollEl) return;
+
+    const recalcOffset = () => {
       const currentPage = pages[currentPageIndex];
       if (!currentPage) return;
 
       const pageDimensions = getPageDimensions(currentPage.size, currentPage.orientation);
-      const containerWidth = scrollContainer.clientWidth;
+      const containerWidth = scrollEl.clientWidth;
       const canvasWidth = pageDimensions.width;
-
       const padding = 32; // px-8 padding
-      const canvasStartOffset = Math.max(padding, (containerWidth - canvasWidth) / 2);
+      setCanvasOffsetLeft(Math.max(padding, (containerWidth - canvasWidth) / 2));
+    };
 
-      setCanvasOffsetLeft(canvasStartOffset);
-    }
+    // Initial calculation
+    recalcOffset();
+
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(recalcOffset);
+    });
+    observer.observe(scrollEl);
+
+    return () => observer.disconnect();
   }, [pages, currentPageIndex]);
-
-  useEffect(() => {
-    updateCanvasOffset();
-    const handleResize = () => updateCanvasOffset();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [updateCanvasOffset]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('printPreview.panelCollapsed', isPanelCollapsed.toString());
     }
-    updateCanvasOffset();
-  }, [isPanelCollapsed, updateCanvasOffset]);
+  }, [isPanelCollapsed]);
 
   // Get data from adapter
   const adapterColumns = useMemo(() => adapter.getColumnDefinitions(), [adapter]);
@@ -374,6 +376,7 @@ export function GenericPrintPreviewModal({
           title: printableData.metadata?.title || 'Print Preview',
           subtitle: printableData.metadata?.subtitle,
           rowMarkers: (rowMarkers as RowMarker[] | undefined) || [],
+          margin: rulerState.margins.left,
         });
 
         let finalPages = result.pages;
@@ -680,6 +683,12 @@ export function GenericPrintPreviewModal({
     ? formatTimestamp(lastSavedTime)
     : '';
 
+  // Margin conversion: internal state is pixels, dropdown operates in inches
+  const currentMarginInches = rulerState.margins.left / POINTS_PER_INCH;
+  const handleMarginChangeInches = useCallback((inches: number) => {
+    setUniformMargins(inches * POINTS_PER_INCH);
+  }, [setUniformMargins]);
+
   // Handle document title change
   const handleTitleChange = useCallback(
     (newTitle: string) => {
@@ -712,12 +721,12 @@ export function GenericPrintPreviewModal({
           onToggleMarginGuides={toggleMarginGuides}
           pageOrientation={currentPage.orientation}
           pageSize={currentPage.size}
-          currentMargin={rulerState.margins.left}
-          onMarginChange={setUniformMargins}
+          currentMargin={currentMarginInches}
+          onMarginChange={handleMarginChangeInches}
         />
 
         {/* Inner Editor Toolbar */}
-        <div className="z-20 bg-stone-100 border-b border-stone-300 shadow-sm no-print">
+        <div className="z-20 bg-stone-100 dark:bg-zinc-800 border-b border-stone-300 dark:border-zinc-700 shadow-sm no-print">
           <Toolbar
             selectedElement={currentPage.elements.find(el => el.id === selectedElementId)}
             onUpdateElement={selectedElementId ? (updates) => updateElement(selectedElementId, updates) : undefined}
@@ -742,18 +751,18 @@ export function GenericPrintPreviewModal({
             onToggleRuler={toggleRulerVisibility}
             marginGuidesVisible={rulerState.showMarginGuides}
             onToggleMarginGuides={toggleMarginGuides}
-            currentMargin={rulerState.margins.left}
-            onMarginChange={setUniformMargins}
+            currentMargin={currentMarginInches}
+            onMarginChange={handleMarginChangeInches}
           />
         </div>
 
         {/* Rulers UI Block */}
         {rulerState.visible && (
-          <div className="sticky top-0 z-30 bg-stone-200 border-b border-stone-300 flex no-print">
+          <div className="sticky top-0 z-30 bg-stone-200 dark:bg-zinc-900 border-b border-stone-300 dark:border-zinc-700 flex no-print">
             {rulerState.showVertical && (
-              <div className="flex-shrink-0 bg-stone-200 border-r border-stone-300" style={{ width: RULER_WIDTH, height: RULER_HEIGHT }} />
+              <div className="flex-shrink-0 bg-stone-200 dark:bg-zinc-900 border-r border-stone-300 dark:border-zinc-700" style={{ width: RULER_WIDTH, height: RULER_HEIGHT }} />
             )}
-            <div className="flex-shrink-0 bg-stone-200 border-r border-stone-300 transition-all duration-300" style={{ width: isPanelCollapsed ? 48 : 280, height: RULER_HEIGHT }} />
+            <div className="flex-shrink-0 bg-stone-200 dark:bg-zinc-900 border-r border-stone-300 dark:border-zinc-700 transition-all duration-300" style={{ width: isPanelCollapsed ? 48 : 280, height: RULER_HEIGHT }} />
             <div ref={canvasContainerRef} className="flex-1 overflow-hidden flex justify-start" style={{ height: RULER_HEIGHT }}>
               <div style={{ marginLeft: Math.max(0, canvasOffsetLeft), transform: `translateX(${-scrollLeft}px)` }}>
                 <HorizontalRuler
@@ -768,13 +777,13 @@ export function GenericPrintPreviewModal({
                 />
               </div>
             </div>
-            <div className="w-64 flex-shrink-0 bg-stone-200 border-l border-stone-300" style={{ height: RULER_HEIGHT }} />
+            <div className="w-64 flex-shrink-0 bg-stone-200 dark:bg-zinc-900 border-l border-stone-300 dark:border-zinc-700" style={{ height: RULER_HEIGHT }} />
           </div>
         )}
 
         <div className="flex flex-1 overflow-hidden">
           {rulerState.visible && rulerState.showVertical && (
-            <div className="flex-shrink-0 bg-stone-100 border-r border-stone-300 overflow-hidden" style={{ width: RULER_WIDTH }}>
+            <div className="flex-shrink-0 bg-stone-100 dark:bg-zinc-800 border-r border-stone-300 dark:border-zinc-700 overflow-hidden" style={{ width: RULER_WIDTH }}>
               <div style={{ transform: `translateY(${-scrollTop}px)`, marginTop: 0 }}>
                 <VerticalRuler height={getPageDimensions(currentPage.size, currentPage.orientation).height} rulerState={rulerState} onMarginChange={updateMargin} scrollTop={0} showHeaderFooter={true} />
               </div>
@@ -796,7 +805,7 @@ export function GenericPrintPreviewModal({
             onToggleCollapse={() => setIsPanelCollapsed(!isPanelCollapsed)}
           />
 
-          <div className="flex-1 flex flex-col overflow-hidden bg-stone-50 min-w-0">
+          <div className="flex-1 flex flex-col overflow-hidden bg-stone-50 dark:bg-zinc-950 min-w-0">
             <div ref={canvasScrollRef} className="flex-1 overflow-y-auto overflow-x-auto flex items-start justify-center pt-4 pb-16 px-8" onScroll={(e) => { const target = e.target as HTMLDivElement; setScrollLeft(target.scrollLeft); setScrollTop(target.scrollTop); }}>
               <Canvas
                 page={{ ...currentPage, elements: visibleElements }}
@@ -817,7 +826,7 @@ export function GenericPrintPreviewModal({
               />
             </div>
 
-            <div className="border-t border-stone-200 bg-white flex-shrink-0">
+            <div className="border-t border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex-shrink-0">
               <BottomPageControls
                 currentPageIndex={currentPageIndex}
                 totalPages={pages.length}
@@ -837,7 +846,7 @@ export function GenericPrintPreviewModal({
           </div>
 
           {/* Page Panel (right side) */}
-          <div className="w-64 border-l border-stone-200 bg-zinc-50 flex-shrink-0 overflow-y-auto">
+          <div className="w-64 border-l border-stone-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex-shrink-0 overflow-y-auto">
             <PagePanel
               pages={pages}
               currentPageIndex={currentPageIndex}

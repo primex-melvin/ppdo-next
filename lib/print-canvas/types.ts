@@ -41,6 +41,7 @@ export interface ConversionConfig {
   title?: string;
   subtitle?: string;
   rowMarkers?: RowMarker[]; // Optional markers for category/group headers
+  margin?: number; // Uniform margin in pixels (default: 22px = 0.3")
 }
 
 /**

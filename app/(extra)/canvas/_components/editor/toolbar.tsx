@@ -221,7 +221,7 @@ export default function Toolbar({
   };
 
   return (
-    <div className="w-full bg-stone-100">
+    <div className="w-full bg-stone-100 dark:bg-zinc-800">
       <div className="flex items-center gap-2 px-4 py-2">
         {isEditorMode && (
           <>
@@ -231,8 +231,8 @@ export default function Toolbar({
 
             <Separator orientation="vertical" className="h-5" />
 
-            <div className="flex items-center gap-2 bg-white rounded-md border border-stone-300 px-2.5 py-1.5 shadow-sm">
-              <label className="text-xs text-stone-600 font-medium whitespace-nowrap">Background</label>
+            <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 rounded-md border border-stone-300 dark:border-zinc-700 px-2.5 py-1.5 shadow-sm">
+              <label className="text-xs text-stone-600 dark:text-stone-400 font-medium whitespace-nowrap">Background</label>
               <div className="flex items-center gap-1.5">
                 <input
                   type="color"

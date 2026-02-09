@@ -25,7 +25,8 @@ const PAGE_SIZES = {
 
 const HEADER_HEIGHT = 80;
 const FOOTER_HEIGHT = 60;
-const MARGIN = 20;
+// Module-level margin, set per-conversion from config. Default: 0.3" * 72 ≈ 22px
+let MARGIN = 22;
 // Minimum row heights (rows will expand if text wraps)
 const MIN_ROW_HEIGHT = 24;
 const MIN_HEADER_ROW_HEIGHT = 28;
@@ -54,6 +55,9 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
     subtitle,
     rowMarkers = [],
   } = config;
+
+  // Set module-level MARGIN from config (safe: synchronous, single-threaded)
+  MARGIN = config.margin ?? 22;
 
   const isLandscape = config.orientation === 'landscape';
   const baseSize = PAGE_SIZES[pageSize as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;

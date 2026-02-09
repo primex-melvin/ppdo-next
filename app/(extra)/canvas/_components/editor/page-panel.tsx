@@ -74,7 +74,7 @@ export default function PagePanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-50 overflow-hidden">
+    <div className="flex flex-col h-full bg-zinc-50 dark:bg-zinc-900 overflow-hidden">
       <div className="flex-1 overflow-y-auto p-2">
         <div className="space-y-2">
           {pages.map((page, index) => {
@@ -102,7 +102,7 @@ export default function PagePanel({
                     className={`
                       relative overflow-hidden rounded cursor-pointer transition-all
                       ${isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'}
-                      ${isActive ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white hover:bg-stone-100'}
+                      ${isActive ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'bg-white hover:bg-stone-100'}
                       ${isDropTarget ? 'ring-2 ring-blue-300' : ''}
                     `}
                     style={{
@@ -118,7 +118,7 @@ export default function PagePanel({
                     )}
 
                     <div
-                      className="absolute top-0 left-0 border border-stone-200"
+                      className="absolute top-0 left-0 border border-stone-200 dark:border-zinc-700"
                       style={{
                         width: `${size.width}px`,
                         height: `${size.height}px`,
@@ -327,7 +327,7 @@ export default function PagePanel({
         </div>
       </div>
 
-      <div className="border-t border-stone-200 p-3 flex-shrink-0 bg-white">
+      <div className="border-t border-stone-200 dark:border-zinc-700 p-3 flex-shrink-0 bg-white dark:bg-zinc-900">
         <Button
           onClick={onAddPage}
           size="sm"

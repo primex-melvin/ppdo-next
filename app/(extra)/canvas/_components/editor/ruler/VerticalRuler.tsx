@@ -164,7 +164,7 @@ export default function VerticalRuler({
   return (
     <div
       ref={rulerRef}
-      className="relative bg-stone-100 border-r border-stone-300 select-none overflow-hidden"
+      className="relative bg-stone-100 dark:bg-zinc-800 border-r border-stone-300 dark:border-zinc-700 select-none overflow-hidden"
       style={{
         width: RULER_WIDTH,
         height: totalHeight,
@@ -174,7 +174,7 @@ export default function VerticalRuler({
       {/* Header section background */}
       {showHeaderFooter && (
         <div
-          className="absolute left-0 right-0 bg-stone-200/50"
+          className="absolute left-0 right-0 bg-stone-200/50 dark:bg-zinc-700/50"
           style={{ top: 0, height: headerHeight }}
         />
       )}
@@ -191,7 +191,7 @@ export default function VerticalRuler({
       {/* Footer section background */}
       {showHeaderFooter && (
         <div
-          className="absolute left-0 right-0 bg-stone-200/50"
+          className="absolute left-0 right-0 bg-stone-200/50 dark:bg-zinc-700/50"
           style={{ top: headerHeight + bodyHeight, height: footerHeight }}
         />
       )}
