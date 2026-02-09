@@ -79,6 +79,7 @@ export interface UseBudgetTableSelectionReturn {
 export interface UseBudgetTableActionsReturn {
   contextMenu: BudgetContextMenuState | null;
   setContextMenu: (menu: BudgetContextMenuState | null) => void;
+  contextMenuRef: React.RefObject<HTMLDivElement | null>;
   isTogglingAutoCalculate: boolean;
   handleRowClick: (item: BudgetItem, e: React.MouseEvent) => void;
   handleContextMenu: (e: React.MouseEvent, item: BudgetItem) => void;

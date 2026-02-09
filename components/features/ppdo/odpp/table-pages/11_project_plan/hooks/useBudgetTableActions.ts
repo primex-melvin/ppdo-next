@@ -258,6 +258,7 @@ export function useBudgetTableActions(
   return {
     contextMenu,
     setContextMenu,
+    contextMenuRef,
     isTogglingAutoCalculate,
     handleRowClick,
     handleContextMenu,
