@@ -58,6 +58,7 @@ export function useParticularData({ particular, budgetItemId }: UseParticularDat
                 projectManagerId: project.projectManagerId,
                 _creationTime: project._creationTime,
                 autoCalculateBudgetUtilized: project.autoCalculateBudgetUtilized,
+                aipRefCode: project.aipRefCode,
             }))
             .sort((a, b) => (b._creationTime ?? 0) - (a._creationTime ?? 0)) ?? [];
 
