@@ -63,6 +63,7 @@ export function useAutoScrollHighlight(
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
   const hasScrolledRef = useRef<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup function to clear highlight
   const clearHighlight = useCallback(() => {
@@ -123,8 +124,16 @@ export function useAutoScrollHighlight(
     // Mark that we've started processing this highlight ID
     hasScrolledRef.current = highlightId;
 
+    // Clear any previous scroll timeout before starting a new one
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
     // Delay scroll slightly to ensure DOM is ready
-    const scrollTimeout = setTimeout(() => {
+    // IMPORTANT: We use a ref for this timeout so it survives effect re-runs.
+    // Previously, returning clearTimeout in the cleanup would cancel the scroll
+    // when dataIds changed during React re-renders, before the scroll could execute.
+    scrollTimeoutRef.current = setTimeout(() => {
       const elementId = `row-${highlightId}`;
       const element = document.getElementById(elementId);
 
@@ -184,9 +193,8 @@ export function useAutoScrollHighlight(
       }
     }, scrollDelay);
 
-    return () => {
-      clearTimeout(scrollTimeout);
-    };
+    // Don't return a cleanup that clears scrollTimeoutRef - it's managed via the ref
+    // and cleaned up on unmount below
   }, [
     highlightId,
     dataIds,
@@ -203,6 +211,9 @@ export function useAutoScrollHighlight(
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, []);

@@ -48,6 +48,8 @@ interface TwentyPercentDFTableProps {
     onSelectRow?: (id: string, checked: boolean) => void;
     onSelectAll?: (checked: boolean) => void;
     onSelectCategory?: (projects: TwentyPercentDF[], checked: boolean) => void;
+    /** Callback to check if a row is highlighted (from useAutoScrollHighlight) */
+    isHighlighted?: (id: string) => boolean;
 }
 
 // Category header style helper
@@ -122,6 +124,7 @@ export function TwentyPercentDFTable({
     onSelectRow,
     onSelectAll,
     onSelectCategory,
+    isHighlighted,
 }: TwentyPercentDFTableProps) {
     const {
         columns: allColumns,
@@ -317,6 +320,7 @@ export function TwentyPercentDFTable({
                                             onStartRowResize={startResizeRow}
                                             isSelected={selectedIds?.has(item.id)}
                                             onSelectRow={onSelectRow}
+                                            isHighlighted={isHighlighted?.(item.id)}
                                         />
                                     ))}
                                 </React.Fragment>

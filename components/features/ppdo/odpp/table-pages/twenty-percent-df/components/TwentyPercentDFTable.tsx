@@ -56,6 +56,7 @@ import { TwentyPercentDFKanban } from "./TwentyPercentDFKanban";
 // Tabs for view switching
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, Table as TableIcon } from "lucide-react";
+import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighlight";
 
 export function TwentyPercentDFTable({
     items: projects,
@@ -211,6 +212,12 @@ export function TwentyPercentDFTable({
         projectDelayed: totals.projectDelayed || 0,
         projectsOngoing: totals.projectsOngoing || 0,
     }), [totals]);
+
+    // Auto-scroll & highlight for search deep-linking (Search Engine V2)
+    const { isHighlighted } = useAutoScrollHighlight(
+        filteredAndSortedProjects.map(p => p.id),
+        { scrollDelay: 200 }
+    );
 
     // Selection state
     const isAllSelected = filteredAndSortedProjects.length > 0 &&
@@ -758,6 +765,7 @@ export function TwentyPercentDFTable({
                                 selectedIds={selectedIds}
                                 onSelectRow={handleSelectRow}
                                 onSelectAll={handleSelectAll}
+                                isHighlighted={isHighlighted}
                             />
                         </div>
                     </div>
