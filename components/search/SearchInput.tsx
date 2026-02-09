@@ -23,6 +23,7 @@ interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   onSuggestionSelect?: (suggestion: SuggestionItem) => void;
+  onSubmit?: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
@@ -31,6 +32,7 @@ export function SearchInput({
   value,
   onChange,
   onSuggestionSelect,
+  onSubmit,
   placeholder = "Search projects, departments, users...",
   className,
 }: SearchInputProps) {
@@ -88,6 +90,7 @@ export function SearchInput({
     isTypingRef.current = false;
     setLocalValue("");
     onChange("");
+    onSubmit?.("");
     setShowSuggestions(false);
     setSelectedIndex(-1);
     inputRef.current?.focus();
@@ -105,6 +108,25 @@ export function SearchInput({
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      // Always close suggestions on Enter
+      setShowSuggestions(false);
+
+      if (selectedIndex >= 0 && suggestions && suggestions[selectedIndex]) {
+        handleSuggestionClick(suggestions[selectedIndex] as SuggestionItem);
+      } else {
+        // No suggestion selected, just submit current value
+        // Ensure we clear any pending debounce and sync upward
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        onChange(localValue);
+        onSubmit?.(localValue);
+      }
+      return;
+    }
+
     if (!suggestions || suggestions.length === 0) return;
 
     switch (e.key) {
@@ -119,15 +141,6 @@ export function SearchInput({
       case "ArrowUp":
         e.preventDefault();
         setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-
-      case "Enter":
-        e.preventDefault();
-        // Always close suggestions on Enter, regardless of selection
-        setShowSuggestions(false);
-        if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-          handleSuggestionClick(suggestions[selectedIndex] as SuggestionItem);
-        }
         break;
 
       case "Escape":
@@ -183,38 +196,73 @@ export function SearchInput({
   };
 
   return (
-    <div className={cn("relative w-full", className)}>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-        <Input
-          ref={inputRef}
-          type="text"
-          value={localValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (localValue.length >= 2) {
-              setShowSuggestions(true);
+    <div className={cn("relative w-full max-w-xl mx-auto", className)}>
+      <div className="flex w-full items-center">
+        {/* Input Wrapper */}
+        <div className="relative flex-1">
+          {/* Mobile: Search Icon inside input on left (optional, YouTube doesn't usually do this on desktop but good for mobile) - actually let's stick to clean input */}
+          {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground hidden sm:block" /> */}
+
+          <Input
+            ref={inputRef}
+            type="text"
+            value={localValue}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => {
+              if (localValue.length >= 2) {
+                setShowSuggestions(true);
+              }
+            }}
+            placeholder={placeholder}
+            // YouTube Style: Rounded Left, Border, specific shadows
+            className={cn(
+              "rounded-l-full border border-zinc-300 dark:border-zinc-700",
+              "focus-visible:ring-1 focus-visible:ring-[#15803D] focus-visible:border-[#15803D]",
+              "pl-4 pr-10 h-10 shadow-inner dark:bg-[#121212]", // shadow-inner acts like that subtle depth
+              "border-r-0" // remove right border to merge with button
+            )}
+            aria-label="Search"
+            aria-autocomplete="list"
+            aria-controls="search-suggestions"
+            aria-expanded={showSuggestions}
+          />
+
+          {/* Clear Button - Inside Input */}
+          {localValue && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClear}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              aria-label="Clear search"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Search Button - Right Side */}
+        <Button
+          onClick={() => {
+            // Trigger submit manually
+            if (selectedIndex >= 0 && suggestions && suggestions[selectedIndex]) {
+              handleSuggestionClick(suggestions[selectedIndex] as SuggestionItem);
+            } else {
+              onChange(localValue);
+              onSubmit?.(localValue);
             }
           }}
-          placeholder={placeholder}
-          className="pl-10 pr-10 h-12 sm:h-14 text-base w-full"
+          className={cn(
+            "rounded-r-full rounded-l-none h-10 px-6",
+            "border border-l-0 border-zinc-300 dark:border-zinc-700",
+            "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700",
+            "text-zinc-600 dark:text-zinc-300"
+          )}
           aria-label="Search"
-          aria-autocomplete="list"
-          aria-controls="search-suggestions"
-          aria-expanded={showSuggestions}
-        />
-        {localValue && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 sm:h-9 sm:w-9"
-            aria-label="Clear search"
-          >
-            <X className="size-4" />
-          </Button>
-        )}
+        >
+          <Search className="size-5" />
+        </Button>
       </div>
 
       {/* Suggestions Dropdown */}
@@ -236,7 +284,7 @@ export function SearchInput({
                 "w-full px-4 py-3 sm:py-3.5 text-left flex items-center justify-between gap-3 transition-colors min-h-[48px]",
                 "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
                 index === selectedIndex &&
-                  "bg-accent text-accent-foreground dark:bg-accent/50"
+                "bg-accent text-accent-foreground dark:bg-accent/50"
               )}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">

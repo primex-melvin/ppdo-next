@@ -3,10 +3,11 @@
 import { useState, useRef } from "react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { SearchInput } from "@/components/search/SearchInput";
 import { Button } from "@/components/ui/button";
 import { Bug, Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,74 @@ interface HeaderProps {
   searchQuery?: string;
 }
 
+function HeaderSearch() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [value, setValue] = useState("");
+
+  // Sync with URL query param on mount or navigation
+  useEffect(() => {
+    const query = searchParams.get("q");
+    if (query !== null) {
+      setValue(query);
+    } else if (pathname !== "/search") {
+      // Clear value if navigating away from search (and no q param)
+      setValue("");
+    }
+  }, [searchParams, pathname]);
+
+  const handleSearchChange = (newValue: string) => {
+    setValue(newValue);
+
+    // Live update ONLY if on search page
+    if (pathname === "/search") {
+      const params = new URLSearchParams(searchParams.toString());
+      if (newValue) {
+        params.set("q", newValue);
+      } else {
+        params.delete("q");
+      }
+      // Replace to avoid cluttering history state while typing
+      router.replace(`/search?${params.toString()}`, { scroll: false });
+    }
+  };
+
+  const handleSubmit = (submittedValue: string) => {
+    // If NOT on search page, or if we want to force navigation/history push
+    if (pathname !== "/search") {
+      const params = new URLSearchParams();
+      if (submittedValue) {
+        params.set("q", submittedValue);
+      }
+      router.push(`/search?${params.toString()}`);
+    } else {
+      // Already on search page, effectively a no-op visually, 
+      // but we could treat it as a "fresh" search if needed.
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion: { text: string }) => {
+    // Navigate on select
+    const params = new URLSearchParams();
+    params.set("q", suggestion.text);
+    router.push(`/search?${params.toString()}`);
+  };
+
+  return (
+    <Suspense>
+      {/* Suspense boundary for useSearchParams */}
+      <SearchInput
+        value={value}
+        onChange={handleSearchChange}
+        onSubmit={handleSubmit}
+        onSuggestionSelect={handleSuggestionSelect}
+        className="w-full"
+      />
+    </Suspense>
+  );
+}
+
 export function Header({ onSearchChange, searchQuery }: HeaderProps) {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [accountModalTab, setAccountModalTab] = useState<"profile" | "security">("profile");
@@ -34,7 +103,7 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
   const { isMinimized, toggleMinimize } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
-  const [showBugReport, setShowBugReport] = useState(true);
+  const [showBugReport, setShowBugReport] = useState(false);
 
   // Concern Logic State
   const [isCapturing, setIsCapturing] = useState(false);
@@ -179,7 +248,7 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 py-4">
             {/* Left section - Sidebar Toggle, Welcome and User Name */}
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-4">
               {/* Sidebar Toggle Button */}
               <button
                 onClick={toggleMinimize}
@@ -211,7 +280,7 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
               </button>
 
               {/* Welcome Message */}
-              <div className="flex flex-col">
+              <div className="hidden md:flex flex-col">
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   Welcome back,
                 </span>
@@ -249,11 +318,11 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
                   {showBugReport ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
               </div>
+            </div>
 
-              {/* Migration Button - Admin only */}
-              {/* <div className="hidden sm:flex ml-2">
-                <MigrationContainer />
-              </div> */}
+            {/* Center - Search Bar */}
+            <div className="flex-1 max-w-2xl mx-auto px-4 lg:px-8">
+              <HeaderSearch />
             </div>
 
             {/* Right section - Actions */}
@@ -278,8 +347,8 @@ export function Header({ onSearchChange, searchQuery }: HeaderProps) {
       {showAccountModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="w-full max-w-5xl">
-            <AccountModal 
-              onClose={() => setShowAccountModal(false)} 
+            <AccountModal
+              onClose={() => setShowAccountModal(false)}
               initialTab={accountModalTab}
             />
           </div>

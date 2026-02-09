@@ -192,15 +192,7 @@ export default function SearchPage() {
               </Sheet>
             </div>
           </header>
-          
-          {/* Search Input - Full width on mobile */}
-          <div className="mb-4 sm:mb-6">
-            <SearchInput
-              value={query}
-              onChange={handleQueryChange}
-              onSuggestionSelect={handleSuggestionSelect}
-            />
-          </div>
+
 
           {/* Active Category Indicator & Results Count */}
           <div
