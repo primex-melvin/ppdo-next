@@ -619,6 +619,7 @@ export function BudgetTrackingTable({
                 onSelectRow={handleSelectRow}
                 onSelectAll={handleSelectAll}
                 isHighlighted={isHighlighted}
+                onContextMenu={(item, e) => handleContextMenu(e, item)}
               />
             </div>
           </TabsContent>

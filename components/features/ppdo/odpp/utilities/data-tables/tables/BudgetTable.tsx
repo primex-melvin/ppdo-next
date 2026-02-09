@@ -43,6 +43,7 @@ interface BudgetTableProps {
     onSelectAll?: (checked: boolean) => void;
     /** Callback to check if a row is highlighted (from useAutoScrollHighlight) */
     isHighlighted?: (id: string) => boolean;
+    onContextMenu?: (item: BudgetItem, e: React.MouseEvent) => void;
 }
 
 // Empty State Component
@@ -139,6 +140,7 @@ export function BudgetTable({
     onSelectRow,
     onSelectAll,
     isHighlighted,
+    onContextMenu,
 }: BudgetTableProps) {
     const {
         columns: allColumns,
@@ -282,6 +284,7 @@ export function BudgetTable({
                                     renderCell={renderCell}
                                     renderActions={renderActions}
                                     onRowClick={(rowItem, e) => onRowClick(rowItem as unknown as BudgetItem, e)}
+                                    onContextMenu={onContextMenu ? (rowItem, e) => onContextMenu(rowItem as unknown as BudgetItem, e) : undefined}
                                     onStartRowResize={startResizeRow}
                                     isSelected={selectedIds?.has(item.id)}
                                     onSelectRow={onSelectRow}
