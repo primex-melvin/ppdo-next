@@ -52,3 +52,6 @@ copy.txt
 
 # windows reserved device files
 nul
+
+# database backup
+/database-backup/
