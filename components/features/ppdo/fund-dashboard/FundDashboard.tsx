@@ -182,11 +182,6 @@ export function FundDashboard<TStats = Record<string, number>>({
         }
     };
 
-    // Handle access denied
-    if (!canAccess && renderAccessDenied) {
-        return <>{renderAccessDenied(accessCheck || null)}</>;
-    }
-
     // Handle loading state
     if (isLoading) {
         if (loadingContent) {
@@ -200,6 +195,11 @@ export function FundDashboard<TStats = Record<string, number>>({
                 </div>
             </div>
         );
+    }
+
+    // Handle access denied
+    if (!canAccess && renderAccessDenied) {
+        return <>{renderAccessDenied(accessCheck || null)}</>;
     }
 
     return (
