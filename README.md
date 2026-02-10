@@ -16,19 +16,87 @@ Built with **Next.js 16**, **Convex**, and **Tailwind CSS**. Designed for govern
 | [📊 Dashboard Docs](./app/dashboard/docs/README.md) | Main dashboard architecture, routing, modules |
 | [🧩 Components Docs](./components/ppdo/docs/README.md) | Reusable component library documentation |
 | [📁 Projects Module Docs](./app/dashboard/project/docs/README.md) | Detailed Projects module (Budget → Projects → Breakdowns → Details) |
-| [⚡ PowerShell Automation](./docs/POWERSHELL_AUTOMATION.md) | Automate deployment with push-staging command |
-| [🚀 Setup Guide](./docs/SETUP_GUIDE.md) | Development & production setup instructions |
+| [📖 Main Docs](./docs/README.md) | Complete documentation index |
+| [⚡ PowerShell Automation](./docs/00-getting-started/POWERSHELL_AUTOMATION.md) | Automate deployment with push-staging command |
+| [🚀 Setup Guide](./docs/00-getting-started/SETUP_GUIDE.md) | Development & production setup instructions |
 
 ---
 
 ## 📖 Full Documentation Index
 
-### General Documentation (`docs/`)
+### Getting Started (`docs/00-getting-started/`)
 
 | File | Topic |
 |------|-------|
-| [POWERSHELL_AUTOMATION.md](./docs/POWERSHELL_AUTOMATION.md) | PowerShell automation for deployment |
-| [SETUP_GUIDE.md](./docs/SETUP_GUIDE.md) | Development & production setup guide |
+| [SETUP_GUIDE.md](./docs/00-getting-started/SETUP_GUIDE.md) | Development & production setup guide |
+| [POWERSHELL_AUTOMATION.md](./docs/00-getting-started/POWERSHELL_AUTOMATION.md) | PowerShell automation for deployment |
+| [CONVEX_DATA_MIGRATION_LOCAL_VS_PROD.md](./docs/00-getting-started/CONVEX_DATA_MIGRATION_LOCAL_VS_PROD.md) | Data migration between environments |
+
+### Core Systems (`docs/01-core-systems/`)
+
+| File | Topic |
+|------|-------|
+| [computation-guides/README.md](./docs/01-core-systems/computation-guides/README.md) | Understanding the numbers in PPDO |
+| [01-budget-project-breakdown.md](./docs/01-core-systems/computation-guides/01-budget-project-breakdown.md) | Budget, Project & Breakdown calculations |
+| [02-trust-fund.md](./docs/01-core-systems/computation-guides/02-trust-fund.md) | Trust Fund calculations |
+| [03-special-health-fund.md](./docs/01-core-systems/computation-guides/03-special-health-fund.md) | Special Health Fund calculations |
+| [04-special-education-fund.md](./docs/01-core-systems/computation-guides/04-special-education-fund.md) | Special Education Fund calculations |
+| [05-twenty-percent-df.md](./docs/01-core-systems/computation-guides/05-twenty-percent-df.md) | 20% Development Fund calculations |
+
+### Feature Modules (`docs/02-feature-modules/`)
+
+| File | Topic |
+|------|-------|
+| [inspection-system.md](./docs/02-feature-modules/inspection-system.md) | Inspection module with image galleries |
+| [trash-hierarchy-system.md](./docs/02-feature-modules/trash-hierarchy-system.md) | Trash/recycle bin with recovery |
+
+### Technical Reference (`docs/03-technical-reference/`)
+
+| File | Topic |
+|------|-------|
+| [TABLE_SYSTEM_DOCUMENTATION.md](./docs/03-technical-reference/TABLE_SYSTEM_DOCUMENTATION.md) | Table system handover guide |
+| [TABLE_COLUMN_RESIZE_SYSTEM.md](./docs/03-technical-reference/TABLE_COLUMN_RESIZE_SYSTEM.md) | Column resize system documentation |
+| [PROTECTED_ROUTES_BREAKDOWN.md](./docs/03-technical-reference/PROTECTED_ROUTES_BREAKDOWN.md) | Protected dashboard routes |
+| [dashboard-analytics-data-flow.md](./docs/03-technical-reference/dashboard-analytics-data-flow.md) | Dashboard data flow |
+| [search-system/README.md](./docs/03-technical-reference/search-system/README.md) | Search system architecture |
+| [search-system/api-reference.md](./docs/03-technical-reference/search-system/api-reference.md) | Search API reference |
+| [search-system/DEVELOPER-GUIDE.md](./docs/03-technical-reference/search-system/DEVELOPER-GUIDE.md) | Search developer guide |
+| [search-system/hooks-reference.md](./docs/03-technical-reference/search-system/hooks-reference.md) | Search hooks reference |
+| [search-system/error-handling.md](./docs/03-technical-reference/search-system/error-handling.md) | Search error handling |
+| [search-system/component-examples.md](./docs/03-technical-reference/search-system/component-examples.md) | Search component examples |
+| [table-system/README.md](./docs/03-technical-reference/table-system/README.md) | Table system overview |
+| [table-system/01-architecture-overview.md](./docs/03-technical-reference/table-system/01-architecture-overview.md) | Table architecture |
+| [table-system/02-unified-table-toolbar.md](./docs/03-technical-reference/table-system/02-unified-table-toolbar.md) | Unified toolbar |
+| [table-system/03-table-toolbar-adapters.md](./docs/03-technical-reference/table-system/03-table-toolbar-adapters.md) | Toolbar adapters |
+| [table-system/04-domain-specific-toolbars.md](./docs/03-technical-reference/table-system/04-domain-specific-toolbars.md) | Domain toolbars |
+| [table-system/05-table-hooks.md](./docs/03-technical-reference/table-system/05-table-hooks.md) | Table hooks |
+| [table-system/06-column-visibility-system.md](./docs/03-technical-reference/table-system/06-column-visibility-system.md) | Column visibility |
+| [table-system/07-bulk-actions-system.md](./docs/03-technical-reference/table-system/07-bulk-actions-system.md) | Bulk actions |
+| [table-system/08-print-preview-toolbar.md](./docs/03-technical-reference/table-system/08-print-preview-toolbar.md) | Print preview |
+| [table-system/09-responsive-design-patterns.md](./docs/03-technical-reference/table-system/09-responsive-design-patterns.md) | Responsive tables |
+| [table-system/10-integration-guide.md](./docs/03-technical-reference/table-system/10-integration-guide.md) | Table integration |
+
+### Troubleshooting (`docs/04-troubleshooting/`)
+
+| File | Topic |
+|------|-------|
+| [password-reset/password-reset-system.md](./docs/04-troubleshooting/password-reset/password-reset-system.md) | Password reset system |
+| [password-reset/password-reset-bugfix-plan.md](./docs/04-troubleshooting/password-reset/password-reset-bugfix-plan.md) | Bug fix implementation |
+| [password-reset/password-reset-error-handling.md](./docs/04-troubleshooting/password-reset/password-reset-error-handling.md) | Error handling |
+| [password-reset/password-reset-attempt-bugfix.md](./docs/04-troubleshooting/password-reset/password-reset-attempt-bugfix.md) | Attempt bug fix |
+
+### Complete Feature Documentation (`docs/full-ppdo-docs/`)
+
+| File | Topic |
+|------|-------|
+| [README.md](./docs/full-ppdo-docs/README.md) | Complete feature catalog (132 features) |
+| [FEATURE-MATRIX.md](./docs/full-ppdo-docs/FEATURE-MATRIX.md) | Feature matrix by module |
+| [EXTRACTED_LEARNINGS.md](./docs/full-ppdo-docs/EXTRACTED_LEARNINGS.md) | Lessons from completed tasks |
+| [01-phase-foundation/README.md](./docs/full-ppdo-docs/01-phase-foundation/README.md) | Phase 1: Foundation & Auth |
+| [02-phase-projects/README.md](./docs/full-ppdo-docs/02-phase-projects/README.md) | Phase 2: Projects Module |
+| [03-phase-funds/README.md](./docs/full-ppdo-docs/03-phase-funds/README.md) | Phase 3: Funds Management |
+| [04-phase-advanced/README.md](./docs/full-ppdo-docs/04-phase-advanced/README.md) | Phase 4: Advanced Features |
+| [05-phase-enhancements/README.md](./docs/full-ppdo-docs/05-phase-enhancements/README.md) | Phase 5: Enhancements |
 
 ### Dashboard Documentation (`app/dashboard/docs/`)
 
@@ -158,6 +226,13 @@ ppdo-next/
 │   ├── schema.ts                 # Database schema
 │   ├── *.ts                      # Queries & mutations
 │   └── lib/                      # Shared backend code
+├── docs/                         # Documentation
+│   ├── 00-getting-started/       # Setup guides
+│   ├── 01-core-systems/          # Business logic
+│   ├── 02-feature-modules/       # Feature docs
+│   ├── 03-technical-reference/   # API & guides
+│   ├── 04-troubleshooting/       # Bug fixes
+│   └── full-ppdo-docs/           # Complete docs
 ├── lib/                          # Utilities
 ├── types/                        # TypeScript types
 └── ...
@@ -205,8 +280,3 @@ This project is maintained by the **PPDO Development Team**:
 ---
 
 *For detailed documentation, see the [Developer Docs Index](#-full-documentation-index) above.*
-
-
-## commit message
-
-create me a git commit -m (eg. "message") for all changes: powershell ready
