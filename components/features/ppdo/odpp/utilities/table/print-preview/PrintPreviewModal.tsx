@@ -8,6 +8,7 @@ import { ConfirmationModal } from "@/components/features/ppdo/odpp/table-pages/1
 import { TemplateSelector } from './TemplateSelector';
 import { TemplateApplicationModal } from './TemplateApplicationModal';
 import { ColumnVisibilityPanel } from './ColumnVisibilityPanel';
+import { TextAlign } from './JustifyDropdown';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
@@ -95,6 +96,9 @@ export function PrintPreviewModal({
   const [hiddenCanvasColumns, setHiddenCanvasColumns] = useState<Set<string>>(new Set());
   // Version counter to force React re-renders when Set changes (React doesn't detect Set mutations)
   const [hiddenColumnsVersion, setHiddenColumnsVersion] = useState(0);
+
+  // --- Text Alignment State ---
+  const [textAlign, setTextAlign] = useState<TextAlign>('left');
 
   // --- Column Label Overrides (for inline renaming) ---
   const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
@@ -260,6 +264,7 @@ export function PrintPreviewModal({
       const columnKey = extractColumnKey(el.id);
 
       // Non-column table elements (e.g., category headers) - scale proportionally
+      // Category headers never get textAlign applied
       if (!columnKey) {
         return {
           ...el,
@@ -273,20 +278,21 @@ export function PrintPreviewModal({
         return { ...el, visible: false };
       }
 
-      // Reposition and resize visible columns
+      // Reposition and resize visible columns, apply textAlign
       const newLayout = newColumnLayout.get(columnKey);
       if (newLayout) {
         return {
           ...el,
           x: newLayout.x,
           width: newLayout.width,
-          visible: true
+          visible: true,
+          ...(textAlign !== 'left' && el.type === 'text' ? { textAlign } : {}),
         };
       }
 
-      return el;
+      return el.type === 'text' && textAlign !== 'left' ? { ...el, textAlign } : el;
     });
-  }, [state.currentPage.elements, hiddenCanvasColumns, state.currentPage.size, state.currentPage.orientation, rulerState.margins]);
+  }, [state.currentPage.elements, hiddenCanvasColumns, state.currentPage.size, state.currentPage.orientation, rulerState.margins, textAlign]);
 
   // Calculate column widths and table dimensions from visible elements
   const { columnWidths, tableDimensions } = useMemo(() => {
@@ -427,10 +433,11 @@ export function PrintPreviewModal({
 
   // Initialize from table data with template and orientation
   const initializeFromTableData = useCallback(
-    (template?: CanvasTemplate | null, orientation: 'portrait' | 'landscape' = 'portrait') => {
+    (template?: CanvasTemplate | null, orientation: 'portrait' | 'landscape' = 'portrait', includeCoverPage: boolean = true) => {
       console.group('ðŸŽ¨ INITIALIZING PRINT PREVIEW');
       console.log('Template:', template?.name || 'none');
       console.log('Orientation:', orientation);
+      console.log('Include Cover Page:', includeCoverPage);
 
       try {
         const result = convertTableToCanvas({
@@ -442,8 +449,8 @@ export function PrintPreviewModal({
           orientation: orientation,
           includeHeaders: true,
           includeTotals: true,
-          title: `Budget Tracking ${year}`,
-          subtitle: particular ? `Particular: ${particular}` : undefined,
+          title: includeCoverPage ? `Budget Tracking ${year}` : undefined,
+          subtitle: includeCoverPage && particular ? `Particular: ${particular}` : undefined,
           rowMarkers,
           margin: rulerState.margins.left,
         });
@@ -488,13 +495,13 @@ export function PrintPreviewModal({
   );
 
   // âœ… Handler: Called when user finishes the Setup Wizard
-  const handleSetupComplete = useCallback((result: { template: CanvasTemplate | null, orientation: 'portrait' | 'landscape' }) => {
+  const handleSetupComplete = useCallback((result: { template: CanvasTemplate | null, orientation: 'portrait' | 'landscape', includeCoverPage: boolean }) => {
     console.log('ðŸŽ¯ Setup complete, closing modal and initializing...');
     setShowSetupModal(false);
 
     // Defer slightly to allow modal unmount animation to start cleanly
     setTimeout(() => {
-      initializeFromTableData(result.template, result.orientation);
+      initializeFromTableData(result.template, result.orientation, result.includeCoverPage);
     }, 100);
   }, [initializeFromTableData]);
 
@@ -721,6 +728,8 @@ export function PrintPreviewModal({
           pageSize={state.currentPage.size}
           currentMargin={currentMarginInches}
           onMarginChange={handleMarginChangeInches}
+          textAlign={textAlign}
+          onTextAlignChange={setTextAlign}
         />
 
         {/* Inner Editor Toolbar (moved up for alignment) */}

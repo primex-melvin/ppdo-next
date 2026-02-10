@@ -73,6 +73,7 @@ export default function TextElementComponent({
       textShadow: element.shadow ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
       WebkitTextStroke: element.outline ? '0.5px rgba(0,0,0,0.5)' : 'none',
       lineHeight: element.lineHeight ?? 'normal', // Apply line height multiplier
+      textAlign: element.textAlign || 'left',
     };
 
     const googleFonts = ['Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat'];

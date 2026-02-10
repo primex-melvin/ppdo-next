@@ -11,7 +11,8 @@
       "Bash(ls:*)",
       "Bash(tree:*)",
       "Bash(npx next build:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(del \"c:\\\\ppdo\\\\ppdo-next\\\\PLAN.md\")"
     ]
   }
 }

@@ -20,6 +20,7 @@ import { getPageDimensions, RULER_WIDTH, RULER_HEIGHT, POINTS_PER_INCH } from '@
 import { TemplateSelector } from '@/components/features/ppdo/odpp/utilities/table/print-preview/TemplateSelector';
 import { TemplateApplicationModal } from '@/components/features/ppdo/odpp/utilities/table/print-preview/TemplateApplicationModal';
 import { ColumnVisibilityPanel } from '@/components/features/ppdo/odpp/utilities/table/print-preview/ColumnVisibilityPanel';
+import { TextAlign } from '@/components/features/ppdo/odpp/utilities/table/print-preview/JustifyDropdown';
 import { HorizontalRuler, VerticalRuler } from '@/app/(extra)/canvas/_components/editor/ruler';
 import { useRulerState } from '@/app/(extra)/canvas/_components/editor/hooks/useRulerState';
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
@@ -111,6 +112,9 @@ export function GenericPrintPreviewModal({
   const [canvasOffsetLeft, setCanvasOffsetLeft] = useState(0);
   const canvasScrollRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+
+  // --- Text Alignment State ---
+  const [textAlign, setTextAlign] = useState<TextAlign>('left');
 
   // --- Column Visibility State ---
   const [hiddenCanvasColumns, setHiddenCanvasColumns] = useState<Set<string>>(new Set());
@@ -260,6 +264,7 @@ export function GenericPrintPreviewModal({
       if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) return el;
       const columnKey = extractColumnKey(el.id);
       // Non-column table elements (e.g., category headers) - scale proportionally
+      // Category headers never get textAlign applied
       if (!columnKey) {
         return {
           ...el,
@@ -269,10 +274,16 @@ export function GenericPrintPreviewModal({
       }
       if (hiddenColumnsSet.has(columnKey)) return { ...el, visible: false };
       const newLayout = newColumnLayout.get(columnKey);
-      if (newLayout) return { ...el, x: newLayout.x, width: newLayout.width, visible: true };
-      return el;
+      if (newLayout) return {
+        ...el,
+        x: newLayout.x,
+        width: newLayout.width,
+        visible: true,
+        ...(textAlign !== 'left' && el.type === 'text' ? { textAlign } : {}),
+      };
+      return el.type === 'text' && textAlign !== 'left' ? { ...el, textAlign } : el;
     });
-  }, [pages, currentPageIndex, hiddenCanvasColumns, rulerState.margins]);
+  }, [pages, currentPageIndex, hiddenCanvasColumns, rulerState.margins, textAlign]);
 
   const { columnWidths, tableDimensions } = useMemo(() => {
     const tableElements = visibleElements.filter(
@@ -362,7 +373,7 @@ export function GenericPrintPreviewModal({
 
   // ðŸŽ¨ Initialize canvas from data with optional template and orientation
   const initializeFromTableData = useCallback(
-    (template: CanvasTemplate | null = null, orientation: 'portrait' | 'landscape' = 'portrait') => {
+    (template: CanvasTemplate | null = null, orientation: 'portrait' | 'landscape' = 'portrait', includeCoverPage: boolean = true) => {
       try {
         const printableData = adapter.toPrintableData();
         const columns = adapter.getColumnDefinitions();
@@ -385,8 +396,8 @@ export function GenericPrintPreviewModal({
           orientation: orientation,
           includeHeaders: true,
           includeTotals: true,
-          title: printableData.metadata?.title || 'Print Preview',
-          subtitle: printableData.metadata?.subtitle,
+          title: includeCoverPage ? (printableData.metadata?.title || 'Print Preview') : undefined,
+          subtitle: includeCoverPage ? printableData.metadata?.subtitle : undefined,
           rowMarkers: (rowMarkers as RowMarker[] | undefined) || [],
           margin: rulerState.margins.left,
         });
@@ -426,10 +437,10 @@ export function GenericPrintPreviewModal({
     [adapter, hiddenColumns]
   );
 
-  const handleSetupComplete = useCallback((result: { template: CanvasTemplate | null, orientation: 'portrait' | 'landscape' }) => {
+  const handleSetupComplete = useCallback((result: { template: CanvasTemplate | null, orientation: 'portrait' | 'landscape', includeCoverPage: boolean }) => {
     setShowSetupModal(false);
     setTimeout(() => {
-      initializeFromTableData(result.template, result.orientation);
+      initializeFromTableData(result.template, result.orientation, result.includeCoverPage);
     }, 100);
   }, [initializeFromTableData]);
 
@@ -735,6 +746,8 @@ export function GenericPrintPreviewModal({
           pageSize={currentPage.size}
           currentMargin={currentMarginInches}
           onMarginChange={handleMarginChangeInches}
+          textAlign={textAlign}
+          onTextAlignChange={setTextAlign}
         />
 
         {/* Inner Editor Toolbar */}

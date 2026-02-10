@@ -174,7 +174,7 @@ export function PageOrientationTab({
           </span>
           <Button onClick={handleConfirm} className="bg-[#15803D] hover:bg-[#15803D]/90 text-white px-6">
             <Check className="w-4 h-4 mr-2" />
-            Finish & Create Preview
+            Continue
           </Button>
         </div>
       </ResizableModalFooter>

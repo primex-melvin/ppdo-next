@@ -18,6 +18,7 @@ import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/te
 import { useTemplateStorage } from '@/app/(extra)/canvas/_components/editor/hooks/useTemplateStorage';
 import { toast } from 'sonner';
 import { PageOrientationTab } from './PageOrientationTab';
+import { CoverPageTab } from './CoverPageTab';
 
 import TemplateCreator from '@/app/(extra)/canvas/_components/TemplateCreator';
 
@@ -25,10 +26,10 @@ import TemplateCreator from '@/app/(extra)/canvas/_components/TemplateCreator';
 interface TemplateSelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  onComplete: (result: { template: CanvasTemplate | null; orientation: 'portrait' | 'landscape' }) => void;
+  onComplete: (result: { template: CanvasTemplate | null; orientation: 'portrait' | 'landscape'; includeCoverPage: boolean }) => void;
 }
 
-type SetupStep = 'template' | 'orientation' | 'canvas-editor';
+type SetupStep = 'template' | 'orientation' | 'cover-page' | 'canvas-editor';
 
 export function TemplateSelector({ isOpen, onClose, onComplete }: TemplateSelectorProps) {
   const { templates, deleteTemplate, duplicateTemplate, refreshTemplates } = useTemplateStorage();
@@ -36,6 +37,7 @@ export function TemplateSelector({ isOpen, onClose, onComplete }: TemplateSelect
   // Setup State
   const [step, setStep] = useState<SetupStep>('template');
   const [selectedTemplate, setSelectedTemplate] = useState<CanvasTemplate | null>(null);
+  const [selectedOrientation, setSelectedOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
   // UI State for Template Grid
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -70,9 +72,15 @@ export function TemplateSelector({ isOpen, onClose, onComplete }: TemplateSelect
     setStep('orientation');
   };
 
-  const handleFinalize = (orientation: 'portrait' | 'landscape') => {
-    console.log('🎉 Setup complete:', { template: selectedTemplate?.name, orientation });
-    onComplete({ template: selectedTemplate, orientation });
+  const handleOrientationSelected = (orientation: 'portrait' | 'landscape') => {
+    console.log('📐 Orientation selected, moving to cover page:', orientation);
+    setSelectedOrientation(orientation);
+    setStep('cover-page');
+  };
+
+  const handleFinalize = (includeCoverPage: boolean) => {
+    console.log('🎉 Setup complete:', { template: selectedTemplate?.name, orientation: selectedOrientation, includeCoverPage });
+    onComplete({ template: selectedTemplate, orientation: selectedOrientation, includeCoverPage });
   };
 
   // --- Template Grid Actions ---
@@ -122,6 +130,7 @@ export function TemplateSelector({ isOpen, onClose, onComplete }: TemplateSelect
         return { width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh' };
       case 'template':
         return { width: '1200px', height: '800px', maxWidth: '95vw', maxHeight: '90vh' };
+      case 'cover-page':
       case 'orientation':
       default:
         return { width: '800px', height: '600px', maxWidth: '95vw', maxHeight: '90vh' };
@@ -244,12 +253,18 @@ export function TemplateSelector({ isOpen, onClose, onComplete }: TemplateSelect
               </div>
             </ResizableModalFooter>
           </>
-        ) : (
+        ) : step === 'orientation' ? (
           /* Step 2: Page Orientation */
           <PageOrientationTab
             onBack={() => setStep('template')}
-            onSelectOrientation={handleFinalize}
+            onSelectOrientation={handleOrientationSelected}
             defaultOrientation={selectedTemplate?.page.orientation || 'portrait'}
+          />
+        ) : (
+          /* Step 3: Cover Page */
+          <CoverPageTab
+            onBack={() => setStep('orientation')}
+            onSelect={handleFinalize}
           />
         )}
       </ResizableModalContent>

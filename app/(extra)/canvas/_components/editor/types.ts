@@ -18,6 +18,7 @@ export interface TextElement {
   width: number;
   height: number;
   lineHeight?: number; // Line height multiplier (e.g., 1.2)
+  textAlign?: 'left' | 'center' | 'right';
   locked?: boolean;
   visible?: boolean;
   groupId?: string;

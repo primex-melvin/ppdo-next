@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { MarginDropdown } from '@/app/(extra)/canvas/_components/editor/margin-dropdown';
+import { JustifyDropdown, TextAlign } from './JustifyDropdown';
 
 interface PrintPreviewToolbarProps {
   documentTitle: string;
@@ -33,6 +34,8 @@ interface PrintPreviewToolbarProps {
   pageSize?: string;
   currentMargin?: number;
   onMarginChange?: (value: number) => void;
+  textAlign?: TextAlign;
+  onTextAlignChange?: (align: TextAlign) => void;
 }
 
 
@@ -56,6 +59,8 @@ export function PrintPreviewToolbar({
   pageSize = 'A4',
   currentMargin,
   onMarginChange,
+  textAlign,
+  onTextAlignChange,
 }: PrintPreviewToolbarProps) {
 
   return (
@@ -122,6 +127,11 @@ export function PrintPreviewToolbar({
 
         {/* --- DESKTOP ACTIONS --- */}
         <div className="hidden md:flex items-center gap-2">
+          {/* Text Alignment Dropdown */}
+          {textAlign && onTextAlignChange && (
+            <JustifyDropdown value={textAlign} onChange={onTextAlignChange} />
+          )}
+
           {/* Ruler Toggle Button */}
           {onToggleRuler && (
             <TooltipProvider>
@@ -214,6 +224,10 @@ export function PrintPreviewToolbar({
                 <TooltipContent>Save Draft</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+          )}
+
+          {textAlign && onTextAlignChange && (
+            <JustifyDropdown value={textAlign} onChange={onTextAlignChange} />
           )}
 
           <ResponsiveMoreMenu>

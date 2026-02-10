@@ -674,6 +674,8 @@ const createSectionDOM = (
       const textColor = convertColorToRGB(element.color, '#000000', false);
       textEl.style.setProperty('color', textColor, 'important');
       textEl.style.color = textColor;
+      // Text alignment
+      textEl.style.textAlign = element.textAlign || 'left';
       // CRITICAL: Preserve whitespace and spacing - prevents space collapse in html2canvas
       textEl.style.whiteSpace = 'pre-wrap';
       textEl.style.wordBreak = 'break-word';
