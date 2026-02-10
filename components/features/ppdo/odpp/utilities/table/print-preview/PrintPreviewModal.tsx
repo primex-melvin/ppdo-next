@@ -155,144 +155,89 @@ export function PrintPreviewModal({
     }))
   }], [columns, columnLabelOverrides]);
 
-  // Filter and redistribute canvas elements based on hidden columns and margins
-  const visibleElements = useMemo(() => {
-    // Group elements by row (same Y position) to identify table structure
-    const tableElements = state.currentPage.elements.filter(
+  // Helper: Extract column key from any table element ID
+  const extractColumnKey = useCallback((id: string): string | null => {
+    if (id.startsWith('category-')) return null;
+    const patterns = [
+      /cell-\w+-(\w+)-/, /header-(\w+)-/, /total-(\w+)-/,
+      /cell-\w+-(\w+)$/, /header-(\w+)$/, /total-(\w+)$/,
+    ];
+    for (const pattern of patterns) {
+      const match = id.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  }, []);
+
+  // Helper: Transform a page's elements with column hiding, margin repositioning, textAlign
+  const transformPageElements = useCallback((elements: import('@/app/(extra)/canvas/_components/editor/types').CanvasElement[], pageSizeStr: string, orientation: string) => {
+    const tableElements = elements.filter(
       el => el.groupId && el.groupName?.toLowerCase().includes('table')
     );
+    if (tableElements.length === 0) return elements;
 
-    if (tableElements.length === 0) {
-      return state.currentPage.elements;
-    }
-
-    // Helper function to extract column key from any table element ID
-    const extractColumnKey = (id: string): string | null => {
-      // Category headers span the full table width — they are NOT column-specific
-      if (id.startsWith('category-')) return null;
-
-      // Match patterns: cell-xxx-COLUMNKEY-xxx, header-COLUMNKEY-xxx, total-COLUMNKEY-xxx
-      const patterns = [
-        /cell-\w+-(\w+)-/,           // Data cells: cell-123-particular-456
-        /header-(\w+)-/,              // Headers: header-particular-123
-        /total-(\w+)-/,               // Totals: total-particular-123
-        /cell-\w+-(\w+)$/,            // Alternative: cell-123-particular
-        /header-(\w+)$/,              // Alternative: header-particular
-        /total-(\w+)$/,               // Alternative: total-particular
-      ];
-
-      for (const pattern of patterns) {
-        const match = id.match(pattern);
-        if (match) return match[1];
-      }
-
-      return null;
-    };
-
-    // Get unique columns from element IDs
     const columnInfo = new Map<string, { key: string; originalX: number; originalWidth: number }>();
     tableElements.forEach(el => {
       const columnKey = extractColumnKey(el.id);
       if (columnKey && !columnInfo.has(columnKey)) {
-        columnInfo.set(columnKey, {
-          key: columnKey,
-          originalX: el.x,
-          originalWidth: el.width
-        });
+        columnInfo.set(columnKey, { key: columnKey, originalX: el.x, originalWidth: el.width });
       }
     });
 
-    // Determine visible columns
     const allColumns = Array.from(columnInfo.entries()).sort((a, b) => a[1].originalX - b[1].originalX);
     const visibleColumns = allColumns.filter(([key]) => !hiddenCanvasColumns.has(`main-table.${key}`));
     const hiddenColumnsSet = new Set(allColumns.filter(([key]) => hiddenCanvasColumns.has(`main-table.${key}`)).map(([key]) => key));
 
-    if (visibleColumns.length === 0) {
-      return state.currentPage.elements;
-    }
+    if (visibleColumns.length === 0) return elements;
 
-    // Calculate total available width based on current ruler margins
-    const pageSize = state.currentPage.size || 'A4';
-    const orientation = state.currentPage.orientation || 'portrait';
     const marginLeft = rulerState.margins.left;
     const marginRight = rulerState.margins.right;
-
-    const PAGE_SIZES = {
-      A4: { width: 595, height: 842 },
-      Short: { width: 612, height: 792 },
-      Long: { width: 612, height: 936 },
-    };
-
-    const baseSize = PAGE_SIZES[pageSize as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;
-    const size = orientation === 'landscape'
-      ? { width: baseSize.height, height: baseSize.width }
-      : baseSize;
-
+    const PAGE_SIZES = { A4: { width: 595, height: 842 }, Short: { width: 612, height: 792 }, Long: { width: 612, height: 936 } };
+    const baseSize = PAGE_SIZES[pageSizeStr as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;
+    const size = orientation === 'landscape' ? { width: baseSize.height, height: baseSize.width } : baseSize;
     const totalAvailableWidth = size.width - marginLeft - marginRight;
     const firstColumnX = marginLeft;
     const oldLeftEdge = allColumns[0][1].originalX;
-
-    // Create new width and position map for visible columns
-    // Distribute full available width among visible columns proportionally
     const totalVisibleOriginalWidth = visibleColumns.reduce((sum, [, info]) => sum + info.originalWidth, 0);
+    const scaleX = totalVisibleOriginalWidth > 0 ? totalAvailableWidth / totalVisibleOriginalWidth : 1;
     const newColumnLayout = new Map<string, { x: number; width: number }>();
     let currentX = firstColumnX;
-
     visibleColumns.forEach(([key, info]) => {
-      // Proportional width based on original weight
       const widthRatio = info.originalWidth / totalVisibleOriginalWidth;
-      const newWidth = totalAvailableWidth * widthRatio;
-
-      newColumnLayout.set(key, {
-        x: currentX,
-        width: newWidth
-      });
-      currentX += newWidth;
+      newColumnLayout.set(key, { x: currentX, width: totalAvailableWidth * widthRatio });
+      currentX += totalAvailableWidth * widthRatio;
     });
 
-    // Scale factor for non-column table elements (e.g., category headers)
-    const scaleX = totalVisibleOriginalWidth > 0 ? totalAvailableWidth / totalVisibleOriginalWidth : 1;
-
-    // Apply transformations to elements
-    return state.currentPage.elements.map(el => {
-      // Non-table elements pass through unchanged
-      if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) {
-        return el;
-      }
-
-      // Extract column key from element ID
+    return elements.map(el => {
+      if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) return el;
       const columnKey = extractColumnKey(el.id);
-
-      // Non-column table elements (e.g., category headers) - scale proportionally
-      // Category headers never get textAlign applied
       if (!columnKey) {
-        return {
-          ...el,
-          x: marginLeft + (el.x - oldLeftEdge) * scaleX,
-          width: el.width * scaleX,
-        };
+        return { ...el, x: marginLeft + (el.x - oldLeftEdge) * scaleX, width: el.width * scaleX };
       }
-
-      // Hide if column is hidden
-      if (hiddenColumnsSet.has(columnKey)) {
-        return { ...el, visible: false };
-      }
-
-      // Reposition and resize visible columns, apply textAlign
+      if (hiddenColumnsSet.has(columnKey)) return { ...el, visible: false };
       const newLayout = newColumnLayout.get(columnKey);
       if (newLayout) {
         return {
-          ...el,
-          x: newLayout.x,
-          width: newLayout.width,
-          visible: true,
+          ...el, x: newLayout.x, width: newLayout.width, visible: true,
           ...(textAlign !== 'left' && el.type === 'text' ? { textAlign } : {}),
         };
       }
-
       return el.type === 'text' && textAlign !== 'left' ? { ...el, textAlign } : el;
     });
-  }, [state.currentPage.elements, hiddenCanvasColumns, state.currentPage.size, state.currentPage.orientation, rulerState.margins, textAlign]);
+  }, [extractColumnKey, hiddenCanvasColumns, rulerState.margins, textAlign]);
+
+  // Filter and redistribute canvas elements based on hidden columns and margins (current page only - for preview)
+  const visibleElements = useMemo(() => {
+    return transformPageElements(state.currentPage.elements, state.currentPage.size || 'A4', state.currentPage.orientation || 'portrait');
+  }, [state.currentPage.elements, state.currentPage.size, state.currentPage.orientation, transformPageElements]);
+
+  // Processed pages: apply the same transformations to ALL pages (for PDF export WYSIWYG)
+  const processedPages = useMemo(() => {
+    return state.pages.map(page => ({
+      ...page,
+      elements: transformPageElements(page.elements, page.size || 'A4', page.orientation || 'portrait'),
+    }));
+  }, [state.pages, transformPageElements]);
 
   // Calculate column widths and table dimensions from visible elements
   const { columnWidths, tableDimensions } = useMemo(() => {
@@ -750,9 +695,10 @@ export function PrintPreviewModal({
             onHeaderBackgroundChange={actions.updateHeaderBackground}
             onFooterBackgroundChange={actions.updateFooterBackground}
             onPageBackgroundChange={actions.updatePageBackground}
-            pages={state.pages}
+            pages={processedPages}
             header={state.header}
             footer={state.footer}
+            documentTitle={state.documentTitle}
             isEditorMode={isEditorMode}
             rulerVisible={rulerState.visible}
             onToggleRuler={toggleRulerVisibility}

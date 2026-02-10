@@ -44,6 +44,7 @@ interface ToolbarProps {
   pages: Page[];
   header: HeaderFooter;
   footer: HeaderFooter;
+  documentTitle?: string;
   isEditorMode?: boolean;
   rulerVisible?: boolean;
   onToggleRuler?: () => void;
@@ -96,6 +97,7 @@ export default function Toolbar({
   pages,
   header,
   footer,
+  documentTitle,
   isEditorMode = true,
   rulerVisible = false,
   onToggleRuler,
@@ -506,6 +508,7 @@ export default function Toolbar({
         pages={pages}
         header={header}
         footer={footer}
+        documentTitle={documentTitle}
       />
     </div>
   );
