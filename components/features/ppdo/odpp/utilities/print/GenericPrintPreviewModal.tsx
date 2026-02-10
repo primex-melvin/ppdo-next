@@ -186,6 +186,9 @@ export function GenericPrintPreviewModal({
     }
 
     const extractColumnKey = (id: string): string | null => {
+      // Category headers span the full table width — they are NOT column-specific
+      if (id.startsWith('category-')) return null;
+
       const patterns = [
         /cell-\w+-(\w+)-/,
         /header-(\w+)-/,
@@ -281,6 +284,9 @@ export function GenericPrintPreviewModal({
     }
 
     const extractColumnKey = (id: string): string | null => {
+      // Category headers span the full table width — they are NOT column-specific
+      if (id.startsWith('category-')) return null;
+
       const patterns = [/cell-\w+-(\w+)-/, /header-(\w+)-/, /total-(\w+)-/, /cell-\w+-(\w+)$/, /header-(\w+)$/, /total-(\w+)$/];
       for (const pattern of patterns) {
         const match = id.match(pattern);

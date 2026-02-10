@@ -164,6 +164,9 @@ export function PrintPreviewModal({
 
     // Helper function to extract column key from any table element ID
     const extractColumnKey = (id: string): string | null => {
+      // Category headers span the full table width — they are NOT column-specific
+      if (id.startsWith('category-')) return null;
+
       // Match patterns: cell-xxx-COLUMNKEY-xxx, header-COLUMNKEY-xxx, total-COLUMNKEY-xxx
       const patterns = [
         /cell-\w+-(\w+)-/,           // Data cells: cell-123-particular-456
@@ -297,6 +300,9 @@ export function PrintPreviewModal({
 
     // Extract column key from element ID
     const extractColumnKey = (id: string): string | null => {
+      // Category headers span the full table width — they are NOT column-specific
+      if (id.startsWith('category-')) return null;
+
       const patterns = [
         /cell-\w+-(\w+)-/,
         /header-(\w+)-/,

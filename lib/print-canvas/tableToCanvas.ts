@@ -246,6 +246,8 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
 function calculateColumnWidths(columns: ColumnDefinition[], totalWidth: number): number[] {
   const weights: Record<string, number> = {
     particular: 3,
+    particulars: 3,
+    implementingOffice: 2,
     year: 1,
     status: 1.2,
     totalBudgetAllocated: 2,
@@ -255,6 +257,8 @@ function calculateColumnWidths(columns: ColumnDefinition[], totalWidth: number):
     projectCompleted: 1.2,
     projectDelayed: 1.2,
     projectsOnTrack: 1.2,
+    projectsOngoing: 1.2,
+    remarks: 1.5,
   };
 
   const totalWeight = columns.reduce((sum, col) => sum + (weights[col.key] || 1), 0);
