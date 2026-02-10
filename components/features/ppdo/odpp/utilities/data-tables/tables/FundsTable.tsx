@@ -144,7 +144,10 @@ export function FundsTable<T extends BaseFund>({
         startResizeRow,
         onDragStart,
         onDrop,
-        onDragOver
+        onDragOver,
+        columnCustomLabels,
+        isLoadingCustomLabels,
+        updateColumnLabel,
     } = useResizableColumns({
         tableIdentifier,
         defaultColumns: FUNDS_TABLE_COLUMNS
@@ -261,6 +264,9 @@ export function FundsTable<T extends BaseFund>({
                     isAllSelected={isAllSelected}
                     isIndeterminate={isIndeterminate}
                     onSelectAll={onSelectAll}
+                    columnCustomLabels={columnCustomLabels}
+                    isLoadingLabels={isLoadingCustomLabels}
+                    onRenameColumn={updateColumnLabel}
                 />
                 <tbody>
                     {data.length === 0 ? (

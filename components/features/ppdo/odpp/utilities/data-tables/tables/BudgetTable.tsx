@@ -151,7 +151,10 @@ export function BudgetTable({
         startResizeRow,
         onDragStart,
         onDrop,
-        onDragOver
+        onDragOver,
+        columnCustomLabels,
+        isLoadingCustomLabels,
+        updateColumnLabel,
     } = useResizableColumns({
         tableIdentifier: "budgetItemsTable_v2",
         defaultColumns: BUDGET_TABLE_COLUMNS
@@ -266,6 +269,9 @@ export function BudgetTable({
                     isAllSelected={isAllSelected}
                     isIndeterminate={isIndeterminate}
                     onSelectAll={onSelectAll}
+                    columnCustomLabels={columnCustomLabels}
+                    isLoadingLabels={isLoadingCustomLabels}
+                    onRenameColumn={updateColumnLabel}
                 />
                 <tbody>
                     {budgetItems.length === 0 ? (

@@ -229,6 +229,88 @@ export const resetSettings = mutation({
 });
 
 // ============================================================================
+// SYSTEM-WIDE CUSTOM COLUMN NAMES
+// ============================================================================
+
+/**
+ * Get system-wide custom column display names for a table
+ */
+export const getColumnCustomNames = query({
+  args: { tableIdentifier: v.string() },
+  handler: async (ctx, args) => {
+    const result = await ctx.db
+      .query("tableColumnCustomNames")
+      .withIndex("by_table", (q) =>
+        q.eq("tableIdentifier", args.tableIdentifier)
+      )
+      .first();
+    return result;
+  },
+});
+
+/**
+ * Update a custom column display name (system-wide)
+ * Only admin/super_admin can rename columns.
+ * Empty customLabel removes the override (reverts to original).
+ */
+export const updateColumnCustomName = mutation({
+  args: {
+    tableIdentifier: v.string(),
+    columnKey: v.string(),
+    customLabel: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+
+    // Check user role
+    const user = await ctx.db.get(userId);
+    if (!user || (user.role !== "super_admin" && user.role !== "admin")) {
+      throw new Error("Only admins can rename column headers");
+    }
+
+    const existing = await ctx.db
+      .query("tableColumnCustomNames")
+      .withIndex("by_table", (q) =>
+        q.eq("tableIdentifier", args.tableIdentifier)
+      )
+      .first();
+
+    const trimmed = args.customLabel.trim();
+    const now = Date.now();
+
+    if (!existing) {
+      // No custom names doc yet — create one (only if non-empty label)
+      if (trimmed) {
+        await ctx.db.insert("tableColumnCustomNames", {
+          tableIdentifier: args.tableIdentifier,
+          customLabels: [{ columnKey: args.columnKey, label: trimmed }],
+          updatedBy: userId,
+          updatedAt: now,
+        });
+      }
+      return;
+    }
+
+    // Update existing document
+    let labels = existing.customLabels.filter(
+      (l) => l.columnKey !== args.columnKey
+    );
+
+    // Only add entry if non-empty (empty = reset to default)
+    if (trimmed) {
+      labels.push({ columnKey: args.columnKey, label: trimmed });
+    }
+
+    await ctx.db.patch(existing._id, {
+      customLabels: labels,
+      updatedBy: userId,
+      updatedAt: now,
+    });
+  },
+});
+
+// ============================================================================
 // INTERNAL MUTATIONS (for seeding/migrations)
 // ============================================================================
 

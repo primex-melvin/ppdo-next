@@ -56,6 +56,9 @@ export function useResizableColumns({
         toggleColumnVisibility,
         canEditLayout,
         updateColumnWidth,
+        columnCustomLabels,
+        isLoadingCustomLabels,
+        updateColumnLabel,
         saveLayout,
     } = useTableSettings({
         tableIdentifier,
@@ -155,10 +158,13 @@ export function useResizableColumns({
         resizingColumn,
         containerRef,
         containerWidth,
+        columnCustomLabels,
+        isLoadingCustomLabels,
 
         // Actions
         setRowHeights,
         toggleColumnVisibility,
+        updateColumnLabel,
         saveLayout,
 
         // Resize Handlers

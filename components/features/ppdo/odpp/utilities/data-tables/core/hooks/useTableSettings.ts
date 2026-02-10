@@ -52,6 +52,10 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     const saveSettings = useMutation(api.tableSettings.saveSettings);
     const updateWidth = useMutation(api.tableSettings.updateColumnWidth);
 
+    // Query system-wide custom column names
+    const customNamesDoc = useQuery(api.tableSettings.getColumnCustomNames, { tableIdentifier });
+    const updateCustomName = useMutation(api.tableSettings.updateColumnCustomName);
+
     // Check user permissions
     const currentUser = useQuery(api.users.current, {});
     const canEditLayout = currentUser?.role === "super_admin" || currentUser?.role === "admin";
@@ -170,6 +174,29 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     //     console.log(`[Table:${tableIdentifier}] Widths: ${widthInfo}`);
     // }, [columns, columnWidths, tableIdentifier]);
 
+    // Derive custom labels map from Convex query
+    const columnCustomLabels = useMemo((): Map<string, string> => {
+        const map = new Map<string, string>();
+        if (customNamesDoc?.customLabels) {
+            customNamesDoc.customLabels.forEach((entry) => {
+                map.set(entry.columnKey, entry.label);
+            });
+        }
+        return map;
+    }, [customNamesDoc]);
+
+    // Loading state for custom labels (undefined = still loading)
+    const isLoadingCustomLabels = customNamesDoc === undefined;
+
+    // Update a column's custom display name (system-wide)
+    const updateColumnLabel = useCallback(
+        async (columnKey: string, newLabel: string) => {
+            if (!canEditLayout) return;
+            await updateCustomName({ tableIdentifier, columnKey, customLabel: newLabel });
+        },
+        [canEditLayout, updateCustomName, tableIdentifier]
+    );
+
     // Toggle column visibility
     const toggleColumnVisibility = useCallback((columnKey: string, isVisible: boolean) => {
         setHiddenColumns(prev => {
@@ -242,6 +269,8 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         columnWidths,
         rowHeights,
         canEditLayout,
+        columnCustomLabels,
+        isLoadingCustomLabels,
 
         // Actions
         setRowHeights,
@@ -249,6 +278,7 @@ export function useTableSettings(options: UseTableSettingsOptions) {
         setColumnOrder,
         toggleColumnVisibility,
         updateColumnWidth,
+        updateColumnLabel,
         saveLayout,
 
         // Legacy compatibility

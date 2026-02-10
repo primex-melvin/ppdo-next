@@ -4,6 +4,7 @@
 import { GripVertical } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnConfig } from "./types/table.types";
+import { EditableColumnLabel } from "./EditableColumnLabel";
 
 interface ResizableTableHeaderProps {
     columns: ColumnConfig[];
@@ -24,6 +25,11 @@ interface ResizableTableHeaderProps {
 
     // Dynamic widths calculated from flex
     columnWidths?: Map<string, number>;
+
+    // Custom column names (system-wide, optional — backward compatible)
+    columnCustomLabels?: Map<string, string>;
+    isLoadingLabels?: boolean;
+    onRenameColumn?: (columnKey: string, newLabel: string) => void;
 }
 
 export function ResizableTableHeader({
@@ -39,6 +45,9 @@ export function ResizableTableHeader({
     showActionsColumn = true,
     actionsColumnWidth = 64,
     columnWidths,
+    columnCustomLabels,
+    isLoadingLabels,
+    onRenameColumn,
 }: ResizableTableHeaderProps) {
     // Calculate width for a column (use dynamic width if available, fallback to flex-based)
     const getColumnWidth = (column: ColumnConfig): number => {
@@ -108,9 +117,14 @@ export function ResizableTableHeader({
                                 />
                             )}
 
-                            <span className="flex-1 truncate text-[11px] sm:text-xs font-semibold uppercase tracking-wide">
-                                {column.label}
-                            </span>
+                            <EditableColumnLabel
+                                columnKey={String(column.key)}
+                                originalLabel={column.label}
+                                customLabel={columnCustomLabels?.get(String(column.key))}
+                                isLoading={isLoadingLabels ?? false}
+                                canEdit={canEditLayout && !!onRenameColumn}
+                                onSave={(key, label) => onRenameColumn?.(key, label)}
+                            />
                         </div>
 
                         {canEditLayout && (

@@ -162,6 +162,9 @@ export function ProjectsTable({
         onDrop,
         onDragOver,
         containerRef,
+        columnCustomLabels,
+        isLoadingCustomLabels,
+        updateColumnLabel,
     } = useResizableColumns({
         tableIdentifier: `projectsTable_${particularId || 'default'}`,
         defaultColumns: PROJECT_TABLE_COLUMNS
@@ -282,6 +285,9 @@ export function ProjectsTable({
                     isAllSelected={isAllSelected}
                     isIndeterminate={isIndeterminate}
                     onSelectAll={onSelectAll}
+                    columnCustomLabels={columnCustomLabels}
+                    isLoadingLabels={isLoadingCustomLabels}
+                    onRenameColumn={updateColumnLabel}
                 />
                 <tbody>
                     {projects.length === 0 ? (

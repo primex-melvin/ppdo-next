@@ -4,6 +4,7 @@
 import { GripVertical } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnConfig } from "./types/resizableTable.types";
+import { EditableColumnLabel } from "../../data-tables/core/EditableColumnLabel";
 
 interface ResizableTableHeaderProps {
     columns: ColumnConfig[];
@@ -21,6 +22,11 @@ interface ResizableTableHeaderProps {
     // Customization
     showActionsColumn?: boolean;
     actionsColumnWidth?: number;
+
+    // Custom column names (system-wide, optional — backward compatible)
+    columnCustomLabels?: Map<string, string>;
+    isLoadingLabels?: boolean;
+    onRenameColumn?: (columnKey: string, newLabel: string) => void;
 }
 
 export function ResizableTableHeader({
@@ -35,6 +41,9 @@ export function ResizableTableHeader({
     onSelectAll,
     showActionsColumn = true,
     actionsColumnWidth = 64,
+    columnCustomLabels,
+    isLoadingLabels,
+    onRenameColumn,
 }: ResizableTableHeaderProps) {
     return (
         <thead className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-800">
@@ -93,9 +102,14 @@ export function ResizableTableHeader({
                                 />
                             )}
 
-                            <span className="flex-1 truncate text-[11px] sm:text-xs font-semibold uppercase tracking-wide">
-                                {column.label}
-                            </span>
+                            <EditableColumnLabel
+                                columnKey={String(column.key)}
+                                originalLabel={column.label}
+                                customLabel={columnCustomLabels?.get(String(column.key))}
+                                isLoading={isLoadingLabels ?? false}
+                                canEdit={canEditLayout && !!onRenameColumn}
+                                onSave={(key, label) => onRenameColumn?.(key, label)}
+                            />
                         </div>
 
                         {canEditLayout && (

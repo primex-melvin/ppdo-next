@@ -1,6 +1,7 @@
 
 export * from "./ResizableTableContainer";
 export * from "./ResizableTableHeader";
+export * from "./EditableColumnLabel";
 export * from "./ResizableTableRow";
 export * from "./TableEmptyState";
 export * from "./hooks/useResizableColumns";

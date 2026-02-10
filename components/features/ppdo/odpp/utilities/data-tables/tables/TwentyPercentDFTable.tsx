@@ -137,7 +137,10 @@ export function TwentyPercentDFTable({
         startResizeRow,
         onDragStart,
         onDrop,
-        onDragOver
+        onDragOver,
+        columnCustomLabels,
+        isLoadingCustomLabels,
+        updateColumnLabel,
     } = useResizableColumns({
         tableIdentifier: "twentyPercentDFTable_v2",
         defaultColumns: TWENTY_PERCENT_DF_COLUMNS
@@ -260,6 +263,9 @@ export function TwentyPercentDFTable({
                     isAllSelected={isAllSelected}
                     isIndeterminate={isIndeterminate}
                     onSelectAll={onSelectAll}
+                    columnCustomLabels={columnCustomLabels}
+                    isLoadingLabels={isLoadingCustomLabels}
+                    onRenameColumn={updateColumnLabel}
                 />
                 <tbody>
                     {data.length === 0 ? (

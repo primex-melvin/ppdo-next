@@ -35,4 +35,17 @@ export const tableSettingsTables = {
   })
     .index("by_table", ["tableIdentifier"])
     .index("by_table_column", ["tableIdentifier", "columnKey"]),
+
+  // System-wide custom column display names (shared across all users)
+  tableColumnCustomNames: defineTable({
+    tableIdentifier: v.string(),
+    customLabels: v.array(
+      v.object({
+        columnKey: v.string(),
+        label: v.string(),
+      })
+    ),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  }).index("by_table", ["tableIdentifier"]),
 };
