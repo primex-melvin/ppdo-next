@@ -301,7 +301,7 @@ export function FundForm({ fund, onSave, onCancel, year }: FundFormProps) {
                             <FormControl>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500">
-                                        â‚±
+                                        ₱
                                     </span>
                                     <Input
                                         placeholder="0"
@@ -346,7 +346,7 @@ export function FundForm({ fund, onSave, onCancel, year }: FundFormProps) {
                                 <FormControl>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500">
-                                            â‚±
+                                            ₱
                                         </span>
                                         <Input
                                             placeholder="0"
@@ -392,7 +392,7 @@ export function FundForm({ fund, onSave, onCancel, year }: FundFormProps) {
                                 <FormControl>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500">
-                                            â‚±
+                                            ₱
                                         </span>
                                         <Input
                                             placeholder="0"
@@ -426,7 +426,7 @@ export function FundForm({ fund, onSave, onCancel, year }: FundFormProps) {
                     <div>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">Balance</p>
                         <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                            â‚±{formatNumberForDisplay(balance)}
+                            ₱{formatNumberForDisplay(balance)}
                         </p>
                     </div>
                     <div>

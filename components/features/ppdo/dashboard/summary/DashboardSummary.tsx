@@ -97,7 +97,7 @@ export function DashboardSummary({ year }: { year: number }) {
   const budgetDistributionData = (analytics.topCategories || []).map((c: any) => ({
     label: c.category,
     value: c.allocated,
-    subValue: `â‚±${c.utilized.toLocaleString()}`,
+    subValue: `₱${c.utilized.toLocaleString()}`,
     percentage: c.allocated > 0 ? (c.utilized / c.allocated) * 100 : 0
   }));
 

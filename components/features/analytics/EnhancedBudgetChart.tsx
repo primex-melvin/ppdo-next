@@ -271,7 +271,7 @@ export function EnhancedBudgetChart({ data }: EnhancedBudgetChartProps) {
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
-                                tickFormatter={(value) => `â‚±${(value / 1_000_000).toFixed(0)}M`}
+                                tickFormatter={(value) => `₱${(value / 1_000_000).toFixed(0)}M`}
                             />
                             <Tooltip
                                 cursor={{ fill: 'rgba(0,0,0,0.02)' }}

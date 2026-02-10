@@ -338,7 +338,7 @@ interface ColumnConfig {
 
 ```typescript
 // Format currency
-formatCurrency(1000000);  // "â‚±1,000,000.00"
+formatCurrency(1000000);  // "₱1,000,000.00"
 
 // Format date
 formatDate(1704067200000);  // "Jan 1, 2024"

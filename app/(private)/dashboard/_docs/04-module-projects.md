@@ -21,8 +21,8 @@ The Projects module is the most complex module in the PPDO Dashboard. It manages
 Fiscal Year (e.g., 2025)
 â”‚
 â”œâ”€â”€ Budget Item (e.g., "Road Infrastructure")
-â”‚   â”œâ”€â”€ Total Budget Allocated: â‚±10,000,000
-â”‚   â”œâ”€â”€ Total Budget Utilized: â‚±6,000,000
+â”‚   â”œâ”€â”€ Total Budget Allocated: ₱10,000,000
+â”‚   â”œâ”€â”€ Total Budget Utilized: ₱6,000,000
 â”‚   â”‚
 â”‚   â””â”€â”€ Project (e.g., "National Highway Rehabilitation")
 â”‚       â”œâ”€â”€ Category: "Infrastructure"
@@ -30,7 +30,7 @@ Fiscal Year (e.g., 2025)
 â”‚       â”‚
 â”‚       â””â”€â”€ Project Breakdown
 â”‚           â”œâ”€â”€ Breakdown Item 1
-â”‚           â”‚   â”œâ”€â”€ Budget: â‚±2,000,000
+â”‚           â”‚   â”œâ”€â”€ Budget: ₱2,000,000
 â”‚           â”‚   â”œâ”€â”€ Implementing Office: "DPWH"
 â”‚           â”‚   â””â”€â”€ Status Chain: 
 â”‚           â”‚       â”œâ”€â”€ MOA: âœ“

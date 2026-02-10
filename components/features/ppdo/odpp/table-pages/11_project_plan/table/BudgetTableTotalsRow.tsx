@@ -41,21 +41,21 @@ export function BudgetTableTotalsRow({
       {/* Budget Allocated */}
       {!hiddenColumns.has("totalBudgetAllocated") && (
         <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-          â‚±{totals.totalBudgetAllocated.toLocaleString()}
+          ₱{totals.totalBudgetAllocated.toLocaleString()}
         </td>
       )}
 
       {/* Obligated Budget */}
       {!hiddenColumns.has("obligatedBudget") && (
         <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-          â‚±{totals.obligatedBudget.toLocaleString()}
+          ₱{totals.obligatedBudget.toLocaleString()}
         </td>
       )}
 
       {/* Budget Utilized */}
       {!hiddenColumns.has("totalBudgetUtilized") && (
         <td className="px-4 sm:px-6 py-4 text-right text-sm text-zinc-900 dark:text-zinc-100">
-          â‚±{totals.totalBudgetUtilized.toLocaleString()}
+          ₱{totals.totalBudgetUtilized.toLocaleString()}
         </td>
       )}
 

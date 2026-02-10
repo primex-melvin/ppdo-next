@@ -101,7 +101,7 @@ export function BudgetTableRow({
       {!hiddenColumns.has("totalBudgetAllocated") && (
         <td className="px-4 sm:px-6 py-4 text-right">
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            â‚±{item.totalBudgetAllocated.toLocaleString()}
+            ₱{item.totalBudgetAllocated.toLocaleString()}
           </span>
         </td>
       )}
@@ -111,7 +111,7 @@ export function BudgetTableRow({
         <td className="px-4 sm:px-6 py-4 text-right">
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
             {item.obligatedBudget
-              ? `â‚±${item.obligatedBudget.toLocaleString()}`
+              ? `₱${item.obligatedBudget.toLocaleString()}`
               : "-"}
           </span>
         </td>
@@ -121,7 +121,7 @@ export function BudgetTableRow({
       {!hiddenColumns.has("totalBudgetUtilized") && (
         <td className="px-4 sm:px-6 py-4 text-right">
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            â‚±{item.totalBudgetUtilized.toLocaleString()}
+            ₱{item.totalBudgetUtilized.toLocaleString()}
           </span>
         </td>
       )}

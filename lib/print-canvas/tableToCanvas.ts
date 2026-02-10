@@ -656,7 +656,7 @@ function formatCellValue(item: BudgetItem, key: string): string {
 
   // Currency formatting
   if (key.includes('Budget') || key.includes('budget')) {
-    return `â‚±${value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    return `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   }
 
   // Percentage formatting

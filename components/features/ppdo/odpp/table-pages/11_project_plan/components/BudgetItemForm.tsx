@@ -436,7 +436,7 @@ export function BudgetItemForm({
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400">
-                    â‚±
+                    ₱
                   </span>
                   <Input
                     placeholder="0"
@@ -547,7 +547,7 @@ export function BudgetItemForm({
                       <FormControl>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400">
-                            â‚±
+                            ₱
                           </span>
                           <Input
                             placeholder="0"
@@ -590,7 +590,7 @@ export function BudgetItemForm({
                       <FormControl>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400">
-                            â‚±
+                            ₱
                           </span>
                           <Input
                             placeholder="0"
@@ -642,7 +642,7 @@ export function BudgetItemForm({
                 Obligated Budget Exceeded
               </p>
               <p className="text-sm text-red-600/80 dark:text-red-400/80 mt-0.5">
-                Obligated budget (â‚±{formatNumberForDisplay(obligatedBudget || 0)}) cannot exceed allocated amount (â‚±{formatNumberForDisplay(totalBudgetAllocated)})
+                Obligated budget (₱{formatNumberForDisplay(obligatedBudget || 0)}) cannot exceed allocated amount (₱{formatNumberForDisplay(totalBudgetAllocated)})
               </p>
             </div>
           </div>
@@ -656,7 +656,7 @@ export function BudgetItemForm({
                 Utilized Budget Exceeded
               </p>
               <p className="text-sm text-red-600/80 dark:text-red-400/80 mt-0.5">
-                Utilized budget (â‚±{formatNumberForDisplay(totalBudgetUtilized)}) cannot exceed allocated amount (â‚±{formatNumberForDisplay(totalBudgetAllocated)})
+                Utilized budget (₱{formatNumberForDisplay(totalBudgetUtilized)}) cannot exceed allocated amount (₱{formatNumberForDisplay(totalBudgetAllocated)})
               </p>
             </div>
           </div>

@@ -90,7 +90,7 @@ export function TimeSeriesChart({ data }: TimeSeriesChartProps) {
                             tickLine={false}
                             tick={{ fontSize: 12 }}
                             tickFormatter={(value) =>
-                                metric === "projects" ? value : `â‚±${(value / 1000).toFixed(0)}k`
+                                metric === "projects" ? value : `₱${(value / 1000).toFixed(0)}k`
                             }
                         />
                         <Tooltip

@@ -143,9 +143,9 @@ export const getBudgetWarning = (
 
   if (budgetStatus.isExceeded) {
     return {
-      message: `Total allocated budget (â‚±${formatCurrency(
+      message: `Total allocated budget (₱${formatCurrency(
         budgetStatus.siblingTotal + currentAllocated
-      )}) exceeds parent project budget (â‚±${formatCurrency(budgetStatus.parentTotal)}) by â‚±${formatCurrency(
+      )}) exceeds parent project budget (₱${formatCurrency(budgetStatus.parentTotal)}) by ₱${formatCurrency(
         budgetStatus.difference
       )}`,
       parentBudget: budgetStatus.parentTotal,
