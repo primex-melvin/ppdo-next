@@ -62,6 +62,45 @@ function push-staging {
     $protectedItems = @(".git", "node_modules")
     $remoteUrl = "https://github.com/mviner000/ppdo-staging.git"
     $targetBranch = "main"
+    
+    # --- ASK TO CHANGE REMOTE ORIGIN ---
+    Write-Host "`n=== GIT REMOTE CONFIGURATION ===" -ForegroundColor Cyan
+    Write-Host "Current repo origin url: " -ForegroundColor Yellow -NoNewline
+    Write-Host "$remoteUrl" -ForegroundColor Gray
+    $changeRemote = Read-Host "Do you want to change the git remote origin? (Y/N, default: N)"
+    
+    if ($changeRemote -eq 'Y' -or $changeRemote -eq 'y') {
+        $newRemoteUrl = Read-Host "Enter new remote URL"
+        if (![string]::IsNullOrWhiteSpace($newRemoteUrl)) {
+            # Update the remote URL in this session
+            $remoteUrl = $newRemoteUrl
+            Write-Host "Remote URL updated to: $remoteUrl" -ForegroundColor Green
+            
+            # Auto-update the script itself with the new URL
+            $profilePath = $PROFILE
+            if (Test-Path $profilePath) {
+                try {
+                    $profileContent = Get-Content -Path $profilePath -Raw
+                    # Replace the remoteUrl line with the new value
+                    $pattern = '\$remoteUrl\s*=\s*"[^"]+"'
+                    $replacement = '$remoteUrl = "' + $newRemoteUrl + '"'
+                    $updatedContent = $profileContent -replace $pattern, $replacement
+                    
+                    if ($updatedContent -ne $profileContent) {
+                        Set-Content -Path $profilePath -Value $updatedContent -NoNewline
+                        Write-Host "Script updated with new remote URL (saved to profile)." -ForegroundColor Green
+                    }
+                } catch {
+                    Write-Host "Note: Could not auto-update script file: $($_.Exception.Message)" -ForegroundColor Yellow
+                }
+            }
+        } else {
+            Write-Host "Empty URL entered. Keeping current remote: $remoteUrl" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "Keeping current remote origin." -ForegroundColor Gray
+    }
+    
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     Write-Host "`n--- Starting Sync & Deploy: next -> staging ---" -ForegroundColor Cyan
     if (!(Test-Path $stagingPath) -or !(Test-Path $sourcePath)) {

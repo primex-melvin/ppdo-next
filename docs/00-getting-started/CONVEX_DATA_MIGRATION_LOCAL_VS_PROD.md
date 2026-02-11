@@ -99,13 +99,12 @@ npx convex export --path prod_data.zip --include-file-storage
 ```
 
 #### Import (Production Destination)
-```bash
-npx convex import prod_data.zip
-```
-
 ⚠️ Overwriting production data:
 ```bash
-npx convex import --replace prod_data.zip
+npx convex import --prod --replace-all .\my_data.zip
+
+npx convex import --prod --replace .\my_data.zip
+
 ```
 
 🚨 **Warning:** This replaces ALL existing data.
