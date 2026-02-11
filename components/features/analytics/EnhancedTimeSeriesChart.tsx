@@ -329,7 +329,7 @@ export function EnhancedTimeSeriesChart({
           <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
             <div className="flex items-center justify-between">
               <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                ðŸ’° Total Allocated Budget
+                Total Allocated Budget
               </span>
               <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
                 {formatCurrency(totalAllocatedBudget)}
