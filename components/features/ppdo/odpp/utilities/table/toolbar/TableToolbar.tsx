@@ -225,11 +225,7 @@ export function TableToolbar({
                     Clear
                   </Button>
                 </div>
-              ) : (
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  {title}
-                </h3>
-              )}
+              ) : null}
             </motion.div>
           )}
         </AnimatePresence>
@@ -253,11 +249,7 @@ export function TableToolbar({
                 Clear
               </Button>
             </div>
-          ) : (
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {title}
-            </h3>
-          )}
+          ) : null}
         </div>
       )}
 
