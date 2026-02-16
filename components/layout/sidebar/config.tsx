@@ -11,6 +11,7 @@ import {
     HeartPulse,
     TrendingUp,
     Search,
+    Building,
 } from "lucide-react";
 import { NavItem } from "./types";
 import { BugsBadge, SuggestionsBadge } from "./badges/UpdatesBadges";
@@ -66,6 +67,12 @@ export const STATIC_NAV_ITEMS: NavItem[] = [
         href: "/dashboard/particulars",
         category: "Department",
         icon: <FileText size={20} />,
+    },
+    {
+        name: "Implementing Agencies",
+        href: "/dashboard/implementing-agencies",
+        category: "Cross Department",
+        icon: <Building size={20} />,
     },
     {
         name: "Office",

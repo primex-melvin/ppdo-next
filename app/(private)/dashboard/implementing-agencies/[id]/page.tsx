@@ -214,29 +214,6 @@ export default function AgencyDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 md:py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard/implementing-agencies">
-                <Button variant="ghost" size="icon" className="hover:bg-[#15803D]/10">
-                  <ArrowLeft className="h-5 w-5" style={{ color: "#15803D" }} />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-2xl md:text-4xl font-cinzel font-bold tracking-tight" style={{ color: "#15803D" }}>
-                  PPDO
-                </h1>
-                <p className="text-sm md:text-base text-muted-foreground mt-1">
-                  Provincial Planning and Development Office
-                </p>
-              </div>
-            </div>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 md:py-10 space-y-8">
@@ -256,9 +233,6 @@ export default function AgencyDetailPage() {
                 <h2 className="text-3xl md:text-5xl font-cinzel font-bold tracking-tight mb-2">{agency.code}</h2>
                 <p className="text-lg md:text-xl text-muted-foreground">{agency.fullName}</p>
               </div>
-              <p className="text-base md:text-lg text-muted-foreground max-w-4xl leading-relaxed">
-                {agency.description || "No description available."}
-              </p>
             </div>
           </div>
         </div>
@@ -429,12 +403,6 @@ export default function AgencyDetailPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t mt-16 py-8 bg-card/30">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 Provincial Planning and Development Office. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   )
 }

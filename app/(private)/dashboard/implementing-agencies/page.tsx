@@ -54,22 +54,7 @@ export default function ImplementingAgenciesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 md:py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl md:text-4xl font-cinzel font-bold tracking-tight" style={{ color: "#15803D" }}>
-                PPDO
-              </h1>
-              <p className="text-sm md:text-base text-muted-foreground mt-1">
-                Provincial Planning and Development Office
-              </p>
-            </div>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 md:py-10 space-y-8">
@@ -150,13 +135,6 @@ export default function ImplementingAgenciesPage() {
           />
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t mt-16 py-8 bg-card/30">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 Provincial Planning and Development Office. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   )
 }
