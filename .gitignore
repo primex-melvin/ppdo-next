@@ -55,3 +55,6 @@ nul
 
 # database backup
 /database_backup/
+
+# agents folder
+/laravel_super_agents/

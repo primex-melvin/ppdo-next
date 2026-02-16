@@ -534,15 +534,6 @@ export function BreakdownHistoryTable({
                   variant="table"
                 />
 
-                {/* Sort Dropdown */}
-                {onSortChange && selectedIds.size === 0 && (
-                  <SortDropdown
-                    value={sortOption || "lastModified"}
-                    onChange={onSortChange}
-                    tooltipText="Sort breakdowns"
-                  />
-                )}
-
                 {/* Desktop secondary actions */}
                 <div className="hidden lg:flex items-center gap-2">
                   {onOpenTrash && (
@@ -614,11 +605,23 @@ export function BreakdownHistoryTable({
               </div>
             }
           >
-            <TableSearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Search..."
-            />
+            <div className="flex items-center gap-2 flex-1">
+              {/* Sort Dropdown - positioned before search */}
+              {onSortChange && selectedIds.size === 0 && (
+                <SortDropdown
+                  value={sortOption || "lastModified"}
+                  onChange={onSortChange}
+                  tooltipText="Sort breakdowns"
+                />
+              )}
+              <div className="flex-1 max-w-sm">
+                <TableSearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search..."
+                />
+              </div>
+            </div>
           </GenericTableToolbar>
 
           {/* TABLE WRAPPER - CRITICAL: Contains the border grid */}
