@@ -146,6 +146,7 @@ export default function AgencyDetailPage() {
     if (projects.length === 0) return null
 
     const config = categoryConfig[categoryKey]
+    if (!config) return null
     const IconComponent = config.icon
 
     // Group by status within category
@@ -403,19 +404,19 @@ export default function AgencyDetailPage() {
           </div>
 
           {/* Project 11 Plans / Budget Items */}
-          {renderCategorySection("project_11plans", projectsByCategory.project11Plans as CategorizedProjectItem[])}
+          {renderCategorySection("project11Plans", projectsByCategory.project11Plans as CategorizedProjectItem[])}
 
           {/* 20% Development Fund */}
-          {renderCategorySection("twenty_percent_df", projectsByCategory.twentyPercentDF as CategorizedProjectItem[])}
+          {renderCategorySection("twentyPercentDF", projectsByCategory.twentyPercentDF as CategorizedProjectItem[])}
 
           {/* Trust Fund */}
-          {renderCategorySection("trust_fund", projectsByCategory.trustFund as CategorizedProjectItem[])}
+          {renderCategorySection("trustFund", projectsByCategory.trustFund as CategorizedProjectItem[])}
 
           {/* Special Health Fund */}
-          {renderCategorySection("special_health", projectsByCategory.specialHealth as CategorizedProjectItem[])}
+          {renderCategorySection("specialHealth", projectsByCategory.specialHealth as CategorizedProjectItem[])}
 
           {/* Special Education Fund */}
-          {renderCategorySection("special_education", projectsByCategory.specialEducation as CategorizedProjectItem[])}
+          {renderCategorySection("specialEducation", projectsByCategory.specialEducation as CategorizedProjectItem[])}
 
           {/* Empty State */}
           {agency.totalProjects === 0 && (
