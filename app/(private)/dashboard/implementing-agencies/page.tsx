@@ -1,10 +1,14 @@
 "use client"
 
+import { useState, useCallback } from "react"
 import { Building2, TrendingUp, FileText, Users, Loader2 } from "lucide-react"
 import { ThemeToggle } from "@/components/shared"
-import { AgencyCard } from "./components/AgencyCard"
-import { useQuery } from "convex/react"
+import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
+import { toast } from "sonner"
+import { ImplementingAgenciesTable } from "./components/table"
+import { Agency } from "./types/agency-table.types"
 
 // Helper function for currency formatting
 export function formatCurrency(amount: number): string {
@@ -17,16 +21,28 @@ export function formatCurrency(amount: number): string {
 }
 
 export default function ImplementingAgenciesPage() {
-  const implementingAgencies = useQuery(api.implementingAgencies.list, { includeInactive: false })
+  const implementingAgencies = useQuery(api.implementingAgencies.list, { includeInactive: true })
+  const removeAgency = useMutation(api.implementingAgencies.remove)
 
-  // Calculate totals safely
-  const totalAgencies = implementingAgencies?.length || 0
-  const totalProjects = implementingAgencies?.reduce((sum, agency) => sum + (agency.totalProjects || 0), 0) || 0
-  const totalBudget = implementingAgencies?.reduce((sum, agency) => sum + (agency.totalBudget || 0), 0) || 0
-  const totalUtilized = implementingAgencies?.reduce((sum, agency) => sum + (agency.utilizedBudget || 0), 0) || 0
+  // Calculate totals safely (only active agencies)
+  const activeAgencies = implementingAgencies?.filter(a => a.isActive) || []
+  const totalAgencies = activeAgencies.length
+  const totalProjects = activeAgencies.reduce((sum, agency) => sum + (agency.totalProjects || 0), 0)
+  const totalBudget = activeAgencies.reduce((sum, agency) => sum + (agency.totalBudget || 0), 0)
+  const totalUtilized = activeAgencies.reduce((sum, agency) => sum + (agency.utilizedBudget || 0), 0)
 
   // Avoid division by zero
   const avgUtilization = totalBudget > 0 ? ((totalUtilized / totalBudget) * 100).toFixed(1) : "0.0"
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!confirm("Are you sure you want to delete this agency?")) return
+    try {
+      await removeAgency({ id: id as Id<"implementingAgencies"> })
+      toast.success("Agency deleted successfully")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete agency")
+    }
+  }, [removeAgency])
 
   if (implementingAgencies === undefined) {
     return (
@@ -121,31 +137,24 @@ export default function ImplementingAgenciesPage() {
           </div>
         </div>
 
-        {/* Agency Cards Grid */}
+        {/* Implementing Agencies Table */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xl md:text-2xl font-cinzel font-semibold">All Agencies</h3>
-            <p className="text-sm text-muted-foreground">{totalAgencies} agencies found</p>
+            <p className="text-sm text-muted-foreground">{implementingAgencies.length} agencies found</p>
           </div>
 
-          {totalAgencies === 0 ? (
-            <div className="p-8 text-center border rounded-lg bg-card/50">
-              <p className="text-muted-foreground">No implementing agencies found.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {implementingAgencies.map((agency) => (
-                <AgencyCard key={agency._id} agency={agency} />
-              ))}
-            </div>
-          )}
+          <ImplementingAgenciesTable
+            agencies={implementingAgencies as Agency[]}
+            onDelete={handleDelete}
+          />
         </div>
       </main>
 
       {/* Footer */}
       <footer className="border-t mt-16 py-8 bg-card/30">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 Provincial Planning and Development Office. All rights reserved.</p>
+          <p>&copy; 2025 Provincial Planning and Development Office. All rights reserved.</p>
         </div>
       </footer>
     </div>

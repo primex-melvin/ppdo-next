@@ -469,6 +469,23 @@ export const seedDefaultWidths = internalMutation({
       { tableId: "specialHealthFundBreakdowns", col: "status", width: 120, flex: 1.2, minW: 90, maxW: 200 },
       { tableId: "specialHealthFundBreakdowns", col: "remarks", width: 250, flex: 2.5, minW: 150, maxW: 400 },
 
+      // === IMPLEMENTING AGENCIES TABLE ===
+      // Frontend: tableIdentifier: "implementing-agencies-table"
+      { tableId: "implementing-agencies-table", col: "code", width: 100, flex: 1, minW: 70, maxW: 180 },
+      { tableId: "implementing-agencies-table", col: "fullName", width: 250, flex: 2.5, minW: 180, maxW: 500 },
+      { tableId: "implementing-agencies-table", col: "type", width: 120, flex: 1, minW: 90, maxW: 180 },
+      { tableId: "implementing-agencies-table", col: "category", width: 140, flex: 1.2, minW: 100, maxW: 220 },
+      { tableId: "implementing-agencies-table", col: "department", width: 180, flex: 1.8, minW: 120, maxW: 300 },
+      { tableId: "implementing-agencies-table", col: "contactPerson", width: 160, flex: 1.5, minW: 120, maxW: 280 },
+      { tableId: "implementing-agencies-table", col: "contactEmail", width: 180, flex: 1.5, minW: 120, maxW: 300 },
+      { tableId: "implementing-agencies-table", col: "contactPhone", width: 130, flex: 1, minW: 100, maxW: 200 },
+      { tableId: "implementing-agencies-table", col: "address", width: 200, flex: 2, minW: 140, maxW: 400 },
+      { tableId: "implementing-agencies-table", col: "totalProjects", width: 100, flex: 0.8, minW: 70, maxW: 150 },
+      { tableId: "implementing-agencies-table", col: "totalBreakdowns", width: 110, flex: 0.8, minW: 80, maxW: 160 },
+      { tableId: "implementing-agencies-table", col: "isActive", width: 100, flex: 0.8, minW: 80, maxW: 150 },
+      { tableId: "implementing-agencies-table", col: "createdAt", width: 120, flex: 1, minW: 100, maxW: 180 },
+      { tableId: "implementing-agencies-table", col: "updatedAt", width: 120, flex: 1, minW: 100, maxW: 180 },
+
       // === TWENTY PERCENT DF BREAKDOWNS ===
       { tableId: "twentyPercentDFBreakdowns", col: "projectTitle", width: 280, flex: 2.8, minW: 180, maxW: 600 },
       { tableId: "twentyPercentDFBreakdowns", col: "implementingOffice", width: 180, flex: 1.8, minW: 120, maxW: 300 },
