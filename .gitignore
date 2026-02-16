@@ -54,4 +54,4 @@ copy.txt
 nul
 
 # database backup
-/database-backup/
+/database_backup/

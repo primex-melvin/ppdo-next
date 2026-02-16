@@ -16,7 +16,7 @@ import { FundsTableToolbar } from "./toolbar/FundsTableToolbar";
 import { FundsContextMenu } from "./context-menu/FundsContextMenu";
 import { GenericPrintPreviewModal } from "@/components/features/ppdo/odpp/utilities/print";
 import { FundsResizableTable } from "./FundsResizableTable";
-import { BaseFund, FundsTableProps, ContextMenuState } from "../types";
+import { BaseFund, FundsTableProps, ContextMenuState, SortField, SortDirection } from "../types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, Table as TableIcon } from "lucide-react";
 import { FundsKanban } from "./FundsKanban";
@@ -41,6 +41,9 @@ export function FundsTable<T extends BaseFund>({
     expandButton,
     pendingRequestsCount,
     onOpenShare,
+    // Sorting features
+    sortOption,
+    onSortChange,
 }: FundsTableProps<T>) {
     const router = useRouter();
     const { accentColorValue } = useAccentColor();
@@ -133,7 +136,16 @@ export function FundsTable<T extends BaseFund>({
 
     // Column settings managed by FundsResizableTable directly
 
-    const { sortField, sortDirection, handleSort } = useTableSort();
+    // Support external sorting via props, fallback to internal sorting
+    const internalSort = useTableSort();
+    
+    // When external sorting is provided, don't apply internal sorting
+    // The data is already sorted by the parent component using useSort hook
+    const sortField = internalSort.sortField;
+    const sortDirection = internalSort.sortDirection;
+    const handleSort = internalSort.handleSort;
+    
+    // Only use internal filtering/sorting when no external sort is provided
     const filteredAndSortedData = useTableFilter(data, searchQuery, sortField, sortDirection);
     const { selected, allSelected, toggleAll, toggleOne, clearSelection } = useTableSelection(filteredAndSortedData);
 
@@ -363,6 +375,10 @@ export function FundsTable<T extends BaseFund>({
                             expandButton={expandButton}
                             pendingRequestsCount={pendingRequestsCount}
                             onOpenShare={onOpenShare}
+                            // Sort functionality
+                            sortOption={sortOption}
+                            onSortChange={onSortChange}
+                            showSort={!!onSortChange}
                         />
 
                         <div className="overflow-auto max-h-[calc(100vh-300px)]">
@@ -423,6 +439,10 @@ export function FundsTable<T extends BaseFund>({
                             onToggleStatus={handleToggleStatus}
                             visibleFields={visibleFields}
                             onToggleField={handleToggleField}
+                            // Sort functionality
+                            sortOption={sortOption}
+                            onSortChange={onSortChange}
+                            showSort={!!onSortChange}
                         />
                         <div className="p-4 bg-zinc-50/50 dark:bg-zinc-950/50">
                             <FundsKanban

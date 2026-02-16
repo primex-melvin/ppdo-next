@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+import { SortOption } from "@/types/sort";
 
 /**
  * Pluggable bulk action for the toolbar
@@ -187,6 +188,22 @@ export interface TableToolbarProps {
 
   /** Enable animated search expansion with Framer Motion (default: true) */
   animatedSearch?: boolean;
+
+  // ═══════════════════════════════════════════════════════════
+  // SORT DROPDOWN (Optional)
+  // ═══════════════════════════════════════════════════════════
+
+  /** Currently selected sort option */
+  sortOption?: SortOption;
+
+  /** Callback when sort option changes */
+  onSortChange?: (option: SortOption) => void;
+
+  /** Show/hide sort dropdown (default: true) */
+  showSort?: boolean;
+
+  /** Available sort options for the dropdown */
+  sortOptions?: SortOption[];
 
   // ═══════════════════════════════════════════════════════════
   // ADVANCED FEATURES (Optional)

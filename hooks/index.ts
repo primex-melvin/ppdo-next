@@ -50,6 +50,9 @@ export {
   type UseFiscalYearDashboardReturn,
 } from "./useFiscalYearDashboard";
 
+// Sort hooks
+export { useSort } from "./useSort";
+
 // Search hooks
 export {
   useSearchRouter,

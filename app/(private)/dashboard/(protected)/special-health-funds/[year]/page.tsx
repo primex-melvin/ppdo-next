@@ -10,6 +10,7 @@ import { TrashBinModal } from "@/components/shared/modals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Expand } from "lucide-react";
+import { useSort } from "@/hooks/useSort";
 
 interface PageProps {
     params: Promise<{ year: string }>;
@@ -46,6 +47,20 @@ export default function YearSpecialHealthFundsPage({ params }: PageProps) {
         if (isNaN(year)) return funds;
         return funds.filter((fund) => fund.year === year);
     }, [funds, year]);
+
+    // Sort funds with URL persistence
+    const { sortedItems: sortedFunds, sortOption, setSortOption } = useSort({
+        items: yearFilteredFunds,
+        initialSort: "lastModified",
+        sortFieldMap: {
+            nameField: "projectTitle",
+            allocatedField: "received",
+            obligatedField: "obligatedPR",
+            utilizedField: "utilized",
+            modifiedField: "_creationTime",
+        },
+        enableUrlPersistence: true,
+    });
 
     // Calculate statistics and status summary for filtered items
     const { yearStatistics, statusCounts } = useMemo(() => {
@@ -192,7 +207,7 @@ export default function YearSpecialHealthFundsPage({ params }: PageProps) {
             )}
 
             <FundsTable
-                data={yearFilteredFunds}
+                data={sortedFunds}
                 year={year}
                 fundType="specialHealth"
                 title="Special Health Funds"
@@ -204,6 +219,9 @@ export default function YearSpecialHealthFundsPage({ params }: PageProps) {
                 onDelete={handleDelete}
                 onOpenTrash={() => setShowTrashModal(true)}
                 FormComponent={FundForm}
+                // Sorting
+                sortOption={sortOption}
+                onSortChange={setSortOption}
                 // Enhanced toolbar features
                 expandButton={
                     <Button

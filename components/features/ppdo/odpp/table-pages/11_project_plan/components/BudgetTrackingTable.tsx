@@ -63,6 +63,8 @@ export function BudgetTrackingTable({
   onDelete,
   expandButton,
   onOpenTrash,
+  sortOption,
+  onSortChange,
 }: BudgetTrackingTableProps) {
   const { accentColorValue } = useAccentColor();
   const accessCheck = useQuery(api.budgetAccess.canAccess);
@@ -524,6 +526,10 @@ export function BudgetTrackingTable({
             searchInputRef={searchInputRef}
             selectedCount={selectedIds.size}
             onClearSelection={() => setSelectedIds(new Set())}
+
+            // Sorting
+            sortOption={sortOption}
+            onSortChange={onSortChange}
 
             // Unified Column/Field Visibility
             columnTriggerLabel={viewMode === 'kanban' ? "Fields" : "Columns"}

@@ -20,6 +20,7 @@ import {
 import { LoadingState } from "@/components/features/ppdo/LoadingState";
 import { Button } from "@/components/ui/button";
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
+import { useSort } from "@/hooks/useSort";
 
 interface PageProps {
   params: Promise<{ year: string }>;
@@ -51,6 +52,18 @@ export default function YearBudgetPage({ params }: PageProps) {
     if (isNaN(year)) return budgetItems;
     return budgetItems.filter((item: BudgetItem) => item.year === year);
   }, [budgetItems, year]);
+
+  // Sort functionality with URL persistence
+  const { sortedItems, sortOption, setSortOption } = useSort<BudgetItem>({
+    items: yearFilteredItems,
+    sortFieldMap: {
+      nameField: "particular",
+      allocatedField: "totalBudgetAllocated",
+      obligatedField: "obligatedBudget",
+      utilizedField: "totalBudgetUtilized",
+    },
+    enableUrlPersistence: true,
+  });
 
   // Calculate statistics for filtered items
   const yearStatistics = useMemo(() => {
@@ -147,7 +160,9 @@ export default function YearBudgetPage({ params }: PageProps) {
 
       <div className="mb-6">
         <BudgetTrackingTable
-          budgetItems={yearFilteredItems}
+          budgetItems={sortedItems}
+          sortOption={sortOption}
+          onSortChange={setSortOption}
           onAdd={handleAdd}
           onEdit={handleEdit}
           onDelete={handleDelete}

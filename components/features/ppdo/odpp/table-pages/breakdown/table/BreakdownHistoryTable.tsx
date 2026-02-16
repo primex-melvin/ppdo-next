@@ -15,6 +15,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Trash2, Printer, Plus, LayoutGrid, Table2, FileSpreadsheet, Share2 } from "lucide-react";
+import { SortOption } from "@/types/sort";
 import { toast } from "sonner";
 import { useAccentColor } from "@/contexts/AccentColorContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,6 +65,7 @@ import {
   GenericTableToolbar,
   TableSearchInput,
   TableActionButton,
+  SortDropdown,
 } from "@/components/shared/table";
 import { ColumnVisibilityMenu } from "@/components/shared/table/ColumnVisibilityMenu";
 
@@ -94,6 +96,8 @@ export function BreakdownHistoryTable({
   entityName,
   enableInspectionNavigation = false,
   onNavigateToInspections,
+  sortOption,
+  onSortChange,
 }: BreakdownHistoryTableProps) {
   const router = useRouter();
   const params = useParams();
@@ -529,6 +533,15 @@ export function BreakdownHistoryTable({
                   onHideAll={handleHideAllColumns}
                   variant="table"
                 />
+
+                {/* Sort Dropdown */}
+                {onSortChange && selectedIds.size === 0 && (
+                  <SortDropdown
+                    value={sortOption || "lastModified"}
+                    onChange={onSortChange}
+                    tooltipText="Sort breakdowns"
+                  />
+                )}
 
                 {/* Desktop secondary actions */}
                 <div className="hidden lg:flex items-center gap-2">

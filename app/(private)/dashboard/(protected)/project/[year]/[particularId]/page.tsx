@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import AccessDeniedPage from "@/components/shared/pages/AccessDeniedPage";
 import { TrashBinModal } from "@/components/shared/modals";
 import { extractIdFromSlug } from "@/lib/utils/breadcrumb-utils";
+import { useSort } from "@/hooks/useSort";
 
 // Import from reusable component library
 // Note: We use relative imports if we are inside the same feature folder structure, 
@@ -25,6 +26,7 @@ import {
   getParticularFullName,
   calculateProjectStats
 } from "@/components/features/ppdo/odpp/table-pages/projects";
+import { Project } from "@/components/features/ppdo/odpp/table-pages/projects/types";
 
 export default function ParticularProjectsPage() {
   const params = useParams();
@@ -93,6 +95,19 @@ export default function ParticularProjectsPage() {
     0
   );
 
+  // Sort functionality with URL persistence
+  const { sortedItems, sortOption, setSortOption } = useSort<Project>({
+    items: projects,
+    sortFieldMap: {
+      nameField: "particulars",
+      allocatedField: "totalBudgetAllocated",
+      obligatedField: "obligatedBudget",
+      utilizedField: "totalBudgetUtilized",
+      modifiedField: "_creationTime",
+    },
+    enableUrlPersistence: true,
+  });
+
   // ============================================================================
   // LOADING STATE - Checking Access
   // For slug-based navigation, wait for budget item to load before checking access
@@ -159,7 +174,9 @@ export default function ParticularProjectsPage() {
 
       <div className="mb-6">
         <ProjectsTable
-          projects={projects}
+          projects={sortedItems}
+          sortOption={sortOption}
+          onSortChange={setSortOption}
           particularId={particular}
           budgetItemId={budgetItem!._id}
           budgetItemYear={budgetItem?.year}

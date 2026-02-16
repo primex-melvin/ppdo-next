@@ -12,6 +12,7 @@ import { Id } from "@/convex/_generated/dataModel";
 
 // Contexts & Hooks
 import { useDashboardBreadcrumbs } from "@/lib/hooks/useDashboardBreadcrumbs";
+import { useSort } from "@/hooks/useSort";
 
 // Centralized Breakdown Components
 import {
@@ -96,6 +97,20 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
     // Hooks - Using shared hooks for statistics
     const stats = useEntityStats(breakdownHistory as Breakdown[] | undefined);
     const metadata = useEntityMetadata(breakdownHistory as Breakdown[] | undefined);
+
+    // Sort breakdown history with URL persistence
+    const { sortedItems: sortedBreakdowns, sortOption, setSortOption } = useSort({
+        items: (breakdownHistory as Breakdown[]) || [],
+        initialSort: "lastModified",
+        sortFieldMap: {
+            nameField: "projectName",
+            allocatedField: "allocatedBudget",
+            obligatedField: "obligatedBudget",
+            utilizedField: "budgetUtilized",
+            modifiedField: "_creationTime",
+        },
+        enableUrlPersistence: true,
+    });
 
     // Breadcrumbs with shared logic
     const yearLabel = formatYearLabel(year);
@@ -289,7 +304,7 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
                     </div>
                 ) : (
                     <BreakdownHistoryTable
-                        breakdowns={breakdownHistory as Breakdown[]}
+                        breakdowns={sortedBreakdowns}
                         onPrint={handlePrint}
                         onAdd={() => setShowAddModal(true)}
                         onEdit={handleEdit}
@@ -300,6 +315,8 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
                         entityName={fund?.particulars}
                         enableInspectionNavigation={true}
                         navigationParams={{ year, slug }}
+                        sortOption={sortOption}
+                        onSortChange={setSortOption}
                     />
                 )}
             </div>

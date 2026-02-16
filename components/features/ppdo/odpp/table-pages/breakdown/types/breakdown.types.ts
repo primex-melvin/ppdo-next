@@ -8,6 +8,7 @@
  */
 
 import { Id } from "@/convex/_generated/dataModel";
+import { SortOption } from "@/types/sort";
 
 export interface Breakdown {
   _id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns"> | Id<"twentyPercentDFBreakdowns">;
@@ -73,6 +74,10 @@ export interface BreakdownHistoryTableProps {
   enableInspectionNavigation?: boolean;
   /** Callback when navigating to inspections (alternative to row click) */
   onNavigateToInspections?: (breakdown: Breakdown) => void;
+  /** Current sort option (for external sort control) */
+  sortOption?: import("@/types/sort").SortOption;
+  /** Callback when sort option changes */
+  onSortChange?: (option: import("@/types/sort").SortOption) => void;
 }
 
 export interface RowHeights {

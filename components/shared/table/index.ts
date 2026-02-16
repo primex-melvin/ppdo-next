@@ -21,3 +21,5 @@ export { TableActionButton } from './TableActionButton';
 export { GenericTableToolbar } from './GenericTableToolbar';
 export { RowActionMenu } from './RowActionMenu';
 export type { RowActionMenuProps, ExtraAction } from './RowActionMenu';
+export { SortDropdown } from './SortDropdown';
+export type { SortDropdownProps } from './SortDropdown';

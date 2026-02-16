@@ -1,6 +1,7 @@
 
 import { Id } from "@/convex/_generated/dataModel";
 import { SortState, ContextMenuState } from "@/lib/shared/types/table.types";
+import { SortOption } from "@/types/sort";
 
 // Re-export API types
 export type { ProjectApiConfig, ProjectComponentConfig, WithApiConfigProps } from "./api.types";
@@ -174,6 +175,10 @@ export interface ProjectsTableProps {
     onOpenTrash?: () => void;
     newlyAddedProjectId?: string | null;
     expandButton?: React.ReactNode;
+    /** Current sort option for the table */
+    sortOption?: SortOption;
+    /** Callback when sort option changes */
+    onSortChange?: (option: SortOption) => void;
 }
 
 // ============================================================================

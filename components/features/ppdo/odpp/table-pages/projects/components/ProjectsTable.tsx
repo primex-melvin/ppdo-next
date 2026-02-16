@@ -71,6 +71,8 @@ export function ProjectsTable({
     onOpenTrash,
     newlyAddedProjectId,
     expandButton,
+    sortOption,
+    onSortChange,
 }: ProjectsTableProps) {
     const { accentColorValue } = useAccentColor();
     const router = useRouter();
@@ -870,6 +872,10 @@ export function ProjectsTable({
                         onToggleField={undefined}
                         showColumnVisibility={true} // Always show unified menu
                         showExport={viewMode === "table"}
+                        // Sort functionality
+                        sortOption={sortOption}
+                        onSortChange={onSortChange}
+                        showSort={!!onSortChange}
                     />
 
                     {/* View Toggle (Ctrl+Shift+V to show/hide) */}

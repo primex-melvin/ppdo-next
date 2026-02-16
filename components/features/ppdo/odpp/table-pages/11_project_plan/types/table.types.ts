@@ -1,6 +1,7 @@
 // app/dashboard/project/[year]/types/table.types.ts
 
 import { BudgetItem } from "./budget.types";
+import { SortOption } from "@/types/sort";
 
 // ============================================================================
 // TABLE COMPONENT PROPS
@@ -37,6 +38,10 @@ export interface BudgetTrackingTableProps {
   onDelete?: (id: string) => void;
   expandButton?: React.ReactNode;
   onOpenTrash?: () => void;
+  /** Current sort option for the table */
+  sortOption?: SortOption;
+  /** Callback when sort option changes */
+  onSortChange?: (option: SortOption) => void;
 }
 
 // ============================================================================

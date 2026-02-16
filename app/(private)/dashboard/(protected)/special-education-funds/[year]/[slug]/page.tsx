@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, use, useMemo } from "react";
+import { useSort } from "@/hooks/useSort";
 import { useQuery, useMutation } from "convex/react";
 import { toast } from "sonner";
 
@@ -78,6 +79,20 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
         api.specialEducationFundBreakdowns.getBreakdowns,
         fund ? { specialEducationFundId: fundId as Id<"specialEducationFunds"> } : "skip"
     );
+
+    // Sort functionality with URL persistence for breakdown history
+    const { sortedItems: sortedBreakdowns, sortOption, setSortOption } = useSort({
+        items: (breakdownHistory as Breakdown[]) || [],
+        initialSort: "lastModified",
+        sortFieldMap: {
+            nameField: "projectName",
+            allocatedField: "allocatedBudget",
+            obligatedField: "obligatedBudget",
+            utilizedField: "budgetUtilized",
+            modifiedField: "_creationTime",
+        },
+        enableUrlPersistence: true,
+    });
 
     // Trash Preview Query
     const trashPreviewArgs = useMemo(() => {
@@ -284,7 +299,7 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
                     </div>
                 ) : (
                     <BreakdownHistoryTable
-                        breakdowns={breakdownHistory as Breakdown[]}
+                        breakdowns={sortedBreakdowns}
                         onPrint={handlePrint}
                         onAdd={() => setShowAddModal(true)}
                         onEdit={handleEdit}
@@ -295,6 +310,8 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
                         entityName={fund?.projectTitle}
                         enableInspectionNavigation={true}
                         navigationParams={{ year, slug }}
+                        sortOption={sortOption}
+                        onSortChange={setSortOption}
                     />
                 )}
             </div>

@@ -68,6 +68,8 @@ export function TwentyPercentDFTable({
     onOpenTrash,
     newlyAddedId: newlyAddedProjectId,
     expandButton,
+    sortOption,
+    onSortChange,
 }: TwentyPercentDFTableProps) {
     const { accentColorValue } = useAccentColor();
     const router = useRouter();
@@ -711,6 +713,10 @@ export function TwentyPercentDFTable({
                             onAddNew={onAdd ? () => setShowAddModal(true) : undefined}
                             expandButton={expandButton}
                             accentColor={accentColorValue}
+                            // Sort functionality
+                            sortOption={sortOption}
+                            onSortChange={onSortChange}
+                            showSort={!!onSortChange}
                         />
 
                         <TwentyPercentDFCategoryFilter
@@ -805,6 +811,10 @@ export function TwentyPercentDFTable({
                             onToggleField={handleToggleField}
                             showColumnVisibility={false}
                             showExport={false}
+                            // Sort functionality
+                            sortOption={sortOption}
+                            onSortChange={onSortChange}
+                            showSort={!!onSortChange}
                         />
 
                         <TwentyPercentDFKanban

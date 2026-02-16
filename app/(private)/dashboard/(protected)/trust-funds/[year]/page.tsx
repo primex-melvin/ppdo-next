@@ -10,6 +10,7 @@ import { TrashBinModal } from "@/components/shared/modals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Expand } from "lucide-react";
+import { useSort } from "@/hooks/useSort";
 
 interface PageProps {
   params: Promise<{ year: string }>;
@@ -46,6 +47,20 @@ export default function YearTrustFundsPage({ params }: PageProps) {
     if (isNaN(year)) return trustFunds;
     return trustFunds.filter((fund) => fund.year === year);
   }, [trustFunds, year]);
+
+  // Sort functionality with URL persistence
+  const { sortedItems: sortedFunds, sortOption, setSortOption } = useSort({
+    items: yearFilteredFunds,
+    initialSort: "lastModified",
+    sortFieldMap: {
+      nameField: "projectTitle",
+      allocatedField: "received",
+      obligatedField: "obligatedPR",
+      utilizedField: "utilized",
+      modifiedField: "_creationTime",
+    },
+    enableUrlPersistence: true,
+  });
 
   // Calculate statistics and status summary for filtered items
   const { yearStatistics, statusCounts } = useMemo(() => {
@@ -192,7 +207,7 @@ export default function YearTrustFundsPage({ params }: PageProps) {
       )}
 
       <FundsTable
-        data={yearFilteredFunds}
+        data={sortedFunds}
         year={year}
         fundType="trust"
         title="Trust Funds"
@@ -218,6 +233,9 @@ export default function YearTrustFundsPage({ params }: PageProps) {
         }
         pendingRequestsCount={pendingRequestsCount}
         onOpenShare={() => setShowShareModal(true)}
+        // Sort functionality
+        sortOption={sortOption}
+        onSortChange={setSortOption}
       />
 
       <TrashBinModal

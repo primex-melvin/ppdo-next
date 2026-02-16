@@ -14,6 +14,9 @@ import { Id } from "@/convex/_generated/dataModel";
 // Contexts
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 
+// Hooks
+import { useSort } from "@/hooks/useSort";
+
 // Centralized Breakdown Components
 import {
   BreakdownHeader,
@@ -93,6 +96,19 @@ export default function ProjectBreakdownPage() {
   // Hooks - Using shared hooks for statistics
   const stats = useEntityStats(breakdownHistory as Breakdown[] | undefined);
   const metadata = useEntityMetadata(breakdownHistory as Breakdown[] | undefined);
+
+  // Sort functionality with URL persistence
+  const { sortedItems, sortOption, setSortOption } = useSort<Breakdown>({
+    items: breakdownHistory || [],
+    sortFieldMap: {
+      nameField: "projectName",
+      allocatedField: "allocatedBudget",
+      obligatedField: "obligatedBudget",
+      utilizedField: "utilizedBudget",
+      modifiedField: "_creationTime",
+    },
+    enableUrlPersistence: true,
+  });
 
   // Breadcrumbs with shared logic
   const particularFullName = getParticularFullName(particularId);
@@ -261,7 +277,9 @@ export default function ProjectBreakdownPage() {
           </div>
         ) : (
           <BreakdownHistoryTable
-            breakdowns={breakdownHistory as Breakdown[]}
+            breakdowns={sortedItems}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
             onPrint={handlePrint}
             onAdd={() => setShowAddModal(true)}
             onEdit={handleEdit}

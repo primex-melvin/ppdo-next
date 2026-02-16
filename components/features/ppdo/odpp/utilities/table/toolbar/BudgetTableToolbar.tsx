@@ -17,6 +17,9 @@ import { BudgetColumnVisibilityMenu } from "./BudgetColumnVisibilityMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
 
+import { SortDropdown } from "@/components/shared/table/SortDropdown";
+import { SortOption } from "@/types/sort";
+
 interface BudgetTableToolbarProps {
   // Search
   searchQuery: string;
@@ -32,6 +35,10 @@ interface BudgetTableToolbarProps {
   onToggleColumn: (columnId: string, isChecked: boolean) => void;
   onShowAllColumns: () => void;
   onHideAllColumns: () => void;
+
+  // Sorting
+  sortOption?: SortOption;
+  onSortChange?: (option: SortOption) => void;
 
   // Export/Print
   onExportCSV: () => void;
@@ -54,6 +61,16 @@ interface BudgetTableToolbarProps {
   // UI State
   expandButton?: React.ReactNode;
   accentColor: string;
+
+  // Kanban View Support (optional - for backward compatibility)
+  columnTriggerLabel?: string;
+  columns?: { key: string; label: string }[];
+  visibleStatuses?: Set<string>;
+  onToggleStatus?: (statusId: string, isChecked: boolean) => void;
+  visibleFields?: Set<string>;
+  onToggleField?: (fieldId: string, isChecked: boolean) => void;
+  showColumnVisibility?: boolean;
+  showExport?: boolean;
 }
 
 export function BudgetTableToolbar({
@@ -66,6 +83,8 @@ export function BudgetTableToolbar({
   onToggleColumn,
   onShowAllColumns,
   onHideAllColumns,
+  sortOption,
+  onSortChange,
   onExportCSV,
   onOpenPrintPreview,
   isAdmin,
@@ -78,6 +97,15 @@ export function BudgetTableToolbar({
   hasPrintDraft,
   expandButton,
   accentColor,
+  // Kanban view props (ignored for now - can be implemented later)
+  columnTriggerLabel,
+  columns,
+  visibleStatuses,
+  onToggleStatus,
+  visibleFields,
+  onToggleField,
+  showColumnVisibility,
+  showExport,
 }: BudgetTableToolbarProps) {
   return (
     <div className="h-16 px-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-4 no-print">
@@ -136,6 +164,14 @@ export function BudgetTableToolbar({
 
         {/* --- DESKTOP ACTIONS (hidden on mobile) --- */}
         <div className="hidden lg:flex items-center gap-2">
+          {/* Sort Dropdown */}
+          {sortOption && onSortChange && (
+            <SortDropdown
+              value={sortOption}
+              onChange={onSortChange}
+            />
+          )}
+
           {/* Column Visibility */}
           <BudgetColumnVisibilityMenu
             hiddenColumns={hiddenColumns}

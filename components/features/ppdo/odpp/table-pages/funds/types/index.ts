@@ -109,6 +109,15 @@ export interface FundsTableProps<T = BaseFund> {
     /** Share functionality */
     pendingRequestsCount?: number;
     onOpenShare?: () => void;
+
+    // ============================================
+    // SORTING FEATURES
+    // ============================================
+
+    /** Current sort option (for external sort control) */
+    sortOption?: import("@/types/sort").SortOption;
+    /** Callback when sort option changes */
+    onSortChange?: (option: import("@/types/sort").SortOption) => void;
 }
 
 // ============================================================================

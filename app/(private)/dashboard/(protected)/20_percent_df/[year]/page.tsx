@@ -13,8 +13,14 @@ import { TwentyPercentDFTable } from "@/components/features/ppdo/odpp/table-page
 import { TwentyPercentDFStatistics } from "@/components/features/ppdo/odpp/table-pages/twenty-percent-df/components/TwentyPercentDFStatistics";
 import { TwentyPercentDFYearHeader } from "./components/TwentyPercentDFYearHeader";
 
+// Sort Components & Hooks
+import { useSort } from "@/hooks/useSort";
+
 // Types
 import { TwentyPercentDF } from "@/components/features/ppdo/odpp/table-pages/twenty-percent-df/types";
+
+// Sort field type for 20% DF items
+type TwentyPercentDFSortField = "particulars" | "totalBudgetAllocated" | "totalBudgetUtilized" | "obligatedBudget" | "_creationTime";
 
 interface PageProps {
     params: Promise<{ year: string }>;
@@ -34,6 +40,20 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
         }));
     }, [projectsRaw]);
     const isLoading = projectsRaw === undefined;
+
+    // Sort functionality with URL persistence
+    const { sortedItems: sortedProjects, sortOption, setSortOption } = useSort({
+        items: projects,
+        initialSort: "lastModified",
+        sortFieldMap: {
+            nameField: "particulars",
+            allocatedField: "totalBudgetAllocated",
+            obligatedField: "obligatedBudget",
+            utilizedField: "totalBudgetUtilized",
+            modifiedField: "_creationTime",
+        },
+        enableUrlPersistence: true,
+    });
 
     // Mutations (only for top-level page actions if needed, table handles most)
     const createProject = useMutation(api.twentyPercentDF.create);
@@ -165,12 +185,14 @@ export default function YearTwentyPercentDFPage({ params }: PageProps) {
             )}
 
             <TwentyPercentDFTable
-                items={projects as any}
+                items={sortedProjects as any}
                 budgetItemYear={year}
                 onAdd={handleAdd}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onOpenTrash={() => setShowTrashModal(true)}
+                sortOption={sortOption}
+                onSortChange={setSortOption}
             />
 
             <TrashBinModal

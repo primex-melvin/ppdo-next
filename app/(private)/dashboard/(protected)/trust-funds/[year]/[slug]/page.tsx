@@ -12,6 +12,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useSort } from "@/hooks/useSort";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { toast } from "sonner";
@@ -86,6 +87,20 @@ export default function TrustFundBreakdownPage() {
     api.trustFundBreakdowns.getBreakdowns,
     trustFund ? { trustFundId: trustFundId as Id<"trustFunds"> } : "skip"
   );
+
+  // Sort functionality with URL persistence for breakdown history
+  const { sortedItems: sortedBreakdowns, sortOption, setSortOption } = useSort({
+    items: (breakdownHistory as Breakdown[]) || [],
+    initialSort: "lastModified",
+    sortFieldMap: {
+      nameField: "projectName",
+      allocatedField: "allocatedBudget",
+      obligatedField: "obligatedBudget",
+      utilizedField: "budgetUtilized",
+      modifiedField: "_creationTime",
+    },
+    enableUrlPersistence: true,
+  });
 
   const departments = useQuery(api.departments.list, { includeInactive: false });
 
@@ -296,7 +311,7 @@ export default function TrustFundBreakdownPage() {
           </div>
         ) : (
           <BreakdownHistoryTable
-            breakdowns={breakdownHistory as Breakdown[]}
+            breakdowns={sortedBreakdowns}
             onPrint={handlePrint}
             onAdd={() => setShowAddModal(true)}
             onEdit={handleEdit}
@@ -307,6 +322,8 @@ export default function TrustFundBreakdownPage() {
             entityName={trustFund?.projectTitle}
             enableInspectionNavigation={true}
             navigationParams={{ year, slug: slugWithId }}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
           />
         )}
       </div>

@@ -29,9 +29,34 @@ import { TableToolbarColumnVisibility } from "./TableToolbarColumnVisibility";
 import { TableToolbarBulkActions } from "./TableToolbarBulkActions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
+import { SortDropdown as BaseSortDropdown } from "@/components/shared/table/SortDropdown";
+import { SortOption, SORT_OPTIONS } from "@/types/sort";
 import { motion, AnimatePresence } from "framer-motion";
 import { StatusVisibilityMenu } from "@/components/features/ppdo/odpp/utilities/shared/toolbar/StatusVisibilityMenu";
 import { KanbanFieldVisibilityMenu } from "@/components/features/ppdo/odpp/utilities/shared/kanban/KanbanFieldVisibilityMenu";
+
+/**
+ * Wrapper component that passes sort props to SortDropdown
+ */
+function SortDropdownWrapper({
+  value,
+  onChange,
+  showSort,
+}: {
+  value?: SortOption;
+  onChange?: (option: SortOption) => void;
+  showSort?: boolean;
+}) {
+  if (!showSort || !onChange) return null;
+
+  return (
+    <BaseSortDropdown
+      value={value}
+      onChange={onChange}
+      tooltipText="Sort items"
+    />
+  );
+}
 
 /**
  * Unified Table Toolbar Component
@@ -135,6 +160,12 @@ export function TableToolbar({
   showPrintPreview = true,
   showDirectPrint = true,
   animatedSearch = true,
+
+  // Sort Dropdown
+  sortOption,
+  onSortChange,
+  showSort = true,
+  sortOptions = [],
 
   // Advanced
   onAddNew,
@@ -302,6 +333,15 @@ export function TableToolbar({
               transition={{ duration: 0.2 }}
               className="flex items-center gap-2 overflow-hidden"
             >
+              {/* Sort Dropdown - Only show when no items selected and showSort is true */}
+              {showSort && selectedCount === 0 && onSortChange && (
+                <SortDropdownWrapper
+                  value={sortOption}
+                  onChange={onSortChange}
+                  showSort={showSort}
+                />
+              )}
+
               <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
 
               {/* --- DESKTOP ACTIONS (hidden on mobile) --- */}
