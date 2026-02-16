@@ -120,12 +120,12 @@ export function TableToolbar({
 
   // Bulk Actions
   bulkActions,
-  bulkActionsComponent, // NEW: Custom component slot for domain-specific bulk actions
-  onBulkToggleAutoCalculate, // Legacy support
-  onBulkCategoryChange, // Legacy support
-  canManageBulkActions, // Legacy support
+  bulkActionsComponent,
+  onBulkToggleAutoCalculate,
+  onBulkCategoryChange,
+  canManageBulkActions,
 
-  // Kanban View Support (NEW)
+  // Kanban View Support
   visibleStatuses,
   onToggleStatus,
   visibleFields,
@@ -142,7 +142,7 @@ export function TableToolbar({
   onOpenPrintPreview,
   hasPrintDraft,
 
-  // Share (Admin)
+  // Share
   isAdmin,
   pendingRequestsCount,
   onOpenShare,
@@ -194,68 +194,37 @@ export function TableToolbar({
 
   return (
     <div className="h-16 px-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-4 no-print overflow-hidden">
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      {/* LEFT: Title or Selection Info */}
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      {animatedSearch ? (
-        <AnimatePresence mode="popLayout">
-          {(!isSearchExpanded || (typeof window !== 'undefined' && window.innerWidth >= 1024)) && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20, width: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-3 min-w-[200px] whitespace-nowrap"
-            >
-              {selectedCount > 0 ? (
-                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                    {selectedCount} Selected
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClearSelection}
-                    className="text-zinc-500 text-xs h-7 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  >
-                    Clear
-                  </Button>
-                </div>
-              ) : null}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      ) : (
-        <div className="flex items-center gap-3 min-w-[200px]">
-          {selectedCount > 0 ? (
-            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-              <Badge
-                variant="secondary"
-                className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                {selectedCount} Selected
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClearSelection}
-                className="text-zinc-500 text-xs h-7 hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Clear
-              </Button>
-            </div>
-          ) : null}
+      {/* LEFT: Sort Dropdown */}
+      {showSort && selectedCount === 0 && onSortChange && (
+        <SortDropdownWrapper
+          value={sortOption}
+          onChange={onSortChange}
+          showSort={showSort}
+        />
+      )}
+
+      {/* Selection Info (when items selected) */}
+      {selectedCount > 0 && (
+        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+          <Badge
+            variant="secondary"
+            className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 h-7"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+            {selectedCount} Selected
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearSelection}
+            className="text-zinc-500 text-xs h-7 hover:text-zinc-900 dark:hover:text-zinc-100"
+          >
+            Clear
+          </Button>
         </div>
       )}
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {/* RIGHT: Actions */}
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="flex items-center gap-2 flex-1 justify-end">
         {/* Search Input - Animated or Static based on animatedSearch prop */}
         {animatedSearch ? (
@@ -325,18 +294,9 @@ export function TableToolbar({
               transition={{ duration: 0.2 }}
               className="flex items-center gap-2 overflow-hidden"
             >
-              {/* Sort Dropdown - Only show when no items selected and showSort is true */}
-              {showSort && selectedCount === 0 && onSortChange && (
-                <SortDropdownWrapper
-                  value={sortOption}
-                  onChange={onSortChange}
-                  showSort={showSort}
-                />
-              )}
-
               <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
 
-              {/* --- DESKTOP ACTIONS (hidden on mobile) --- */}
+              {/* Desktop Actions */}
               <div className="hidden lg:flex items-center gap-2">
 
                 {/* Column Visibility Menu */}
@@ -353,7 +313,7 @@ export function TableToolbar({
 
                 {showColumnVisibility && <Separator orientation="vertical" className="h-6 mx-1" />}
 
-                {/* Kanban Field Visibility Menu (when in Kanban view) */}
+                {/* Kanban Field Visibility Menu */}
                 {hasKanbanFieldVisibility && (
                   <KanbanFieldVisibilityMenu
                     visibleFields={visibleFields!}
@@ -362,7 +322,7 @@ export function TableToolbar({
                   />
                 )}
 
-                {/* Kanban Status Visibility Menu (when in Kanban view) */}
+                {/* Kanban Status Visibility Menu */}
                 {hasKanbanStatusVisibility && (
                   <StatusVisibilityMenu
                     visibleStatuses={visibleStatuses!}
@@ -370,10 +330,10 @@ export function TableToolbar({
                   />
                 )}
 
-                {/* Custom Bulk Actions Component Slot (e.g., ProjectBulkActions) */}
+                {/* Custom Bulk Actions Component Slot */}
                 {selectedCount > 0 && bulkActionsComponent}
 
-                {/* Pluggable Bulk Actions (array-based) */}
+                {/* Pluggable Bulk Actions */}
                 {selectedCount > 0 && bulkActions && (
                   <>
                     <TableToolbarBulkActions actions={bulkActions} />
@@ -485,7 +445,7 @@ export function TableToolbar({
                   </TooltipProvider>
                 )}
 
-                {/* Share Button (Admin Only) */}
+                {/* Share Button */}
                 {showShare && isAdmin && onOpenShare && (
                   <TooltipProvider>
                     <Tooltip>
@@ -516,7 +476,7 @@ export function TableToolbar({
                 {expandButton}
               </div>
 
-              {/* --- MOBILE/TABLET ACTIONS (Hidden on Desktop) --- */}
+              {/* Mobile/Tablet Actions */}
               <div className="flex lg:hidden items-center gap-1">
                 {showColumnVisibility && (
                   <ColumnVisibilityMenuComponent
@@ -529,7 +489,7 @@ export function TableToolbar({
                 )}
 
                 <ResponsiveMoreMenu>
-                  {/* Auto Calc (Legacy) */}
+                  {/* Auto Calc */}
                   {selectedCount > 0 && onBulkToggleAutoCalculate && !bulkActions && (
                     <DropdownMenuItem onClick={onBulkToggleAutoCalculate}>
                       <Calculator className="w-4 h-4 mr-2" />
@@ -537,7 +497,7 @@ export function TableToolbar({
                     </DropdownMenuItem>
                   )}
 
-                  {/* Pluggable Bulk Actions in mobile menu */}
+                  {/* Pluggable Bulk Actions */}
                   {selectedCount > 0 && bulkActions && bulkActions.map((action) => {
                     const shouldShow = action.showWhen ? action.showWhen(selectedCount) : true;
                     if (!shouldShow) return null;
