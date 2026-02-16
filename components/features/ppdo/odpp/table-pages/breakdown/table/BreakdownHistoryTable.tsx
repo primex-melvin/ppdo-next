@@ -14,7 +14,8 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { Trash2, Printer, Plus, LayoutGrid, Table2, FileSpreadsheet, Share2 } from "lucide-react";
+import { Trash2, Printer, Plus, LayoutGrid, Table2, FileSpreadsheet, Share2, Search, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { SortOption } from "@/types/sort";
 import { toast } from "sonner";
 import { useAccentColor } from "@/contexts/AccentColorContext";
@@ -63,7 +64,6 @@ import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighligh
 // Import shared table components
 import {
   GenericTableToolbar,
-  TableSearchInput,
   TableActionButton,
   SortDropdown,
 } from "@/components/shared/table";
@@ -106,6 +106,8 @@ export function BreakdownHistoryTable({
 
   // Search state
   const [search, setSearch] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const isSearchExpanded = isSearchFocused || search.length > 0;
 
   // Column visibility state
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
@@ -525,88 +527,101 @@ export function BreakdownHistoryTable({
                   </div>
                 )}
 
-                <ColumnVisibilityMenu
-                  columns={columns.map(col => ({ key: String(col.key), label: col.label }))}
-                  hiddenColumns={hiddenColumns}
-                  onToggleColumn={handleToggleColumn}
-                  onShowAll={handleShowAllColumns}
-                  onHideAll={handleHideAllColumns}
-                  variant="table"
-                />
+                {/* Collapsible toolbar actions - hide when search expanded */}
+                <AnimatePresence>
+                  {!isSearchExpanded && (
+                    <motion.div
+                      initial={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95, width: 0 }}
+                      animate={{ opacity: 1, scale: 1, width: "auto" }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center gap-2 overflow-hidden"
+                    >
+                      <ColumnVisibilityMenu
+                        columns={columns.map(col => ({ key: String(col.key), label: col.label }))}
+                        hiddenColumns={hiddenColumns}
+                        onToggleColumn={handleToggleColumn}
+                        onShowAll={handleShowAllColumns}
+                        onHideAll={handleHideAllColumns}
+                        variant="table"
+                      />
 
-                {/* Desktop secondary actions */}
-                <div className="hidden lg:flex items-center gap-2">
-                  {onOpenTrash && (
-                    <TableActionButton
-                      icon={Trash2}
-                      label="Recycle Bin"
-                      onClick={onOpenTrash}
-                      title="View Recycle Bin"
-                    />
+                      {/* Desktop secondary actions */}
+                      <div className="hidden lg:flex items-center gap-2">
+                        {onOpenTrash && (
+                          <TableActionButton
+                            icon={Trash2}
+                            label="Recycle Bin"
+                            onClick={onOpenTrash}
+                            title="View Recycle Bin"
+                          />
+                        )}
+                        <TableActionButton
+                          icon={Printer}
+                          label="Print"
+                          onClick={handlePrint}
+                          title="Print"
+                        />
+                        <TableActionButton
+                          icon={FileSpreadsheet}
+                          label="Export CSV"
+                          onClick={handleExportCSV}
+                          title="Export to CSV"
+                        />
+                        {isAdmin && (
+                          <TableActionButton
+                            icon={Share2}
+                            label="Share"
+                            onClick={() => setShowShareModal(true)}
+                            title="Share & Manage Access"
+                          />
+                        )}
+                      </div>
+
+                      {/* Mobile/Tablet more menu */}
+                      <div className="lg:hidden">
+                        <ResponsiveMoreMenu>
+                          {onOpenTrash && (
+                            <DropdownMenuItem onClick={onOpenTrash}>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Recycle Bin
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={handlePrint}>
+                            <Printer className="w-4 h-4 mr-2" />
+                            Print
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleExportCSV}>
+                            <FileSpreadsheet className="w-4 h-4 mr-2" />
+                            Export CSV
+                          </DropdownMenuItem>
+                          {isAdmin && (
+                            <DropdownMenuItem onClick={() => setShowShareModal(true)}>
+                              <Share2 className="w-4 h-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                          )}
+                        </ResponsiveMoreMenu>
+                      </div>
+
+                      {onAdd && (
+                        <TableActionButton
+                          icon={Plus}
+                          label="Add"
+                          onClick={onAdd}
+                          variant="primary"
+                          accentColor={accentColorValue}
+                          hideLabelOnMobile={true}
+                        />
+                      )}
+                    </motion.div>
                   )}
-                  <TableActionButton
-                    icon={Printer}
-                    label="Print"
-                    onClick={handlePrint}
-                    title="Print"
-                  />
-                  <TableActionButton
-                    icon={FileSpreadsheet}
-                    label="Export CSV"
-                    onClick={handleExportCSV}
-                    title="Export to CSV"
-                  />
-                  {isAdmin && (
-                    <TableActionButton
-                      icon={Share2}
-                      label="Share"
-                      onClick={() => setShowShareModal(true)}
-                      title="Share & Manage Access"
-                    />
-                  )}
-                </div>
-
-                {/* Mobile/Tablet more menu */}
-                <div className="lg:hidden">
-                  <ResponsiveMoreMenu>
-                    {onOpenTrash && (
-                      <DropdownMenuItem onClick={onOpenTrash}>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Recycle Bin
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={handlePrint}>
-                      <Printer className="w-4 h-4 mr-2" />
-                      Print
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportCSV}>
-                      <FileSpreadsheet className="w-4 h-4 mr-2" />
-                      Export CSV
-                    </DropdownMenuItem>
-                    {isAdmin && (
-                      <DropdownMenuItem onClick={() => setShowShareModal(true)}>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Share
-                      </DropdownMenuItem>
-                    )}
-                  </ResponsiveMoreMenu>
-                </div>
-
-                {onAdd && (
-                  <TableActionButton
-                    icon={Plus}
-                    label="Add"
-                    onClick={onAdd}
-                    variant="primary"
-                    accentColor={accentColorValue}
-                    hideLabelOnMobile={true}
-                  />
-                )}
+                </AnimatePresence>
               </div>
             }
           >
             <div className="flex items-center gap-2 flex-1">
-              {/* Sort Dropdown - positioned before search */}
+              {/* Sort Dropdown - always visible on left side */}
               {onSortChange && selectedIds.size === 0 && (
                 <SortDropdown
                   value={sortOption || "lastModified"}
@@ -614,13 +629,36 @@ export function BreakdownHistoryTable({
                   tooltipText="Sort breakdowns"
                 />
               )}
-              <div className="flex-1 max-w-sm">
-                <TableSearchInput
-                  value={search}
-                  onChange={setSearch}
+              {/* Animated Search Input */}
+              <motion.div
+                className="relative"
+                initial={false}
+                animate={{
+                  width: isSearchExpanded ? "100%" : "20rem",
+                  flexGrow: isSearchExpanded ? 1 : 0
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <input
+                  type="text"
                   placeholder="Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  className="w-full h-9 pl-9 pr-9 text-sm border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
                 />
-              </div>
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </motion.div>
             </div>
           </GenericTableToolbar>
 
@@ -706,89 +744,136 @@ export function BreakdownHistoryTable({
           <GenericTableToolbar
             actions={
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="hidden sm:flex items-center gap-2">
-                  <KanbanFieldVisibilityMenu
-                    visibleFields={visibleFields}
-                    onToggleField={handleToggleField}
-                    fields={[
-                      { id: "allocatedBudget", label: "Allocated Budget" },
-                      { id: "obligatedBudget", label: "Obligated Budget" },
-                      { id: "budgetUtilized", label: "Budget Utilized" },
-                      { id: "balance", label: "Balance" },
-                      { id: "utilizationRate", label: "Utilization Rate" },
-                      { id: "date", label: "Date" },
-                      { id: "remarks", label: "Remarks" },
-                    ]}
-                  />
-                  <StatusVisibilityMenu
-                    visibleStatuses={visibleStatuses}
-                    onToggleStatus={handleToggleStatus}
-                    statusOptions={[
-                      { id: "ongoing", label: "Ongoing" },
-                      { id: "delayed", label: "Delayed" },
-                      { id: "completed", label: "Completed" },
-                    ]}
-                  />
-                </div>
+                {/* Collapsible toolbar actions - hide when search expanded */}
+                <AnimatePresence>
+                  {!isSearchExpanded && (
+                    <motion.div
+                      initial={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95, width: 0 }}
+                      animate={{ opacity: 1, scale: 1, width: "auto" }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center gap-2 overflow-hidden"
+                    >
+                      <div className="hidden sm:flex items-center gap-2">
+                        <KanbanFieldVisibilityMenu
+                          visibleFields={visibleFields}
+                          onToggleField={handleToggleField}
+                          fields={[
+                            { id: "allocatedBudget", label: "Allocated Budget" },
+                            { id: "obligatedBudget", label: "Obligated Budget" },
+                            { id: "budgetUtilized", label: "Budget Utilized" },
+                            { id: "balance", label: "Balance" },
+                            { id: "utilizationRate", label: "Utilization Rate" },
+                            { id: "date", label: "Date" },
+                            { id: "remarks", label: "Remarks" },
+                          ]}
+                        />
+                        <StatusVisibilityMenu
+                          visibleStatuses={visibleStatuses}
+                          onToggleStatus={handleToggleStatus}
+                          statusOptions={[
+                            { id: "ongoing", label: "Ongoing" },
+                            { id: "delayed", label: "Delayed" },
+                            { id: "completed", label: "Completed" },
+                          ]}
+                        />
+                      </div>
 
-                {/* Mobile/Tablet more menu for Kanban filters */}
-                <div className="sm:hidden">
-                  <ResponsiveMoreMenu>
-                    <div className="p-2 border-b">
-                      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Visibility</p>
-                      <KanbanFieldVisibilityMenu
-                        visibleFields={visibleFields}
-                        onToggleField={handleToggleField}
-                      />
-                      <StatusVisibilityMenu
-                        visibleStatuses={visibleStatuses}
-                        onToggleStatus={handleToggleStatus}
-                      />
-                    </div>
-                  </ResponsiveMoreMenu>
-                </div>
+                      {/* Mobile/Tablet more menu for Kanban filters */}
+                      <div className="sm:hidden">
+                        <ResponsiveMoreMenu>
+                          <div className="p-2 border-b">
+                            <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Visibility</p>
+                            <KanbanFieldVisibilityMenu
+                              visibleFields={visibleFields}
+                              onToggleField={handleToggleField}
+                            />
+                            <StatusVisibilityMenu
+                              visibleStatuses={visibleStatuses}
+                              onToggleStatus={handleToggleStatus}
+                            />
+                          </div>
+                        </ResponsiveMoreMenu>
+                      </div>
 
-                <div className="hidden lg:flex items-center gap-2">
-                  {onOpenTrash && (
-                    <TableActionButton
-                      icon={Trash2}
-                      label="Recycle Bin"
-                      onClick={onOpenTrash}
-                      title="View Recycle Bin"
-                    />
+                      <div className="hidden lg:flex items-center gap-2">
+                        {onOpenTrash && (
+                          <TableActionButton
+                            icon={Trash2}
+                            label="Recycle Bin"
+                            onClick={onOpenTrash}
+                            title="View Recycle Bin"
+                          />
+                        )}
+                      </div>
+
+                      <div className="lg:hidden">
+                        <ResponsiveMoreMenu>
+                          {onOpenTrash && (
+                            <DropdownMenuItem onClick={onOpenTrash}>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Recycle Bin
+                            </DropdownMenuItem>
+                          )}
+                        </ResponsiveMoreMenu>
+                      </div>
+
+                      {onAdd && (
+                        <TableActionButton
+                          icon={Plus}
+                          label="Add"
+                          onClick={onAdd}
+                          variant="primary"
+                          accentColor={accentColorValue}
+                          hideLabelOnMobile={true}
+                        />
+                      )}
+                    </motion.div>
                   )}
-                </div>
-
-                <div className="lg:hidden">
-                  <ResponsiveMoreMenu>
-                    {onOpenTrash && (
-                      <DropdownMenuItem onClick={onOpenTrash}>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Recycle Bin
-                      </DropdownMenuItem>
-                    )}
-                    {/* If on mobile and in kanban, maybe add other actions here */}
-                  </ResponsiveMoreMenu>
-                </div>
-
-                {onAdd && (
-                  <TableActionButton
-                    icon={Plus}
-                    label="Add"
-                    onClick={onAdd}
-                    variant="primary"
-                    accentColor={accentColorValue}
-                    hideLabelOnMobile={true}
-                  />
-                )}
+                </AnimatePresence>
               </div>
             }
           >
-            <TableSearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Search items..."
-            />
+            <div className="flex items-center gap-2 flex-1">
+              {/* Sort Dropdown - always visible on left side */}
+              {onSortChange && selectedIds.size === 0 && (
+                <SortDropdown
+                  value={sortOption || "lastModified"}
+                  onChange={onSortChange}
+                  tooltipText="Sort breakdowns"
+                />
+              )}
+              {/* Animated Search Input */}
+              <motion.div
+                className="relative"
+                initial={false}
+                animate={{
+                  width: isSearchExpanded ? "100%" : "20rem",
+                  flexGrow: isSearchExpanded ? 1 : 0
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <input
+                  type="text"
+                  placeholder="Search items..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                className="w-full h-9 pl-9 pr-9 text-sm border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </motion.div>
+            </div>
           </GenericTableToolbar>
 
           <div className="p-4 bg-zinc-50/50 dark:bg-zinc-950/50">

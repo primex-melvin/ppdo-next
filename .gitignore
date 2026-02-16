@@ -58,3 +58,8 @@ nul
 
 # agents folder
 /laravel_super_agents/
+
+# tests
+
+/tests/
+/tests-results/
