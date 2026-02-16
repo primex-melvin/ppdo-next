@@ -18,7 +18,7 @@ export interface ProjectItem {
   endDate: string
   beneficiaries: number
   type?: "project" | "breakdown"
-  category?: "project_11plans" | "twenty_percent_df" | "trust_fund" | "special_health" | "special_education"
+  category?: "project11Plans" | "twentyPercentDF" | "trustFund" | "specialHealth" | "specialEducation"
 }
 
 interface ProjectCardProps {
@@ -38,29 +38,29 @@ function formatNumber(num: number): string {
   return new Intl.NumberFormat("en-PH").format(num)
 }
 
-// Category badge configuration
+// Category badge configuration - keys must match backend category values
 const categoryBadgeConfig: Record<string, { label: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {
-  project_11plans: {
+  project11Plans: {
     label: "Budget Item",
     className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
     icon: FolderKanban,
   },
-  twenty_percent_df: {
+  twentyPercentDF: {
     label: "20% DF",
     className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
     icon: PiggyBank,
   },
-  trust_fund: {
+  trustFund: {
     label: "Trust Fund",
     className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
     icon: PiggyBank,
   },
-  special_health: {
+  specialHealth: {
     label: "Special Health",
     className: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20",
     icon: Heart,
   },
-  special_education: {
+  specialEducation: {
     label: "Special Ed",
     className: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
     icon: GraduationCap,

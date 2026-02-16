@@ -320,7 +320,7 @@ export const get = query({
       startDate: new Date(p.createdAt).toISOString(),
       endDate: p.targetDateCompletion ? new Date(p.targetDateCompletion).toISOString() : new Date().toISOString(),
       beneficiaries: 0,
-      category: "project_11plans" as const,
+      category: "project11Plans" as const,
     });
 
     const mapGovtBreakdown = (b: any) => ({
@@ -334,7 +334,7 @@ export const get = query({
       startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
       endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
       beneficiaries: 0,
-      category: "project_11plans" as const, // Govt breakdowns are also budget items
+      category: "project11Plans" as const, // Govt breakdowns are also budget items
     });
 
     const map20DFBreakdown = (b: any) => ({
@@ -348,7 +348,7 @@ export const get = query({
       startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
       endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
       beneficiaries: 0,
-      category: "twenty_percent_df" as const,
+      category: "twentyPercentDF" as const,
     });
 
     const mapTrustFundBreakdown = (b: any) => ({
@@ -362,7 +362,7 @@ export const get = query({
       startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
       endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
       beneficiaries: 0,
-      category: "trust_fund" as const,
+      category: "trustFund" as const,
     });
 
     const mapSpecialHealthBreakdown = (b: any) => ({
@@ -376,7 +376,7 @@ export const get = query({
       startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
       endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
       beneficiaries: 0,
-      category: "special_health" as const,
+      category: "specialHealth" as const,
     });
 
     const mapSpecialEducationBreakdown = (b: any) => ({
@@ -390,7 +390,7 @@ export const get = query({
       startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
       endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
       beneficiaries: 0,
-      category: "special_education" as const,
+      category: "specialEducation" as const,
     });
 
     // Categorized projects

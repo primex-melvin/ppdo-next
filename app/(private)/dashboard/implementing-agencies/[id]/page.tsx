@@ -39,37 +39,43 @@ function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-// Category configuration
-const categoryConfig = {
-  project_11plans: {
+// Category configuration - keys must match backend categoryCounts keys
+const categoryConfig: Record<string, {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  borderColor: string;
+  bgColor: string;
+}> = {
+  project11Plans: {
     label: "Project 11 Plans / Budget Items",
     icon: FolderKanban,
     color: "text-emerald-600 dark:text-emerald-400",
     borderColor: "border-emerald-500/20",
     bgColor: "bg-emerald-500/10",
   },
-  twenty_percent_df: {
+  twentyPercentDF: {
     label: "20% Development Fund",
     icon: PiggyBank,
     color: "text-amber-600 dark:text-amber-400",
     borderColor: "border-amber-500/20",
     bgColor: "bg-amber-500/10",
   },
-  trust_fund: {
+  trustFund: {
     label: "Trust Fund",
     icon: PiggyBank,
     color: "text-blue-600 dark:text-blue-400",
     borderColor: "border-blue-500/20",
     bgColor: "bg-blue-500/10",
   },
-  special_health: {
+  specialHealth: {
     label: "Special Health Fund",
     icon: Heart,
     color: "text-rose-600 dark:text-rose-400",
     borderColor: "border-rose-500/20",
     bgColor: "bg-rose-500/10",
   },
-  special_education: {
+  specialEducation: {
     label: "Special Education Fund",
     icon: GraduationCap,
     color: "text-purple-600 dark:text-purple-400",
@@ -80,8 +86,8 @@ const categoryConfig = {
 
 type ProjectCategory = keyof typeof categoryConfig
 
-interface CategorizedProjectItem extends Omit<ProjectItem, 'type'> {
-  category: ProjectCategory
+interface CategorizedProjectItem extends Omit<ProjectItem, 'type' | 'category'> {
+  category?: ProjectCategory
 }
 
 export default function AgencyDetailPage() {
@@ -298,7 +304,8 @@ export default function AgencyDetailPage() {
             {/* Category Breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
               {Object.entries(categoryCounts).map(([key, count]) => {
-                const config = categoryConfig[key as ProjectCategory]
+                const config = categoryConfig[key]
+                if (!config) return null
                 const IconComponent = config.icon
                 return (
                   <div key={key} className={`text-center p-3 rounded-lg ${config.bgColor} border ${config.borderColor}`}>
