@@ -33,9 +33,6 @@ function formatCellValue(agency: Agency, column: AgencyColumnConfig): React.Reac
   const key = String(column.key);
 
   switch (key) {
-    case "department":
-      return agency.department?.name || "-";
-
     case "type":
       return (
         <Badge
@@ -57,7 +54,7 @@ function formatCellValue(agency: Agency, column: AgencyColumnConfig): React.Reac
       );
 
     case "totalBreakdowns":
-      return (agency.breakdownUsageCount || 0).toString();
+      return (agency.totalBreakdowns ?? 0).toString();
 
     case "createdAt":
     case "updatedAt": {

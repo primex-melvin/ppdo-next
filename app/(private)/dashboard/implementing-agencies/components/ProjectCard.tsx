@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, Users } from "lucide-react"
+import { Calendar, MapPin, Users, FolderKanban, PiggyBank, Heart, GraduationCap } from "lucide-react"
 import { useAccentColor } from "@/contexts/AccentColorContext"
 
 // Define the interface matching the backend's normalized structure
@@ -17,7 +17,8 @@ export interface ProjectItem {
   startDate: string
   endDate: string
   beneficiaries: number
-  type: "project" | "breakdown"
+  type?: "project" | "breakdown"
+  category?: "project_11plans" | "twenty_percent_df" | "trust_fund" | "special_health" | "special_education"
 }
 
 interface ProjectCardProps {
@@ -35,6 +36,35 @@ function formatCurrency(amount: number): string {
 
 function formatNumber(num: number): string {
   return new Intl.NumberFormat("en-PH").format(num)
+}
+
+// Category badge configuration
+const categoryBadgeConfig: Record<string, { label: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {
+  project_11plans: {
+    label: "Budget Item",
+    className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+    icon: FolderKanban,
+  },
+  twenty_percent_df: {
+    label: "20% DF",
+    className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
+    icon: PiggyBank,
+  },
+  trust_fund: {
+    label: "Trust Fund",
+    className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+    icon: PiggyBank,
+  },
+  special_health: {
+    label: "Special Health",
+    className: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20",
+    icon: Heart,
+  },
+  special_education: {
+    label: "Special Ed",
+    className: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
+    icon: GraduationCap,
+  },
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
@@ -73,24 +103,30 @@ export function ProjectCard({ project }: ProjectCardProps) {
   }
 
   const statusConfig = getStatusConfig(project.status)
+  const categoryConfig = project.category ? categoryBadgeConfig[project.category] : null
+  const CategoryIcon = categoryConfig?.icon
 
   return (
     <Card className="border-2 hover:shadow-lg transition-all duration-300 h-full flex flex-col">
       <CardHeader className="space-y-3 pb-4">
-        <div className="flex items-start justify-between gap-2">
-          <Badge variant="outline" className={`${statusConfig.className} font-medium`}>
-            {statusConfig.label}
-          </Badge>
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className={`${statusConfig.className} font-medium`}>
+              {statusConfig.label}
+            </Badge>
+            {categoryConfig && (
+              <Badge variant="outline" className={`${categoryConfig.className} text-[10px]`}>
+                {CategoryIcon && <CategoryIcon className="h-3 w-3 mr-1" />}
+                {categoryConfig.label}
+              </Badge>
+            )}
+          </div>
           {project.beneficiaries > 0 && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
               <Users className="h-3 w-3" />
               <span>{formatNumber(project.beneficiaries)}</span>
             </div>
           )}
-          {/* Show type badge if useful */}
-          <Badge variant="secondary" className="text-[10px] h-5">
-            {project.type === "project" ? "MAIN" : "BREAKDOWN"}
-          </Badge>
         </div>
 
         <CardTitle className="text-lg font-cinzel leading-tight">{project.name}</CardTitle>

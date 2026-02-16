@@ -53,17 +53,6 @@ export const DEFAULT_COLUMNS: AgencyColumnConfig[] = [
     defaultVisible: false,
   },
   {
-    key: "department",
-    label: "Department",
-    width: 180,
-    flex: 1.8,
-    minWidth: 120,
-    maxWidth: 300,
-    type: "text",
-    align: "left",
-    defaultVisible: true,
-  },
-  {
     key: "contactPerson",
     label: "Contact Person",
     width: 160,
@@ -127,7 +116,7 @@ export const DEFAULT_COLUMNS: AgencyColumnConfig[] = [
     maxWidth: 160,
     type: "number",
     align: "right",
-    defaultVisible: false,
+    defaultVisible: true,
   },
   {
     key: "isActive",

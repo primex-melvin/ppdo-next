@@ -67,33 +67,97 @@ export const list = query({
           .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
           .collect();
 
-        // 2. Get Breakdowns
-        const breakdowns = await ctx.db
+        // 2. Get Govt Project Breakdowns
+        const govtBreakdowns = await ctx.db
           .query("govtProjectBreakdowns")
           .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
           .collect();
 
-        // 3. Filter out deleted items
-        const activeProjects = projects.filter(p => !p.isDeleted);
-        const activeBreakdowns = breakdowns.filter(b => !b.isDeleted);
+        // 3. Get 20% DF Breakdowns
+        const twentyPercentDFBreakdowns = await ctx.db
+          .query("twentyPercentDFBreakdowns")
+          .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+          .collect();
 
-        const totalProjectsCount = activeProjects.length + activeBreakdowns.length;
+        // 4. Get Trust Fund Breakdowns
+        const trustFundBreakdowns = await ctx.db
+          .query("trustFundBreakdowns")
+          .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+          .collect();
+
+        // 5. Get Special Health Fund Breakdowns
+        const specialHealthBreakdowns = await ctx.db
+          .query("specialHealthFundBreakdowns")
+          .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+          .collect();
+
+        // 6. Get Special Education Fund Breakdowns
+        const specialEducationBreakdowns = await ctx.db
+          .query("specialEducationFundBreakdowns")
+          .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+          .collect();
+
+        // Filter out deleted items
+        const activeProjects = projects.filter(p => !p.isDeleted);
+        const activeGovtBreakdowns = govtBreakdowns.filter(b => !b.isDeleted);
+        const active20DFBreakdowns = twentyPercentDFBreakdowns.filter(b => !b.isDeleted);
+        const activeTrustFundBreakdowns = trustFundBreakdowns.filter(b => !b.isDeleted);
+        const activeSpecialHealthBreakdowns = specialHealthBreakdowns.filter(b => !b.isDeleted);
+        const activeSpecialEducationBreakdowns = specialEducationBreakdowns.filter(b => !b.isDeleted);
+
+        // Total breakdowns count (all types except main projects)
+        const totalBreakdownsCount = 
+          activeGovtBreakdowns.length +
+          active20DFBreakdowns.length +
+          activeTrustFundBreakdowns.length +
+          activeSpecialHealthBreakdowns.length +
+          activeSpecialEducationBreakdowns.length;
+
+        const totalProjectsCount = activeProjects.length + totalBreakdownsCount;
 
         // Count by status
+        const countByStatus = <T extends { status?: string }>(items: T[], status: string) => 
+          items.filter(item => item.status === status).length;
+        
+        const countByStatusMulti = <T extends { status?: string }>(items: T[], statuses: string[]) =>
+          items.filter(item => item.status !== undefined && statuses.includes(item.status)).length;
+
         const completedProjectsCount =
-          activeProjects.filter(p => p.status === "completed").length +
-          activeBreakdowns.filter(b => b.status === "completed").length;
+          countByStatus(activeProjects, "completed") +
+          countByStatus(activeGovtBreakdowns, "completed") +
+          countByStatus(active20DFBreakdowns, "completed") +
+          countByStatus(activeTrustFundBreakdowns, "completed") +
+          countByStatus(activeSpecialHealthBreakdowns, "completed") +
+          countByStatus(activeSpecialEducationBreakdowns, "completed");
 
         const ongoingProjectsCount =
-          activeProjects.filter(p => p.status === "ongoing" || p.status === "delayed").length +
-          activeBreakdowns.filter(b => b.status === "ongoing" || b.status === "delayed").length;
+          countByStatusMulti(activeProjects, ["ongoing", "delayed"]) +
+          countByStatusMulti(activeGovtBreakdowns, ["ongoing", "delayed"]) +
+          countByStatusMulti(active20DFBreakdowns, ["ongoing", "delayed"]) +
+          countByStatusMulti(activeTrustFundBreakdowns, ["ongoing", "delayed"]) +
+          countByStatusMulti(activeSpecialHealthBreakdowns, ["ongoing", "delayed"]) +
+          countByStatusMulti(activeSpecialEducationBreakdowns, ["ongoing", "delayed"]);
 
-        const projectBudget = activeProjects.reduce((sum, p) => sum + p.totalBudgetAllocated, 0);
-        const breakdownBudget = activeBreakdowns.reduce((sum, b) => sum + (b.allocatedBudget || 0), 0);
+        // Calculate budgets
+        const sumBudget = <T extends Record<string, unknown>>(items: T[], field: keyof T) => 
+          items.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
+
+        const projectBudget = sumBudget(activeProjects, "totalBudgetAllocated");
+        const breakdownBudget = 
+          sumBudget(activeGovtBreakdowns, "allocatedBudget") +
+          sumBudget(active20DFBreakdowns, "allocatedBudget") +
+          sumBudget(activeTrustFundBreakdowns, "allocatedBudget") +
+          sumBudget(activeSpecialHealthBreakdowns, "allocatedBudget") +
+          sumBudget(activeSpecialEducationBreakdowns, "allocatedBudget");
         const totalBudget = projectBudget + breakdownBudget;
 
-        const projectUtilized = activeProjects.reduce((sum, p) => sum + p.totalBudgetUtilized, 0);
-        const breakdownUtilized = activeBreakdowns.reduce((sum, b) => sum + (b.budgetUtilized || 0), 0);
+        const projectUtilized = sumBudget(activeProjects, "totalBudgetUtilized");
+        const breakdownUtilized = 
+          sumBudget(activeGovtBreakdowns, "budgetUtilized") +
+          sumBudget(active20DFBreakdowns, "budgetUtilized") +
+          sumBudget(activeTrustFundBreakdowns, "budgetUtilized") +
+          sumBudget(activeSpecialHealthBreakdowns, "budgetUtilized") +
+          sumBudget(activeSpecialEducationBreakdowns, "budgetUtilized");
         const utilizedBudget = projectUtilized + breakdownUtilized;
 
         return {
@@ -101,6 +165,7 @@ export const list = query({
           department: departmentInfo,
           // Runtime calculated stats
           totalProjects: totalProjectsCount,
+          totalBreakdowns: totalBreakdownsCount,
           activeProjects: ongoingProjectsCount,
           completedProjects: completedProjectsCount,
           totalBudget: totalBudget,
@@ -147,57 +212,118 @@ export const get = query({
       }
     }
 
-    // 1. Get Projects
+    // 1. Get Projects (11 Plans / Budget Items)
     const projects = await ctx.db
       .query("projects")
       .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
       .collect();
 
-    // 2. Get Breakdowns
-    const breakdowns = await ctx.db
+    // 2. Get Govt Project Breakdowns (also Budget Items)
+    const govtBreakdowns = await ctx.db
       .query("govtProjectBreakdowns")
       .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
       .collect();
 
-    // 3. Filter out deleted items
-    const activeProjects = projects.filter(p => !p.isDeleted);
-    const activeBreakdowns = breakdowns.filter(b => !b.isDeleted);
+    // 3. Get 20% DF Breakdowns
+    const twentyPercentDFBreakdowns = await ctx.db
+      .query("twentyPercentDFBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
 
-    // 4. Calculate Stats
-    const totalProjectsCount = activeProjects.length + activeBreakdowns.length;
+    // 4. Get Trust Fund Breakdowns
+    const trustFundBreakdowns = await ctx.db
+      .query("trustFundBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    // 5. Get Special Health Fund Breakdowns
+    const specialHealthBreakdowns = await ctx.db
+      .query("specialHealthFundBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    // 6. Get Special Education Fund Breakdowns
+    const specialEducationBreakdowns = await ctx.db
+      .query("specialEducationFundBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    // Filter out deleted items
+    const activeProjects = projects.filter(p => !p.isDeleted);
+    const activeGovtBreakdowns = govtBreakdowns.filter(b => !b.isDeleted);
+    const active20DFBreakdowns = twentyPercentDFBreakdowns.filter(b => !b.isDeleted);
+    const activeTrustFundBreakdowns = trustFundBreakdowns.filter(b => !b.isDeleted);
+    const activeSpecialHealthBreakdowns = specialHealthBreakdowns.filter(b => !b.isDeleted);
+    const activeSpecialEducationBreakdowns = specialEducationBreakdowns.filter(b => !b.isDeleted);
+
+    // Calculate Stats - all types combined
+    const totalProjectsCount = 
+      activeProjects.length + 
+      activeGovtBreakdowns.length + 
+      active20DFBreakdowns.length +
+      activeTrustFundBreakdowns.length +
+      activeSpecialHealthBreakdowns.length +
+      activeSpecialEducationBreakdowns.length;
+
+    // Count by status across all types
+    const countByStatus = <T extends { status?: string }>(items: T[], status: string) => 
+      items.filter(item => item.status === status).length;
+    
+    const countByStatusMulti = <T extends { status?: string }>(items: T[], statuses: string[]) =>
+      items.filter(item => item.status !== undefined && statuses.includes(item.status)).length;
 
     const completedProjectsCount =
-      activeProjects.filter(p => p.status === "completed").length +
-      activeBreakdowns.filter(b => b.status === "completed").length;
+      countByStatus(activeProjects, "completed") +
+      countByStatus(activeGovtBreakdowns, "completed") +
+      countByStatus(active20DFBreakdowns, "completed") +
+      countByStatus(activeTrustFundBreakdowns, "completed") +
+      countByStatus(activeSpecialHealthBreakdowns, "completed") +
+      countByStatus(activeSpecialEducationBreakdowns, "completed");
 
     const ongoingProjectsCount =
-      activeProjects.filter(p => p.status === "ongoing" || p.status === "delayed").length +
-      activeBreakdowns.filter(b => b.status === "ongoing" || b.status === "delayed").length;
+      countByStatusMulti(activeProjects, ["ongoing", "delayed"]) +
+      countByStatusMulti(activeGovtBreakdowns, ["ongoing", "delayed"]) +
+      countByStatusMulti(active20DFBreakdowns, ["ongoing", "delayed"]) +
+      countByStatusMulti(activeTrustFundBreakdowns, ["ongoing", "delayed"]) +
+      countByStatusMulti(activeSpecialHealthBreakdowns, ["ongoing", "delayed"]) +
+      countByStatusMulti(activeSpecialEducationBreakdowns, ["ongoing", "delayed"]);
 
-    const projectBudget = activeProjects.reduce((sum, p) => sum + p.totalBudgetAllocated, 0);
-    const breakdownBudget = activeBreakdowns.reduce((sum, b) => sum + (b.allocatedBudget || 0), 0);
-    const totalBudget = projectBudget + breakdownBudget;
+    // Calculate budgets
+    const sumBudget = <T extends Record<string, unknown>>(items: T[], field: keyof T) => 
+      items.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
 
-    const projectUtilized = activeProjects.reduce((sum, p) => sum + p.totalBudgetUtilized, 0);
-    const breakdownUtilized = activeBreakdowns.reduce((sum, b) => sum + (b.budgetUtilized || 0), 0);
-    const utilizedBudget = projectUtilized + breakdownUtilized;
+    const totalBudget = 
+      sumBudget(activeProjects, "totalBudgetAllocated") +
+      sumBudget(activeGovtBreakdowns, "allocatedBudget") +
+      sumBudget(active20DFBreakdowns, "allocatedBudget") +
+      sumBudget(activeTrustFundBreakdowns, "allocatedBudget") +
+      sumBudget(activeSpecialHealthBreakdowns, "allocatedBudget") +
+      sumBudget(activeSpecialEducationBreakdowns, "allocatedBudget");
 
-    // 5. Normalization for Project Cards
-    const mappedProjects = activeProjects.map(p => ({
+    const utilizedBudget = 
+      sumBudget(activeProjects, "totalBudgetUtilized") +
+      sumBudget(activeGovtBreakdowns, "budgetUtilized") +
+      sumBudget(active20DFBreakdowns, "budgetUtilized") +
+      sumBudget(activeTrustFundBreakdowns, "budgetUtilized") +
+      sumBudget(activeSpecialHealthBreakdowns, "budgetUtilized") +
+      sumBudget(activeSpecialEducationBreakdowns, "budgetUtilized");
+
+    // Normalize for Project Cards - by category
+    const mapProject = (p: any) => ({
       id: p._id,
       name: p.particulars,
       description: p.remarks || "No description",
       status: p.status || "ongoing",
       budget: p.totalBudgetAllocated,
       utilized: p.totalBudgetUtilized,
-      location: "Provincial", // Projects are usually provincial level
-      startDate: new Date(p.createdAt).toISOString(), // Fallback
+      location: "Provincial",
+      startDate: new Date(p.createdAt).toISOString(),
       endDate: p.targetDateCompletion ? new Date(p.targetDateCompletion).toISOString() : new Date().toISOString(),
-      beneficiaries: 0, // Not in schema
-      type: "project" as const
-    }));
+      beneficiaries: 0,
+      category: "project_11plans" as const,
+    });
 
-    const mappedBreakdowns = activeBreakdowns.map(b => ({
+    const mapGovtBreakdown = (b: any) => ({
       id: b._id,
       name: b.projectName,
       description: b.remarks || "No description",
@@ -208,10 +334,82 @@ export const get = query({
       startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
       endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
       beneficiaries: 0,
-      type: "breakdown" as const
-    }));
+      category: "project_11plans" as const, // Govt breakdowns are also budget items
+    });
 
-    const allProjects = [...mappedProjects, ...mappedBreakdowns];
+    const map20DFBreakdown = (b: any) => ({
+      id: b._id,
+      name: b.projectName,
+      description: b.remarks || "No description",
+      status: b.status || "ongoing",
+      budget: b.allocatedBudget || 0,
+      utilized: b.budgetUtilized || 0,
+      location: b.municipality || "Various",
+      startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
+      endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
+      beneficiaries: 0,
+      category: "twenty_percent_df" as const,
+    });
+
+    const mapTrustFundBreakdown = (b: any) => ({
+      id: b._id,
+      name: b.projectName,
+      description: b.remarks || "No description",
+      status: b.status || "ongoing",
+      budget: b.allocatedBudget || 0,
+      utilized: b.budgetUtilized || 0,
+      location: b.municipality || "Various",
+      startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
+      endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
+      beneficiaries: 0,
+      category: "trust_fund" as const,
+    });
+
+    const mapSpecialHealthBreakdown = (b: any) => ({
+      id: b._id,
+      name: b.projectName,
+      description: b.remarks || "No description",
+      status: b.status || "ongoing",
+      budget: b.allocatedBudget || 0,
+      utilized: b.budgetUtilized || 0,
+      location: b.municipality || "Various",
+      startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
+      endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
+      beneficiaries: 0,
+      category: "special_health" as const,
+    });
+
+    const mapSpecialEducationBreakdown = (b: any) => ({
+      id: b._id,
+      name: b.projectName,
+      description: b.remarks || "No description",
+      status: b.status || "ongoing",
+      budget: b.allocatedBudget || 0,
+      utilized: b.budgetUtilized || 0,
+      location: b.municipality || "Various",
+      startDate: b.dateStarted ? new Date(b.dateStarted).toISOString() : new Date(b.createdAt).toISOString(),
+      endDate: b.targetDate ? new Date(b.targetDate).toISOString() : new Date().toISOString(),
+      beneficiaries: 0,
+      category: "special_education" as const,
+    });
+
+    // Categorized projects
+    const project11Plans = [
+      ...activeProjects.map(mapProject),
+      ...activeGovtBreakdowns.map(mapGovtBreakdown),
+    ];
+    const twentyPercentDF = active20DFBreakdowns.map(map20DFBreakdown);
+    const trustFund = activeTrustFundBreakdowns.map(mapTrustFundBreakdown);
+    const specialHealth = activeSpecialHealthBreakdowns.map(mapSpecialHealthBreakdown);
+    const specialEducation = activeSpecialEducationBreakdowns.map(mapSpecialEducationBreakdown);
+
+    const allProjects = [
+      ...project11Plans,
+      ...twentyPercentDF,
+      ...trustFund,
+      ...specialHealth,
+      ...specialEducation,
+    ];
 
     return {
       ...agency,
@@ -223,8 +421,23 @@ export const get = query({
       totalBudget: totalBudget,
       utilizedBudget: utilizedBudget,
       avgProjectBudget: totalProjectsCount > 0 ? totalBudget / totalProjectsCount : 0,
-      // List
-      projects: allProjects
+      // Categorized lists
+      projects: allProjects,
+      projectsByCategory: {
+        project11Plans,
+        twentyPercentDF,
+        trustFund,
+        specialHealth,
+        specialEducation,
+      },
+      // Category counts for quick reference
+      categoryCounts: {
+        project11Plans: project11Plans.length,
+        twentyPercentDF: twentyPercentDF.length,
+        trustFund: trustFund.length,
+        specialHealth: specialHealth.length,
+        specialEducation: specialEducation.length,
+      },
     };
   },
 });
