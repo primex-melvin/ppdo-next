@@ -13,7 +13,7 @@ export interface User {
   name?: string;
   email?: string;
   role?: "super_admin" | "admin" | "inspector" | "user"; // ✅ UPDATED: Added inspector
-  departmentId?: Id<"implementingAgencies">;
+  departmentId?: string;
   departmentName?: string;
   position?: string;
   employeeId?: string;
@@ -40,7 +40,7 @@ export interface UserFormData {
   
   email: string;
   role: "super_admin" | "admin" | "inspector" | "user"; // ✅ UPDATED: Added inspector
-  departmentId?: Id<"implementingAgencies">;
+  departmentId?: string;
   departmentName?: string;
   position?: string;
   employeeId?: string;

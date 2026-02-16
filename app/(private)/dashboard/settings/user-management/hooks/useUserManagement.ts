@@ -94,7 +94,7 @@ export function useUserManagement() {
   // Update department
   const handleUpdateDepartment = async (
     userId: Id<"users">,
-    departmentId?: Id<"implementingAgencies">
+    departmentId?: Id<"implementingAgencies"> | Id<"departments">
   ) => {
     try {
       setIsSubmitting(true);

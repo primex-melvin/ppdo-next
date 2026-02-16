@@ -87,7 +87,7 @@ export const create = mutation({
         particulars: v.string(),
         implementingOffice: v.string(),
         categoryId: v.optional(v.id("projectCategories")),
-        departmentId: v.optional(v.id("implementingAgencies")),
+        departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
         budgetItemId: v.optional(v.id("budgetItems")),
         totalBudgetAllocated: v.number(),
         obligatedBudget: v.optional(v.number()),
@@ -170,7 +170,7 @@ export const update = mutation({
         particulars: v.optional(v.string()),
         implementingOffice: v.optional(v.string()),
         categoryId: v.optional(v.id("projectCategories")),
-        departmentId: v.optional(v.id("implementingAgencies")),
+        departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
         budgetItemId: v.optional(v.id("budgetItems")),
         totalBudgetAllocated: v.optional(v.number()),
         obligatedBudget: v.optional(v.number()),

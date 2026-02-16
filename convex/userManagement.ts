@@ -27,7 +27,7 @@ export const createUser = mutation({
       v.literal("inspector"),
       v.literal("user")
     ),
-    departmentId: v.optional(v.id("implementingAgencies")),
+    departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
     position: v.optional(v.string()),
     employeeId: v.optional(v.string()),
     status: v.optional(
@@ -520,7 +520,7 @@ export const updateUserStatus = mutation({
 export const updateUserDepartment = mutation({
   args: {
     userId: v.id("users"),
-    departmentId: v.optional(v.id("implementingAgencies")),
+    departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
@@ -564,7 +564,7 @@ export const updateUserDepartment = mutation({
 export const listAllUsers = query({
   args: {
     limit: v.optional(v.number()),
-    departmentId: v.optional(v.id("implementingAgencies")),
+    departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);

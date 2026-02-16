@@ -21,7 +21,7 @@ interface User {
   position?: string;
   employeeId?: string;
   role?: string;
-  departmentId?: Id<"implementingAgencies">;
+  departmentId?: string;
 }
 
 interface ProfileDetailsTabProps {

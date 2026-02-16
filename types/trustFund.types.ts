@@ -1,6 +1,6 @@
 // types/trustFund.types.ts
 
-import { Id } from "@/convex/_generated/dataModel";
+import { Id, Doc } from "@/convex/_generated/dataModel";
 
 export type TrustFundStatus = "not_available" | "not_yet_started" | "ongoing" | "completed" | "active" | "on_process";
 
@@ -32,34 +32,8 @@ export interface TrustFund {
   notes?: string;
 }
 
-export interface TrustFundFromDB {
-  _id: Id<"trustFunds">;
-  _creationTime: number;
-  projectTitle: string;
-  officeInCharge: string;
-  departmentId?: Id<"implementingAgencies">;
-  dateReceived?: number;
-  received: number;
-  obligatedPR?: number;
-  utilized: number;
-  balance: number;
-  utilizationRate?: number;
-  status?: TrustFundStatus;
-  remarks?: string;
-  year?: number;
-  fiscalYear?: number;
-  isPinned?: boolean;
-  pinnedAt?: number;
-  pinnedBy?: Id<"users">;
-  isDeleted?: boolean;
-  deletedAt?: number;
-  deletedBy?: Id<"users">;
-  createdBy: Id<"users">;
-  createdAt: number;
-  updatedAt: number;
-  updatedBy?: Id<"users">;
-  notes?: string;
-}
+// Use Convex-generated type for DB documents (handles union types during migration)
+export type TrustFundFromDB = Doc<"trustFunds">;
 
 export interface TrustFundFormData {
   projectTitle: string;
@@ -107,7 +81,7 @@ export function convertTrustFundFromDB(dbFund: TrustFundFromDB): TrustFund {
     id: dbFund._id,
     projectTitle: dbFund.projectTitle,
     officeInCharge: dbFund.officeInCharge,
-    departmentId: dbFund.departmentId,
+    departmentId: dbFund.departmentId as string | undefined,
     dateReceived: dbFund.dateReceived,
     received: dbFund.received,
     obligatedPR: dbFund.obligatedPR,
