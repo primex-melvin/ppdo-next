@@ -165,7 +165,7 @@ export const seedLocalData = mutation({
                     year,
                     fiscalYear: year,
                     status,
-                    departmentId: getRandomDeptId(),
+                    departmentId: getRandomDeptId() as any,
                     autoCalculateBudgetUtilized: false,
                     createdBy: userId,
                     createdAt: now - (2026 - year) * 31536000000,
@@ -189,7 +189,7 @@ export const seedLocalData = mutation({
                 const projectId = await ctx.db.insert("projects", {
                     particulars: generateProjectTitle(),
                     implementingOffice: getRandomElement(OFFICES),
-                    departmentId: deptId,
+                    departmentId: deptId as any,
                     budgetItemId,
                     totalBudgetAllocated: allocated,
                     totalBudgetUtilized: utilized,
@@ -249,7 +249,7 @@ export const seedLocalData = mutation({
                 const dfId = await ctx.db.insert("twentyPercentDF", {
                     particulars: generateProjectTitle(),
                     implementingOffice: getRandomElement(OFFICES),
-                    departmentId: deptId,
+                    departmentId: deptId as any,
                     budgetItemId: getRandomElement(budgetItemIds[year]),
                     totalBudgetAllocated: allocated,
                     totalBudgetUtilized: utilized,
@@ -309,7 +309,7 @@ export const seedLocalData = mutation({
                 const sefId = await ctx.db.insert("specialEducationFunds", {
                     projectTitle: generateProjectTitle(),
                     officeInCharge: getRandomElement(OFFICES),
-                    departmentId: deptId,
+                    departmentId: deptId as any,
                     received,
                     utilized,
                     balance: received - utilized,
@@ -370,7 +370,7 @@ export const seedLocalData = mutation({
                 const shfId = await ctx.db.insert("specialHealthFunds", {
                     projectTitle: generateProjectTitle(),
                     officeInCharge: getRandomElement(OFFICES),
-                    departmentId: deptId,
+                    departmentId: deptId as any,
                     received,
                     utilized,
                     balance: received - utilized,
@@ -431,7 +431,7 @@ export const seedLocalData = mutation({
                 const tfId = await ctx.db.insert("trustFunds", {
                     projectTitle: generateProjectTitle(),
                     officeInCharge: getRandomElement(OFFICES),
-                    departmentId: deptId,
+                    departmentId: deptId as any,
                     received,
                     utilized,
                     balance: received - utilized,

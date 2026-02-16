@@ -186,7 +186,7 @@ export const listUsersWithAccess = query({
           ...record,
           userName: user?.name || "Unknown",
           userEmail: user?.email || "",
-          departmentName: department?.name,
+          departmentName: (department as any)?.name ?? (department as any)?.fullName,
           grantedByName: grantedByUser?.name || "Unknown",
           grantedByEmail: grantedByUser?.email || "",
         };

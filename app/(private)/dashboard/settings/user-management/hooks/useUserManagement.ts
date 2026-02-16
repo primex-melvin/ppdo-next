@@ -34,7 +34,7 @@ export function useUserManagement() {
         nameExtension: data.nameExtension,
         email: data.email,
         role: data.role, // ✅ Now includes inspector
-        departmentId: data.departmentId,
+        departmentId: data.departmentId as any,
         position: data.position,
         employeeId: data.employeeId,
         status: data.status,
@@ -94,7 +94,7 @@ export function useUserManagement() {
   // Update department
   const handleUpdateDepartment = async (
     userId: Id<"users">,
-    departmentId?: Id<"departments">
+    departmentId?: Id<"implementingAgencies">
   ) => {
     try {
       setIsSubmitting(true);
@@ -148,7 +148,7 @@ export function useUserManagement() {
 
       // Update department if provided
       if (data.departmentId !== undefined) {
-        await updateUserDepartment({ userId, departmentId: data.departmentId });
+        await updateUserDepartment({ userId, departmentId: data.departmentId as any });
       }
 
       toast.success("User updated successfully");

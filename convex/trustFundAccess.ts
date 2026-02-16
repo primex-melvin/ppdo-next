@@ -82,7 +82,7 @@ export const canAccess = query({
       },
       department: department ? {
         id: department._id,
-        name: department.name,
+        name: (department as any).name ?? (department as any).fullName,
         code: department.code,
       } : null,
       accessLevel,

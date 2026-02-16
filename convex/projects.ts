@@ -459,8 +459,8 @@ export const create = mutation({
         ? (args.totalBudgetUtilized / args.totalBudgetAllocated) * 100
         : 0;
 
-      // Auto-link department ID if this agency represents a department
-      const departmentId = agency.departmentId;
+      // Auto-link department ID - agency itself is the department now
+      const departmentId = agency._id;
 
       const projectId = await ctx.db.insert("projects", {
         particulars: args.particulars,
@@ -644,8 +644,8 @@ export const update = mutation({
         );
       }
 
-      // Update departmentId based on new agency
-      departmentId = agency.departmentId;
+      // Update departmentId based on new agency - agency itself is the department
+      departmentId = agency._id;
 
       // Update usage counts
       await ctx.runMutation(internal.implementingAgencies.updateUsageCount, {

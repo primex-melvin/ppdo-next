@@ -37,7 +37,7 @@ export interface TrustFundFromDB {
   _creationTime: number;
   projectTitle: string;
   officeInCharge: string;
-  departmentId?: Id<"departments">;
+  departmentId?: Id<"implementingAgencies">;
   dateReceived?: number;
   received: number;
   obligatedPR?: number;

@@ -27,7 +27,7 @@ export const createUser = mutation({
       v.literal("inspector"),
       v.literal("user")
     ),
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.id("implementingAgencies")),
     position: v.optional(v.string()),
     employeeId: v.optional(v.string()),
     status: v.optional(
@@ -520,7 +520,7 @@ export const updateUserStatus = mutation({
 export const updateUserDepartment = mutation({
   args: {
     userId: v.id("users"),
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.id("implementingAgencies")),
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
@@ -564,7 +564,7 @@ export const updateUserDepartment = mutation({
 export const listAllUsers = query({
   args: {
     limit: v.optional(v.number()),
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.id("implementingAgencies")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -623,7 +623,7 @@ export const listAllUsers = query({
           createdAt: userWithName.createdAt,
           suspensionReason: userWithName.suspensionReason,
           departmentId: userWithName.departmentId,
-          departmentName: department?.name,
+          departmentName: (department as any)?.name ?? (department as any)?.fullName,
           position: userWithName.position,
           employeeId: userWithName.employeeId,
         };

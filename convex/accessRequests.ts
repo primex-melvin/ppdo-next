@@ -30,7 +30,7 @@ export const create = mutation({
     if (user.departmentId) {
       const department = await ctx.db.get(user.departmentId);
       if (department) {
-        departmentName = department.name;
+        departmentName = (department as any).name ?? (department as any).fullName ?? "Unknown";
       }
     }
 
@@ -340,7 +340,7 @@ export const getParticularPendingRequests = query({
           let departmentName: string | undefined = undefined;
           if (user.departmentId) {
             const dept = await ctx.db.get(user.departmentId);
-            departmentName = dept?.name;
+            departmentName = (dept as any)?.name ?? (dept as any)?.fullName;
           }
 
           userInfo = {
@@ -430,7 +430,7 @@ export const requestParticularAccess = mutation({
     if (user.departmentId) {
       const department = await ctx.db.get(user.departmentId);
       if (department) {
-        departmentName = department.name;
+        departmentName = (department as any).name ?? (department as any).fullName ?? "Unknown";
       }
     }
 

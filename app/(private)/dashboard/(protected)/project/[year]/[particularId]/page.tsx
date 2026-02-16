@@ -133,7 +133,7 @@ export default function ParticularProjectsPage() {
       <AccessDeniedPage
         userName={accessCheck?.user?.name || ""}
         userEmail={accessCheck?.user?.email || ""}
-        departmentName={accessCheck?.department?.name || "Not Assigned"}
+        departmentName={(accessCheck?.department as any)?.name ?? (accessCheck?.department as any)?.fullName ?? "Not Assigned"}
         pageRequested={`Budget Tracking ${year} - ${particularFullName}`}
       />
     );

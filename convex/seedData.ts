@@ -96,7 +96,7 @@ export const seedBudgetItems = internalMutation({
             createdBy: v.id("users"),
             createdAt: v.number(),
             updatedAt: v.number(),
-            departmentId: v.optional(v.id("departments")),
+            departmentId: v.optional(v.id("implementingAgencies")),
         }))
     },
     handler: async (ctx, args) => {
@@ -115,7 +115,7 @@ export const seedProjects = internalMutation({
         data: v.array(v.object({
             particulars: v.string(),
             implementingOffice: v.string(),
-            departmentId: v.optional(v.id("departments")),
+            departmentId: v.optional(v.id("implementingAgencies")),
             budgetItemId: v.optional(v.id("budgetItems")),
             totalBudgetAllocated: v.number(),
             totalBudgetUtilized: v.number(),
@@ -294,7 +294,7 @@ export const seedData = internalAction({
                     createdBy: userId,
                     createdAt: getRandomDate(year, year),
                     updatedAt: getRandomDate(year, year),
-                    departmentId: getRandomDeptId(),
+                    departmentId: getRandomDeptId() as any,
                 });
             }
             const ids = await ctx.runMutation(internal.seedData.seedBudgetItems, { data: batch });
@@ -314,7 +314,7 @@ export const seedData = internalAction({
                 batch.push({
                     particulars: generateProjectTitle(),
                     implementingOffice: getRandomElement(OFFICES),
-                    departmentId: getRandomDeptId(),
+                    departmentId: getRandomDeptId() as any,
                     budgetItemId: getRandomElement(budgetItemIds),
                     totalBudgetAllocated: alloc,
                     totalBudgetUtilized: util,
@@ -377,7 +377,7 @@ export const seedData = internalAction({
                 batchParents.push({
                     projectTitle: generateProjectTitle(),
                     officeInCharge: getRandomElement(OFFICES),
-                    departmentId: getRandomDeptId(),
+                    departmentId: getRandomDeptId() as any,
                     received: received,
                     utilized: util,
                     balance: received - util,
@@ -431,7 +431,7 @@ export const seedData = internalAction({
                 batchParents.push({
                     projectTitle: generateProjectTitle(),
                     officeInCharge: getRandomElement(OFFICES),
-                    departmentId: getRandomDeptId(),
+                    departmentId: getRandomDeptId() as any,
                     received: received,
                     utilized: util,
                     balance: received - util,
@@ -482,7 +482,7 @@ export const seedData = internalAction({
                 batchParents.push({
                     particulars: generateProjectTitle(),
                     implementingOffice: getRandomElement(OFFICES),
-                    departmentId: getRandomDeptId(),
+                    departmentId: getRandomDeptId() as any,
                     budgetItemId: getRandomElement(budgetItemIds),
                     totalBudgetAllocated: alloc,
                     totalBudgetUtilized: util,
@@ -535,7 +535,7 @@ export const seedData = internalAction({
                 batchParents.push({
                     projectTitle: generateProjectTitle(),
                     officeInCharge: getRandomElement(OFFICES),
-                    departmentId: getRandomDeptId(),
+                    departmentId: getRandomDeptId() as any,
                     received: received,
                     utilized: util,
                     balance: received - util,

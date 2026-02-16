@@ -47,7 +47,7 @@ export function useTwentyPercentDFMutations({ fundId }: UseTwentyPercentDFMutati
             const response = await createItem({
                 particulars: data.particulars,
                 categoryId: data.categoryId || undefined,
-                departmentId: data.departmentId || undefined,
+                departmentId: (data.departmentId as any) || undefined,
                 implementingOffice: data.implementingOffice,
                 totalBudgetAllocated: data.totalBudgetAllocated,
                 obligatedBudget: data.obligatedBudget || undefined,
@@ -94,7 +94,7 @@ export function useTwentyPercentDFMutations({ fundId }: UseTwentyPercentDFMutati
                 id: id as Id<"twentyPercentDF">,
                 particulars: data.particulars,
                 categoryId: data.categoryId || undefined,
-                departmentId: data.departmentId || undefined,
+                departmentId: (data.departmentId as any) || undefined,
                 implementingOffice: data.implementingOffice,
                 totalBudgetAllocated: data.totalBudgetAllocated,
                 obligatedBudget: data.obligatedBudget || undefined,

@@ -11,7 +11,7 @@ export interface TwentyPercentDF {
     particulars: string;
     implementingOffice: string;
     categoryId?: Id<"projectCategories">;
-    departmentId?: Id<"departments">;
+    departmentId?: Id<"implementingAgencies">;
     totalBudgetAllocated: number;
     obligatedBudget?: number;
     totalBudgetUtilized: number;
@@ -35,7 +35,7 @@ export interface TwentyPercentDFFormData {
     particulars: string;
     implementingOffice: string;
     categoryId?: Id<"projectCategories">;
-    departmentId?: Id<"departments">;
+    departmentId?: Id<"implementingAgencies">;
     totalBudgetAllocated: number;
     obligatedBudget?: number;
     totalBudgetUtilized: number;

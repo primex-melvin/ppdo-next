@@ -53,7 +53,7 @@ export async function logGovtProjectActivity(
   let departmentName: string | undefined;
   if (user.departmentId) {
     const department = await ctx.db.get(user.departmentId);
-    departmentName = department?.name;
+    departmentName = (department as any)?.name ?? (department as any)?.fullName;
   }
 
   // Extract contextual data from breakdown
@@ -125,7 +125,7 @@ export async function logGovtProjectActivity(
       normalizedRole === "admin" 
         ? normalizedRole 
         : "user",
-    performedByDepartmentId: user.departmentId,
+    performedByDepartmentId: user.departmentId as any,
     performedByDepartmentName: departmentName,
 
     reason: config.reason,

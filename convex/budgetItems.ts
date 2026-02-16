@@ -269,7 +269,7 @@ export const create = mutation({
     totalBudgetUtilized: v.number(),
     year: v.optional(v.number()),
     notes: v.optional(v.string()),
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.id("implementingAgencies")),
     fiscalYear: v.optional(v.number()),
     autoCalculateBudgetUtilized: v.optional(v.boolean()), // 🆕 NEW FLAG
   },
@@ -355,7 +355,7 @@ export const update = mutation({
     totalBudgetUtilized: v.number(),
     year: v.optional(v.number()),
     notes: v.optional(v.string()),
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.id("implementingAgencies")),
     fiscalYear: v.optional(v.number()),
     autoCalculateBudgetUtilized: v.optional(v.boolean()), // 🆕 NEW FLAG
     reason: v.optional(v.string()),

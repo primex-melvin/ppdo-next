@@ -226,7 +226,7 @@ export default function AgencyDetailPage() {
             <div className="flex-1 space-y-3">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="outline" className={`${getTypeColor(agency.type)} font-medium`}>
-                  {agency.type === "department" ? "PROVINCIAL" : "EXTERNAL"}
+                  {agency.type === "internal" ? "PROVINCIAL" : "EXTERNAL"}
                 </Badge>
               </div>
               <div>

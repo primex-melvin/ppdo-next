@@ -82,7 +82,7 @@ export const budgetTables = {
     /**
      * Department responsible for this budget item
      */
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
 
     /**
      * Fiscal year for this budget (e.g., 2024, 2025)

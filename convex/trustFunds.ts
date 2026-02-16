@@ -152,8 +152,8 @@ export const create = mutation({
       ? (args.utilized / args.received) * 100
       : 0;
 
-    // Auto-link department ID if this agency represents a department
-    const departmentId = agency.departmentId;
+    // Auto-link department ID - agency itself is the department now
+    const departmentId = agency._id;
 
     // DEBUG LOG
     console.log('Creating trust fund with status:', args.status);
@@ -276,7 +276,7 @@ export const update = mutation({
       .withIndex("code", (q) => q.eq("code", args.officeInCharge))
       .first();
 
-    const departmentId = agency?.departmentId;
+    const departmentId = agency?._id;
 
     // DEBUG LOG
     console.log('Updating trust fund with status:', args.status);

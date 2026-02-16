@@ -16,7 +16,7 @@ import { indexEntity, removeFromIndex } from "./search/index";
 export const list = query({
   args: {
     includeInactive: v.optional(v.boolean()),
-    type: v.optional(v.union(v.literal("department"), v.literal("external"))),
+    type: v.optional(v.union(v.literal("internal"), v.literal("external"))),
     usageContext: v.optional(v.union(v.literal("project"), v.literal("breakdown"))),
   },
   handler: async (ctx, args) => {
@@ -45,17 +45,31 @@ export const list = query({
       return a.code.localeCompare(b.code);
     });
 
-    // Enrich with department information and runtime stats
+    // Enrich with hierarchy and head user information
     const enrichedAgencies = await Promise.all(
       agencies.map(async (agency) => {
-        let departmentInfo = null;
-        if (agency.departmentId) {
-          const dept = await ctx.db.get(agency.departmentId);
-          if (dept) {
-            departmentInfo = {
-              id: dept._id,
-              name: dept.name,
-              code: dept.code,
+        // Get head user info if available
+        let headUserInfo = null;
+        if (agency.headUserId) {
+          const headUser = await ctx.db.get(agency.headUserId);
+          if (headUser) {
+            headUserInfo = {
+              id: headUser._id,
+              name: headUser.name,
+              email: headUser.email,
+            };
+          }
+        }
+
+        // Get parent agency info if available
+        let parentAgencyInfo = null;
+        if (agency.parentAgencyId) {
+          const parent = await ctx.db.get(agency.parentAgencyId);
+          if (parent) {
+            parentAgencyInfo = {
+              id: parent._id,
+              name: parent.fullName,
+              code: parent.code,
             };
           }
         }
@@ -162,7 +176,8 @@ export const list = query({
 
         return {
           ...agency,
-          department: departmentInfo,
+          headUser: headUserInfo,
+          parentAgency: parentAgencyInfo,
           // Runtime calculated stats
           totalProjects: totalProjectsCount,
           totalBreakdowns: totalBreakdownsCount,
@@ -199,15 +214,27 @@ export const get = query({
     const agency = await ctx.db.get(args.id);
     if (!agency) throw new Error("Implementing agency not found");
 
-    // Enrich with department information
-    let departmentInfo = null;
-    if (agency.departmentId) {
-      const dept = await ctx.db.get(agency.departmentId);
-      if (dept) {
-        departmentInfo = {
-          id: dept._id,
-          name: dept.name,
-          code: dept.code,
+    // Enrich with head user and parent agency information
+    let headUserInfo = null;
+    if (agency.headUserId) {
+      const headUser = await ctx.db.get(agency.headUserId);
+      if (headUser) {
+        headUserInfo = {
+          id: headUser._id,
+          name: headUser.name,
+          email: headUser.email,
+        };
+      }
+    }
+
+    let parentAgencyInfo = null;
+    if (agency.parentAgencyId) {
+      const parent = await ctx.db.get(agency.parentAgencyId);
+      if (parent) {
+        parentAgencyInfo = {
+          id: parent._id,
+          name: parent.fullName,
+          code: parent.code,
         };
       }
     }
@@ -413,7 +440,8 @@ export const get = query({
 
     return {
       ...agency,
-      department: departmentInfo,
+      headUser: headUserInfo,
+      parentAgency: parentAgencyInfo,
       // Stats
       totalProjects: totalProjectsCount,
       activeProjects: ongoingProjectsCount,
@@ -458,22 +486,35 @@ export const getByCode = query({
 
     if (!agency) throw new Error("Implementing agency not found");
 
-    // Enrich with department information
-    let departmentInfo = null;
-    if (agency.departmentId) {
-      const dept = await ctx.db.get(agency.departmentId);
-      if (dept) {
-        departmentInfo = {
-          id: dept._id,
-          name: dept.name,
-          code: dept.code,
+    // Enrich with head user and parent agency information
+    let headUserInfo = null;
+    if (agency.headUserId) {
+      const headUser = await ctx.db.get(agency.headUserId);
+      if (headUser) {
+        headUserInfo = {
+          id: headUser._id,
+          name: headUser.name,
+          email: headUser.email,
+        };
+      }
+    }
+
+    let parentAgencyInfo = null;
+    if (agency.parentAgencyId) {
+      const parent = await ctx.db.get(agency.parentAgencyId);
+      if (parent) {
+        parentAgencyInfo = {
+          id: parent._id,
+          name: parent.fullName,
+          code: parent.code,
         };
       }
     }
 
     return {
       ...agency,
-      department: departmentInfo,
+      headUser: headUserInfo,
+      parentAgency: parentAgencyInfo,
     };
   },
 });
@@ -550,7 +591,7 @@ export const getStatistics = query({
 
     const active = allAgencies.filter(a => a.isActive);
     const inactive = allAgencies.filter(a => !a.isActive);
-    const departments = allAgencies.filter(a => a.type === "department");
+    const internalAgencies = allAgencies.filter(a => a.type === "internal");
     const external = allAgencies.filter(a => a.type === "external");
     const systemDefaults = allAgencies.filter(a => a.isSystemDefault);
 
@@ -566,7 +607,7 @@ export const getStatistics = query({
       total: allAgencies.length,
       active: active.length,
       inactive: inactive.length,
-      departments: departments.length,
+      internal: internalAgencies.length,
       external: external.length,
       systemDefaults: systemDefaults.length,
       totalProjectUsage,
@@ -588,8 +629,9 @@ export const create = mutation({
   args: {
     code: v.string(),
     fullName: v.string(),
-    type: v.union(v.literal("department"), v.literal("external")),
-    departmentId: v.optional(v.id("departments")),
+    type: v.union(v.literal("internal"), v.literal("external")),
+    parentAgencyId: v.optional(v.id("implementingAgencies")),
+    headUserId: v.optional(v.id("users")),
     description: v.optional(v.string()),
     contactPerson: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
@@ -622,21 +664,19 @@ export const create = mutation({
       throw new Error(`Implementing agency with code "${args.code}" already exists`);
     }
 
-    // Validate type-specific requirements
-    if (args.type === "department") {
-      if (!args.departmentId) {
-        throw new Error("Department ID is required when type is 'department'");
+    // Validate parent agency if provided
+    if (args.parentAgencyId) {
+      const parent = await ctx.db.get(args.parentAgencyId);
+      if (!parent) {
+        throw new Error("Parent agency not found");
       }
+    }
 
-      // Verify department exists
-      const dept = await ctx.db.get(args.departmentId);
-      if (!dept) {
-        throw new Error("Department not found");
-      }
-    } else {
-      // External agency - should not have departmentId
-      if (args.departmentId) {
-        throw new Error("External agencies should not have a department ID");
+    // Validate head user if provided
+    if (args.headUserId) {
+      const headUser = await ctx.db.get(args.headUserId);
+      if (!headUser) {
+        throw new Error("Head user not found");
       }
     }
 
@@ -654,7 +694,8 @@ export const create = mutation({
       code: args.code,
       fullName: args.fullName,
       type: args.type,
-      departmentId: args.departmentId,
+      parentAgencyId: args.parentAgencyId,
+      headUserId: args.headUserId,
       description: args.description,
       contactPerson: args.contactPerson,
       contactEmail: args.contactEmail,
@@ -679,7 +720,6 @@ export const create = mutation({
       entityId: agencyId,
       primaryText: args.fullName,
       secondaryText: args.code,
-      departmentId: args.departmentId,
       status: "active",
       isDeleted: false,
     });
@@ -696,8 +736,9 @@ export const update = mutation({
     id: v.id("implementingAgencies"),
     code: v.optional(v.string()),
     fullName: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("department"), v.literal("external"))),
-    departmentId: v.optional(v.id("departments")),
+    type: v.optional(v.union(v.literal("internal"), v.literal("external"))),
+    parentAgencyId: v.optional(v.id("implementingAgencies")),
+    headUserId: v.optional(v.id("users")),
     description: v.optional(v.string()),
     contactPerson: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
@@ -741,13 +782,24 @@ export const update = mutation({
       }
     }
 
-    // Validate type changes
-    const newType = args.type || existing.type;
-    if (newType === "department" && args.departmentId) {
-      // Verify department exists
-      const dept = await ctx.db.get(args.departmentId);
-      if (!dept) {
-        throw new Error("Department not found");
+    // Validate parent agency if provided
+    if (args.parentAgencyId) {
+      // Prevent circular reference
+      if (args.parentAgencyId === args.id) {
+        throw new Error("Agency cannot be its own parent");
+      }
+      
+      const parent = await ctx.db.get(args.parentAgencyId);
+      if (!parent) {
+        throw new Error("Parent agency not found");
+      }
+    }
+
+    // Validate head user if provided
+    if (args.headUserId) {
+      const headUser = await ctx.db.get(args.headUserId);
+      if (!headUser) {
+        throw new Error("Head user not found");
       }
     }
 
@@ -765,7 +817,8 @@ export const update = mutation({
       ...(args.code && { code: args.code }),
       ...(args.fullName && { fullName: args.fullName }),
       ...(args.type && { type: args.type }),
-      ...(args.departmentId !== undefined && { departmentId: args.departmentId }),
+      ...(args.parentAgencyId !== undefined && { parentAgencyId: args.parentAgencyId }),
+      ...(args.headUserId !== undefined && { headUserId: args.headUserId }),
       ...(args.description !== undefined && { description: args.description }),
       ...(args.contactPerson !== undefined && { contactPerson: args.contactPerson }),
       ...(args.contactEmail !== undefined && { contactEmail: args.contactEmail }),
@@ -785,7 +838,6 @@ export const update = mutation({
       entityId: args.id,
       primaryText: args.fullName || existing.fullName,
       secondaryText: args.code || existing.code,
-      departmentId: args.departmentId !== undefined ? args.departmentId : existing.departmentId,
       status: existing.isActive ? "active" : "inactive",
       isDeleted: false,
     });
@@ -1050,5 +1102,104 @@ export const recalculateUsageCountsInternal = internalMutation({
       totalProjects: projects.length,
       totalBreakdowns: breakdowns.length,
     };
+  },
+});
+/**
+ * ============================================================================
+ * HIERARCHY QUERIES
+ * ============================================================================
+ */
+
+/**
+ * Get agency hierarchy (parent-child structure)
+ * Similar to the old departments.getHierarchy
+ */
+export const getHierarchy = query({
+  args: {
+    type: v.optional(v.union(v.literal("internal"), v.literal("external"))),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    let agencies = await ctx.db
+      .query("implementingAgencies")
+      .withIndex("isActive", (q) => q.eq("isActive", true))
+      .collect();
+
+    // Filter by type if requested
+    if (args.type) {
+      agencies = agencies.filter(a => a.type === args.type);
+    }
+
+    // Build hierarchy structure
+    const agencyMap = new Map(agencies.map(a => [a._id, { ...a, children: [] as any[] }]));
+    const rootAgencies: any[] = [];
+
+    agencies.forEach(agency => {
+      const agencyWithChildren = agencyMap.get(agency._id);
+      if (agency.parentAgencyId) {
+        const parent = agencyMap.get(agency.parentAgencyId);
+        if (parent) {
+          parent.children.push(agencyWithChildren);
+        } else {
+          // Parent not in filtered list, treat as root
+          rootAgencies.push(agencyWithChildren);
+        }
+      } else {
+        rootAgencies.push(agencyWithChildren);
+      }
+    });
+
+    // Sort by displayOrder
+    const sortByOrder = (arr: any[]) => {
+      arr.sort((a, b) => {
+        if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+          return a.displayOrder - b.displayOrder;
+        }
+        return a.fullName.localeCompare(b.fullName);
+      });
+      arr.forEach(item => {
+        if (item.children.length > 0) {
+          sortByOrder(item.children);
+        }
+      });
+    };
+
+    sortByOrder(rootAgencies);
+
+    return rootAgencies;
+  },
+});
+
+/**
+ * Get child agencies for a parent agency
+ */
+export const getChildren = query({
+  args: {
+    parentId: v.id("implementingAgencies"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const children = await ctx.db
+      .query("implementingAgencies")
+      .withIndex("parentAgencyId", (q) => q.eq("parentAgencyId", args.parentId))
+      .collect();
+
+    // Sort by displayOrder
+    children.sort((a, b) => {
+      if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+        return a.displayOrder - b.displayOrder;
+      }
+      return a.fullName.localeCompare(b.fullName);
+    });
+
+    return children;
   },
 });

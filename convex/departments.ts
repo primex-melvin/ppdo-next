@@ -48,10 +48,10 @@ export const list = query({
           headUser = await ctx.db.get(dept.headUserId);
         }
         
-        // Get user count for this department
+        // Get user count for this department (backward compatibility cast)
         const userCount = await ctx.db
           .query("users")
-          .withIndex("departmentId", (q) => q.eq("departmentId", dept._id))
+          .withIndex("departmentId", (q) => q.eq("departmentId", dept._id as any))
           .collect()
           .then(users => users.length);
         
@@ -99,17 +99,17 @@ export const get = query({
       parentDepartment = await ctx.db.get(department.parentDepartmentId);
     }
     
-    // Get user count
+    // Get user count (backward compatibility cast)
     const userCount = await ctx.db
       .query("users")
-      .withIndex("departmentId", (q) => q.eq("departmentId", args.id))
+      .withIndex("departmentId", (q) => q.eq("departmentId", args.id as any))
       .collect()
       .then(users => users.length);
     
-    // Get project count
+    // Get project count (backward compatibility cast)
     const projectCount = await ctx.db
       .query("projects")
-      .withIndex("departmentId", (q) => q.eq("departmentId", args.id))
+      .withIndex("departmentId", (q) => q.eq("departmentId", args.id as any))
       .collect()
       .then(projects => projects.length);
     
@@ -196,6 +196,42 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    // ============================================================================
+    // DUAL-WRITE: Also create as implementing agency (migration compatibility)
+    // ============================================================================
+    try {
+      // Check if agency with this code already exists
+      const existingAgency = await ctx.db
+        .query("implementingAgencies")
+        .withIndex("code", (q) => q.eq("code", args.code))
+        .first();
+
+      if (!existingAgency) {
+        await ctx.db.insert("implementingAgencies", {
+          code: args.code,
+          fullName: args.name,
+          type: "internal",
+          departmentId: departmentId, // Link back to department
+          description: args.description,
+          headUserId: args.headUserId,
+          contactEmail: args.email,
+          contactPhone: args.phone,
+          address: args.location,
+          isActive: args.isActive,
+          displayOrder: args.displayOrder,
+          isSystemDefault: false,
+          projectUsageCount: 0,
+          breakdownUsageCount: 0,
+          createdBy: userId,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    } catch (error) {
+      // Log but don't fail - department is already created
+      console.error("Failed to create implementing agency:", error);
+    }
 
     // Log the action
     await ctx.db.insert("userAuditLog", {
@@ -310,6 +346,36 @@ export const update = mutation({
       updatedAt: now,
     });
 
+    // ============================================================================
+    // DUAL-WRITE: Also update the implementing agency (migration compatibility)
+    // ============================================================================
+    try {
+      const agency = await ctx.db
+        .query("implementingAgencies")
+        .withIndex("code", (q) => q.eq("code", existingDept.code))
+        .first();
+
+      if (agency) {
+        await ctx.db.patch(agency._id, {
+          code: args.code,
+          fullName: args.name,
+          type: "internal",
+          description: args.description,
+          headUserId: args.headUserId,
+          contactEmail: args.email,
+          contactPhone: args.phone,
+          address: args.location,
+          isActive: args.isActive,
+          displayOrder: args.displayOrder,
+          updatedAt: now,
+          updatedBy: userId,
+        });
+      }
+    } catch (error) {
+      // Log but don't fail - department is already updated
+      console.error("Failed to update implementing agency:", error);
+    }
+
     // Log the action
     await ctx.db.insert("userAuditLog", {
       performedBy: userId,
@@ -368,20 +434,20 @@ export const remove = mutation({
       throw new Error("Department not found");
     }
 
-    // Check if department has users
+    // Check if department has users (backward compatibility cast)
     const users = await ctx.db
       .query("users")
-      .withIndex("departmentId", (q) => q.eq("departmentId", args.id))
+      .withIndex("departmentId", (q) => q.eq("departmentId", args.id as any))
       .collect();
     
     if (users.length > 0) {
       throw new Error(`Cannot delete department with ${users.length} user(s). Please reassign users first.`);
     }
 
-    // Check if department has projects
+    // Check if department has projects (backward compatibility cast)
     const projects = await ctx.db
       .query("projects")
-      .withIndex("departmentId", (q) => q.eq("departmentId", args.id))
+      .withIndex("departmentId", (q) => q.eq("departmentId", args.id as any))
       .collect();
     
     if (projects.length > 0) {

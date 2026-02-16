@@ -531,13 +531,14 @@ export const getDepartmentHierarchy = query({
 
         // Build hierarchy
         const hierarchy = departments.map(dept => {
-            // Get offices linked to this department
+            // Get offices linked to this department (backward compatibility)
+            // During migration: agencies with parentAgencyId pointing to this dept are considered "offices"
             const offices = implementingAgencies.filter(
-                agency => agency.departmentId === dept._id
+                agency => (agency as any).parentAgencyId === dept._id || (agency as any).departmentId === dept._id
             );
 
             // Calculate department totals
-            const deptBudgets = budgetItems.filter(b => b.departmentId === dept._id);
+            const deptBudgets = budgetItems.filter(b => (b.departmentId as any) === dept._id);
             const totalAllocated = deptBudgets.reduce((sum, b) => sum + (b.totalBudgetAllocated || 0), 0);
             const totalUtilized = deptBudgets.reduce((sum, b) => sum + (b.totalBudgetUtilized || 0), 0);
 
@@ -549,7 +550,7 @@ export const getDepartmentHierarchy = query({
                     id: office._id,
                     name: office.fullName,
                     code: office.code,
-                    type: office.type,
+                    type: (office as any).type || "internal",
                 })),
                 budget: {
                     allocated: totalAllocated,
@@ -643,7 +644,7 @@ export const getTimeSeriesData = query({
             .collect();
 
         // Apply department filter if provided
-        if (args.departmentId) {
+        if (args.departmentId as any) {
             projects = projects.filter(p => p.departmentId === args.departmentId);
             budgetItems = budgetItems.filter(b => b.departmentId === args.departmentId);
         }

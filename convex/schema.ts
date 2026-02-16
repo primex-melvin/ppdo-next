@@ -7,6 +7,8 @@ import { projectTables } from "./schema/projects";
 import { budgetTables } from "./schema/budgets";
 import { inspectionTables } from "./schema/inspections";
 import { mediaTables } from "./schema/media";
+// DEPRECATED: departments table - will be removed after migration
+// Keeping for backward compatibility during transition
 import { departmentTables } from "./schema/departments";
 import { permissionTables } from "./schema/permissions";
 import { auditTables } from "./schema/audit";

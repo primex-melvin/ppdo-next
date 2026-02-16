@@ -153,7 +153,7 @@ export const create = mutation({
       : 0;
 
     // Auto-link department ID if this agency represents a department
-    const departmentId = agency.departmentId;
+    const departmentId = agency._id;
 
     // DEBUG LOG
     console.log('Creating special education fund with status:', args.status);
@@ -276,7 +276,7 @@ export const update = mutation({
       .withIndex("code", (q) => q.eq("code", args.officeInCharge))
       .first();
 
-    const departmentId = agency?.departmentId;
+    const departmentId = agency?._id;
 
     // DEBUG LOG
     console.log('Updating special education fund with status:', args.status);

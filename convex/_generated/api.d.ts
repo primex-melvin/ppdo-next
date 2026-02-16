@@ -64,6 +64,8 @@ import type * as lib_twentyPercentDFAggregation from "../lib/twentyPercentDFAggr
 import type * as loginTrail from "../loginTrail.js";
 import type * as media from "../media.js";
 import type * as migrations from "../migrations.js";
+import type * as migrations_clearDevData from "../migrations/clearDevData.js";
+import type * as migrations_migrateDepartmentsToAgencies from "../migrations/migrateDepartmentsToAgencies.js";
 import type * as migrations_migrateInspectionsV2 from "../migrations/migrateInspectionsV2.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as obligations from "../obligations.js";
@@ -91,6 +93,7 @@ import type * as schema_fiscalYears from "../schema/fiscalYears.js";
 import type * as schema_govtProjectBreakdownActivities from "../schema/govtProjectBreakdownActivities.js";
 import type * as schema_govtProjectBreakdowns from "../schema/govtProjectBreakdowns.js";
 import type * as schema_implementingAgencies from "../schema/implementingAgencies.js";
+import type * as schema_implementingAgenciesMerged from "../schema/implementingAgenciesMerged.js";
 import type * as schema_inspections from "../schema/inspections.js";
 import type * as schema_media from "../schema/media.js";
 import type * as schema_misc from "../schema/misc.js";
@@ -228,6 +231,8 @@ declare const fullApi: ApiFromModules<{
   loginTrail: typeof loginTrail;
   media: typeof media;
   migrations: typeof migrations;
+  "migrations/clearDevData": typeof migrations_clearDevData;
+  "migrations/migrateDepartmentsToAgencies": typeof migrations_migrateDepartmentsToAgencies;
   "migrations/migrateInspectionsV2": typeof migrations_migrateInspectionsV2;
   myFunctions: typeof myFunctions;
   obligations: typeof obligations;
@@ -255,6 +260,7 @@ declare const fullApi: ApiFromModules<{
   "schema/govtProjectBreakdownActivities": typeof schema_govtProjectBreakdownActivities;
   "schema/govtProjectBreakdowns": typeof schema_govtProjectBreakdowns;
   "schema/implementingAgencies": typeof schema_implementingAgencies;
+  "schema/implementingAgenciesMerged": typeof schema_implementingAgenciesMerged;
   "schema/inspections": typeof schema_inspections;
   "schema/media": typeof schema_media;
   "schema/misc": typeof schema_misc;

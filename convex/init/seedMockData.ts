@@ -99,7 +99,7 @@ export const seedDatabase = mutation({
                     particulars: p.code,
                     year,
                     fiscalYear: year,
-                    departmentId: deptId,
+                    departmentId: deptId as any,
                     totalBudgetAllocated: allocated,
                     totalBudgetUtilized: utilized,
                     obligatedBudget: obligated,
@@ -136,8 +136,8 @@ export const seedDatabase = mutation({
             await ctx.db.insert("projects", {
                 particulars: title,
                 budgetItemId: budgetItem._id,
-                departmentId: budgetItem.departmentId,
-                implementingOffice: departments.find(d => departmentIds[d.code] === budgetItem.departmentId)?.code || "PPDO",
+                departmentId: budgetItem.departmentId as any,
+                implementingOffice: departments.find(d => (departmentIds[d.code] as any) === budgetItem.departmentId)?.code || "PPDO",
                 totalBudgetAllocated: allocated,
                 totalBudgetUtilized: utilized,
                 utilizationRate: (utilized / allocated) * 100,
@@ -163,7 +163,7 @@ export const seedDatabase = mutation({
             await ctx.db.insert("trustFunds", {
                 projectTitle: `${tfTitles[i % tfTitles.length]} ${year}`,
                 officeInCharge: deptCode,
-                departmentId: departmentIds[deptCode],
+                departmentId: departmentIds[deptCode] as any,
                 received,
                 utilized,
                 balance: received - utilized,

@@ -136,7 +136,7 @@ export const getSharedUsers = query({
       let departmentName: string | undefined = undefined;
       if (user.departmentId) {
         const dept = await ctx.db.get(user.departmentId);
-        departmentName = dept?.name;
+        departmentName = (dept as any)?.name ?? (dept as any)?.fullName;
       }
 
       enrichedRecords.push({

@@ -248,7 +248,7 @@ export function UserModal({
               onValueChange={(value) =>
                 updateField(
                   "departmentId",
-                  value === "none" ? undefined : (value as Id<"departments">)
+                  value === "none" ? undefined : (value as Id<"implementingAgencies">)
                 )
               }
               disabled={isSubmitting}

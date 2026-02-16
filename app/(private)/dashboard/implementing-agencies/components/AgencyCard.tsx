@@ -54,7 +54,7 @@ export function AgencyCard({ agency }: AgencyCardProps) {
   }
 
   // Create a display type label
-  const displayType = agency.type === "department" ? "PROVINCIAL" : "EXTERNAL"
+  const displayType = agency.type === "internal" ? "PROVINCIAL" : "EXTERNAL"
 
   return (
     // Note: Use string interpolation safely for ID

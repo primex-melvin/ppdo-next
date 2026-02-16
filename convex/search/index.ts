@@ -532,9 +532,9 @@ export const search = query({
           userDepartmentId = user.departmentId;
 
           // Get user's department to find parent department
-          const userDept = await ctx.db.get(user.departmentId as Id<"departments">);
-          if (userDept?.parentDepartmentId) {
-            userParentDepartmentId = userDept.parentDepartmentId;
+          const userDept = await ctx.db.get(user.departmentId);
+          if ((userDept as any)?.parentDepartmentId) {
+            userParentDepartmentId = (userDept as any).parentDepartmentId;
           }
         }
       }

@@ -31,7 +31,7 @@ export const specialEducationFundTables = {
     /**
      * Optional department reference (auto-linked if office is a department)
      */
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
 
     /**
      * Date when the special education fund was received

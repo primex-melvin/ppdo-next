@@ -20,7 +20,7 @@ export const budgetItemActivityTables = {
     
     // Contextual Data
     particulars: v.string(), // Budget Name/Particulars
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
     year: v.optional(v.number()),
 
     // Change Tracking

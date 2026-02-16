@@ -31,8 +31,9 @@ export const accessRequestTables = {
     
     /**
      * User's department ID (reference)
+     * MIGRATION: Temporarily accepts both departments and implementingAgencies IDs
      */
-    departmentId: v.optional(v.id("departments")),
+    departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))),
     
     /**
      * Page or feature being requested
@@ -87,5 +88,6 @@ export const accessRequestTables = {
     .index("status", ["status"])
     .index("createdAt", ["createdAt"])
     .index("reviewedBy", ["reviewedBy"])
-    .index("userAndStatus", ["userId", "status"]),
+    .index("userAndStatus", ["userId", "status"])
+    .index("departmentId", ["departmentId"]),
 };

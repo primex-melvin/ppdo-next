@@ -73,7 +73,7 @@ export async function logTrustFundBreakdownActivity(
   let departmentName: string | undefined;
   if (user.departmentId) {
     const department = await ctx.db.get(user.departmentId);
-    departmentName = department?.name;
+    departmentName = (department as any)?.name ?? (department as any)?.fullName;
   }
 
   // Extract contextual data from breakdown
@@ -147,7 +147,7 @@ export async function logTrustFundBreakdownActivity(
     performedByName: user.name || "Unknown",
     performedByEmail: user.email || "",
     performedByRole: normalizedRole as "super_admin" | "admin" | "inspector" | "user",
-    performedByDepartmentId: user.departmentId,
+    performedByDepartmentId: user.departmentId as any,
     performedByDepartmentName: departmentName,
 
     // Technical Metadata

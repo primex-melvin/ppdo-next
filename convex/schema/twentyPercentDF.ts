@@ -26,7 +26,7 @@ export const twentyPercentDFTables = {
         /**
          * Department ID reference (optional for filtering/grouping)
          */
-        departmentId: v.optional(v.id("departments")),
+        departmentId: v.optional(v.union(v.id("departments"), v.id("implementingAgencies"))), // MIGRATION: Temporarily accepts both
 
 
         /**
