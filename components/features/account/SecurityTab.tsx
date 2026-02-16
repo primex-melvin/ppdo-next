@@ -31,7 +31,7 @@ export function SecurityTab({ user }: SecurityTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [step, setStep] = useState<"current" | "new">(pinStatus?.hasPinSet ? "current" : "new");
+  const [step, setStep] = useState<"current" | "new">(pinStatus?.hasCustomPin ? "current" : "new");
 
   const hasCustomPin = pinStatus?.hasCustomPin ?? false;
   const isDefaultPin = !hasCustomPin && pinStatus?.hasPinSet;

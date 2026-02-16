@@ -128,8 +128,9 @@ export const setPin = mutation({
       throw new Error("PIN must be exactly 6 digits");
     }
 
-    // If user already has a PIN set, verify current PIN
-    if (user.deleteProtectionPin) {
+    // If user already has a custom PIN set, verify current PIN
+    // Users with default PIN (hasCustomDeletePin !== true) can set new PIN without current PIN
+    if (user.hasCustomDeletePin) {
       if (!args.currentPin) {
         throw new Error("Current PIN is required");
       }
