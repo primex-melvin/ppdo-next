@@ -39,7 +39,7 @@ export const DEFAULT_COLUMNS: AgencyColumnConfig[] = [
     maxWidth: 180,
     type: "badge",
     align: "center",
-    defaultVisible: true,
+    defaultVisible: false,
   },
   {
     key: "category",
@@ -127,7 +127,7 @@ export const DEFAULT_COLUMNS: AgencyColumnConfig[] = [
     maxWidth: 150,
     type: "status",
     align: "center",
-    defaultVisible: true,
+    defaultVisible: false,
   },
   {
     key: "createdAt",
