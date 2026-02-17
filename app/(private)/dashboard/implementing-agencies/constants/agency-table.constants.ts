@@ -165,6 +165,6 @@ export const AGENCY_SORT_OPTIONS: AgencySortOptionConfig[] = [
   { value: "codeDesc", label: "Code: Z-A" },
   { value: "projectsDesc", label: "Projects: Most to Least" },
   { value: "projectsAsc", label: "Projects: Least to Most" },
-  { value: "typeAsc", label: "Type: Department First" },
+  { value: "typeAsc", label: "Type: Internal First" },
   { value: "typeDesc", label: "Type: External First" },
 ];

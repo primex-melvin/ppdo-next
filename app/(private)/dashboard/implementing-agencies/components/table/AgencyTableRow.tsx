@@ -36,10 +36,10 @@ function formatCellValue(agency: Agency, column: AgencyColumnConfig): React.Reac
     case "type":
       return (
         <Badge
-          variant={agency.type === "department" ? "default" : "secondary"}
+          variant={agency.type === "internal" ? "default" : "secondary"}
           className="text-[10px] px-1.5 py-0"
         >
-          {agency.type === "department" ? "Department" : "External"}
+          {agency.type === "internal" ? "Internal" : "External"}
         </Badge>
       );
 
@@ -97,11 +97,10 @@ export function AgencyTableRow({
       <ContextMenuTrigger asChild>
         <tr
           id={`row-${agency._id}`}
-          className={`cursor-pointer transition-colors ${
-            isSelected
+          className={`cursor-pointer transition-colors ${isSelected
               ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
               : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
-          }`}
+            }`}
           style={{ height: rowHeight }}
           onClick={(e) => onRowClick(agency, e)}
         >

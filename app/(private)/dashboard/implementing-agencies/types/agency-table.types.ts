@@ -10,7 +10,7 @@ export interface Agency {
   _creationTime: number;
   code: string;
   fullName: string;
-  type: "department" | "external";
+  type: "internal" | "external";
   departmentId?: Id<"departments">;
   description?: string;
   contactPerson?: string;

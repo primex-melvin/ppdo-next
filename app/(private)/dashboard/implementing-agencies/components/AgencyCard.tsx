@@ -46,7 +46,7 @@ export function AgencyCard({ agency }: AgencyCardProps) {
         // Schema: "department" | "external". The mock used "national", "provincial" etc.
         // We should adapt.
         return "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20"
-      case "department":
+      case "internal":
         return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
       default:
         return "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20"

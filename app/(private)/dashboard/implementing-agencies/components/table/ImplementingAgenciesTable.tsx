@@ -111,7 +111,7 @@ export function ImplementingAgenciesTable({
             case "department":
               return agency.department?.name || "";
             case "type":
-              return agency.type === "department" ? "Department" : "External";
+              return agency.type === "internal" ? "Internal" : "External";
             case "isActive":
               return agency.isActive ? "Active" : "Inactive";
             case "totalBreakdowns":
