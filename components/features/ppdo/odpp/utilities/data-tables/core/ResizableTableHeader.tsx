@@ -127,24 +127,23 @@ export function ResizableTableHeader({
                             />
                         </div>
 
-                        {canEditLayout && (
-                            <div
-                                className="absolute right-0 top-0 h-full cursor-col-resize z-10 hover:bg-blue-400/50"
-                                onMouseDown={e => onStartResize(e, index)}
-                                style={{
-                                    width: '6px',
-                                    marginRight: '-3px',
-                                    backgroundColor: 'transparent',
-                                    transition: 'background-color 0.15s',
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = 'rgb(59 130 246 / 0.6)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = 'transparent';
-                                }}
-                            />
-                        )}
+                        {/* Resize handle - available to ALL users */}
+                        <div
+                            className="absolute right-0 top-0 h-full cursor-col-resize z-20"
+                            onMouseDown={e => onStartResize(e, index)}
+                            style={{
+                                width: '8px',
+                                transform: 'translateX(50%)',
+                                backgroundColor: 'transparent',
+                                transition: 'background-color 0.15s',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgb(59 130 246 / 0.6)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                        />
                     </th>
                 ))}
 
