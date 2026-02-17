@@ -99,6 +99,9 @@ export default function AgencyDetailPage() {
   const params = useParams()
   const id = params?.id as Id<"implementingAgencies">
 
+  // Show/hide statistics state - MUST be before any conditional returns
+  const [showStatistics, setShowStatistics] = useState(true)
+
   const agency = useQuery(api.implementingAgencies.get, { id })
 
   if (agency === undefined) {
@@ -142,9 +145,6 @@ export default function AgencyDetailPage() {
     utilizationRate: agency.totalBudget > 0 ? ((agency.utilizedBudget / agency.totalBudget) * 100).toFixed(1) : "0.0",
     avgProjectBudget: agency.avgProjectBudget || 0
   }
-
-  // Show/hide statistics state
-  const [showStatistics, setShowStatistics] = useState(true)
 
   // Helper to render a category section
   const renderCategorySection = (
