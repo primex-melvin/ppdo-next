@@ -81,7 +81,7 @@ export function DashboardFilters({
     // Fetch data for selectors
     // Fetch data for selectors
     const fiscalYears = useQuery(api.fiscalYears.list, {});
-    const departments = useQuery(api.departments.list, {});
+    const internalAgencies = useQuery(api.implementingAgencies.list, { type: "internal" });
     const implementingAgencies = useQuery(api.implementingAgencies.list, {});
 
     // Count active filters
@@ -124,7 +124,7 @@ export function DashboardFilters({
                     <DepartmentMultiSelect
                         value={filters.departmentIds || []}
                         onChange={(value) => onChange("departmentIds", value)}
-                        departments={departments || []}
+                        departments={internalAgencies || []}
                     />
 
                     {/* Date Range Picker */}
@@ -221,7 +221,7 @@ export function DashboardFilters({
                             <DepartmentMultiSelect
                                 value={filters.departmentIds || []}
                                 onChange={(value) => onChange("departmentIds", value)}
-                                departments={departments || []}
+                                departments={internalAgencies || []}
                             />
                             {/* Add more mobile filters */}
                         </motion.div>
@@ -383,20 +383,22 @@ function YearSwitcher({ fiscalYears, currentFiscalYearId, mobile, activeYear }: 
     );
 }
 interface DepartmentMultiSelectProps {
-    value: Id<"departments">[];
-    onChange: (value: Id<"departments">[]) => void;
-    departments: Doc<"departments">[];
+    value: Id<"implementingAgencies">[];
+    onChange: (value: Id<"implementingAgencies">[]) => void;
+    departments: Doc<"implementingAgencies">[];
 }
 
 function DepartmentMultiSelect({ value, onChange, departments }: DepartmentMultiSelectProps) {
     const [open, setOpen] = useState(false);
 
-    const toggleDepartment = (deptId: Id<"departments">) => {
-        const newValue: Id<"departments">[] = value.includes(deptId)
+    const toggleDepartment = (deptId: Id<"implementingAgencies">) => {
+        const newValue: Id<"implementingAgencies">[] = value.includes(deptId)
             ? value.filter((id) => id !== deptId)
             : [...value, deptId];
         onChange(newValue);
     };
+
+
 
     const selectedDepts = departments.filter((d) => value.includes(d._id));
 
@@ -427,7 +429,7 @@ function DepartmentMultiSelect({ value, onChange, departments }: DepartmentMulti
                             {departments.map((dept) => (
                                 <CommandItem
                                     key={dept._id}
-                                    value={dept.name}
+                                    value={dept.fullName}
                                     onSelect={() => toggleDepartment(dept._id)}
                                 >
                                     <div className="flex items-center">
@@ -442,7 +444,7 @@ function DepartmentMultiSelect({ value, onChange, departments }: DepartmentMulti
                                             <Check className="h-3 w-3" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-sm">{dept.name}</span>
+                                            <span className="text-sm">{dept.fullName}</span>
                                             <span className="text-xs text-muted-foreground">
                                                 {dept.code}
                                             </span>

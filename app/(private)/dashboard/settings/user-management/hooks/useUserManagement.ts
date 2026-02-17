@@ -12,7 +12,7 @@ export function useUserManagement() {
 
   // Queries
   const users = useQuery(api.userManagement.listAllUsers, {});
-  const departments = useQuery(api.departments.list, {});
+  const departments = useQuery(api.implementingAgencies.list, { type: "internal" });
 
   // Mutations
   const createUserMutation = useMutation(api.userManagement.createUser);

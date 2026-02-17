@@ -28,25 +28,27 @@ export const seedDatabase = mutation({
             adminId = adminUser._id;
         }
 
-        // 2. Departments
+        // 2. Implementing Agencies
         const departments = [
-            { name: "Provincial Planning & Development Office", code: "PPDO" },
-            { name: "Provincial Engineering Office", code: "PEO" },
-            { name: "Provincial Health Office", code: "PHO" },
-            { name: "Provincial Agriculture Office", code: "PAgO" },
-            { name: "Provincial Social Welfare & Development", code: "PSWDO" },
-            { name: "Provincial Disaster Risk Reduction", code: "PDRRMO" },
-            { name: "Provincial Tourism Office", code: "PTourO" },
-            { name: "General Services Office", code: "GSO" },
-            { name: "Human Resource Management Office", code: "HRMO" },
+            { fullName: "Provincial Planning & Development Office", code: "PPDO" },
+            { fullName: "Provincial Engineering Office", code: "PEO" },
+            { fullName: "Provincial Health Office", code: "PHO" },
+            { fullName: "Provincial Agriculture Office", code: "PAgO" },
+            { fullName: "Provincial Social Welfare & Development", code: "PSWDO" },
+            { fullName: "Provincial Disaster Risk Reduction", code: "PDRRMO" },
+            { fullName: "Provincial Tourism Office", code: "PTourO" },
+            { fullName: "General Services Office", code: "GSO" },
+            { fullName: "Human Resource Management Office", code: "HRMO" },
         ];
 
-        const departmentIds: Record<string, Id<"departments">> = {};
+        const departmentIds: Record<string, Id<"implementingAgencies">> = {};
         for (const d of departments) {
-            const existing = await ctx.db.query("departments").withIndex("code", q => q.eq("code", d.code)).first();
+            const existing = await ctx.db.query("implementingAgencies").withIndex("code", q => q.eq("code", d.code)).first();
             if (!existing) {
-                const id = await ctx.db.insert("departments", {
-                    ...d,
+                const id = await ctx.db.insert("implementingAgencies", {
+                    fullName: d.fullName,
+                    code: d.code,
+                    type: "internal",
                     isActive: true,
                     createdBy: adminId,
                     createdAt: now,

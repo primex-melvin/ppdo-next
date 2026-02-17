@@ -125,7 +125,7 @@ const filterArgs = {
     fiscalYearId: v.optional(v.id("fiscalYears")),
 
     // Department/Office filters (multi-select)
-    departmentIds: v.optional(v.array(v.id("departments"))),
+    departmentIds: v.optional(v.array(v.id("implementingAgencies"))),
     officeIds: v.optional(v.array(v.string())), // Implementing office codes
 
     // Time filters
@@ -164,7 +164,7 @@ interface NormalizedProject {
     _id: string;
     createdAt: number;
     year?: number;
-    departmentId?: Id<"departments">;
+    departmentId?: Id<"implementingAgencies">;
     implementingOffice?: string;
     particulars: string; // Name/Title
     status?: string;
@@ -177,7 +177,7 @@ interface NormalizedBudgetItem {
     _id: string;
     createdAt: number;
     year?: number;
-    departmentId?: Id<"departments">; // Some funds might not have this, optional
+    departmentId?: Id<"implementingAgencies">; // Some funds might not have this, optional
     particulars: string;
     totalBudgetAllocated: number;
     obligatedBudget: number;
@@ -325,7 +325,10 @@ export const getDashboardAnalytics = query({
                 .collect();
         }
 
-        const allDepartments = await ctx.db.query("departments").collect();
+        const allInternalAgencies = await ctx.db
+            .query("implementingAgencies")
+            .withIndex("type", q => q.eq("type", "internal"))
+            .collect();
         const allCategories = await ctx.db.query("projectCategories").collect();
         // Breakdowns might not exist for all types yet
         allBreakdowns = await ctx.db
@@ -405,8 +408,8 @@ export const getDashboardAnalytics = query({
         // Apply filters
         const filters = buildFilters(args, targetYear);
 
-        allProjects = applyProjectFilters(allProjects, filters, allDepartments);
-        allBudgetItems = applyBudgetFilters(allBudgetItems, filters, allDepartments);
+        allProjects = applyProjectFilters(allProjects, filters, allInternalAgencies);
+        allBudgetItems = applyBudgetFilters(allBudgetItems, filters, allInternalAgencies);
 
         // Apply search if provided
         if (args.searchTerm && args.searchTerm.trim().length > 0) {
@@ -429,7 +432,7 @@ export const getDashboardAnalytics = query({
         const departmentBreakdown = calculateDepartmentBreakdown(
             allBudgetItems,
             allProjects,
-            allDepartments
+            allInternalAgencies
         );
 
         // Calculate breakdown by office (implementing agency)
@@ -468,7 +471,7 @@ export const getDashboardAnalytics = query({
             allProjects,
             allBudgetItems,
             allCategories,
-            allDepartments
+            allInternalAgencies
         );
 
         // Top spending categories
@@ -700,7 +703,7 @@ export const getTimeSeriesData = query({
 
 interface FilterCriteria {
     year?: number;
-    departmentIds?: Id<"departments">[];
+    departmentIds?: Id<"implementingAgencies">[];
     officeIds?: string[];
     dateRange?: { start: number; end: number };
     month?: number;

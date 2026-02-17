@@ -102,7 +102,7 @@ export default function TrustFundBreakdownPage() {
     enableUrlPersistence: true,
   });
 
-  const departments = useQuery(api.departments.list, { includeInactive: false });
+  const internalAgencies = useQuery(api.implementingAgencies.list, { type: "internal", includeInactive: false });
 
   // Trash Preview Query
   const trashPreviewArgs = useMemo(() => {

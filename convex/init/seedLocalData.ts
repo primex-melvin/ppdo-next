@@ -114,25 +114,26 @@ export const seedLocalData = mutation({
             }
         }
 
-        // Get or create departments for reference
-        let departments = await ctx.db.query("departments").collect();
-        let deptIds: Id<"departments">[] = departments.map(d => d._id);
+        // Get or create implementing agencies for reference
+        let implementingAgencies = await ctx.db.query("implementingAgencies").withIndex("type", q => q.eq("type", "internal")).collect();
+        let deptIds: Id<"implementingAgencies">[] = implementingAgencies.map(d => d._id);
         
         if (deptIds.length === 0) {
-            // Create default departments
+            // Create default implementing agencies
             const deptData = [
-                { name: "Provincial Planning & Development Office", code: "PPDO" },
-                { name: "Provincial Engineering Office", code: "PEO" },
-                { name: "Provincial Health Office", code: "PHO" },
-                { name: "Provincial Agriculture Office", code: "PAgO" },
-                { name: "Provincial Social Welfare & Development", code: "PSWDO" },
-                { name: "General Services Office", code: "GSO" },
-                { name: "City Health Office", code: "CHO" },
-                { name: "City Planning & Development Office", code: "CPDO" },
+                { fullName: "Provincial Planning & Development Office", code: "PPDO" },
+                { fullName: "Provincial Engineering Office", code: "PEO" },
+                { fullName: "Provincial Health Office", code: "PHO" },
+                { fullName: "Provincial Agriculture Office", code: "PAgO" },
+                { fullName: "Provincial Social Welfare & Development", code: "PSWDO" },
+                { fullName: "General Services Office", code: "GSO" },
+                { fullName: "City Health Office", code: "CHO" },
+                { fullName: "City Planning & Development Office", code: "CPDO" },
             ];
             for (const d of deptData) {
-                const id = await ctx.db.insert("departments", {
+                const id = await ctx.db.insert("implementingAgencies", {
                     ...d,
+                    type: "internal",
                     isActive: true,
                     createdBy: userId,
                     createdAt: now,

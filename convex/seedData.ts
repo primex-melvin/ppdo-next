@@ -68,7 +68,7 @@ export const getFirstUser = internalQuery({
 export const getDepartments = internalQuery({
     args: {},
     handler: async (ctx) => {
-        return await ctx.db.query("departments").collect();
+        return await ctx.db.query("implementingAgencies").withIndex("type", q => q.eq("type", "internal")).collect();
     }
 });
 

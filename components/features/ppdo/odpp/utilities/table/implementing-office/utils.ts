@@ -10,7 +10,7 @@ export function normalizeDepartment(dept: Department): NormalizedOfficeItem {
   return {
     _id: dept._id,
     code: dept.code,
-    fullName: dept.name,
+    fullName: dept.fullName,
     type: "department",
     category: "Department",
     isActive: dept.isActive,
@@ -70,7 +70,7 @@ export function canCreateNewCode(
   searchQuery: string,
   mode: SelectionMode,
   agencies: Agency[] | undefined,
-  departments: Department[] | undefined
+  internalAgencies: Department[] | undefined
 ): boolean {
   if (!searchQuery || searchQuery.length === 0 || !mode) return false;
 
@@ -81,7 +81,7 @@ export function canCreateNewCode(
     return !codeExists(searchQuery, agencies);
   } else {
     if (!DEPARTMENT_CODE_PATTERN.test(upperSearch)) return false;
-    return !codeExists(searchQuery, departments);
+    return !codeExists(searchQuery, internalAgencies);
   }
 }
 
@@ -92,7 +92,7 @@ export function getCodeValidationError(
   searchQuery: string,
   mode: SelectionMode,
   agencies: Agency[] | undefined,
-  departments: Department[] | undefined
+  internalAgencies: Department[] | undefined
 ): { title: string; message: string } | null {
   if (!searchQuery || !mode) return null;
 
@@ -118,7 +118,7 @@ export function getCodeValidationError(
         message: "Code must contain only uppercase letters, numbers, and underscores (no spaces)",
       };
     }
-    if (codeExists(searchQuery, departments)) {
+    if (codeExists(searchQuery, internalAgencies)) {
       return {
         title: "Already exists",
         message: "This department is already in the list above",

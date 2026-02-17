@@ -22,9 +22,9 @@ export interface Agency {
 }
 
 export interface Department {
-  _id: Id<"departments">;
+  _id: Id<"implementingAgencies">;
   code: string;
-  name: string;
+  fullName: string;
   isActive: boolean;
   usageCount?: number;
 }

@@ -14,7 +14,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 
 export interface DashboardFilters {
     fiscalYearId?: Id<"fiscalYears">;
-    departmentIds?: Id<"departments">[];
+    departmentIds?: Id<"implementingAgencies">[];
     officeIds?: string[];
     startDate?: number;
     endDate?: number;
@@ -67,7 +67,7 @@ export function useDashboardFilters() {
         // Departments (comma-separated IDs)
         const depts = searchParams.get("depts");
         if (depts) {
-            parsed.departmentIds = depts.split(",") as Id<"departments">[];
+            parsed.departmentIds = depts.split(",") as Id<"implementingAgencies">[];
         }
 
         // Offices (comma-separated codes)

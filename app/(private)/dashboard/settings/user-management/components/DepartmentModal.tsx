@@ -36,15 +36,15 @@ import {
 
 interface Department {
   _id: string;
-  name: string;
+  fullName: string;
   code: string;
   description?: string;
-  parentDepartmentId?: string;
+  parentAgencyId?: string;
   headUserId?: string;
   headUserName?: string;
-  email?: string;
-  phone?: string;
-  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  address?: string;
   isActive: boolean;
   displayOrder?: number;
   userCount?: number;
@@ -60,11 +60,12 @@ interface DepartmentFormData {
   name: string;
   code: string;
   description?: string;
-  parentDepartmentId?: Id<"departments">;
+  parentAgencyId?: Id<"implementingAgencies">;
   headUserId?: Id<"users">;
-  email?: string;
-  phone?: string;
-  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  address?: string;
+  location?: string;  // Alias for address, backward compatibility
   isActive: boolean;
   displayOrder?: number;
 }
@@ -75,8 +76,8 @@ interface DepartmentModalProps {
   departments?: Department[];
   users?: User[];
   onCreate: (data: DepartmentFormData) => Promise<boolean>;
-  onUpdate: (id: Id<"departments">, data: DepartmentFormData) => Promise<boolean>;
-  onDelete: (id: Id<"departments">) => Promise<boolean>;
+  onUpdate: (id: Id<"implementingAgencies">, data: DepartmentFormData) => Promise<boolean>;
+  onDelete: (id: Id<"implementingAgencies">) => Promise<boolean>;
   isSubmitting?: boolean;
   accentColor: string;
 }
@@ -101,11 +102,11 @@ export function DepartmentModal({
     name: "",
     code: "",
     description: "",
-    parentDepartmentId: undefined,
+    parentAgencyId: undefined,
     headUserId: undefined,
-    email: "",
-    phone: "",
-    location: "",
+    contactEmail: "",
+    contactPhone: "",
+    address: "",
     isActive: true,
     displayOrder: undefined,
   });
@@ -123,11 +124,11 @@ export function DepartmentModal({
       name: "",
       code: "",
       description: "",
-      parentDepartmentId: undefined,
+      parentAgencyId: undefined,
       headUserId: undefined,
-      email: "",
-      phone: "",
-      location: "",
+      contactEmail: "",
+      contactPhone: "",
+      address: "",
       isActive: true,
       displayOrder: undefined,
     });
@@ -136,14 +137,14 @@ export function DepartmentModal({
   const handleEdit = (department: Department) => {
     setSelectedDepartment(department);
     setFormData({
-      name: department.name,
+      name: department.fullName,
       code: department.code,
       description: department.description || "",
-      parentDepartmentId: department.parentDepartmentId as Id<"departments"> | undefined,
+      parentAgencyId: department.parentAgencyId as Id<"implementingAgencies"> | undefined,
       headUserId: department.headUserId as Id<"users"> | undefined,
-      email: department.email || "",
-      phone: department.phone || "",
-      location: department.location || "",
+      contactEmail: department.contactEmail || "",
+      contactPhone: department.contactPhone || "",
+      address: department.address || "",
       isActive: department.isActive,
       displayOrder: department.displayOrder,
     });
@@ -164,7 +165,7 @@ export function DepartmentModal({
   const handleDeleteConfirm = async () => {
     if (!departmentToDelete) return;
 
-    const success = await onDelete(departmentToDelete._id as Id<"departments">);
+    const success = await onDelete(departmentToDelete._id as Id<"implementingAgencies">);
 
     if (success) {
       setShowDeleteDialog(false);
@@ -178,7 +179,7 @@ export function DepartmentModal({
     let success = false;
 
     if (selectedDepartment) {
-      success = await onUpdate(selectedDepartment._id as Id<"departments">, formData);
+      success = await onUpdate(selectedDepartment._id as Id<"implementingAgencies">, formData);
     } else {
       success = await onCreate(formData);
     }
@@ -246,7 +247,7 @@ export function DepartmentModal({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
-                                {dept.name}
+                                {dept.fullName}
                               </h4>
                               <span className="text-xs px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
                                 {dept.code}
@@ -268,8 +269,8 @@ export function DepartmentModal({
                               {dept.headUserName && (
                                 <span>Head: {dept.headUserName}</span>
                               )}
-                              {dept.location && (
-                                <span>📍 {dept.location}</span>
+                              {dept.address && (
+                                <span>📍 {dept.address}</span>
                               )}
                               {dept.userCount !== undefined && (
                                 <span>👥 {dept.userCount} users</span>
@@ -366,11 +367,11 @@ export function DepartmentModal({
                   <div className="space-y-2">
                     <Label htmlFor="parentDepartment">Parent Department</Label>
                     <Select
-                      value={formData.parentDepartmentId || "none"}
+                      value={formData.parentAgencyId || "none"}
                       onValueChange={(value) =>
                         updateField(
-                          "parentDepartmentId",
-                          value === "none" ? undefined : (value as Id<"departments">)
+                          "parentAgencyId",
+                          value === "none" ? undefined : (value as Id<"implementingAgencies">)
                         )
                       }
                       disabled={isSubmitting}
@@ -384,7 +385,7 @@ export function DepartmentModal({
                           .filter((d) => d._id !== selectedDepartment?._id)
                           .map((dept) => (
                             <SelectItem key={dept._id} value={dept._id}>
-                              {dept.name} ({dept.code})
+                              {dept.fullName} ({dept.code})
                             </SelectItem>
                           ))}
                       </SelectContent>
@@ -425,8 +426,8 @@ export function DepartmentModal({
                     <Input
                       id="email"
                       type="email"
-                      value={formData.email}
-                      onChange={(e) => updateField("email", e.target.value)}
+                      value={formData.contactEmail}
+                      onChange={(e) => updateField("contactEmail", e.target.value)}
                       placeholder="department@tarlac.gov.ph"
                       disabled={isSubmitting}
                     />
@@ -436,8 +437,8 @@ export function DepartmentModal({
                     <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
-                      value={formData.phone}
-                      onChange={(e) => updateField("phone", e.target.value)}
+                      value={formData.contactPhone}
+                      onChange={(e) => updateField("contactPhone", e.target.value)}
                       placeholder="+63 XXX XXX XXXX"
                       disabled={isSubmitting}
                     />
@@ -449,8 +450,8 @@ export function DepartmentModal({
                   <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
-                    value={formData.location}
-                    onChange={(e) => updateField("location", e.target.value)}
+                    value={formData.address}
+                    onChange={(e) => updateField("address", e.target.value)}
                     placeholder="e.g., Building A, 3rd Floor"
                     disabled={isSubmitting}
                   />
@@ -532,7 +533,7 @@ export function DepartmentModal({
             <AlertDialogTitle>Delete Department?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete{" "}
-              <span className="font-semibold">{departmentToDelete?.name}</span>? This
+              <span className="font-semibold">{departmentToDelete?.fullName}</span>? This
               action cannot be undone.
               {departmentToDelete?.userCount && departmentToDelete.userCount > 0 && (
                 <span className="block mt-2 text-red-600 dark:text-red-400">

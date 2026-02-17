@@ -91,7 +91,7 @@ export default function ProjectBreakdownPage() {
     project ? { projectId: projectId as Id<"projects"> } : "skip"
   );
 
-  const departments = useQuery(api.departments.list, { includeInactive: false });
+  const internalAgencies = useQuery(api.implementingAgencies.list, { type: "internal", includeInactive: false });
 
   // Hooks - Using shared hooks for statistics
   const stats = useEntityStats(breakdownHistory as Breakdown[] | undefined);

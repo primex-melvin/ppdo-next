@@ -42,13 +42,14 @@ export function useOfficeSelector({ value, onChange }: UseOfficeSelectorProps) {
     includeInactive: false,
   });
 
-  const allDepartments = useQuery(api.departments.list, {
+  const internalAgencies = useQuery(api.implementingAgencies.list, {
+    type: "internal",
     includeInactive: false,
   });
 
   // Mutations
   const createAgency = useMutation(api.implementingAgencies.create);
-  const createDepartment = useMutation(api.departments.create);
+  const createInternalAgency = useMutation(api.implementingAgencies.create);
 
   // Get current list based on mode
   const currentList = useMemo((): NormalizedOfficeItem[] => {
@@ -57,9 +58,9 @@ export function useOfficeSelector({ value, onChange }: UseOfficeSelectorProps) {
     if (selectionMode === "agency") {
       return allAgencies || [];
     } else {
-      return (allDepartments?.map(normalizeDepartment) || []);
+      return (internalAgencies?.map(normalizeDepartment) || []);
     }
-  }, [selectionMode, allAgencies, allDepartments]);
+  }, [selectionMode, allAgencies, internalAgencies]);
 
   // Filter and paginate
   const filteredList = useMemo(() => {
@@ -74,26 +75,26 @@ export function useOfficeSelector({ value, onChange }: UseOfficeSelectorProps) {
     const agency = allAgencies?.find((a) => a.code === value);
     if (agency) return { ...agency, sourceType: "agency" };
 
-    const dept = allDepartments?.find((d) => d.code === value);
-    if (dept) {
+    const internalAgency = internalAgencies?.find((d) => d.code === value);
+    if (internalAgency) {
       return {
-        ...normalizeDepartment(dept),
+        ...normalizeDepartment(internalAgency),
         sourceType: "department",
       };
     }
 
     return null;
-  }, [allAgencies, allDepartments, value]);
+  }, [allAgencies, internalAgencies, value]);
 
   // Validation
   const canCreate = useMemo(() => {
-    return canCreateNewCode(searchQuery, selectionMode, allAgencies, allDepartments);
-  }, [searchQuery, selectionMode, allAgencies, allDepartments]);
+    return canCreateNewCode(searchQuery, selectionMode, allAgencies, internalAgencies);
+  }, [searchQuery, selectionMode, allAgencies, internalAgencies]);
 
   const validationError = useMemo(() => {
     if (canCreate) return null;
-    return getCodeValidationError(searchQuery, selectionMode, allAgencies, allDepartments);
-  }, [searchQuery, selectionMode, allAgencies, allDepartments, canCreate]);
+    return getCodeValidationError(searchQuery, selectionMode, allAgencies, internalAgencies);
+  }, [searchQuery, selectionMode, allAgencies, internalAgencies, canCreate]);
 
   // Handlers
   const handleOpenChange = useCallback((newOpen: boolean) => {
@@ -149,14 +150,15 @@ export function useOfficeSelector({ value, onChange }: UseOfficeSelectorProps) {
           description: `"${createDialog.code}" has been added. You can edit details in Settings.`,
         });
       } else {
-        await createDepartment({
-          name: createDialog.fullName,
+        await createInternalAgency({
+          fullName: createDialog.fullName,
           code: createDialog.code,
-          description: `Custom department: ${createDialog.code}`,
-          isActive: true,
+          type: "internal",
+          description: `Custom internal agency: ${createDialog.code}`,
+          category: "Custom",
         });
 
-        toast.success("Department created!", {
+        toast.success("Internal agency created!", {
           description: `"${createDialog.code}" has been added. You can edit details in Settings.`,
         });
       }
@@ -180,7 +182,7 @@ export function useOfficeSelector({ value, onChange }: UseOfficeSelectorProps) {
     } finally {
       setCreateDialog((prev) => ({ ...prev, isCreating: false }));
     }
-  }, [createDialog, createAgency, createDepartment, onChange]);
+  }, [createDialog, createAgency, createInternalAgency, onChange]);
 
   return {
     // State
@@ -192,7 +194,7 @@ export function useOfficeSelector({ value, onChange }: UseOfficeSelectorProps) {
     
     // Data
     allAgencies,
-    allDepartments,
+    internalAgencies,
     currentList,
     filteredList,
     displayedItems,
@@ -202,7 +204,7 @@ export function useOfficeSelector({ value, onChange }: UseOfficeSelectorProps) {
     // Validation
     canCreate,
     validationError,
-    isLoading: allAgencies === undefined || allDepartments === undefined,
+    isLoading: allAgencies === undefined || internalAgencies === undefined,
     
     // Handlers
     setOpen: handleOpenChange,

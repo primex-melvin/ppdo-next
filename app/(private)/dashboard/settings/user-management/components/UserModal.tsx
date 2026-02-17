@@ -25,7 +25,7 @@ import { User, UserFormData } from "../../../../../../types/user.types";
 
 interface Department {
   _id: string;
-  name: string;
+  fullName: string;
   code: string;
 }
 
@@ -260,7 +260,7 @@ export function UserModal({
                 <SelectItem value="none">No Department</SelectItem>
                 {departments.map((dept) => (
                   <SelectItem key={dept._id} value={dept._id}>
-                    {dept.name} ({dept.code})
+                    {dept.fullName} ({dept.code})
                   </SelectItem>
                 ))}
               </SelectContent>
