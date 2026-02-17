@@ -15,6 +15,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Trash2, Printer, Plus, LayoutGrid, Table2, FileSpreadsheet, Share2, Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { SortOption } from "@/types/sort";
 import { toast } from "sonner";
@@ -525,6 +526,19 @@ export function BreakdownHistoryTable({
                       Clear
                     </button>
                   </div>
+                )}
+
+                {/* Bulk Move to Trash Button */}
+                {selectedIds.size > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkTrash}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Move to Trash ({selectedIds.size})
+                  </Button>
                 )}
 
                 {/* Collapsible toolbar actions - hide when search expanded */}
