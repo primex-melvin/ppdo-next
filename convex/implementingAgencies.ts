@@ -335,6 +335,14 @@ export const get = query({
       sumBudget(activeSpecialHealthBreakdowns, "budgetUtilized") +
       sumBudget(activeSpecialEducationBreakdowns, "budgetUtilized");
 
+    const obligatedBudget = 
+      sumBudget(activeProjects, "obligatedBudget") +
+      sumBudget(activeGovtBreakdowns, "obligatedBudget") +
+      sumBudget(active20DFBreakdowns, "obligatedBudget") +
+      sumBudget(activeTrustFundBreakdowns, "obligatedBudget") +
+      sumBudget(activeSpecialHealthBreakdowns, "obligatedBudget") +
+      sumBudget(activeSpecialEducationBreakdowns, "obligatedBudget");
+
     // Normalize for Project Cards - by category
     const mapProject = (p: any) => ({
       id: p._id,
@@ -448,6 +456,7 @@ export const get = query({
       completedProjects: completedProjectsCount,
       totalBudget: totalBudget,
       utilizedBudget: utilizedBudget,
+      obligatedBudget: obligatedBudget,
       avgProjectBudget: totalProjectsCount > 0 ? totalBudget / totalProjectsCount : 0,
       // Categorized lists
       projects: allProjects,

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,6 +23,9 @@ import {
   PiggyBank,
   Heart,
   GraduationCap,
+  Eye,
+  EyeOff,
+  Wallet,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/shared"
 import { ProjectCard, ProjectItem } from "../components/ProjectCard"
@@ -138,6 +142,9 @@ export default function AgencyDetailPage() {
     utilizationRate: agency.totalBudget > 0 ? ((agency.utilizedBudget / agency.totalBudget) * 100).toFixed(1) : "0.0",
     avgProjectBudget: agency.avgProjectBudget || 0
   }
+
+  // Show/hide statistics state
+  const [showStatistics, setShowStatistics] = useState(true)
 
   // Helper to render a category section
   const renderCategorySection = (
@@ -269,11 +276,24 @@ export default function AgencyDetailPage() {
                 value={agency.address}
                 fieldName="address"
               />
+              {/* Show/Hide Statistics Toggle */}
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowStatistics(!showStatistics)}
+                  className="w-full justify-between text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <span>{showStatistics ? "Hide Statistics" : "Show Statistics"}</span>
+                  {showStatistics ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Status Information Card */}
+        {showStatistics && (
         <Card className="border-2">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
@@ -355,15 +375,16 @@ export default function AgencyDetailPage() {
               <Card className="border">
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FileText className="h-4 w-4" />
-                    <span>Average per Project</span>
+                    <Wallet className="h-4 w-4" />
+                    <span>Total Obligated</span>
                   </div>
-                  <p className="text-2xl font-bold font-cinzel">{formatCurrency(stats.avgProjectBudget)}</p>
+                  <p className="text-2xl font-bold font-cinzel">{formatCurrency(agency.obligatedBudget || 0)}</p>
                 </CardContent>
               </Card>
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Projects Section - Categorized */}
         <div className="space-y-8">
