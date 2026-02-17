@@ -5,12 +5,10 @@ import {
     Settings as SettingsIcon,
     Wallet,
     LockKeyhole,
-    Building2,
     FileText,
     GraduationCap,
     HeartPulse,
     TrendingUp,
-    Search,
     Building,
 } from "lucide-react";
 import { NavItem } from "./types";
@@ -73,12 +71,6 @@ export const STATIC_NAV_ITEMS: NavItem[] = [
         href: "/dashboard/implementing-agencies",
         category: "Cross Department",
         icon: <Building size={20} />,
-    },
-    {
-        name: "Office",
-        href: "/dashboard/office",
-        category: "Cross Department",
-        icon: <Building2 size={20} />,
     },
     {
         name: "CMS",
