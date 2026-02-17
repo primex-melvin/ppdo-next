@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   ArrowLeft,
   Building2,
   FileText,
@@ -26,6 +32,7 @@ import {
   Eye,
   EyeOff,
   Wallet,
+  BarChart3,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/shared"
 import { ProjectCard, ProjectItem } from "../components/ProjectCard"
@@ -100,7 +107,9 @@ export default function AgencyDetailPage() {
   const id = params?.id as Id<"implementingAgencies">
 
   // Show/hide statistics state - MUST be before any conditional returns
-  const [showStatistics, setShowStatistics] = useState(true)
+  const [showStatistics, setShowStatistics] = useState(false)
+  // Dashboard statistics modal state
+  const [showDashboardStats, setShowDashboardStats] = useState(false)
 
   const agency = useQuery(api.implementingAgencies.get, { id })
 
@@ -276,16 +285,25 @@ export default function AgencyDetailPage() {
                 value={agency.address}
                 fieldName="address"
               />
-              {/* Show/Hide Statistics Toggle */}
-              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+              {/* Statistics Toggle Buttons */}
+              <div className="pt-2 flex gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => setShowStatistics(!showStatistics)}
-                  className="w-full justify-between text-xs text-muted-foreground hover:text-foreground"
+                  className="flex-1 justify-center gap-2 text-xs"
                 >
-                  <span>{showStatistics ? "Hide Statistics" : "Show Statistics"}</span>
-                  {showStatistics ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  {showStatistics ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showStatistics ? "Hide Statistics" : "Show Statistics"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDashboardStats(true)}
+                  className="flex-1 justify-center gap-2 text-xs"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Dashboard Statistics
                 </Button>
               </div>
             </div>
@@ -385,6 +403,26 @@ export default function AgencyDetailPage() {
           </CardContent>
         </Card>
         )}
+
+        {/* Dashboard Statistics Modal */}
+        <Dialog open={showDashboardStats} onOpenChange={setShowDashboardStats}>
+          <DialogContent className="sm:max-w-md resize-x min-w-[300px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Dashboard Statistics
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-8 text-center space-y-4">
+              <div className="text-6xl font-bold text-muted-foreground/30">📊</div>
+              <h3 className="text-xl font-bold">Dashboard Summary Stats</h3>
+              <p className="text-lg text-muted-foreground">of an Office Feature</p>
+              <Badge variant="secondary" className="text-sm px-4 py-1">
+                Coming Soon
+              </Badge>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Projects Section - Categorized */}
         <div className="space-y-8">
