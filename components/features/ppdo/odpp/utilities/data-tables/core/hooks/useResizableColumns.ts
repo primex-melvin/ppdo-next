@@ -67,7 +67,6 @@ export function useResizableColumns({
 
     // 2. ACTIVE COLUMN RESIZE (now functional with persisted widths!)
     const startResizeColumn = useCallback((e: React.MouseEvent, index: number) => {
-        if (!canEditLayout) return;
         if (index < 0 || index >= columns.length) return;
 
         const col = columns[index];
@@ -119,14 +118,13 @@ export function useResizableColumns({
 
         document.addEventListener("mousemove", handleMouseMove);
         document.addEventListener("mouseup", handleMouseUp);
-    }, [canEditLayout, columns, columnWidths, updateColumnWidth, tableIdentifier]);
+    }, [columns, columnWidths, updateColumnWidth, tableIdentifier]);
 
     // 3. Row resize (for future implementation)
     const startResizeRow = useCallback((e: React.MouseEvent, rowId: string) => {
-        if (!canEditLayout) return;
-        // Implementation similar to column resize
-        // Save to rowHeights state and persist via saveLayout
-    }, [canEditLayout]);
+        // Row resize logic will go here
+        // Note: DB persistence is controlled by canEditLayout in saveLayout
+    }, []);
 
     // Wrapper for useTableResize (expects 1 param: heights)
     const saveLayoutForResize = useCallback((heights: RowHeights) => {
