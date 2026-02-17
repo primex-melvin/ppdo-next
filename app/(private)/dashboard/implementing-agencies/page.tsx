@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Building2, TrendingUp, FileText, Users, Loader2 } from "lucide-react"
+import { Building2, TrendingUp, FileText, Users, Loader2, Eye, EyeOff } from "lucide-react"
 import { ThemeToggle } from "@/components/shared"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -9,6 +9,8 @@ import { Id } from "@/convex/_generated/dataModel"
 import { toast } from "sonner"
 import { ImplementingAgenciesTable } from "./components/table"
 import { Agency } from "./types/agency-table.types"
+import { DeleteAgencyModal } from "./components/modals/DeleteAgencyModal"
+import { Button } from "@/components/ui/button"
 
 // Helper function for currency formatting
 export function formatCurrency(amount: number): string {
@@ -22,7 +24,13 @@ export function formatCurrency(amount: number): string {
 
 export default function ImplementingAgenciesPage() {
   const implementingAgencies = useQuery(api.implementingAgencies.list, { includeInactive: true })
-  const removeAgency = useMutation(api.implementingAgencies.remove)
+
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [selectedAgencyId, setSelectedAgencyId] = useState<Id<"implementingAgencies"> | null>(null)
+
+  // Statistics Visibility State
+  const [showStatistics, setShowStatistics] = useState(false)
 
   // Calculate totals safely (only active agencies)
   const activeAgencies = implementingAgencies?.filter(a => a.isActive) || []
@@ -34,15 +42,15 @@ export default function ImplementingAgenciesPage() {
   // Avoid division by zero
   const avgUtilization = totalBudget > 0 ? ((totalUtilized / totalBudget) * 100).toFixed(1) : "0.0"
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("Are you sure you want to delete this agency?")) return
-    try {
-      await removeAgency({ id: id as Id<"implementingAgencies"> })
-      toast.success("Agency deleted successfully")
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete agency")
-    }
-  }, [removeAgency])
+  const handleDelete = useCallback((id: string) => {
+    setSelectedAgencyId(id as Id<"implementingAgencies">)
+    setDeleteModalOpen(true)
+  }, [])
+
+  const handleDeleteSuccess = useCallback(() => {
+    setDeleteModalOpen(false)
+    setSelectedAgencyId(null)
+  }, [])
 
   if (implementingAgencies === undefined) {
     return (
@@ -54,79 +62,107 @@ export default function ImplementingAgenciesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      
+
+      <DeleteAgencyModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        agencyId={selectedAgencyId}
+        onSuccess={handleDeleteSuccess}
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 md:py-10 space-y-8">
-        {/* Page Title */}
-        <div className="space-y-2">
-          <h2 className="text-3xl md:text-4xl font-cinzel font-bold tracking-tight">Implementing Agencies</h2>
-          <p className="text-muted-foreground text-base md:text-lg max-w-3xl">
-            Comprehensive overview of government agencies responsible for executing development projects across the
-            province.
-          </p>
+        {/* Page Title & Actions */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="space-y-2">
+            <h2 className="text-3xl md:text-4xl font-cinzel font-bold tracking-tight">Implementing Agencies</h2>
+            <p className="text-muted-foreground text-base md:text-lg max-w-3xl">
+              Comprehensive overview of offices or agencies responsible for executing development projects across the
+              province.
+            </p>
+          </div>
+
+          <Button
+            onClick={() => setShowStatistics(!showStatistics)}
+            variant="outline"
+            size="sm"
+            className="gap-2 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 self-start md:self-auto"
+          >
+            {showStatistics ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                <span className="hidden sm:inline">Hide Statistics</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                <span className="hidden sm:inline">Show Statistics</span>
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Statistics Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
-                <Building2 className="h-5 w-5" style={{ color: "#15803D" }} />
+        {showStatistics && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
+                  <Building2 className="h-5 w-5" style={{ color: "#15803D" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Total Agencies</p>
+                <p className="text-3xl font-bold font-cinzel">{totalAgencies}</p>
+                <p className="text-xs text-muted-foreground">Active implementing bodies</p>
               </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Total Agencies</p>
-              <p className="text-3xl font-bold font-cinzel">{totalAgencies}</p>
-              <p className="text-xs text-muted-foreground">Active implementing bodies</p>
-            </div>
-          </div>
 
-          <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
-                <FileText className="h-5 w-5" style={{ color: "#15803D" }} />
+            <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
+                  <FileText className="h-5 w-5" style={{ color: "#15803D" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Total Projects</p>
+                <p className="text-3xl font-bold font-cinzel">{totalProjects}</p>
+                <p className="text-xs text-muted-foreground">Across all agencies</p>
               </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Total Projects</p>
-              <p className="text-3xl font-bold font-cinzel">{totalProjects}</p>
-              <p className="text-xs text-muted-foreground">Across all agencies</p>
-            </div>
-          </div>
 
-          <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
-                <TrendingUp className="h-5 w-5" style={{ color: "#15803D" }} />
+            <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
+                  <TrendingUp className="h-5 w-5" style={{ color: "#15803D" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Total Budget</p>
+                <p className="text-2xl md:text-3xl font-bold font-cinzel">{formatCurrency(totalBudget)}</p>
+                <p className="text-xs text-muted-foreground">Allocated funding</p>
               </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Total Budget</p>
-              <p className="text-2xl md:text-3xl font-bold font-cinzel">{formatCurrency(totalBudget)}</p>
-              <p className="text-xs text-muted-foreground">Allocated funding</p>
-            </div>
-          </div>
 
-          <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
-                <Users className="h-5 w-5" style={{ color: "#15803D" }} />
+            <div className="bg-card border rounded-xl p-6 space-y-2 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-lg" style={{ backgroundColor: "#15803D20" }}>
+                  <Users className="h-5 w-5" style={{ color: "#15803D" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Utilization Rate</p>
+                <p className="text-3xl font-bold font-cinzel">{avgUtilization}%</p>
+                <p className="text-xs text-muted-foreground">Budget efficiency</p>
               </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Utilization Rate</p>
-              <p className="text-3xl font-bold font-cinzel">{avgUtilization}%</p>
-              <p className="text-xs text-muted-foreground">Budget efficiency</p>
-            </div>
           </div>
-        </div>
+        )}
 
         {/* Implementing Agencies Table */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl md:text-2xl font-cinzel font-semibold">All Agencies</h3>
-            <p className="text-sm text-muted-foreground">{implementingAgencies.length} agencies found</p>
+          <div className="flex justify-end">
+            <p className="text-sm text-muted-foreground">{implementingAgencies.length} found</p>
           </div>
 
           <ImplementingAgenciesTable

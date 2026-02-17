@@ -1203,3 +1203,217 @@ export const getChildren = query({
     return children;
   },
 });
+
+/**
+ * ============================================================================
+ * DELETE PROTECTION & CASCADING DELETE
+ * ============================================================================
+ */
+
+/**
+ * Hash a PIN (simple hash for demo - matches userPin.ts)
+ */
+function hashPin(pin: string): string {
+  let hash = 0;
+  for (let i = 0; i < pin.length; i++) {
+    const char = pin.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(16);
+}
+
+const DEFAULT_PIN = "123456";
+
+/**
+ * Get preview of items that will be deleted when an agency is removed
+ * This is used for the "Smart Delete" modal
+ */
+export const getDeletePreview = query({
+  args: { id: v.id("implementingAgencies") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+
+    const agency = await ctx.db.get(args.id);
+    if (!agency) throw new Error("Implementing agency not found");
+
+    // 1. Get Projects (11 Plans / Budget Items)
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    // 2. Get Breakdowns (All Types)
+    const govtBreakdowns = await ctx.db
+      .query("govtProjectBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    const twentyPercentDFBreakdowns = await ctx.db
+      .query("twentyPercentDFBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    const trustFundBreakdowns = await ctx.db
+      .query("trustFundBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    const specialHealthBreakdowns = await ctx.db
+      .query("specialHealthFundBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    const specialEducationBreakdowns = await ctx.db
+      .query("specialEducationFundBreakdowns")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", agency.code))
+      .collect();
+
+    // Filter out already deleted items (though we will delete them again to be sure, or maybe we just ignore them)
+    // For the preview, we should probably show what is currently visible/active to the user
+    const activeProjects = projects.filter(p => !p.isDeleted);
+    const activeGovtBreakdowns = govtBreakdowns.filter(b => !b.isDeleted);
+    const active20DFBreakdowns = twentyPercentDFBreakdowns.filter(b => !b.isDeleted);
+    const activeTrustFundBreakdowns = trustFundBreakdowns.filter(b => !b.isDeleted);
+    const activeSpecialHealthBreakdowns = specialHealthBreakdowns.filter(b => !b.isDeleted);
+    const activeSpecialEducationBreakdowns = specialEducationBreakdowns.filter(b => !b.isDeleted);
+
+    // Calculate Financial Impact
+    const sumBudget = (items: any[], field: string) => 
+      items.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
+
+    const totalBudget = 
+      sumBudget(activeProjects, "totalBudgetAllocated") +
+      sumBudget(activeGovtBreakdowns, "allocatedBudget") +
+      sumBudget(active20DFBreakdowns, "allocatedBudget") +
+      sumBudget(activeTrustFundBreakdowns, "allocatedBudget") +
+      sumBudget(activeSpecialHealthBreakdowns, "allocatedBudget") +
+      sumBudget(activeSpecialEducationBreakdowns, "allocatedBudget");
+
+    // Map items for display
+    const mapItem = (item: any, type: string) => ({
+      id: item._id,
+      name: item.particulars || item.projectName || "Unnamed Item",
+      type,
+      budget: item.totalBudgetAllocated || item.allocatedBudget || 0,
+    });
+
+    const affectedItems = {
+      projects: activeProjects.map(p => mapItem(p, "Project (11 Plans)")),
+      govtBreakdowns: activeGovtBreakdowns.map(b => mapItem(b, "Govt Project Breakdown")),
+      twentyPercentDF: active20DFBreakdowns.map(b => mapItem(b, "20% DF Breakdown")),
+      trustFund: activeTrustFundBreakdowns.map(b => mapItem(b, "Trust Fund Breakdown")),
+      specialHealth: activeSpecialHealthBreakdowns.map(b => mapItem(b, "Special Health Breakdown")),
+      specialEducation: activeSpecialEducationBreakdowns.map(b => mapItem(b, "Special Education Breakdown")),
+    };
+
+    const totalCount = 
+      activeProjects.length + 
+      activeGovtBreakdowns.length + 
+      active20DFBreakdowns.length + 
+      activeTrustFundBreakdowns.length + 
+      activeSpecialHealthBreakdowns.length + 
+      activeSpecialEducationBreakdowns.length;
+
+    return {
+      agency: {
+        id: agency._id,
+        name: agency.fullName,
+        code: agency.code,
+      },
+      hasChildren: totalCount > 0,
+      totalCount,
+      totalBudget,
+      affectedItems,
+    };
+  },
+});
+
+/**
+ * Permanently delete an agency and all its related children
+ * REQUIRES PIN VERIFICATION
+ */
+export const deleteWithCascade = mutation({
+  args: {
+    id: v.id("implementingAgencies"),
+    pin: v.string(),
+    reason: v.optional(v.string()), // For audit log (future use)
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    // 1. Verify PIN
+    const hashedPin = hashPin(args.pin);
+    const storedPin = user.deleteProtectionPin || hashPin(DEFAULT_PIN);
+
+    if (hashedPin !== storedPin) {
+      throw new Error("Invalid PIN code");
+    }
+
+    const agency = await ctx.db.get(args.id);
+    if (!agency) throw new Error("Implementing agency not found");
+    
+    // System default check
+    if (agency.isSystemDefault) {
+      throw new Error("Cannot delete system default agency");
+    }
+
+    // 2. Fetch all related items to delete
+    const code = agency.code;
+
+    // Helper to delete items
+    const deleteItems = async (tableName: string, items: any[]) => {
+      for (const item of items) {
+        await ctx.db.delete(item._id);
+        // Also remove from search index if applicable
+        await removeFromIndex(ctx, { entityId: item._id });
+      }
+    };
+
+    // Projects
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("implementingOffice", (q) => q.eq("implementingOffice", code))
+      .collect();
+    // Assuming we want to delete ALL, even previously soft-deleted ones, to clean up completely
+    await deleteItems("projects", projects);
+
+    // Breakdowns
+    const govtBreakdowns = await ctx.db.query("govtProjectBreakdowns").withIndex("implementingOffice", (q) => q.eq("implementingOffice", code)).collect();
+    await deleteItems("govtProjectBreakdowns", govtBreakdowns);
+
+    const twentyPercentDFBreakdowns = await ctx.db.query("twentyPercentDFBreakdowns").withIndex("implementingOffice", (q) => q.eq("implementingOffice", code)).collect();
+    await deleteItems("twentyPercentDFBreakdowns", twentyPercentDFBreakdowns);
+
+    const trustFundBreakdowns = await ctx.db.query("trustFundBreakdowns").withIndex("implementingOffice", (q) => q.eq("implementingOffice", code)).collect();
+    await deleteItems("trustFundBreakdowns", trustFundBreakdowns);
+
+    const specialHealthBreakdowns = await ctx.db.query("specialHealthFundBreakdowns").withIndex("implementingOffice", (q) => q.eq("implementingOffice", code)).collect();
+    await deleteItems("specialHealthFundBreakdowns", specialHealthBreakdowns);
+
+    const specialEducationBreakdowns = await ctx.db.query("specialEducationFundBreakdowns").withIndex("implementingOffice", (q) => q.eq("implementingOffice", code)).collect();
+    await deleteItems("specialEducationFundBreakdowns", specialEducationBreakdowns);
+
+    // 3. Delete the Agency itself
+    await ctx.db.delete(args.id);
+    await removeFromIndex(ctx, { entityId: args.id });
+
+    return {
+      success: true,
+      deletedCounts: {
+        projects: projects.length,
+        breakdowns: 
+          govtBreakdowns.length + 
+          twentyPercentDFBreakdowns.length + 
+          trustFundBreakdowns.length + 
+          specialHealthBreakdowns.length + 
+          specialEducationBreakdowns.length,
+      }
+    };
+  },
+});
