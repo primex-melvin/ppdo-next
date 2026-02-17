@@ -18,6 +18,86 @@ export interface ChangelogItem {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v1.11.0",
+    date: "February 17, 2026",
+    author: "Melvin Nogoy",
+    title: "Office Project Management, Enhanced Agency Detail Page, and Table UX Improvements",
+    description: "Major update introducing comprehensive agency detail views, improved table interactions with click animations, and refined UI/UX across the implementing agencies module.",
+    changes: [
+      {
+        category: "feature",
+        title: "Enhanced Implementing Agencies Detail Page",
+        description: "Complete overhaul of the agency detail page with rich project visualization and management features.",
+        items: [
+          "Added three project view modes: Compact Folder, Detailed Cards, and List View with tabbed interface",
+          "Implemented inline editing for agency full name with hover-to-edit interaction",
+          "Added editable contact information (head officer, email, phone, address) with blur-to-save functionality",
+          "Created dashboard statistics modal placeholder for future office summary features",
+          "Added Total Obligated budget display alongside total allocated and utilized",
+          "Implemented agency code breadcrumb for better navigation readability",
+          "Statistics card now hidden by default with show/hide toggle",
+        ],
+      },
+      {
+        category: "feature",
+        title: "Agency Gallery & Table Enhancements",
+        description: "Improved navigation and interaction for implementing agencies listing.",
+        items: [
+          "Added click-to-navigate functionality to agency gallery folder icons",
+          "Implemented loading spinner on gallery folder click for better UX",
+          "Added mouse-following hover tooltips with agency summary (projects, budget, utilization)",
+          "Created viewport edge detection for tooltip positioning",
+          "Implemented smooth click animation on all table rows across all modules",
+          "Added bulk 'Move to Trash' action to breakdown history table toolbar",
+        ],
+      },
+      {
+        category: "feature",
+        title: "Agency Data Management",
+        description: "New capabilities for managing agency information with data integrity protection.",
+        items: [
+          "Created resizable edit modal for agency code and full name",
+          "Implemented data integrity protection: agency code only editable when no associated projects/breakdowns",
+          "Added validation for agency code format (uppercase alphanumeric with underscores/spaces)",
+          "Right-click context menu on table rows for quick actions (View, Edit, Delete)",
+        ],
+      },
+      {
+        category: "improvement",
+        title: "Table UX & Performance",
+        description: "Enhanced table interactions and visual feedback across all modules.",
+        items: [
+          "Subtle click animation on table rows indicating navigation to detail page",
+          "Fixed column resizer persistence issues for project detail pages",
+          "Removed canEditLayout restriction from column resizing - now available to all users",
+          "Added cursor-grab styling to table action buttons for better affordance",
+          "Contact info layout updated with icons on right side for consistency",
+        ],
+      },
+      {
+        category: "bugfix",
+        title: "UI Fixes & Stability",
+        description: "Resolved critical UI issues and improved overall stability.",
+        items: [
+          "Fixed right-click context menu not showing on table rows",
+          "Fixed React hooks order violation in AgencyDetailPage",
+          "Fixed column width persistence for project detail pages",
+          "Fixed missing gap between Cancel and Save Changes buttons in edit modal",
+        ],
+      },
+      {
+        category: "refactor",
+        title: "Navigation & Architecture",
+        description: "Internal improvements to navigation and data structure.",
+        items: [
+          "Hidden 'Office' menu item from sidebar navigation (deprecated in favor of Implementing Agencies)",
+          "Migrated all department API usage to implementingAgencies",
+          "Verified no trash items appear in agency detail page project cards (isDeleted filter)",
+        ],
+      },
+    ],
+  },
+  {
     version: "v1.10.0",
     date: "February 9, 2026",
     author: "Melvin Nogoy",

@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnConfig } from "./types/table.types";
 
@@ -50,6 +51,17 @@ export function ResizableTableRow<T extends { _id: string }>({
     isHighlighted = false,
     onContextMenu,
 }: ResizableTableRowProps<T>) {
+    const [isClicking, setIsClicking] = useState(false);
+
+    const handleRowClick = (e: React.MouseEvent) => {
+        if (!onRowClick) return;
+        setIsClicking(true);
+        // Small delay to show the animation before navigation
+        setTimeout(() => {
+            onRowClick(data, e);
+        }, 150);
+    };
+
     // Helper to get column width (use resized width if available, fallback to column config)
     const getColumnWidth = (column: ColumnConfig): number => {
         const key = String(column.key);
@@ -62,12 +74,14 @@ export function ResizableTableRow<T extends { _id: string }>({
     return (
         <tr
             id={`row-${data._id}`}
-            className={`cursor-pointer transition-colors ${isSelected
+            className={`cursor-pointer transition-all duration-150 ${isSelected
                 ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+                : isClicking
+                    ? "bg-emerald-50 dark:bg-emerald-900/20 scale-[0.99] ring-1 ring-inset ring-emerald-500/30"
+                    : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
                 } ${isHighlighted ? "highlight-row-active" : ""} ${className}`}
             style={{ height: rowHeight }}
-            onClick={(e) => onRowClick?.(data, e)}
+            onClick={handleRowClick}
             onContextMenu={onContextMenu ? (e) => onContextMenu(data, e) : undefined}
         >
             {/* Checkbox */}

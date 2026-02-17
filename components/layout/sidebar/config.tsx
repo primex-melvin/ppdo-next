@@ -66,8 +66,9 @@ export const STATIC_NAV_ITEMS: NavItem[] = [
         category: "Department",
         icon: <FileText size={20} />,
     },
+    // temporarily Implementing Agencies into Office
     {
-        name: "Implementing Agencies",
+        name: "Office",
         href: "/dashboard/implementing-agencies",
         category: "Cross Department",
         icon: <Building size={20} />,

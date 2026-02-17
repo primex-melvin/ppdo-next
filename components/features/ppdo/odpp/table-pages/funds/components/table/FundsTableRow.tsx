@@ -168,13 +168,14 @@ export function FundsTableRow<T extends BaseFund>({
     fundType,
 }: FundsTableRowProps<T>) {
     const router = useRouter();
+    const [isClicking, setIsClicking] = useState(false);
     const isColumnVisible = (columnId: string) => !hiddenColumns.has(columnId);
 
     // Calculate utilization rate if not already present
     const utilizationRate = item.utilizationRate ?? calculateUtilizationRate(item.utilized, item.received);
 
     // Handle row click to navigate to breakdown page
-    const handleRowClick = (e: React.MouseEvent) => {
+    const handleRowClickInternal = (e: React.MouseEvent) => {
         // Don't navigate if clicking on interactive elements
         if (
             (e.target as HTMLElement).closest("button") ||
@@ -201,6 +202,14 @@ export function FundsTableRow<T extends BaseFund>({
         router.push(`/dashboard/${basePath}/${year}/${slug}`);
     };
 
+    const handleRowClick = (e: React.MouseEvent) => {
+        setIsClicking(true);
+        // Small delay to show the animation before navigation
+        setTimeout(() => {
+            handleRowClickInternal(e);
+        }, 150);
+    };
+
     return (
         <TableRow
             onClick={handleRowClick}
@@ -208,9 +217,11 @@ export function FundsTableRow<T extends BaseFund>({
             className={`
         border-b border-zinc-200 dark:border-zinc-800 
         hover:bg-zinc-50 dark:hover:bg-zinc-800/50 
-        transition-colors cursor-pointer
+        cursor-pointer
+        transition-all duration-150
         ${item.isPinned ? "bg-amber-50 dark:bg-amber-950/20" : ""}
         ${isSelected ? "bg-blue-50 dark:bg-blue-900/10" : ""}
+        ${isClicking ? "bg-emerald-50 dark:bg-emerald-900/20 scale-[0.99] ring-1 ring-inset ring-emerald-500/30" : ""}
       `}
         >
             {isAdmin && (

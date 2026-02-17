@@ -47,13 +47,23 @@ export function ProjectsTableRow({
 }: ProjectsTableRowProps) {
 
     const [isHoveringRemarks, setIsHoveringRemarks] = useState(false); // 🆕 HOVER STATE
+    const [isClicking, setIsClicking] = useState(false);
     const animationConfig = useReducedMotion();
 
+    const handleRowClick = (e: React.MouseEvent) => {
+        setIsClicking(true);
+        setTimeout(() => {
+            setIsClicking(false);
+            onClick(e);
+        }, 150);
+    };
+
     const rowClassName = `
-    hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-colors
+    hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-all duration-150
     ${project.isPinned ? 'bg-amber-50 dark:bg-amber-950/20' : ''}
     ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
     ${isHighlighted ? 'bg-yellow-100 dark:bg-yellow-900/30 ring-2 ring-yellow-400 dark:ring-yellow-600' : ''}
+    ${isClicking ? 'bg-emerald-50 dark:bg-emerald-900/20 scale-[0.99] ring-1 ring-inset ring-emerald-500/30' : ''}
   `;
 
     return (
@@ -76,7 +86,7 @@ export function ProjectsTableRow({
                 ease: animationConfig.ease,
             } : undefined}
             onContextMenu={onContextMenu}
-            onClick={onClick}
+            onClick={handleRowClick}
             className={rowClassName}
         >
             {/* Checkbox */}

@@ -66,6 +66,7 @@ export function TableRow({
   const [isHoveringStatus, setIsHoveringStatus] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isClicking, setIsClicking] = useState(false);
 
   // Use appropriate mutation based on entity type
   const updateProjectBreakdown = useMutation(api.govtProjects.updateProjectBreakdown);
@@ -114,17 +115,27 @@ export function TableRow({
     }
   };
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    setIsClicking(true);
+    setTimeout(() => {
+      setIsClicking(false);
+      onRowClick(breakdown, e);
+    }, 150);
+  };
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <tr
           id={`row-${breakdown._id}`}
-          className={`cursor-pointer transition-colors ${isSelected
-            ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-            : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+          className={`cursor-pointer transition-all duration-150 ${isClicking
+            ? "bg-emerald-50 dark:bg-emerald-900/20 scale-[0.99] ring-1 ring-inset ring-emerald-500/30"
+            : isSelected
+              ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+              : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
             } ${isHighlighted ? "highlight-row-active" : ""}`}
           style={{ height: rowHeight }}
-          onClick={(e) => onRowClick(breakdown, e)}
+          onClick={handleRowClick}
         >
           {/* Checkbox */}
           <td

@@ -100,7 +100,7 @@ export default function ImplementingAgenciesPage() {
           {/* Page Title & Actions */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="space-y-2">
-              <h2 className="text-3xl md:text-4xl font-cinzel font-bold tracking-tight">Implementing Agencies</h2>
+              <h2 className="text-3xl md:text-4xl font-cinzel font-bold tracking-tight">Implementing Office and Agencies</h2>
               <p className="text-muted-foreground text-base md:text-lg max-w-3xl">
                 Comprehensive overview of offices or agencies responsible for executing development projects across the
                 province.

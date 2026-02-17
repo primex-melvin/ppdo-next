@@ -46,12 +46,22 @@ export function TwentyPercentDFTableRow({
 }: TwentyPercentDFTableRowProps) {
 
     const [isHoveringRemarks, setIsHoveringRemarks] = useState(false);
+    const [isClicking, setIsClicking] = useState(false);
     const animationConfig = useReducedMotion();
 
+    const handleRowClick = (e: React.MouseEvent) => {
+        setIsClicking(true);
+        // Small delay to show the animation before navigation
+        setTimeout(() => {
+            onClick(e);
+        }, 150);
+    };
+
     const rowClassName = `
-    hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-colors
+    hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-all duration-150
     ${project.isPinned ? 'bg-amber-50 dark:bg-amber-950/20' : ''}
     ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
+    ${isClicking ? 'bg-emerald-50 dark:bg-emerald-900/20 scale-[0.99] ring-1 ring-inset ring-emerald-500/30' : ''}
   `;
 
     return (
@@ -73,7 +83,7 @@ export function TwentyPercentDFTableRow({
                 ease: animationConfig.ease,
             } : undefined}
             onContextMenu={onContextMenu}
-            onClick={onClick}
+            onClick={handleRowClick}
             className={rowClassName}
         >
             {/* Checkbox */}

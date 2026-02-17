@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from "react";
 import { Pin, Calculator } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
@@ -26,23 +27,32 @@ export function BudgetTableRow({
   onClick,
   onSelectRow,
 }: BudgetTableRowProps) {
+  const [isClicking, setIsClicking] = useState(false);
+
+  const handleRowClick = (e: React.MouseEvent) => {
+    if (
+      (e.target as HTMLElement).closest("button") ||
+      (e.target as HTMLElement).closest("[role='checkbox']")
+    )
+      return;
+    setIsClicking(true);
+    // Small delay to show the animation before navigation
+    setTimeout(() => {
+      onClick(item, e);
+    }, 150);
+  };
+
   return (
     <tr
       onContextMenu={(e) => onContextMenu(e, item)}
-      onClick={(e) => {
-        if (
-          (e.target as HTMLElement).closest("button") ||
-          (e.target as HTMLElement).closest("[role='checkbox']")
-        )
-          return;
-        onClick(item, e);
-      }}
+      onClick={handleRowClick}
       className={`
         border-b border-zinc-200 dark:border-zinc-800 
         hover:bg-zinc-50 dark:hover:bg-zinc-800/50 
-        transition-colors cursor-pointer
+        transition-all duration-150 cursor-pointer
         ${item.isPinned ? "bg-amber-50 dark:bg-amber-950/20" : ""}
         ${isSelected ? "bg-blue-50 dark:bg-blue-900/10" : ""}
+        ${isClicking ? "bg-emerald-50 dark:bg-emerald-900/20 scale-[0.99] ring-1 ring-inset ring-emerald-500/30" : ""}
       `}
     >
       {/* Checkbox */}

@@ -257,17 +257,28 @@ export function AgencyTableRow({
   onSelectRow,
 }: AgencyTableRowProps) {
   const { handleMouseEnter, handleMouseMove, handleMouseLeave, tooltipContent } = useAgencyTooltip(agency);
+  const [isClicking, setIsClicking] = useState(false);
+
+  const handleRowClick = (e: React.MouseEvent) => {
+    setIsClicking(true);
+    // Small delay to show the animation before navigation
+    setTimeout(() => {
+      onRowClick(agency, e);
+    }, 150);
+  };
 
   // Table row content
   const rowContent = (
     <tr
       id={`row-${agency._id}`}
-      className={`cursor-pointer transition-colors ${isSelected
+      className={`cursor-pointer transition-all duration-150 ${isSelected
         ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-        : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+        : isClicking
+          ? "bg-emerald-50 dark:bg-emerald-900/20 scale-[0.99] ring-1 ring-inset ring-emerald-500/30"
+          : "bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
         }`}
       style={{ height: rowHeight }}
-      onClick={(e) => onRowClick(agency, e)}
+      onClick={handleRowClick}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -342,14 +353,14 @@ export function AgencyTableRow({
         className="text-center"
         style={{ border: "1px solid rgb(228 228 231 / 1)" }}
       >
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center justify-center gap-1 cursor-grab hover:cursor-grabbing active:cursor-grabbing group">
           {onEdit && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(agency);
               }}
-              className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded transition-colors"
+              className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
               title="Edit"
             >
               <Edit
@@ -364,7 +375,7 @@ export function AgencyTableRow({
                 e.stopPropagation();
                 onDelete(agency._id);
               }}
-              className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600 dark:text-red-400 transition-colors"
+              className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600 dark:text-red-400 transition-colors cursor-pointer"
               title="Delete"
             >
               <Trash2 style={{ width: "14px", height: "14px" }} />
