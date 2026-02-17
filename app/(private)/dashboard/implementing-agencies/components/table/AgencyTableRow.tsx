@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Edit, Trash2, Eye, Building2, FileText, CheckCircle2 } from "lucide-react";
 import {
@@ -94,7 +94,31 @@ function AgencySummaryTooltip({ agency, children }: { agency: Agency; children: 
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showTooltip, setShowTooltip] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>('bottom-right');
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const tooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Tooltip estimated dimensions
+  const tooltipWidth = 320; // max-w-xs = 20rem = 320px
+  const tooltipHeight = 250; // approximate height
+  const offset = 15;
+
+  // Initialize viewport size and listen for resize
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    // Set initial size
+    updateViewportSize();
+
+    // Add resize listener
+    window.addEventListener('resize', updateViewportSize);
+    return () => window.removeEventListener('resize', updateViewportSize);
+  }, []);
 
   const utilizationRate = agency.totalBudget > 0
     ? ((agency.utilizedBudget / agency.totalBudget) * 100).toFixed(1)
@@ -111,8 +135,27 @@ function AgencySummaryTooltip({ agency, children }: { agency: Agency; children: 
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    setMousePos({ x: e.clientX, y: e.clientY });
-  }, []);
+    const x = e.clientX;
+    const y = e.clientY;
+    const viewportWidth = viewportSize.width || window.innerWidth;
+    const viewportHeight = viewportSize.height || window.innerHeight;
+
+    // Determine position based on viewport edges
+    const nearRightEdge = x + tooltipWidth + offset > viewportWidth;
+    const nearBottomEdge = y + tooltipHeight + offset > viewportHeight;
+
+    if (nearRightEdge && nearBottomEdge) {
+      setTooltipPosition('top-left');
+    } else if (nearRightEdge) {
+      setTooltipPosition('bottom-left');
+    } else if (nearBottomEdge) {
+      setTooltipPosition('top-right');
+    } else {
+      setTooltipPosition('bottom-right');
+    }
+
+    setMousePos({ x, y });
+  }, [viewportSize.width, viewportSize.height]);
 
   const handleMouseLeave = useCallback(() => {
     if (tooltipTimeout.current) {
@@ -125,6 +168,22 @@ function AgencySummaryTooltip({ agency, children }: { agency: Agency; children: 
       setShowTooltip(false);
     }, 200);
   }, []);
+
+  // Calculate tooltip position based on current tooltipPosition state
+  const getTooltipStyle = () => {
+    switch (tooltipPosition) {
+      case 'bottom-right':
+        return { left: mousePos.x + offset, top: mousePos.y + offset };
+      case 'bottom-left':
+        return { left: mousePos.x - tooltipWidth - offset, top: mousePos.y + offset };
+      case 'top-right':
+        return { left: mousePos.x + offset, top: mousePos.y - tooltipHeight - offset };
+      case 'top-left':
+        return { left: mousePos.x - tooltipWidth - offset, top: mousePos.y - tooltipHeight - offset };
+      default:
+        return { left: mousePos.x + offset, top: mousePos.y + offset };
+    }
+  };
 
   return (
     <>
@@ -143,10 +202,7 @@ function AgencySummaryTooltip({ agency, children }: { agency: Agency; children: 
           className={`fixed z-50 pointer-events-none transition-all duration-200 ease-out ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
           }`}
-          style={{
-            left: mousePos.x + 15,
-            top: mousePos.y + 15,
-          }}
+          style={getTooltipStyle()}
         >
           <div className="max-w-xs p-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-lg">
             <div className="space-y-3">
