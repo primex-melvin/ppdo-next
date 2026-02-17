@@ -2,6 +2,8 @@
 
 "use client";
 
+import { useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Edit, Trash2, Eye, Building2, FileText, CheckCircle2 } from "lucide-react";
 import {
   ContextMenu,
@@ -10,12 +12,6 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from "@/components/ui/context-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Agency, AgencyColumnConfig } from "../../types/agency-table.types";
@@ -93,88 +89,135 @@ function formatCellValue(agency: Agency, column: AgencyColumnConfig): React.Reac
   }
 }
 
-// Agency Summary Tooltip Component
+// Mouse-following Agency Summary Tooltip Component
 function AgencySummaryTooltip({ agency, children }: { agency: Agency; children: React.ReactNode }) {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const tooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+
   const utilizationRate = agency.totalBudget > 0
     ? ((agency.utilizedBudget / agency.totalBudget) * 100).toFixed(1)
     : "0.0";
 
+  const handleMouseEnter = useCallback(() => {
+    tooltipTimeout.current = setTimeout(() => {
+      setShowTooltip(true);
+      // Small delay for fade-in animation
+      requestAnimationFrame(() => {
+        setIsVisible(true);
+      });
+    }, 500);
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (tooltipTimeout.current) {
+      clearTimeout(tooltipTimeout.current);
+      tooltipTimeout.current = null;
+    }
+    setIsVisible(false);
+    // Wait for fade-out animation before removing from DOM
+    setTimeout(() => {
+      setShowTooltip(false);
+    }, 200);
+  }, []);
+
   return (
-    <TooltipProvider delayDuration={500}>
-      <Tooltip>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent
-          side="top"
-          align="center"
-          className="max-w-xs p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg"
+    <>
+      <div
+        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="contents"
+      >
+        {children}
+      </div>
+
+      {/* Custom Tooltip Portal */}
+      {showTooltip && typeof document !== "undefined" && createPortal(
+        <div
+          className={`fixed z-50 pointer-events-none transition-all duration-200 ease-out ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
+          }`}
+          style={{
+            left: mousePos.x + 15,
+            top: mousePos.y + 15,
+          }}
         >
-          <div className="space-y-3">
-            {/* Agency Header */}
-            <div className="flex items-start gap-2">
-              <Building2 className="h-4 w-4 text-zinc-500 mt-0.5" />
-              <div>
-                <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
-                  {agency.fullName}
-                </p>
-                <p className="text-xs text-zinc-500">
-                  {agency.code}
-                </p>
-              </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-zinc-500 mb-1">
-                  <FileText className="h-3 w-3" />
+          <div className="max-w-xs p-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-lg">
+            <div className="space-y-3">
+              {/* Agency Header */}
+              <div className="flex items-start gap-2">
+                <Building2 className="h-4 w-4 text-zinc-500 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+                    {agency.fullName}
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    {agency.code}
+                  </p>
                 </div>
-                <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{agency.totalProjects || 0}</p>
-                <p className="text-[10px] text-zinc-500">Projects</p>
               </div>
 
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-emerald-500 mb-1">
-                  <CheckCircle2 className="h-3 w-3" />
+              {/* Stats Grid */}
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-zinc-500 mb-1">
+                    <FileText className="h-3 w-3" />
+                  </div>
+                  <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{agency.totalProjects || 0}</p>
+                  <p className="text-[10px] text-zinc-500">Projects</p>
                 </div>
-                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{agency.completedProjects || 0}</p>
-                <p className="text-[10px] text-zinc-500">Completed</p>
-              </div>
 
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-blue-500 mb-1">
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-emerald-500 mb-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                  </div>
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{agency.completedProjects || 0}</p>
+                  <p className="text-[10px] text-zinc-500">Completed</p>
                 </div>
-                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{agency.activeProjects || 0}</p>
-                <p className="text-[10px] text-zinc-500">Active</p>
-              </div>
-            </div>
 
-            {/* Budget Info */}
-            <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Total Budget:</span>
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatCurrency(agency.totalBudget || 0)}</span>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-blue-500 mb-1">
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{agency.activeProjects || 0}</p>
+                  <p className="text-[10px] text-zinc-500">Active</p>
+                </div>
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Utilized:</span>
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">{formatCurrency(agency.utilizedBudget || 0)}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Utilization Rate:</span>
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">{utilizationRate}%</span>
-              </div>
-            </div>
 
-            {/* Click Hint */}
-            <p className="text-[10px] text-zinc-400 text-center pt-1">
-              Click to view details
-            </p>
+              {/* Budget Info */}
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Total Budget:</span>
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatCurrency(agency.totalBudget || 0)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Utilized:</span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">{formatCurrency(agency.utilizedBudget || 0)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Utilization Rate:</span>
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">{utilizationRate}%</span>
+                </div>
+              </div>
+
+              {/* Click Hint */}
+              <p className="text-[10px] text-zinc-400 text-center pt-1">
+                Click to view details
+              </p>
+            </div>
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 
