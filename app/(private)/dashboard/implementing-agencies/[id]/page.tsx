@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { ThemeToggle } from "@/components/shared"
 import { ProjectCard, ProjectItem } from "../components/ProjectCard"
+import { EditableContactItem } from "../components/EditableContactItem"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
@@ -219,20 +220,55 @@ export default function AgencyDetailPage() {
       <main className="container mx-auto px-4 py-6 md:py-10 space-y-8">
         {/* Agency Header */}
         <div className="space-y-6">
-          <div className="flex items-start gap-4">
-            <div className="p-4 md:p-6 rounded-2xl" style={{ backgroundColor: "#15803D20" }}>
-              <Building2 className="h-10 w-10 md:h-12 md:w-12" style={{ color: "#15803D" }} />
+          <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-8">
+            {/* Left: Icon and Main Info */}
+            <div className="flex items-start gap-4 flex-1">
+              <div className="p-4 md:p-6 rounded-2xl shrink-0" style={{ backgroundColor: "#15803D20" }}>
+                <Building2 className="h-10 w-10 md:h-12 md:w-12" style={{ color: "#15803D" }} />
+              </div>
+              <div className="flex-1 space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge variant="outline" className={`${getTypeColor(agency.type)} font-medium`}>
+                    {agency.type === "internal" ? "PROVINCIAL" : "EXTERNAL"}
+                  </Badge>
+                </div>
+                <div>
+                  <h2 className="text-3xl md:text-5xl font-cinzel font-bold tracking-tight mb-2">{agency.code}</h2>
+                  <p className="text-lg md:text-xl text-muted-foreground">{agency.fullName}</p>
+                </div>
+              </div>
             </div>
-            <div className="flex-1 space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge variant="outline" className={`${getTypeColor(agency.type)} font-medium`}>
-                  {agency.type === "internal" ? "PROVINCIAL" : "EXTERNAL"}
-                </Badge>
-              </div>
-              <div>
-                <h2 className="text-3xl md:text-5xl font-cinzel font-bold tracking-tight mb-2">{agency.code}</h2>
-                <p className="text-lg md:text-xl text-muted-foreground">{agency.fullName}</p>
-              </div>
+            
+            {/* Right: Contact Info */}
+            <div className="md:w-72 space-y-2 md:pt-2">
+              <EditableContactItem
+                id={agency._id}
+                icon={<User className="h-4 w-4" />}
+                label="Head Officer"
+                value={agency.contactPerson}
+                fieldName="contactPerson"
+              />
+              <EditableContactItem
+                id={agency._id}
+                icon={<Mail className="h-4 w-4" />}
+                label="Email"
+                value={agency.contactEmail}
+                fieldName="contactEmail"
+              />
+              <EditableContactItem
+                id={agency._id}
+                icon={<Phone className="h-4 w-4" />}
+                label="Phone"
+                value={agency.contactPhone}
+                fieldName="contactPhone"
+              />
+              <EditableContactItem
+                id={agency._id}
+                icon={<MapPin className="h-4 w-4" />}
+                label="Address"
+                value={agency.address}
+                fieldName="address"
+              />
             </div>
           </div>
         </div>
@@ -325,47 +361,6 @@ export default function AgencyDetailPage() {
                   <p className="text-2xl font-bold font-cinzel">{formatCurrency(stats.avgProjectBudget)}</p>
                 </CardContent>
               </Card>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Contact Information */}
-        <Card className="border-2">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-cinzel font-semibold mb-4">Contact Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-[#15803D] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Head Officer</p>
-                    <p className="font-semibold">{agency.contactPerson || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-[#15803D] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email Address</p>
-                    <p className="font-semibold">{agency.contactEmail || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-[#15803D] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Contact Number</p>
-                    <p className="font-semibold">{agency.contactPhone || "N/A"}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-[#15803D] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Office Address</p>
-                    <p className="font-semibold">{agency.address || "N/A"}</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
