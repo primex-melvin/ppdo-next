@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { ImplementingAgenciesTable } from "./components/table"
 import { Agency } from "./types/agency-table.types"
 import { DeleteAgencyModal } from "./components/modals/DeleteAgencyModal"
+import { EditAgencyModal } from "./components/modals/EditAgencyModal"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AgencyGallery } from "./components/AgencyGallery"
@@ -30,6 +31,10 @@ export default function ImplementingAgenciesPage() {
   // Delete Modal State
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [selectedAgencyId, setSelectedAgencyId] = useState<Id<"implementingAgencies"> | null>(null)
+
+  // Edit Modal State
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null)
 
   // Statistics Visibility State
   const [showStatistics, setShowStatistics] = useState(false)
@@ -54,6 +59,16 @@ export default function ImplementingAgenciesPage() {
     setSelectedAgencyId(null)
   }, [])
 
+  const handleEdit = useCallback((agency: Agency) => {
+    setSelectedAgency(agency)
+    setEditModalOpen(true)
+  }, [])
+
+  const handleEditSuccess = useCallback(() => {
+    setEditModalOpen(false)
+    setSelectedAgency(null)
+  }, [])
+
   if (implementingAgencies === undefined) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -70,6 +85,13 @@ export default function ImplementingAgenciesPage() {
         onOpenChange={setDeleteModalOpen}
         agencyId={selectedAgencyId}
         onSuccess={handleDeleteSuccess}
+      />
+
+      <EditAgencyModal
+        agency={selectedAgency}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onSuccess={handleEditSuccess}
       />
 
       {/* Main Content */}
@@ -184,6 +206,7 @@ export default function ImplementingAgenciesPage() {
             <ImplementingAgenciesTable
               agencies={implementingAgencies as Agency[]}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           </TabsContent>
 
