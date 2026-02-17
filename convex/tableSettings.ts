@@ -26,14 +26,23 @@ export const getSettings = query({
 /**
  * Get default column widths for a table type
  * Used when user has no custom settings
+ * Falls back to projectsTable_default for project tables with particular-specific IDs
  */
 export const getDefaultWidths = query({
   args: { tableIdentifier: v.string() },
   handler: async (ctx, args) => {
-    const defaults = await ctx.db
+    let defaults = await ctx.db
       .query("tableColumnDefaults")
       .withIndex("by_table", (q) => q.eq("tableIdentifier", args.tableIdentifier))
       .collect();
+
+    // Fallback for project tables with particular-specific IDs (e.g., projectsTable_LDRRMF)
+    if (defaults.length === 0 && args.tableIdentifier.startsWith('projectsTable_') && args.tableIdentifier !== 'projectsTable_default') {
+      defaults = await ctx.db
+        .query("tableColumnDefaults")
+        .withIndex("by_table", (q) => q.eq("tableIdentifier", "projectsTable_default"))
+        .collect();
+    }
 
     return defaults.reduce((acc, def) => {
       acc[def.columnKey] = {
@@ -123,11 +132,19 @@ export const updateColumnWidth = mutation({
     console.log(`[Convex] updateColumnWidth | table: ${args.tableIdentifier} | column: ${args.columnKey} | width: ${args.width}px | user: ${userId}`);
 
     if (!existing) {
-      // Get defaults to create initial settings
-      const defaults = await ctx.db
+      // Get defaults to create initial settings - with fallback for project tables
+      let defaults = await ctx.db
         .query("tableColumnDefaults")
         .withIndex("by_table", (q) => q.eq("tableIdentifier", args.tableIdentifier))
         .collect();
+
+      // Fallback for project tables with particular-specific IDs
+      if (defaults.length === 0 && args.tableIdentifier.startsWith('projectsTable_') && args.tableIdentifier !== 'projectsTable_default') {
+        defaults = await ctx.db
+          .query("tableColumnDefaults")
+          .withIndex("by_table", (q) => q.eq("tableIdentifier", "projectsTable_default"))
+          .collect();
+      }
 
       const columns = defaults.map((def) => ({
         fieldKey: def.columnKey,
@@ -146,11 +163,19 @@ export const updateColumnWidth = mutation({
       });
       console.log(`[Convex] updateColumnWidth | INSERT new settings with ${columns.length} columns`);
     } else if (existing.columns.length === 0) {
-      // Settings exist but columns array is empty - populate from defaults
-      const defaults = await ctx.db
+      // Settings exist but columns array is empty - populate from defaults with fallback
+      let defaults = await ctx.db
         .query("tableColumnDefaults")
         .withIndex("by_table", (q) => q.eq("tableIdentifier", args.tableIdentifier))
         .collect();
+
+      // Fallback for project tables with particular-specific IDs
+      if (defaults.length === 0 && args.tableIdentifier.startsWith('projectsTable_') && args.tableIdentifier !== 'projectsTable_default') {
+        defaults = await ctx.db
+          .query("tableColumnDefaults")
+          .withIndex("by_table", (q) => q.eq("tableIdentifier", "projectsTable_default"))
+          .collect();
+      }
 
       const columns = defaults.map((def) => ({
         fieldKey: def.columnKey,
@@ -177,13 +202,23 @@ export const updateColumnWidth = mutation({
         );
       } else {
         // Column doesn't exist in saved settings - add it
-        // Get default values from tableColumnDefaults
-        const columnDefault = await ctx.db
+        // Get default values from tableColumnDefaults with fallback for project tables
+        let columnDefault = await ctx.db
           .query("tableColumnDefaults")
           .withIndex("by_table_column", (q) =>
             q.eq("tableIdentifier", args.tableIdentifier).eq("columnKey", args.columnKey)
           )
           .first();
+
+        // Fallback for project tables with particular-specific IDs
+        if (!columnDefault && args.tableIdentifier.startsWith('projectsTable_') && args.tableIdentifier !== 'projectsTable_default') {
+          columnDefault = await ctx.db
+            .query("tableColumnDefaults")
+            .withIndex("by_table_column", (q) =>
+              q.eq("tableIdentifier", "projectsTable_default").eq("columnKey", args.columnKey)
+            )
+            .first();
+        }
         
         columns = [
           ...existing.columns,

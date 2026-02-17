@@ -214,7 +214,6 @@ export function useTableSettings(options: UseTableSettingsOptions) {
     // Debounced save to prevent too many mutation calls
     const saveWidthToDb = useDebouncedCallback(
         async (columnKey: string, width: number) => {
-            if (!canEditLayout) return;
             // NOTE: Temporarily disabled to reduce console noise during search debug
             // console.log(`[Table:${tableIdentifier}] Saving width: ${columnKey} = ${width}px`);
             await updateWidth({ tableIdentifier, columnKey, width });
