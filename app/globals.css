@@ -805,3 +805,50 @@ mark {
 .dark .leaflet-control-attribution a {
   color: #60a5fa !important;
 }
+
+/* ============================================================================
+ * Leaflet Map Fixes for Next.js / React
+ * ============================================================================
+ */
+
+/* Fix for tiles not rendering properly - force hardware acceleration */
+.leaflet-tile {
+  will-change: transform !important;
+  visibility: visible !important;
+}
+
+/* Ensure map pane is visible */
+.leaflet-map-pane {
+  z-index: 1 !important;
+}
+
+/* Fix for map not showing in modals/tabs */
+.leaflet-container.leaflet-touch-drag {
+  touch-action: none;
+}
+
+/* Force map visibility */
+.leaflet-container .leaflet-pane,
+.leaflet-container .leaflet-tile-pane,
+.leaflet-container .leaflet-overlay-pane {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Fix for marker icons */
+.leaflet-marker-icon {
+  display: block !important;
+}
+
+/* Fix for IE/Edge and some mobile browsers */
+.leaflet-container img.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Fix for box-sizing issues */
+.leaflet-container *,
+.leaflet-container *:before,
+.leaflet-container *:after {
+  box-sizing: content-box;
+}

@@ -18,6 +18,16 @@ import {
   ResizableModalBody,
   ResizableModalFooter,
 } from "@/components/ui/resizable-modal"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Tarlac City default coordinates
 const DEFAULT_CENTER = { lat: 15.4866, lng: 120.5955 }
@@ -46,7 +56,7 @@ export function LocationEditorModal({
 }: LocationEditorModalProps) {
   const { theme, resolvedTheme } = useTheme()
   const updateAgency = useMutation(api.implementingAgencies.update)
-  
+
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markerRef = useRef<any>(null)
@@ -67,6 +77,7 @@ export function LocationEditorModal({
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("map")
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -116,7 +127,7 @@ export function LocationEditorModal({
           link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           link.crossOrigin = ""
           document.head.appendChild(link)
-          
+
           // Wait for CSS
           await new Promise(resolve => setTimeout(resolve, 200))
         }
@@ -166,11 +177,11 @@ export function LocationEditorModal({
         // Add initial tile layer
         const isDark = (resolvedTheme || theme) === "dark"
         const tileLayer = L.tileLayer(
-          isDark 
+          isDark
             ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
           {
-            attribution: isDark 
+            attribution: isDark
               ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
               : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
@@ -196,7 +207,7 @@ export function LocationEditorModal({
         // Add marker if location exists
         if (initialLocation?.locationLatitude && initialLocation?.locationLongitude) {
           const marker = L.marker(
-            [initialLocation.locationLatitude, initialLocation.locationLongitude], 
+            [initialLocation.locationLatitude, initialLocation.locationLongitude],
             { icon: createGreenIcon() }
           ).addTo(map)
           markerRef.current = marker
@@ -262,23 +273,41 @@ export function LocationEditorModal({
     }
   }, [isOpen]) // Only depend on isOpen
 
+  // Handle tab changes - force map refresh when switching back to map tab
+  useEffect(() => {
+    if (activeTab === "map" && mapRef.current && mapInitializedRef.current) {
+      console.log("[LocationEditor] Active tab is map, forcing refresh")
+      // Small delay to let the visibility change take effect
+      setTimeout(() => {
+        if (mapRef.current) {
+          const center = mapRef.current.getCenter()
+          const zoom = mapRef.current.getZoom()
+          // Force a minimal view change to trigger tile reload
+          mapRef.current.setView(center, zoom, { animate: false })
+          mapRef.current.invalidateSize(true)
+          console.log("[LocationEditor] Map refresh completed")
+        }
+      }, 100)
+    }
+  }, [activeTab])
+
   // Handle theme changes separately
   useEffect(() => {
     if (!mapRef.current || !tileLayerRef.current) return
 
     const L = require("leaflet")
     const isDark = (resolvedTheme || theme) === "dark"
-    
+
     // Remove old tile layer
     mapRef.current.removeLayer(tileLayerRef.current)
-    
+
     // Add new tile layer with correct theme
     const newTileLayer = L.tileLayer(
-      isDark 
+      isDark
         ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
-        attribution: isDark 
+        attribution: isDark
           ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
@@ -295,7 +324,7 @@ export function LocationEditorModal({
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
       )
       const data = await response.json()
-      
+
       if (data.display_name) {
         setFormattedAddress(data.display_name)
         const addr = data.address
@@ -325,12 +354,12 @@ export function LocationEditorModal({
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery + ", Philippines")}&limit=1`
       )
       const data = await response.json()
-      
+
       if (data?.length > 0) {
         const result = data[0]
         const lat = parseFloat(result.lat)
         const lng = parseFloat(result.lon)
-        
+
         setLatitude(lat)
         setLongitude(lng)
         setFormattedAddress(result.display_name)
@@ -338,7 +367,7 @@ export function LocationEditorModal({
         if (mapRef.current) {
           const L = require("leaflet")
           mapRef.current.setView([lat, lng], 15)
-          
+
           const greenIcon = L.divIcon({
             className: "custom-green-marker",
             html: `
@@ -381,14 +410,14 @@ export function LocationEditorModal({
       (position) => {
         const lat = position.coords.latitude
         const lng = position.coords.longitude
-        
+
         setLatitude(lat)
         setLongitude(lng)
 
         if (mapRef.current) {
           const L = require("leaflet")
           mapRef.current.setView([lat, lng], 15)
-          
+
           const greenIcon = L.divIcon({
             className: "custom-green-marker",
             html: `
@@ -431,7 +460,7 @@ export function LocationEditorModal({
         locationProvince: province || undefined,
         locationPostalCode: postalCode || undefined,
       })
-      
+
       toast.success("Location updated successfully")
       onClose()
     } catch (error: any) {
@@ -447,15 +476,16 @@ export function LocationEditorModal({
     try {
       await updateAgency({
         id: agencyId as any,
-        locationLatitude: undefined,
-        locationLongitude: undefined,
-        locationFormattedAddress: undefined,
-        locationBarangay: undefined,
-        locationMunicipality: undefined,
-        locationProvince: undefined,
-        locationPostalCode: undefined,
+        locationLatitude: null,
+        locationLongitude: null,
+        locationFormattedAddress: null,
+        locationBarangay: null,
+        locationMunicipality: null,
+        locationProvince: null,
+        locationPostalCode: null,
+        address: null,
       })
-      
+
       toast.success("Location cleared successfully")
       onClose()
     } catch (error: any) {
@@ -468,174 +498,201 @@ export function LocationEditorModal({
   const hasExistingLocation = initialLocation?.locationLatitude && initialLocation?.locationLongitude
 
   return (
-    <ResizableModal open={isOpen} onOpenChange={onClose}>
-      <ResizableModalContent width="750px" height="650px" className="flex flex-col">
-        <ResizableModalHeader>
-          <ResizableModalTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-[#15803D]" />
-            Edit Location
-          </ResizableModalTitle>
-        </ResizableModalHeader>
+    <>
+      <ResizableModal open={isOpen} onOpenChange={onClose}>
+        <ResizableModalContent width="750px" height="650px" className="flex flex-col">
+          <ResizableModalHeader>
+            <ResizableModalTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-[#15803D]" />
+              Edit Location
+            </ResizableModalTitle>
+          </ResizableModalHeader>
 
-        <ResizableModalBody className="flex-1 p-0 overflow-hidden">
-          <Tabs 
-            defaultValue="map" 
-            value={activeTab}
-            onValueChange={(value) => {
-              console.log("[LocationEditor] Tab changed to:", value)
-              setActiveTab(value)
-              // When switching back to map tab, invalidate size after animation
-              if (value === "map" && mapRef.current) {
-                console.log("[LocationEditor] Switching to map tab, scheduling invalidateSize")
-                // Aggressive invalidateSize calls - needed because display:none to visible transition
-                // doesn't always trigger ResizeObserver properly
-                ;[50, 100, 200, 300, 500, 800].forEach((delay) => {
-                  setTimeout(() => {
-                    if (mapRef.current) {
-                      console.log(`[LocationEditor] invalidateSize call at ${delay}ms`)
-                      mapRef.current.invalidateSize(true) // true = animate pan
-                    }
-                  }, delay)
-                })
-              }
-            }}
-            className="h-full flex flex-col"
-          >
-            <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 mb-0 rounded-b-none border-b-0">
-              <TabsTrigger value="map">Map View</TabsTrigger>
-              <TabsTrigger value="address">Address Input</TabsTrigger>
-            </TabsList>
+          <ResizableModalBody className="flex-1 p-0 overflow-hidden">
+            <Tabs
+              defaultValue="map"
+              value={activeTab}
+              onValueChange={(value) => {
+                console.log("[LocationEditor] Tab changed to:", value)
+                setActiveTab(value)
+                // When switching back to map tab, invalidate size after animation
+                if (value === "map" && mapRef.current) {
+                  console.log("[LocationEditor] Switching to map tab, scheduling invalidateSize")
+                    // Aggressive invalidateSize calls - needed because display:none to visible transition
+                    // doesn't always trigger ResizeObserver properly
+                    ;[50, 100, 200, 300, 500, 800].forEach((delay) => {
+                      setTimeout(() => {
+                        if (mapRef.current) {
+                          console.log(`[LocationEditor] invalidateSize call at ${delay}ms`)
+                          mapRef.current.invalidateSize(true) // true = animate pan
+                        }
+                      }, delay)
+                    })
+                }
+              }}
+              className="h-full flex flex-col"
+            >
+              <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 mb-0 rounded-b-none border-b-0">
+                <TabsTrigger value="map">Map View</TabsTrigger>
+                <TabsTrigger value="address">Address Input</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="map" className="flex-1 flex flex-col mt-0 p-6 pt-4">
-              <div 
-                className="relative flex-1 rounded-lg border border-border overflow-hidden bg-muted"
-                style={{ minHeight: "350px" }}
-              >
-                <div 
-                  ref={mapContainerRef} 
-                  className="absolute inset-0 w-full h-full"
-                  style={{ zIndex: 1 }}
-                />
-                {isLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="animate-spin h-6 w-6 border-2 border-[#15803D] border-t-transparent rounded-full" />
-                      <p className="text-sm text-muted-foreground">Loading map...</p>
+              <TabsContent value="map" className="flex-1 flex flex-col mt-0 p-6 pt-4" forceMount>
+                <div
+                  className="relative flex-1 rounded-lg border border-border overflow-hidden bg-muted"
+                  style={{
+                    minHeight: "350px",
+                    display: activeTab === 'map' ? 'block' : 'none'
+                  }}
+                >
+                  <div
+                    ref={mapContainerRef}
+                    className="absolute inset-0 w-full h-full"
+                    style={{ zIndex: 1 }}
+                  />
+                  {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="animate-spin h-6 w-6 border-2 border-[#15803D] border-t-transparent rounded-full" />
+                        <p className="text-sm text-muted-foreground">Loading map...</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                {!isLoading && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleLocateMe}
-                    className="absolute top-3 right-3 z-[400] shadow-md"
-                  >
-                    <Locate className="h-4 w-4 mr-2" />
-                    Locate Me
-                  </Button>
-                )}
-              </div>
+                  )}
 
-              <div className="bg-muted/50 rounded-lg p-4 mt-4 space-y-2">
-                <h4 className="font-medium text-sm">Selected Location</h4>
-                {formattedAddress ? (
-                  <p className="text-sm text-muted-foreground">{formattedAddress}</p>
-                ) : (
-                  <p className="text-sm text-zinc-400 italic">Click on the map to select a location</p>
-                )}
-                <div className="flex gap-4 text-xs text-muted-foreground">
-                  <span>Lat: {latitude.toFixed(6)}</span>
-                  <span>Lng: {longitude.toFixed(6)}</span>
+                  {!isLoading && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleLocateMe}
+                      className="absolute top-3 right-3 z-[400] shadow-md"
+                    >
+                      <Locate className="h-4 w-4 mr-2" />
+                      Locate Me
+                    </Button>
+                  )}
                 </div>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="address" className="flex flex-col gap-4 p-6 pt-4 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="barangay">Barangay</Label>
-                  <Input
-                    id="barangay"
-                    placeholder="Enter barangay"
-                    value={barangay}
-                    onChange={(e) => setBarangay(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="municipality">Municipality / City</Label>
-                  <Input
-                    id="municipality"
-                    placeholder="Enter municipality or city"
-                    value={municipality}
-                    onChange={(e) => setMunicipality(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="province">Province</Label>
-                  <Input
-                    id="province"
-                    placeholder="Enter province"
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="postal">Postal Code</Label>
-                  <Input
-                    id="postal"
-                    placeholder="Enter postal code"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <Button
-                onClick={handleGeocodeSearch}
-                disabled={isGeocoding}
-                className="w-full"
-              >
-                <Search className="h-4 w-4 mr-2" />
-                {isGeocoding ? "Searching..." : "Search Address on Map"}
-              </Button>
-
-              {formattedAddress && (
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <h4 className="font-medium text-sm mb-2">Found Address</h4>
-                  <p className="text-sm text-muted-foreground">{formattedAddress}</p>
-                  <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                <div className="bg-muted/50 rounded-lg p-4 mt-4 space-y-2">
+                  <h4 className="font-medium text-sm">Selected Location</h4>
+                  {formattedAddress ? (
+                    <p className="text-sm text-muted-foreground">{formattedAddress}</p>
+                  ) : (
+                    <p className="text-sm text-zinc-400 italic">Click on the map to select a location</p>
+                  )}
+                  <div className="flex gap-4 text-xs text-muted-foreground">
                     <span>Lat: {latitude.toFixed(6)}</span>
                     <span>Lng: {longitude.toFixed(6)}</span>
                   </div>
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </ResizableModalBody>
+              </TabsContent>
 
-        <ResizableModalFooter className="flex justify-between">
-          <Button
-            variant="destructive"
-            onClick={handleClear}
-            disabled={isSaving || !hasExistingLocation}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear Location
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} disabled={isSaving}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
+              <TabsContent value="address" className={`flex flex-col gap-4 p-6 pt-4 overflow-y-auto ${activeTab !== 'address' ? 'hidden' : ''}`} forceMount>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="barangay">Barangay</Label>
+                    <Input
+                      id="barangay"
+                      placeholder="Enter barangay"
+                      value={barangay}
+                      onChange={(e) => setBarangay(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="municipality">Municipality / City</Label>
+                    <Input
+                      id="municipality"
+                      placeholder="Enter municipality or city"
+                      value={municipality}
+                      onChange={(e) => setMunicipality(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="province">Province</Label>
+                    <Input
+                      id="province"
+                      placeholder="Enter province"
+                      value={province}
+                      onChange={(e) => setProvince(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postal">Postal Code</Label>
+                    <Input
+                      id="postal"
+                      placeholder="Enter postal code"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleGeocodeSearch}
+                  disabled={isGeocoding}
+                  className="w-full"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  {isGeocoding ? "Searching..." : "Search Address on Map"}
+                </Button>
+
+                {formattedAddress && (
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <h4 className="font-medium text-sm mb-2">Found Address</h4>
+                    <p className="text-sm text-muted-foreground">{formattedAddress}</p>
+                    <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                      <span>Lat: {latitude.toFixed(6)}</span>
+                      <span>Lng: {longitude.toFixed(6)}</span>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </ResizableModalBody>
+
+          <ResizableModalFooter className="flex justify-between">
+            <Button
+              variant="destructive"
+              onClick={() => setShowClearConfirm(true)}
+              disabled={isSaving || !hasExistingLocation}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Location
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="bg-[#15803D] hover:bg-[#15803D]/90">
-              <Check className="h-4 w-4 mr-2" />
-              {isSaving ? "Saving..." : "Save Location"}
-            </Button>
-          </div>
-        </ResizableModalFooter>
-      </ResizableModalContent>
-    </ResizableModal>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose} disabled={isSaving}>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving} className="bg-[#15803D] hover:bg-[#15803D]/90">
+                <Check className="h-4 w-4 mr-2" />
+                {isSaving ? "Saving..." : "Save Location"}
+              </Button>
+            </div>
+          </ResizableModalFooter>
+        </ResizableModalContent>
+      </ResizableModal>
+
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Location Data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the saved location from the database, including the coordinates and address details. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClear}
+              disabled={isSaving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {isSaving ? "Clearing..." : "Yes, Clear Location"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

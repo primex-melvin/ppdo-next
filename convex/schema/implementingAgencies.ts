@@ -83,22 +83,22 @@ export const implementingAgencyTables = {
      * Use the location* fields below for structured location data
      * @deprecated Use locationFormattedAddress and component fields instead
      */
-    address: v.optional(v.string()),
+    address: v.optional(v.union(v.string(), v.null())),
 
     /**
      * Location Data - Geographic coordinates for mapping
      */
-    locationLatitude: v.optional(v.number()), // Latitude coordinate (-90 to 90)
-    locationLongitude: v.optional(v.number()), // Longitude coordinate (-180 to 180)
+    locationLatitude: v.optional(v.union(v.number(), v.null())), // Latitude coordinate (-90 to 90)
+    locationLongitude: v.optional(v.union(v.number(), v.null())), // Longitude coordinate (-180 to 180)
 
     /**
      * Location Data - Structured address components
      */
-    locationFormattedAddress: v.optional(v.string()), // Human-readable full address
-    locationBarangay: v.optional(v.string()), // Barangay (smallest administrative unit in Philippines)
-    locationMunicipality: v.optional(v.string()), // Municipality or City name
-    locationProvince: v.optional(v.string()), // Province name
-    locationPostalCode: v.optional(v.string()), // Postal/ZIP code
+    locationFormattedAddress: v.optional(v.union(v.string(), v.null())), // Human-readable full address
+    locationBarangay: v.optional(v.union(v.string(), v.null())), // Barangay (smallest administrative unit in Philippines)
+    locationMunicipality: v.optional(v.union(v.string(), v.null())), // Municipality or City name
+    locationProvince: v.optional(v.union(v.string(), v.null())), // Province name
+    locationPostalCode: v.optional(v.union(v.string(), v.null())), // Postal/ZIP code
 
     /**
      * Display order for sorting in UI (lower numbers appear first)

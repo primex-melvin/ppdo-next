@@ -44,7 +44,7 @@ interface Department {
   headUserName?: string;
   contactEmail?: string;
   contactPhone?: string;
-  address?: string;
+  address?: string | null;
   isActive: boolean;
   displayOrder?: number;
   userCount?: number;

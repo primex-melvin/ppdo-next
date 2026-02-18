@@ -120,7 +120,7 @@ export const list = query({
         const activeSpecialEducationBreakdowns = specialEducationBreakdowns.filter(b => !b.isDeleted);
 
         // Total breakdowns count (all types except main projects)
-        const totalBreakdownsCount = 
+        const totalBreakdownsCount =
           activeGovtBreakdowns.length +
           active20DFBreakdowns.length +
           activeTrustFundBreakdowns.length +
@@ -130,9 +130,9 @@ export const list = query({
         const totalProjectsCount = activeProjects.length + totalBreakdownsCount;
 
         // Count by status
-        const countByStatus = <T extends { status?: string }>(items: T[], status: string) => 
+        const countByStatus = <T extends { status?: string }>(items: T[], status: string) =>
           items.filter(item => item.status === status).length;
-        
+
         const countByStatusMulti = <T extends { status?: string }>(items: T[], statuses: string[]) =>
           items.filter(item => item.status !== undefined && statuses.includes(item.status)).length;
 
@@ -153,11 +153,11 @@ export const list = query({
           countByStatusMulti(activeSpecialEducationBreakdowns, ["ongoing", "delayed"]);
 
         // Calculate budgets
-        const sumBudget = <T extends Record<string, unknown>>(items: T[], field: keyof T) => 
+        const sumBudget = <T extends Record<string, unknown>>(items: T[], field: keyof T) =>
           items.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
 
         const projectBudget = sumBudget(activeProjects, "totalBudgetAllocated");
-        const breakdownBudget = 
+        const breakdownBudget =
           sumBudget(activeGovtBreakdowns, "allocatedBudget") +
           sumBudget(active20DFBreakdowns, "allocatedBudget") +
           sumBudget(activeTrustFundBreakdowns, "allocatedBudget") +
@@ -166,7 +166,7 @@ export const list = query({
         const totalBudget = projectBudget + breakdownBudget;
 
         const projectUtilized = sumBudget(activeProjects, "totalBudgetUtilized");
-        const breakdownUtilized = 
+        const breakdownUtilized =
           sumBudget(activeGovtBreakdowns, "budgetUtilized") +
           sumBudget(active20DFBreakdowns, "budgetUtilized") +
           sumBudget(activeTrustFundBreakdowns, "budgetUtilized") +
@@ -284,18 +284,18 @@ export const get = query({
     const activeSpecialEducationBreakdowns = specialEducationBreakdowns.filter(b => !b.isDeleted);
 
     // Calculate Stats - all types combined
-    const totalProjectsCount = 
-      activeProjects.length + 
-      activeGovtBreakdowns.length + 
+    const totalProjectsCount =
+      activeProjects.length +
+      activeGovtBreakdowns.length +
       active20DFBreakdowns.length +
       activeTrustFundBreakdowns.length +
       activeSpecialHealthBreakdowns.length +
       activeSpecialEducationBreakdowns.length;
 
     // Count by status across all types
-    const countByStatus = <T extends { status?: string }>(items: T[], status: string) => 
+    const countByStatus = <T extends { status?: string }>(items: T[], status: string) =>
       items.filter(item => item.status === status).length;
-    
+
     const countByStatusMulti = <T extends { status?: string }>(items: T[], statuses: string[]) =>
       items.filter(item => item.status !== undefined && statuses.includes(item.status)).length;
 
@@ -316,10 +316,10 @@ export const get = query({
       countByStatusMulti(activeSpecialEducationBreakdowns, ["ongoing", "delayed"]);
 
     // Calculate budgets
-    const sumBudget = <T extends Record<string, unknown>>(items: T[], field: keyof T) => 
+    const sumBudget = <T extends Record<string, unknown>>(items: T[], field: keyof T) =>
       items.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
 
-    const totalBudget = 
+    const totalBudget =
       sumBudget(activeProjects, "totalBudgetAllocated") +
       sumBudget(activeGovtBreakdowns, "allocatedBudget") +
       sumBudget(active20DFBreakdowns, "allocatedBudget") +
@@ -327,7 +327,7 @@ export const get = query({
       sumBudget(activeSpecialHealthBreakdowns, "allocatedBudget") +
       sumBudget(activeSpecialEducationBreakdowns, "allocatedBudget");
 
-    const utilizedBudget = 
+    const utilizedBudget =
       sumBudget(activeProjects, "totalBudgetUtilized") +
       sumBudget(activeGovtBreakdowns, "budgetUtilized") +
       sumBudget(active20DFBreakdowns, "budgetUtilized") +
@@ -335,7 +335,7 @@ export const get = query({
       sumBudget(activeSpecialHealthBreakdowns, "budgetUtilized") +
       sumBudget(activeSpecialEducationBreakdowns, "budgetUtilized");
 
-    const obligatedBudget = 
+    const obligatedBudget =
       sumBudget(activeProjects, "obligatedBudget") +
       sumBudget(activeGovtBreakdowns, "obligatedBudget") +
       sumBudget(active20DFBreakdowns, "obligatedBudget") +
@@ -766,14 +766,14 @@ export const update = mutation({
     contactPerson: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
-    address: v.optional(v.string()),
-    locationLatitude: v.optional(v.number()),
-    locationLongitude: v.optional(v.number()),
-    locationFormattedAddress: v.optional(v.string()),
-    locationBarangay: v.optional(v.string()),
-    locationMunicipality: v.optional(v.string()),
-    locationProvince: v.optional(v.string()),
-    locationPostalCode: v.optional(v.string()),
+    address: v.optional(v.union(v.string(), v.null())),
+    locationLatitude: v.optional(v.union(v.number(), v.null())),
+    locationLongitude: v.optional(v.union(v.number(), v.null())),
+    locationFormattedAddress: v.optional(v.union(v.string(), v.null())),
+    locationBarangay: v.optional(v.union(v.string(), v.null())),
+    locationMunicipality: v.optional(v.union(v.string(), v.null())),
+    locationProvince: v.optional(v.union(v.string(), v.null())),
+    locationPostalCode: v.optional(v.union(v.string(), v.null())),
     displayOrder: v.optional(v.number()),
     category: v.optional(v.string()),
     colorCode: v.optional(v.string()),
@@ -818,7 +818,7 @@ export const update = mutation({
       if (args.parentAgencyId === args.id) {
         throw new Error("Agency cannot be its own parent");
       }
-      
+
       const parent = await ctx.db.get(args.parentAgencyId);
       if (!parent) {
         throw new Error("Parent agency not found");
@@ -1317,10 +1317,10 @@ export const getDeletePreview = query({
     const activeSpecialEducationBreakdowns = specialEducationBreakdowns.filter(b => !b.isDeleted);
 
     // Calculate Financial Impact
-    const sumBudget = (items: any[], field: string) => 
+    const sumBudget = (items: any[], field: string) =>
       items.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
 
-    const totalBudget = 
+    const totalBudget =
       sumBudget(activeProjects, "totalBudgetAllocated") +
       sumBudget(activeGovtBreakdowns, "allocatedBudget") +
       sumBudget(active20DFBreakdowns, "allocatedBudget") +
@@ -1345,12 +1345,12 @@ export const getDeletePreview = query({
       specialEducation: activeSpecialEducationBreakdowns.map(b => mapItem(b, "Special Education Breakdown")),
     };
 
-    const totalCount = 
-      activeProjects.length + 
-      activeGovtBreakdowns.length + 
-      active20DFBreakdowns.length + 
-      activeTrustFundBreakdowns.length + 
-      activeSpecialHealthBreakdowns.length + 
+    const totalCount =
+      activeProjects.length +
+      activeGovtBreakdowns.length +
+      active20DFBreakdowns.length +
+      activeTrustFundBreakdowns.length +
+      activeSpecialHealthBreakdowns.length +
       activeSpecialEducationBreakdowns.length;
 
     return {
@@ -1394,7 +1394,7 @@ export const deleteWithCascade = mutation({
 
     const agency = await ctx.db.get(args.id);
     if (!agency) throw new Error("Implementing agency not found");
-    
+
     // System default check
     if (agency.isSystemDefault) {
       throw new Error("Cannot delete system default agency");
@@ -1444,11 +1444,11 @@ export const deleteWithCascade = mutation({
       success: true,
       deletedCounts: {
         projects: projects.length,
-        breakdowns: 
-          govtBreakdowns.length + 
-          twentyPercentDFBreakdowns.length + 
-          trustFundBreakdowns.length + 
-          specialHealthBreakdowns.length + 
+        breakdowns:
+          govtBreakdowns.length +
+          twentyPercentDFBreakdowns.length +
+          trustFundBreakdowns.length +
+          specialHealthBreakdowns.length +
           specialEducationBreakdowns.length,
       }
     };

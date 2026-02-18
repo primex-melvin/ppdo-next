@@ -16,7 +16,14 @@ export interface Agency {
   contactPerson?: string;
   contactEmail?: string;
   contactPhone?: string;
-  address?: string;
+  address?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
+  locationFormattedAddress?: string | null;
+  locationBarangay?: string | null;
+  locationMunicipality?: string | null;
+  locationProvince?: string | null;
+  locationPostalCode?: string | null;
   displayOrder?: number;
   isActive: boolean;
   isSystemDefault?: boolean;
