@@ -44,6 +44,8 @@ import { CompactProjectCard } from "../components/CompactProjectCard"
 import { ProjectListView } from "../components/ProjectListView"
 import { EditableContactItem } from "../components/EditableContactItem"
 import { EditableAgencyName } from "../components/EditableAgencyName"
+import { LocationDisplay } from "../components/LocationDisplay"
+import { LocationEditorModal } from "../components/LocationEditorModal"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
@@ -120,6 +122,8 @@ export default function AgencyDetailPage() {
   const [showDashboardStats, setShowDashboardStats] = useState(false)
   // View mode state: 'compact', 'detailed', 'list'
   const [viewMode, setViewMode] = useState<"compact" | "detailed" | "list">("detailed")
+  // Location editor modal state
+  const [showLocationEditor, setShowLocationEditor] = useState(false)
 
   const agency = useQuery(api.implementingAgencies.get, { id })
   const { setCustomBreadcrumbs } = useBreadcrumb()
@@ -341,12 +345,10 @@ export default function AgencyDetailPage() {
                 value={agency.contactPhone}
                 fieldName="contactPhone"
               />
-              <EditableContactItem
-                id={agency._id}
-                icon={<MapPin className="h-4 w-4" />}
-                label="Address"
-                value={agency.address}
-                fieldName="address"
+              <LocationDisplay
+                locationFormattedAddress={agency.locationFormattedAddress}
+                address={agency.address}
+                onClick={() => setShowLocationEditor(true)}
               />
               {/* Statistics Toggle Buttons */}
               <div className="pt-2 flex gap-2">
@@ -486,6 +488,23 @@ export default function AgencyDetailPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Location Editor Modal */}
+        <LocationEditorModal
+          isOpen={showLocationEditor}
+          onClose={() => setShowLocationEditor(false)}
+          agencyId={agency._id}
+          initialLocation={{
+            locationLatitude: agency.locationLatitude,
+            locationLongitude: agency.locationLongitude,
+            locationFormattedAddress: agency.locationFormattedAddress,
+            locationBarangay: agency.locationBarangay,
+            locationMunicipality: agency.locationMunicipality,
+            locationProvince: agency.locationProvince,
+            locationPostalCode: agency.locationPostalCode,
+            address: agency.address,
+          }}
+        />
 
         {/* Projects Section - Categorized with View Tabs */}
         <div className="space-y-8">

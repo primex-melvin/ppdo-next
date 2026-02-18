@@ -72,6 +72,7 @@ export const STATIC_NAV_ITEMS: NavItem[] = [
         href: "/dashboard/implementing-agencies",
         category: "Cross Department",
         icon: <Building size={20} />,
+        isNew: true,
     },
     {
         name: "CMS",
