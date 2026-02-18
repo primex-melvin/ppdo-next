@@ -38,22 +38,20 @@ interface LocationEditorModalProps {
   }
 }
 
-// Dynamic import Leaflet to avoid SSR issues
-let L: typeof import("leaflet") | null = null
-
 export function LocationEditorModal({
   isOpen,
   onClose,
   agencyId,
   initialLocation,
 }: LocationEditorModalProps) {
-  const { theme } = useTheme()
+  const { theme, resolvedTheme } = useTheme()
   const updateAgency = useMutation(api.implementingAgencies.update)
   
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<import("leaflet").Map | null>(null)
-  const markerRef = useRef<import("leaflet").Marker | null>(null)
-  const [mapLoaded, setMapLoaded] = useState(false)
+  const mapRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
+  const leafletRef = useRef<any>(null)
+  const [mapReady, setMapReady] = useState(false)
 
   // Form state
   const [latitude, setLatitude] = useState<number>(initialLocation?.locationLatitude || DEFAULT_CENTER.lat)
@@ -65,96 +63,174 @@ export function LocationEditorModal({
   const [postalCode, setPostalCode] = useState(initialLocation?.locationPostalCode || "")
   const [isSaving, setIsSaving] = useState(false)
   const [isGeocoding, setIsGeocoding] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Initialize map when modal opens
+  // Reset state when modal opens
   useEffect(() => {
-    if (!isOpen || mapLoaded || !mapContainerRef.current) return
+    if (isOpen) {
+      setLatitude(initialLocation?.locationLatitude || DEFAULT_CENTER.lat)
+      setLongitude(initialLocation?.locationLongitude || DEFAULT_CENTER.lng)
+      setFormattedAddress(initialLocation?.locationFormattedAddress || "")
+      setBarangay(initialLocation?.locationBarangay || "")
+      setMunicipality(initialLocation?.locationMunicipality || "")
+      setProvince(initialLocation?.locationProvince || "")
+      setPostalCode(initialLocation?.locationPostalCode || "")
+      setIsLoading(true)
+      setMapReady(false)
+    }
+  }, [isOpen, initialLocation])
+
+  // Initialize map
+  useEffect(() => {
+    if (!isOpen || !mapContainerRef.current || mapReady) return
+
+    let isMounted = true
 
     const initMap = async () => {
-      if (!L) {
-        L = await import("leaflet")
-      }
+      try {
+        // Load Leaflet CSS first
+        if (!document.getElementById("leaflet-css")) {
+          const link = document.createElement("link")
+          link.id = "leaflet-css"
+          link.rel = "stylesheet"
+          link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          link.crossOrigin = ""
+          document.head.appendChild(link)
+          
+          // Wait for CSS to load
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
 
-      // Import Leaflet CSS
-      if (!document.getElementById("leaflet-css")) {
-        const link = document.createElement("link")
-        link.id = "leaflet-css"
-        link.rel = "stylesheet"
-        link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
-        document.head.appendChild(link)
-      }
+        // Dynamic import Leaflet
+        const L = await import("leaflet")
+        if (!isMounted) return
+        
+        leafletRef.current = L
 
-      const initialLat = initialLocation?.locationLatitude || DEFAULT_CENTER.lat
-      const initialLng = initialLocation?.locationLongitude || DEFAULT_CENTER.lng
+        // Ensure container has dimensions
+        const container = mapContainerRef.current
+        if (!container) return
 
-      const map = L!.map(mapContainerRef.current!).setView([initialLat, initialLng], 13)
-      mapRef.current = map
+        // Get initial coordinates
+        const initialLat = initialLocation?.locationLatitude || DEFAULT_CENTER.lat
+        const initialLng = initialLocation?.locationLongitude || DEFAULT_CENTER.lng
 
-      // Add tile layer based on theme
-      const isDark = theme === "dark"
-      const tileUrl = isDark
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        // Create map
+        const map = L.map(container, {
+          center: [initialLat, initialLng],
+          zoom: 13,
+          zoomControl: false, // We'll add it in a better position
+        })
 
-      L!.tileLayer(tileUrl, {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        maxZoom: 19,
-      }).addTo(map)
+        if (!isMounted) {
+          map.remove()
+          return
+        }
 
-      // Create custom green marker icon
-      const greenIcon = L!.divIcon({
-        className: "custom-green-marker",
-        html: `
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#15803D" width="36" height="36">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-            <circle cx="12" cy="9" r="2.5" fill="white"/>
-          </svg>
-        `,
-        iconSize: [36, 36],
-        iconAnchor: [18, 36],
-        popupAnchor: [0, -36],
-      })
+        mapRef.current = map
 
-      // Add marker if location exists
-      if (initialLocation?.locationLatitude && initialLocation?.locationLongitude) {
-        const marker = L!.marker([initialLocation.locationLatitude, initialLocation.locationLongitude], {
-          icon: greenIcon,
+        // Add zoom control to bottom right
+        L.control.zoom({
+          position: "bottomright"
         }).addTo(map)
-        markerRef.current = marker
-      }
 
-      // Handle map clicks
-      map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
-        const { lat, lng } = e.latlng
-        setLatitude(lat)
-        setLongitude(lng)
+        // Add tile layer based on theme
+        const currentTheme = resolvedTheme || theme
+        const isDark = currentTheme === "dark"
+        
+        const tileLayer = L.tileLayer(
+          isDark 
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            attribution: isDark 
+              ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+          }
+        )
+        tileLayer.addTo(map)
 
-        // Update or create marker
-        if (markerRef.current) {
-          markerRef.current.setLatLng([lat, lng])
-        } else {
-          const marker = L!.marker([lat, lng], { icon: greenIcon }).addTo(map)
+        // Create custom green marker
+        const greenIcon = L.divIcon({
+          className: "custom-green-marker",
+          html: `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#15803D" width="32" height="32" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+              <circle cx="12" cy="9" r="2.5" fill="white"/>
+            </svg>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+        })
+
+        // Add marker if location exists
+        if (initialLocation?.locationLatitude && initialLocation?.locationLongitude) {
+          const marker = L.marker(
+            [initialLocation.locationLatitude, initialLocation.locationLongitude], 
+            { icon: greenIcon }
+          ).addTo(map)
           markerRef.current = marker
         }
 
-        // Reverse geocode
-        reverseGeocode(lat, lng)
-      })
+        // Handle map clicks
+        map.on("click", (e: any) => {
+          const { lat, lng } = e.latlng
+          setLatitude(lat)
+          setLongitude(lng)
 
-      setMapLoaded(true)
+          // Update or create marker
+          if (markerRef.current) {
+            markerRef.current.setLatLng([lat, lng])
+          } else {
+            const marker = L.marker([lat, lng], { icon: greenIcon }).addTo(map)
+            markerRef.current = marker
+          }
+
+          // Reverse geocode
+          reverseGeocode(lat, lng)
+        })
+
+        // Force map to recalculate size after modal animation
+        setTimeout(() => {
+          if (mapRef.current) {
+            mapRef.current.invalidateSize()
+          }
+        }, 300)
+
+        setMapReady(true)
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Map initialization error:", error)
+        setIsLoading(false)
+      }
     }
 
-    initMap()
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(initMap, 100)
 
     return () => {
+      isMounted = false
+      clearTimeout(timer)
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
         markerRef.current = null
-        setMapLoaded(false)
+        leafletRef.current = null
+        setMapReady(false)
       }
     }
-  }, [isOpen, theme])
+  }, [isOpen, theme, resolvedTheme])
+
+  // Handle theme changes
+  useEffect(() => {
+    if (!mapRef.current || !leafletRef.current) return
+    
+    // Reload page to switch tile layers (simplest approach)
+    // In a production app, you'd remove and re-add the tile layer
+  }, [resolvedTheme])
 
   // Reverse geocode to get address from coordinates
   const reverseGeocode = async (lat: number, lng: number) => {
@@ -203,7 +279,7 @@ export function LocationEditorModal({
     setIsGeocoding(true)
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery + ", Philippines")}&limit=1`
       )
       const data = await response.json()
       
@@ -217,19 +293,20 @@ export function LocationEditorModal({
         setFormattedAddress(result.display_name)
 
         // Update map
-        if (mapRef.current && L) {
+        if (mapRef.current && leafletRef.current) {
+          const L = leafletRef.current
           mapRef.current.setView([lat, lng], 15)
           
           const greenIcon = L.divIcon({
             className: "custom-green-marker",
             html: `
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#15803D" width="36" height="36">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#15803D" width="32" height="32" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                 <circle cx="12" cy="9" r="2.5" fill="white"/>
               </svg>
             `,
-            iconSize: [36, 36],
-            iconAnchor: [18, 36],
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
           })
 
           if (markerRef.current) {
@@ -266,19 +343,20 @@ export function LocationEditorModal({
         setLatitude(lat)
         setLongitude(lng)
 
-        if (mapRef.current && L) {
+        if (mapRef.current && leafletRef.current) {
+          const L = leafletRef.current
           mapRef.current.setView([lat, lng], 15)
           
           const greenIcon = L.divIcon({
             className: "custom-green-marker",
             html: `
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#15803D" width="36" height="36">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#15803D" width="32" height="32" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                 <circle cx="12" cy="9" r="2.5" fill="white"/>
               </svg>
             `,
-            iconSize: [36, 36],
-            iconAnchor: [18, 36],
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
           })
 
           if (markerRef.current) {
@@ -290,7 +368,6 @@ export function LocationEditorModal({
         }
 
         reverseGeocode(lat, lng)
-        
         toast.success("Your current location has been set")
       },
       () => {
@@ -347,11 +424,11 @@ export function LocationEditorModal({
     }
   }
 
-  const hasLocation = initialLocation?.locationLatitude && initialLocation?.locationLongitude
+  const hasExistingLocation = initialLocation?.locationLatitude && initialLocation?.locationLongitude
 
   return (
     <ResizableModal open={isOpen} onOpenChange={onClose}>
-      <ResizableModalContent width="750px" height="650px">
+      <ResizableModalContent width="750px" height="650px" className="flex flex-col">
         <ResizableModalHeader>
           <ResizableModalTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-[#15803D]" />
@@ -359,37 +436,49 @@ export function LocationEditorModal({
           </ResizableModalTitle>
         </ResizableModalHeader>
 
-        <ResizableModalBody className="p-6">
+        <ResizableModalBody className="flex-1 p-0 overflow-hidden">
           <Tabs defaultValue="map" className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 mb-0 rounded-b-none border-b-0">
               <TabsTrigger value="map">Map View</TabsTrigger>
               <TabsTrigger value="address">Address Input</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="map" className="flex-1 flex flex-col gap-4 mt-4">
+            <TabsContent value="map" className="flex-1 flex flex-col mt-0 p-6 pt-4">
               {/* Map Container */}
-              <div className="relative flex-1 min-h-[300px] rounded-lg border border-border overflow-hidden">
-                <div ref={mapContainerRef} className="w-full h-full" />
-                {!mapLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                    <p className="text-sm text-muted-foreground">Loading map...</p>
+              <div 
+                className="relative flex-1 rounded-lg border border-border overflow-hidden bg-muted"
+                style={{ minHeight: "350px" }}
+              >
+                <div 
+                  ref={mapContainerRef} 
+                  className="absolute inset-0 w-full h-full"
+                  style={{ zIndex: 1 }}
+                />
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="animate-spin h-6 w-6 border-2 border-[#15803D] border-t-transparent rounded-full" />
+                      <p className="text-sm text-muted-foreground">Loading map...</p>
+                    </div>
                   </div>
                 )}
                 
                 {/* Locate Me Button */}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleLocateMe}
-                  className="absolute top-3 right-3 z-[1000] shadow-md"
-                >
-                  <Locate className="h-4 w-4 mr-2" />
-                  Locate Me
-                </Button>
+                {!isLoading && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleLocateMe}
+                    className="absolute top-3 right-3 z-[400] shadow-md"
+                  >
+                    <Locate className="h-4 w-4 mr-2" />
+                    Locate Me
+                  </Button>
+                )}
               </div>
 
               {/* Current Selection Info */}
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <div className="bg-muted/50 rounded-lg p-4 mt-4 space-y-2">
                 <h4 className="font-medium text-sm">Selected Location</h4>
                 {formattedAddress ? (
                   <p className="text-sm text-muted-foreground">{formattedAddress}</p>
@@ -403,7 +492,7 @@ export function LocationEditorModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="address" className="flex flex-col gap-4 mt-4">
+            <TabsContent value="address" className="flex flex-col gap-4 p-6 pt-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="barangay">Barangay</Label>
@@ -456,6 +545,10 @@ export function LocationEditorModal({
                 <div className="bg-muted/50 rounded-lg p-4">
                   <h4 className="font-medium text-sm mb-2">Found Address</h4>
                   <p className="text-sm text-muted-foreground">{formattedAddress}</p>
+                  <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                    <span>Lat: {latitude.toFixed(6)}</span>
+                    <span>Lng: {longitude.toFixed(6)}</span>
+                  </div>
                 </div>
               )}
             </TabsContent>
@@ -466,7 +559,7 @@ export function LocationEditorModal({
           <Button
             variant="destructive"
             onClick={handleClear}
-            disabled={isSaving || !hasLocation}
+            disabled={isSaving || !hasExistingLocation}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Clear Location
