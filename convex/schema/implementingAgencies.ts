@@ -77,7 +77,28 @@ export const implementingAgencyTables = {
     contactPerson: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
+
+    /**
+     * DEPRECATED: Legacy address field
+     * Use the location* fields below for structured location data
+     * @deprecated Use locationFormattedAddress and component fields instead
+     */
     address: v.optional(v.string()),
+
+    /**
+     * Location Data - Geographic coordinates for mapping
+     */
+    locationLatitude: v.optional(v.number()), // Latitude coordinate (-90 to 90)
+    locationLongitude: v.optional(v.number()), // Longitude coordinate (-180 to 180)
+
+    /**
+     * Location Data - Structured address components
+     */
+    locationFormattedAddress: v.optional(v.string()), // Human-readable full address
+    locationBarangay: v.optional(v.string()), // Barangay (smallest administrative unit in Philippines)
+    locationMunicipality: v.optional(v.string()), // Municipality or City name
+    locationProvince: v.optional(v.string()), // Province name
+    locationPostalCode: v.optional(v.string()), // Postal/ZIP code
 
     /**
      * Display order for sorting in UI (lower numbers appear first)
