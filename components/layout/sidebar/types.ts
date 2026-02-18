@@ -20,6 +20,7 @@ export interface NavItem {
   badgeCount?: number;
   badgeColor?: string;
   badgeComponent?: React.ComponentType<any>;
+  isNew?: boolean;
 }
 
 export interface NavCategory {
