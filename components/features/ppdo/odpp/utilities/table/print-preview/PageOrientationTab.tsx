@@ -44,9 +44,9 @@ export function PageOrientationTab({
       </ResizableModalHeader>
 
       {/* Orientation Cards */}
-      <ResizableModalBody className="px-8 py-8">
+      <ResizableModalBody className="px-6 py-5">
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 gap-5">
             {/* Portrait Card */}
             <button
               onClick={() => setSelectedOrientation('portrait')}
@@ -62,8 +62,8 @@ export function PageOrientationTab({
                 }`}
               >
                 {/* Visual Representation */}
-                <div className="aspect-[3/4] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-8 flex items-center justify-center">
-                  <div className="relative w-full h-full max-w-[140px] max-h-[200px]">
+                <div className="h-[230px] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-5 flex items-center justify-center">
+                  <div className="relative w-full h-full max-w-[120px] max-h-[170px]">
                     {/* Page mockup */}
                     <div className="absolute inset-0 bg-white dark:bg-stone-950 rounded-lg shadow-2xl border border-stone-200 dark:border-stone-700 flex flex-col p-3">
                       <div className="space-y-1.5 mb-3">
@@ -80,13 +80,13 @@ export function PageOrientationTab({
                 </div>
 
                 {/* Label Section */}
-                <div className={`px-6 py-4 transition-colors ${selectedOrientation === 'portrait' ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
+                <div className={`px-5 py-3 transition-colors ${selectedOrientation === 'portrait' ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-5 h-7 border-2 rounded-sm transition-colors ${selectedOrientation === 'portrait' ? 'border-white' : 'border-stone-400 dark:border-stone-500'}`} />
                       <div className="text-left">
-                        <h3 className="font-semibold text-lg">Portrait</h3>
-                        <p className={`text-sm ${selectedOrientation === 'portrait' ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>Vertical layout</p>
+                        <h3 className="font-semibold text-base leading-tight">Portrait</h3>
+                        <p className={`text-xs ${selectedOrientation === 'portrait' ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>Vertical layout</p>
                       </div>
                     </div>
                     {selectedOrientation === 'portrait' && (
@@ -112,8 +112,8 @@ export function PageOrientationTab({
                 }`}
               >
                 {/* Visual Representation */}
-                <div className="aspect-[3/4] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-8 flex items-center justify-center">
-                  <div className="relative w-full h-full max-w-[200px] max-h-[140px]">
+                <div className="h-[230px] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-5 flex items-center justify-center">
+                  <div className="relative w-full h-full max-w-[180px] max-h-[120px]">
                     {/* Page mockup */}
                     <div className="absolute inset-0 bg-white dark:bg-stone-950 rounded-lg shadow-2xl border border-stone-200 dark:border-stone-700 flex flex-col p-3">
                       <div className="space-y-1.5 mb-2">
@@ -133,13 +133,13 @@ export function PageOrientationTab({
                 </div>
 
                 {/* Label Section */}
-                <div className={`px-6 py-4 transition-colors ${selectedOrientation === 'landscape' ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
+                <div className={`px-5 py-3 transition-colors ${selectedOrientation === 'landscape' ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-7 h-5 border-2 rounded-sm transition-colors ${selectedOrientation === 'landscape' ? 'border-white' : 'border-stone-400 dark:border-stone-500'}`} />
                       <div className="text-left">
-                        <h3 className="font-semibold text-lg">Landscape</h3>
-                        <p className={`text-sm ${selectedOrientation === 'landscape' ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>Horizontal layout</p>
+                        <h3 className="font-semibold text-base leading-tight">Landscape</h3>
+                        <p className={`text-xs ${selectedOrientation === 'landscape' ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>Horizontal layout</p>
                       </div>
                     </div>
                     {selectedOrientation === 'landscape' && (
@@ -152,7 +152,7 @@ export function PageOrientationTab({
           </div>
 
           {/* Info Box */}
-          <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="mt-5 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
             <div className="flex items-start gap-3">
               <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
               <div>
@@ -167,7 +167,7 @@ export function PageOrientationTab({
       </ResizableModalBody>
 
       {/* Footer */}
-      <ResizableModalFooter className="px-8 py-4 bg-stone-50 dark:bg-stone-800/50">
+      <ResizableModalFooter className="px-6 py-3 bg-stone-50 dark:bg-stone-800/50">
         <div className="flex items-center justify-between w-full">
           <span className="text-sm text-stone-500 dark:text-stone-400">
             Selected: <span className="font-medium text-stone-700 dark:text-stone-300 capitalize">{selectedOrientation}</span>

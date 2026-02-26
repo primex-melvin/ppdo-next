@@ -1,7 +1,7 @@
 // lib/print.ts
 
 import { Page, CanvasElement, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
-import { HEADER_HEIGHT, FOOTER_HEIGHT } from '@/app/(extra)/canvas/_components/editor/constants';
+import { getPageLayoutMetrics } from '@/app/(extra)/canvas/_components/editor/layout';
 
 const PAGE_SIZES: Record<string, { width: number; height: number; widthInch: number; heightInch: number }> = {
   A4: { width: 595, height: 842, widthInch: 8.27, heightInch: 11.69 },
@@ -198,45 +198,48 @@ export function printAllPages(pages: Page[], header: HeaderFooter, footer: Heade
       overflow: hidden;
     `;
 
-    // Render header
-    const headerDiv = document.createElement('div');
-    headerDiv.style.cssText = `
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: ${pageSize.width}px;
-      height: ${HEADER_HEIGHT}px;
-      background-color: ${header.backgroundColor || '#ffffff'};
-    `;
-    renderElements(header.elements, headerDiv, pageIndex + 1, pages.length);
-    pageDiv.appendChild(headerDiv);
+    const layout = getPageLayoutMetrics(pageSize.width, pageSize.height, header, footer);
+
+    if (layout.headerHeight > 0) {
+      const headerDiv = document.createElement('div');
+      headerDiv.style.cssText = `
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: ${pageSize.width}px;
+        height: ${layout.headerHeight}px;
+        background-color: ${header.backgroundColor || '#ffffff'};
+      `;
+      renderElements(header.elements, headerDiv, pageIndex + 1, pages.length);
+      pageDiv.appendChild(headerDiv);
+    }
 
     // Render page body
     const bodyDiv = document.createElement('div');
-    const bodyHeight = pageSize.height - HEADER_HEIGHT - FOOTER_HEIGHT;
     bodyDiv.style.cssText = `
       position: absolute;
       left: 0;
-      top: ${HEADER_HEIGHT}px;
+      top: ${layout.bodyTop}px;
       width: ${pageSize.width}px;
-      height: ${bodyHeight}px;
+      height: ${layout.bodyHeight}px;
       background-color: ${page.backgroundColor || '#ffffff'};
     `;
     renderElements(page.elements, bodyDiv);
     pageDiv.appendChild(bodyDiv);
 
-    // Render footer
-    const footerDiv = document.createElement('div');
-    footerDiv.style.cssText = `
-      position: absolute;
-      left: 0;
-      top: ${HEADER_HEIGHT + bodyHeight}px;
-      width: ${pageSize.width}px;
-      height: ${FOOTER_HEIGHT}px;
-      background-color: ${footer.backgroundColor || '#ffffff'};
-    `;
-    renderElements(footer.elements, footerDiv, pageIndex + 1, pages.length);
-    pageDiv.appendChild(footerDiv);
+    if (layout.footerHeight > 0) {
+      const footerDiv = document.createElement('div');
+      footerDiv.style.cssText = `
+        position: absolute;
+        left: 0;
+        top: ${layout.bodyTop + layout.bodyHeight}px;
+        width: ${pageSize.width}px;
+        height: ${layout.footerHeight}px;
+        background-color: ${footer.backgroundColor || '#ffffff'};
+      `;
+      renderElements(footer.elements, footerDiv, pageIndex + 1, pages.length);
+      pageDiv.appendChild(footerDiv);
+    }
 
     printContainer.appendChild(pageDiv);
   });

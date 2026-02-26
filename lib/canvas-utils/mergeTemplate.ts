@@ -51,6 +51,7 @@ export function mergeTemplateWithCanvas(
       ...existingHeader.elements,
     ],
     backgroundColor: template.header?.backgroundColor || existingHeader.backgroundColor || '#ffffff',
+    visible: existingHeader.visible ?? template.header?.visible ?? true,
   };
 
   console.log(`📋 Header merged: ${template.header?.elements?.length || 0} template + ${existingHeader.elements.length} existing = ${mergedHeader.elements.length} total`);
@@ -68,6 +69,7 @@ export function mergeTemplateWithCanvas(
       ...existingFooter.elements,
     ],
     backgroundColor: template.footer?.backgroundColor || existingFooter.backgroundColor || '#ffffff',
+    visible: existingFooter.visible ?? template.footer?.visible ?? true,
   };
 
   console.log(`📋 Footer merged: ${template.footer?.elements?.length || 0} template + ${existingFooter.elements.length} existing = ${mergedFooter.elements.length} total`);

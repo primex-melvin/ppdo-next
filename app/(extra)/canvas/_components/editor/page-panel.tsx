@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Copy, Trash2 } from 'lucide-react';
 import { Page, HeaderFooter } from './types';
-import { getPageDimensions, HEADER_HEIGHT, FOOTER_HEIGHT } from './constants';
+import { getPageDimensions } from './constants';
+import { getPageLayoutMetrics } from './layout';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -79,6 +80,7 @@ export default function PagePanel({
         <div className="space-y-2">
           {pages.map((page, index) => {
             const size = getPageDimensions(page.size, page.orientation);
+            const layout = getPageLayoutMetrics(size.width, size.height, header, footer);
             const aspectRatio = size.height / size.width;
             const thumbnailWidth = 224; // w-56
             const thumbnailHeight = thumbnailWidth * aspectRatio;
@@ -130,8 +132,9 @@ export default function PagePanel({
                       <div
                         className="absolute top-0 left-0 right-0"
                         style={{
-                          height: `${HEADER_HEIGHT}px`,
+                          height: `${layout.headerHeight}px`,
                           backgroundColor: header?.backgroundColor || '#ffffff',
+                          display: layout.headerHeight > 0 ? 'block' : 'none',
                         }}
                       >
                         {/* Render header elements if provided */}
@@ -188,8 +191,8 @@ export default function PagePanel({
                       <div
                         className="absolute left-0 right-0"
                         style={{
-                          top: `${HEADER_HEIGHT}px`,
-                          height: `${size.height - HEADER_HEIGHT - FOOTER_HEIGHT}px`,
+                          top: `${layout.bodyTop}px`,
+                          height: `${layout.bodyHeight}px`,
                           backgroundColor: page.backgroundColor || '#ffffff',
                         }}
                       >
@@ -247,8 +250,9 @@ export default function PagePanel({
                       <div
                         className="absolute bottom-0 left-0 right-0"
                         style={{
-                          height: `${FOOTER_HEIGHT}px`,
+                          height: `${layout.footerHeight}px`,
                           backgroundColor: footer?.backgroundColor || '#ffffff',
+                          display: layout.footerHeight > 0 ? 'block' : 'none',
                         }}
                       >
                         {/* Render footer elements if provided */}

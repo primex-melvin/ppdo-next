@@ -21,6 +21,7 @@ import BottomPageControls from '@/app/(extra)/canvas/_components/editor/bottom-p
 import { HorizontalRuler, VerticalRuler } from '@/app/(extra)/canvas/_components/editor/ruler';
 import { useRulerState } from '@/app/(extra)/canvas/_components/editor/hooks/useRulerState';
 import { getPageDimensions, RULER_WIDTH, RULER_HEIGHT, POINTS_PER_INCH } from '@/app/(extra)/canvas/_components/editor/constants';
+import { getPageLayoutMetrics } from '@/app/(extra)/canvas/_components/editor/layout';
 // Custom hooks
 import { usePrintPreviewState } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/hooks";
 import { usePrintPreviewActions } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/hooks";
@@ -91,6 +92,7 @@ export function PrintPreviewModal({
   // --- Setup State ---
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [showLiveTemplateSelector, setShowLiveTemplateSelector] = useState(false);
+  const [includeCoverPage, setIncludeCoverPage] = useState(true);
 
   // --- Column Visibility State ---
   const [hiddenCanvasColumns, setHiddenCanvasColumns] = useState<Set<string>>(new Set());
@@ -111,6 +113,7 @@ export function PrintPreviewModal({
 
   // Track initialization to prevent re-triggering
   const initializationStartedRef = useRef(false);
+  const lastLayoutReflowSignatureRef = useRef<string | null>(null);
 
   // Calculate canvas offset for ruler positioning using ResizeObserver
   // This automatically handles: window resize, sidebar collapse/expand transitions, page size changes
@@ -155,6 +158,17 @@ export function PrintPreviewModal({
     }))
   }], [columns, columnLabelOverrides]);
 
+  const pageHasTableElements = useCallback((page: { elements: Array<{ groupId?: string; groupName?: string }> }) => {
+    return page.elements.some(el => el.groupId && el.groupName?.toLowerCase().includes('table'));
+  }, []);
+
+  const inferCoverPageFromPages = useCallback((pages: Array<{ id: string; elements: Array<{ groupId?: string; groupName?: string }> }>) => {
+    const first = pages[0];
+    if (!first) return false;
+    if (first.id.startsWith('page-title-')) return true;
+    return !pageHasTableElements(first);
+  }, [pageHasTableElements]);
+
   // Helper: Extract column key from any table element ID
   const extractColumnKey = useCallback((id: string): string | null => {
     if (id.startsWith('category-')) return null;
@@ -192,12 +206,14 @@ export function PrintPreviewModal({
 
     const marginLeft = rulerState.margins.left;
     const marginRight = rulerState.margins.right;
+    const marginTop = rulerState.margins.top;
     const PAGE_SIZES = { A4: { width: 595, height: 842 }, Short: { width: 612, height: 792 }, Long: { width: 612, height: 936 } };
     const baseSize = PAGE_SIZES[pageSizeStr as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;
     const size = orientation === 'landscape' ? { width: baseSize.height, height: baseSize.width } : baseSize;
     const totalAvailableWidth = size.width - marginLeft - marginRight;
     const firstColumnX = marginLeft;
     const oldLeftEdge = allColumns[0][1].originalX;
+    const oldTopEdge = Math.min(...tableElements.map(el => el.y));
     const totalVisibleOriginalWidth = visibleColumns.reduce((sum, [, info]) => sum + info.originalWidth, 0);
     const scaleX = totalVisibleOriginalWidth > 0 ? totalAvailableWidth / totalVisibleOriginalWidth : 1;
     const newColumnLayout = new Map<string, { x: number; width: number }>();
@@ -212,13 +228,18 @@ export function PrintPreviewModal({
       if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) return el;
       const columnKey = extractColumnKey(el.id);
       if (!columnKey) {
-        return { ...el, x: marginLeft + (el.x - oldLeftEdge) * scaleX, width: el.width * scaleX };
+        return {
+          ...el,
+          x: marginLeft + (el.x - oldLeftEdge) * scaleX,
+          y: marginTop + (el.y - oldTopEdge),
+          width: el.width * scaleX,
+        };
       }
       if (hiddenColumnsSet.has(columnKey)) return { ...el, visible: false };
       const newLayout = newColumnLayout.get(columnKey);
       if (newLayout) {
         return {
-          ...el, x: newLayout.x, width: newLayout.width, visible: true,
+          ...el, x: newLayout.x, y: marginTop + (el.y - oldTopEdge), width: newLayout.width, visible: true,
           ...(textAlign !== 'left' && el.type === 'text' ? { textAlign } : {}),
         };
       }
@@ -398,6 +419,9 @@ export function PrintPreviewModal({
           subtitle: includeCoverPage && particular ? `Particular: ${particular}` : undefined,
           rowMarkers,
           margin: rulerState.margins.left,
+          margins: rulerState.margins,
+          showHeader: true,
+          showFooter: true,
         });
 
         let finalPages = result.pages;
@@ -436,13 +460,14 @@ export function PrintPreviewModal({
         toast.error('Failed to convert table to canvas');
       }
     },
-    [budgetItems, totals, columns, hiddenColumns, year, particular, rowMarkers, state]
+    [budgetItems, totals, columns, hiddenColumns, year, particular, rowMarkers, rulerState.margins.left, state]
   );
 
   // âœ… Handler: Called when user finishes the Setup Wizard
   const handleSetupComplete = useCallback((result: { template: CanvasTemplate | null, orientation: 'portrait' | 'landscape', includeCoverPage: boolean }) => {
     console.log('ðŸŽ¯ Setup complete, closing modal and initializing...');
     setShowSetupModal(false);
+    setIncludeCoverPage(result.includeCoverPage);
 
     // Defer slightly to allow modal unmount animation to start cleanly
     setTimeout(() => {
@@ -457,12 +482,12 @@ export function PrintPreviewModal({
     setShowTemplateApplicationModal(false);
 
     setTimeout(() => {
-      initializeFromTableData(savedTemplate, savedTemplate.page.orientation);
+      initializeFromTableData(savedTemplate, savedTemplate.page.orientation, includeCoverPage);
       if (existingDraft) state.setLastSavedTime(existingDraft.timestamp);
       setIsLoadingTemplate(false);
       setSavedTemplate(null);
     }, 500);
-  }, [savedTemplate, initializeFromTableData, existingDraft, state]);
+  }, [savedTemplate, initializeFromTableData, existingDraft, state, includeCoverPage]);
 
   const handleSkipTemplate = useCallback(() => {
     if (!existingDraft) return;
@@ -472,13 +497,14 @@ export function PrintPreviewModal({
     state.setPages(existingDraft.canvasState.pages);
     state.setHeader(existingDraft.canvasState.header);
     state.setFooter(existingDraft.canvasState.footer);
+    setIncludeCoverPage(inferCoverPageFromPages(existingDraft.canvasState.pages));
     state.setCurrentPageIndex(existingDraft.canvasState.currentPageIndex);
     state.setLastSavedTime(existingDraft.timestamp);
     if (existingDraft.appliedTemplate) state.setAppliedTemplate(existingDraft.appliedTemplate);
     state.setIsDirty(false);
     state.setHasInitialized(true);
     setSavedTemplate(null);
-  }, [existingDraft, state]);
+  }, [existingDraft, inferCoverPageFromPages, state]);
 
   // Handle applying template to live canvas (from toolbar button)
   const handleApplyLiveTemplate = useCallback(
@@ -537,7 +563,9 @@ export function PrintPreviewModal({
       setShowTemplateApplicationModal(false);
       setShowLiveTemplateSelector(false);
       setShowSetupModal(false);
+      setIncludeCoverPage(true);
       initializationStartedRef.current = false;
+      lastLayoutReflowSignatureRef.current = null;
       setHiddenCanvasColumns(new Set());
       setHiddenColumnsVersion(0);
       setColumnLabelOverrides(new Map());
@@ -560,6 +588,7 @@ export function PrintPreviewModal({
       // console.log('ðŸ“¦ Existing draft detected');
       const draftTitle = existingDraft.documentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
       state.setDocumentTitle(draftTitle);
+      setIncludeCoverPage(inferCoverPageFromPages(existingDraft.canvasState.pages));
 
       if (existingDraft.appliedTemplate) {
         // NOTE: Temporarily disabled to reduce console noise during search debug
@@ -576,6 +605,7 @@ export function PrintPreviewModal({
       state.setPages(existingDraft.canvasState.pages);
       state.setHeader(existingDraft.canvasState.header);
       state.setFooter(existingDraft.canvasState.footer);
+      setIncludeCoverPage(inferCoverPageFromPages(existingDraft.canvasState.pages));
       state.setCurrentPageIndex(existingDraft.canvasState.currentPageIndex);
       state.setLastSavedTime(existingDraft.timestamp);
       state.setIsDirty(false);
@@ -636,7 +666,131 @@ export function PrintPreviewModal({
   const currentMarginInches = rulerState.margins.left / POINTS_PER_INCH;
   const handleMarginChangeInches = useCallback((inches: number) => {
     setUniformMargins(inches * POINTS_PER_INCH);
-  }, [setUniformMargins]);
+    state.setIsDirty(true);
+  }, [setUniformMargins, state]);
+
+  const handleRulerMarginChange = useCallback((side: 'left' | 'right' | 'top' | 'bottom', value: number) => {
+    updateMargin(side, value);
+    state.setIsDirty(true);
+  }, [updateMargin, state]);
+
+  const handlePageHeaderVisibilityChange = useCallback((enabled: boolean) => {
+    state.setHeader(prev => ({ ...prev, visible: enabled }));
+    if (!enabled && state.activeSection === 'header') {
+      state.setActiveSection('page');
+      state.setSelectedElementId(null);
+    }
+    state.setIsDirty(true);
+  }, [state]);
+
+  const handlePageFooterVisibilityChange = useCallback((enabled: boolean) => {
+    state.setFooter(prev => ({ ...prev, visible: enabled }));
+    if (!enabled && state.activeSection === 'footer') {
+      state.setActiveSection('page');
+      state.setSelectedElementId(null);
+    }
+    state.setIsDirty(true);
+  }, [state]);
+
+  const regenerateTablePagesForLayout = useCallback(() => {
+    if (!state.hasInitialized || state.pages.length === 0) return;
+
+    const hasTablePages = state.pages.some(pageHasTableElements);
+    if (!hasTablePages) return;
+
+    const hasCover = includeCoverPage && inferCoverPageFromPages(state.pages);
+    const preservedCoverPage = hasCover ? state.pages[0] : null;
+    const pagesToReflow = preservedCoverPage ? state.pages.slice(1) : state.pages;
+
+    // Safety guard: only auto-reflow pure table pages. If custom/non-table pages exist, skip to avoid data loss.
+    const hasCustomPages = pagesToReflow.some(page => {
+      if (!pageHasTableElements(page)) return true;
+      return page.elements.some(el => !(el.groupId && el.groupName?.toLowerCase().includes('table')));
+    });
+    if (hasCustomPages) return;
+
+    const tableRefPage = pagesToReflow.find(pageHasTableElements);
+    if (!tableRefPage) return;
+
+    const pageDims = getPageDimensions(tableRefPage.size, tableRefPage.orientation);
+    const headerForLayout = { ...state.header };
+    const footerForLayout = { ...state.footer };
+    const layout = getPageLayoutMetrics(pageDims.width, pageDims.height, headerForLayout, footerForLayout, rulerState.margins);
+
+    const regenerated = convertTableToCanvas({
+      items: budgetItems,
+      totals,
+      columns,
+      hiddenColumns,
+      pageSize: tableRefPage.size,
+      orientation: tableRefPage.orientation,
+      includeHeaders: true,
+      includeTotals: true,
+      rowMarkers,
+      margin: rulerState.margins.left,
+      margins: rulerState.margins,
+      showHeader: state.header.visible !== false,
+      showFooter: state.footer.visible !== false,
+      headerHeight: layout.headerHeight,
+      footerHeight: layout.footerHeight,
+    });
+
+    let nextPages = regenerated.pages.map((page) => ({
+      ...page,
+      backgroundColor: state.appliedTemplate?.page.backgroundColor || page.backgroundColor,
+    }));
+
+    if (preservedCoverPage) {
+      nextPages = [preservedCoverPage, ...nextPages];
+    }
+
+    state.setPages(nextPages);
+    state.setCurrentPageIndex(prev => Math.min(prev, Math.max(0, nextPages.length - 1)));
+  }, [
+    state,
+    pageHasTableElements,
+    includeCoverPage,
+    inferCoverPageFromPages,
+    rulerState.margins,
+    budgetItems,
+    totals,
+    columns,
+    hiddenColumns,
+    rowMarkers,
+  ]);
+
+  useEffect(() => {
+    if (!isOpen || !state.hasInitialized) return;
+
+    const signature = JSON.stringify({
+      margins: rulerState.margins,
+      headerVisible: state.header.visible !== false,
+      footerVisible: state.footer.visible !== false,
+      includeCoverPage,
+      pageSize: state.currentPage.size,
+      orientation: state.currentPage.orientation,
+    });
+
+    if (lastLayoutReflowSignatureRef.current === null) {
+      lastLayoutReflowSignatureRef.current = signature;
+      return;
+    }
+
+    if (lastLayoutReflowSignatureRef.current === signature) return;
+    lastLayoutReflowSignatureRef.current = signature;
+
+    regenerateTablePagesForLayout();
+  }, [
+    isOpen,
+    state.hasInitialized,
+    state.header.visible,
+    state.footer.visible,
+    state.currentPage.size,
+    state.currentPage.orientation,
+    rulerState.margins,
+    includeCoverPage,
+    regenerateTablePagesForLayout,
+  ]);
 
   if (!isOpen) return null;
 
@@ -675,6 +829,10 @@ export function PrintPreviewModal({
           onMarginChange={handleMarginChangeInches}
           textAlign={textAlign}
           onTextAlignChange={setTextAlign}
+          showPageHeader={state.header.visible !== false}
+          onShowPageHeaderChange={handlePageHeaderVisibilityChange}
+          showPageFooter={state.footer.visible !== false}
+          onShowPageFooterChange={handlePageFooterVisibilityChange}
         />
 
         {/* Inner Editor Toolbar (moved up for alignment) */}
@@ -741,7 +899,7 @@ export function PrintPreviewModal({
                 <HorizontalRuler
                   width={getPageDimensions(state.currentPage.size, state.currentPage.orientation).width}
                   rulerState={rulerState}
-                  onMarginChange={updateMargin}
+                  onMarginChange={handleRulerMarginChange}
                   onIndentChange={updateIndent}
                   onTabStopAdd={addTabStop}
                   onTabStopUpdate={updateTabStop}
@@ -760,7 +918,15 @@ export function PrintPreviewModal({
           {rulerState.visible && rulerState.showVertical && (
             <div className="flex-shrink-0 bg-stone-100 dark:bg-zinc-800 border-r border-stone-300 dark:border-zinc-700 overflow-hidden" style={{ width: RULER_WIDTH }}>
               <div style={{ transform: `translateY(${-scrollTop}px)`, marginTop: 0 }}>
-                <VerticalRuler height={getPageDimensions(state.currentPage.size, state.currentPage.orientation).height} rulerState={rulerState} onMarginChange={updateMargin} scrollTop={0} showHeaderFooter={true} />
+                <VerticalRuler
+                  height={getPageDimensions(state.currentPage.size, state.currentPage.orientation).height}
+                  rulerState={rulerState}
+                  onMarginChange={handleRulerMarginChange}
+                  scrollTop={0}
+                  showHeaderFooter={true}
+                  headerVisible={state.header.visible !== false}
+                  footerVisible={state.footer.visible !== false}
+                />
               </div>
             </div>
           )}

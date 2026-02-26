@@ -13,6 +13,8 @@ interface VerticalRulerProps {
   scrollTop?: number;
   topOffset?: number;
   showHeaderFooter?: boolean;
+  headerVisible?: boolean;
+  footerVisible?: boolean;
 }
 
 // Convert pixels to display units
@@ -66,6 +68,8 @@ export default function VerticalRuler({
   scrollTop = 0,
   topOffset = 0,
   showHeaderFooter = true,
+  headerVisible = true,
+  footerVisible = true,
 }: VerticalRulerProps) {
   const rulerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<{
@@ -78,8 +82,8 @@ export default function VerticalRuler({
   const { unit, zoom, margins } = rulerState;
 
   // Calculate total height including header and footer
-  const headerHeight = showHeaderFooter ? HEADER_HEIGHT * zoom : 0;
-  const footerHeight = showHeaderFooter ? FOOTER_HEIGHT * zoom : 0;
+  const headerHeight = showHeaderFooter && headerVisible ? HEADER_HEIGHT * zoom : 0;
+  const footerHeight = showHeaderFooter && footerVisible ? FOOTER_HEIGHT * zoom : 0;
   const bodyHeight = height * zoom;
   const totalHeight = headerHeight + bodyHeight + footerHeight;
 

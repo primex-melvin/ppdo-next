@@ -3,7 +3,7 @@
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { Page, CanvasElement, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
-import { HEADER_HEIGHT, FOOTER_HEIGHT } from '@/app/(extra)/canvas/_components/editor/constants';
+import { getPageLayoutMetrics } from '@/app/(extra)/canvas/_components/editor/layout';
 
 const PAGE_SIZES: Record<string, { width: number; height: number }> = {
   A4: { width: 595, height: 842 },
@@ -1046,45 +1046,49 @@ export async function exportAsWYSIWYGPDF(
         pageContainer.style.backgroundColor = '#ffffff'; // Always use safe explicit white
 
         // Create and append header (absolute positioning for precise layout)
-        const headerDOM = createSectionDOM(
-          header.elements,
-          pageSize.width,
-          HEADER_HEIGHT,
-          header.backgroundColor || '#ffffff',
-          pageIndex + 1,
-          pages.length
-        );
-        headerDOM.style.position = 'absolute';
-        headerDOM.style.left = '0';
-        headerDOM.style.top = '0';
-        pageContainer.appendChild(headerDOM);
+        const layout = getPageLayoutMetrics(pageSize.width, pageSize.height, header, footer);
+
+        if (layout.headerHeight > 0) {
+          const headerDOM = createSectionDOM(
+            header.elements,
+            pageSize.width,
+            layout.headerHeight,
+            header.backgroundColor || '#ffffff',
+            pageIndex + 1,
+            pages.length
+          );
+          headerDOM.style.position = 'absolute';
+          headerDOM.style.left = '0';
+          headerDOM.style.top = '0';
+          pageContainer.appendChild(headerDOM);
+        }
 
         // Create and append page body (absolute positioning for precise layout)
-        const bodyHeight = pageSize.height - HEADER_HEIGHT - FOOTER_HEIGHT;
         const bodyDOM = createSectionDOM(
           page.elements,
           pageSize.width,
-          bodyHeight,
+          layout.bodyHeight,
           page.backgroundColor || '#ffffff'
         );
         bodyDOM.style.position = 'absolute';
         bodyDOM.style.left = '0';
-        bodyDOM.style.top = `${HEADER_HEIGHT}px`;
+        bodyDOM.style.top = `${layout.bodyTop}px`;
         pageContainer.appendChild(bodyDOM);
 
-        // Create and append footer (absolute positioning for precise layout)
-        const footerDOM = createSectionDOM(
-          footer.elements,
-          pageSize.width,
-          FOOTER_HEIGHT,
-          footer.backgroundColor || '#ffffff',
-          pageIndex + 1,
-          pages.length
-        );
-        footerDOM.style.position = 'absolute';
-        footerDOM.style.left = '0';
-        footerDOM.style.top = `${HEADER_HEIGHT + bodyHeight}px`;
-        pageContainer.appendChild(footerDOM);
+        if (layout.footerHeight > 0) {
+          const footerDOM = createSectionDOM(
+            footer.elements,
+            pageSize.width,
+            layout.footerHeight,
+            footer.backgroundColor || '#ffffff',
+            pageIndex + 1,
+            pages.length
+          );
+          footerDOM.style.position = 'absolute';
+          footerDOM.style.left = '0';
+          footerDOM.style.top = `${layout.bodyTop + layout.bodyHeight}px`;
+          pageContainer.appendChild(footerDOM);
+        }
 
         // Add to temp container
         tempContainer.appendChild(pageContainer);

@@ -41,9 +41,9 @@ export function CoverPageTab({ onSelect, onBack }: CoverPageTabProps) {
       </ResizableModalHeader>
 
       {/* Cards */}
-      <ResizableModalBody className="px-8 py-8">
+      <ResizableModalBody className="px-6 py-5">
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 gap-5">
             {/* No Card */}
             <button
               onClick={() => setSelected(false)}
@@ -59,8 +59,8 @@ export function CoverPageTab({ onSelect, onBack }: CoverPageTabProps) {
                 }`}
               >
                 {/* Visual */}
-                <div className="aspect-[3/4] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-8 flex items-center justify-center">
-                  <div className="relative w-full h-full max-w-[140px] max-h-[200px] flex items-center justify-center">
+                <div className="h-[230px] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-5 flex items-center justify-center">
+                  <div className="relative w-full h-full max-w-[120px] max-h-[170px] flex items-center justify-center">
                     <div className="w-24 h-24 rounded-full bg-stone-200 dark:bg-stone-700 flex items-center justify-center">
                       <XIcon className="w-12 h-12 text-stone-400 dark:text-stone-500" />
                     </div>
@@ -68,11 +68,11 @@ export function CoverPageTab({ onSelect, onBack }: CoverPageTabProps) {
                 </div>
 
                 {/* Label */}
-                <div className={`px-6 py-4 transition-colors ${!selected ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
+                <div className={`px-5 py-3 transition-colors ${!selected ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
                   <div className="flex items-center justify-between">
                     <div className="text-left">
-                      <h3 className="font-semibold text-lg">No Cover Page</h3>
-                      <p className={`text-sm ${!selected ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>
+                      <h3 className="font-semibold text-base leading-tight">No Cover Page</h3>
+                      <p className={`text-xs ${!selected ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>
                         Start directly with data
                       </p>
                     </div>
@@ -101,8 +101,8 @@ export function CoverPageTab({ onSelect, onBack }: CoverPageTabProps) {
                 }`}
               >
                 {/* Visual */}
-                <div className="aspect-[3/4] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-8 flex items-center justify-center">
-                  <div className="relative w-full h-full max-w-[140px] max-h-[200px]">
+                <div className="h-[230px] bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 p-5 flex items-center justify-center">
+                  <div className="relative w-full h-full max-w-[120px] max-h-[170px]">
                     <div className="absolute inset-0 bg-white dark:bg-stone-950 rounded-lg shadow-2xl border border-stone-200 dark:border-stone-700 flex flex-col items-center justify-center p-4">
                       <div className="w-12 h-12 rounded-full bg-[#15803D]/10 flex items-center justify-center mb-3">
                         <FileText className="w-6 h-6 text-[#15803D]" />
@@ -115,11 +115,11 @@ export function CoverPageTab({ onSelect, onBack }: CoverPageTabProps) {
                 </div>
 
                 {/* Label */}
-                <div className={`px-6 py-4 transition-colors ${selected ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
+                <div className={`px-5 py-3 transition-colors ${selected ? 'bg-[#15803D] text-white' : 'bg-white dark:bg-stone-800'}`}>
                   <div className="flex items-center justify-between">
                     <div className="text-left">
-                      <h3 className="font-semibold text-lg">Add Cover Page</h3>
-                      <p className={`text-sm ${selected ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>
+                      <h3 className="font-semibold text-base leading-tight">Add Cover Page</h3>
+                      <p className={`text-xs ${selected ? 'text-white/90' : 'text-stone-500 dark:text-stone-400'}`}>
                         Title page before data
                       </p>
                     </div>
@@ -135,7 +135,7 @@ export function CoverPageTab({ onSelect, onBack }: CoverPageTabProps) {
           </div>
 
           {/* Info Box */}
-          <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="mt-5 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
             <div className="flex items-start gap-3">
               <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
               <div>
@@ -150,7 +150,7 @@ export function CoverPageTab({ onSelect, onBack }: CoverPageTabProps) {
       </ResizableModalBody>
 
       {/* Footer */}
-      <ResizableModalFooter className="px-8 py-4 bg-stone-50 dark:bg-stone-800/50">
+      <ResizableModalFooter className="px-6 py-3 bg-stone-50 dark:bg-stone-800/50">
         <div className="flex items-center justify-between w-full">
           <span className="text-sm text-stone-500 dark:text-stone-400">
             Cover page: <span className="font-medium text-stone-700 dark:text-stone-300">{selected ? 'Yes' : 'No'}</span>

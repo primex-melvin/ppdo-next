@@ -5,6 +5,7 @@
 import React, { useRef, useState } from 'react';
 import { HeaderFooter, CanvasElement, ImageElement } from './types';
 import { getPageDimensions, HEADER_HEIGHT, FOOTER_HEIGHT } from './constants';
+import { isFooterVisible, isHeaderVisible } from './layout';
 import TextElementComponent from './text-element';
 import ImageElementComponent from './image-element';
 
@@ -60,6 +61,7 @@ export default function HeaderFooterSection({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; elementId: string } | null>(null);
 
   const size = getPageDimensions(pageSize, orientation);
+  const sectionVisible = type === 'header' ? isHeaderVisible(section) : isFooterVisible(section);
   const sectionHeight = type === 'header' ? HEADER_HEIGHT : FOOTER_HEIGHT;
 
   const handleMouseDown = (e: React.MouseEvent, elementId: string) => {
@@ -268,6 +270,10 @@ export default function HeaderFooterSection({
       return () => window.removeEventListener('click', handleClick);
     }
   }, [contextMenu]);
+
+  if (!sectionVisible) {
+    return null;
+  }
 
   const processDynamicText = (text: string): string => {
     return text

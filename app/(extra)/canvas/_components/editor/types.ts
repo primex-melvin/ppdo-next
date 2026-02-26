@@ -46,6 +46,7 @@ export type CanvasElement = TextElement | ImageElement;
 export interface HeaderFooter {
   elements: CanvasElement[];
   backgroundColor?: string;
+  visible?: boolean; // defaults to true when undefined (backward compatible)
 }
 
 export interface Page {

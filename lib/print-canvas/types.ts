@@ -1,6 +1,6 @@
 // lib/print-canvas/types.ts
 
-import { Page, HeaderFooter } from '@/app/(extra)/canvas/_components/editor/types';
+import { Page, HeaderFooter, MarginSettings } from '@/app/(extra)/canvas/_components/editor/types';
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 
@@ -42,6 +42,11 @@ export interface ConversionConfig {
   subtitle?: string;
   rowMarkers?: RowMarker[]; // Optional markers for category/group headers
   margin?: number; // Uniform margin in pixels (default: 22px = 0.3")
+  margins?: MarginSettings; // Optional per-side margins (preferred when available)
+  showHeader?: boolean; // default true
+  showFooter?: boolean; // default true
+  headerHeight?: number; // override reserved header height for pagination
+  footerHeight?: number; // override reserved footer height for pagination
 }
 
 /**

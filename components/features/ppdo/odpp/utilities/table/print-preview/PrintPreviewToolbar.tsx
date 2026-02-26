@@ -36,6 +36,10 @@ interface PrintPreviewToolbarProps {
   onMarginChange?: (value: number) => void;
   textAlign?: TextAlign;
   onTextAlignChange?: (align: TextAlign) => void;
+  showPageHeader?: boolean;
+  onShowPageHeaderChange?: (enabled: boolean) => void;
+  showPageFooter?: boolean;
+  onShowPageFooterChange?: (enabled: boolean) => void;
 }
 
 
@@ -61,6 +65,10 @@ export function PrintPreviewToolbar({
   onMarginChange,
   textAlign,
   onTextAlignChange,
+  showPageHeader = true,
+  onShowPageHeaderChange,
+  showPageFooter = true,
+  onShowPageFooterChange,
 }: PrintPreviewToolbarProps) {
 
   return (
@@ -124,6 +132,43 @@ export function PrintPreviewToolbar({
         </div>
 
         <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 mx-1 hidden sm:block" />
+
+        {(onShowPageHeaderChange || onShowPageFooterChange) && (
+          <>
+            <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
+              {onShowPageHeaderChange && (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="page-header-toggle" className="text-xs font-medium cursor-pointer">
+                    Page Header
+                  </Label>
+                  <Switch
+                    id="page-header-toggle"
+                    checked={showPageHeader}
+                    onCheckedChange={onShowPageHeaderChange}
+                    className="scale-90"
+                  />
+                </div>
+              )}
+              {onShowPageHeaderChange && onShowPageFooterChange && (
+                <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+              )}
+              {onShowPageFooterChange && (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="page-footer-toggle" className="text-xs font-medium cursor-pointer">
+                    Page Footer
+                  </Label>
+                  <Switch
+                    id="page-footer-toggle"
+                    checked={showPageFooter}
+                    onCheckedChange={onShowPageFooterChange}
+                    className="scale-90"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 mx-1 hidden lg:block" />
+          </>
+        )}
 
         {/* --- DESKTOP ACTIONS --- */}
         <div className="hidden md:flex items-center gap-2">
@@ -239,6 +284,28 @@ export function PrintPreviewToolbar({
                 className="scale-75"
               />
             </div>
+
+            {onShowPageHeaderChange && (
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <span className="text-xs font-medium">Page Header</span>
+                <Switch
+                  checked={showPageHeader}
+                  onCheckedChange={onShowPageHeaderChange}
+                  className="scale-75"
+                />
+              </div>
+            )}
+
+            {onShowPageFooterChange && (
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <span className="text-xs font-medium">Page Footer</span>
+                <Switch
+                  checked={showPageFooter}
+                  onCheckedChange={onShowPageFooterChange}
+                  className="scale-75"
+                />
+              </div>
+            )}
 
             {onToggleRuler && (
               <DropdownMenuItem onClick={onToggleRuler}>

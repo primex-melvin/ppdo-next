@@ -25,8 +25,11 @@ const PAGE_SIZES = {
 
 const HEADER_HEIGHT = 80;
 const FOOTER_HEIGHT = 60;
-// Module-level margin, set per-conversion from config. Default: 0.3" * 72 ≈ 22px
-let MARGIN = 22;
+// Module-level margins, set per-conversion from config. Default: 0.3" * 72 ≈ 22px
+let MARGIN_LEFT = 22;
+let MARGIN_RIGHT = 22;
+let MARGIN_TOP = 22;
+let MARGIN_BOTTOM = 22;
 // Minimum row heights (rows will expand if text wraps)
 const MIN_ROW_HEIGHT = 24;
 const MIN_HEADER_ROW_HEIGHT = 28;
@@ -54,10 +57,16 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
     title,
     subtitle,
     rowMarkers = [],
+    showHeader = true,
+    showFooter = true,
   } = config;
 
-  // Set module-level MARGIN from config (safe: synchronous, single-threaded)
-  MARGIN = config.margin ?? 22;
+  // Set module-level margins from config (safe: synchronous, single-threaded)
+  const uniformMargin = config.margin ?? 22;
+  MARGIN_LEFT = config.margins?.left ?? uniformMargin;
+  MARGIN_RIGHT = config.margins?.right ?? uniformMargin;
+  MARGIN_TOP = config.margins?.top ?? uniformMargin;
+  MARGIN_BOTTOM = config.margins?.bottom ?? uniformMargin;
 
   const isLandscape = config.orientation === 'landscape';
   const baseSize = PAGE_SIZES[pageSize as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;
@@ -65,12 +74,14 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
     ? { width: baseSize.height, height: baseSize.width }
     : baseSize;
 
-  const availableHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT - (MARGIN * 2);
+  const reservedHeaderHeight = showHeader ? (config.headerHeight ?? HEADER_HEIGHT) : 0;
+  const reservedFooterHeight = showFooter ? (config.footerHeight ?? FOOTER_HEIGHT) : 0;
+  const availableHeight = size.height - reservedHeaderHeight - reservedFooterHeight - MARGIN_TOP - MARGIN_BOTTOM;
 
   // Filter visible columns
   const visibleColumns = columns.filter(col => !hiddenColumns.has(col.key));
 
-  const columnWidths = calculateColumnWidths(visibleColumns, size.width - (MARGIN * 2));
+  const columnWidths = calculateColumnWidths(visibleColumns, size.width - MARGIN_LEFT - MARGIN_RIGHT);
 
   // Create column width map for text wrapping calculations
   // First column gets reduced width to account for extra left padding
@@ -138,7 +149,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   let itemIndex = 0;
   while (itemIndex < preCalculatedRows.length) {
     const pageElements: TextElement[] = [];
-    let currentY = MARGIN;
+    let currentY = MARGIN_TOP;
     const globalRowIndex = itemIndex;
 
     // Create unique group ID for this page's table data
@@ -220,8 +231,8 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   }
 
   // Create header and footer
-  const header = createPrintHeader(title || 'Budget Tracking Report');
-  const footer = createPrintFooter();
+  const header = createPrintHeader(title || 'Budget Tracking Report', showHeader);
+  const footer = createPrintFooter(showFooter);
 
   const result = {
     pages,
@@ -376,7 +387,7 @@ function createDataPage(
     ? { width: baseSize.height, height: baseSize.width }
     : baseSize;
   const elements: TextElement[] = [];
-  let currentY = MARGIN;
+  let currentY = MARGIN_TOP;
 
   // Create unique group ID for this page's table data
   const groupId = `table-group-${Date.now()}-${globalRowIndex}`;
@@ -424,7 +435,7 @@ function createTableHeaders(
   groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
-  let currentX = MARGIN;
+  let currentX = MARGIN_LEFT;
 
   columns.forEach((col, index) => {
     // Extra left padding for first column
@@ -470,7 +481,7 @@ function createTableHeadersWithWrapping(
   groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
-  let currentX = MARGIN;
+  let currentX = MARGIN_LEFT;
 
   columns.forEach((col, index) => {
     // Find the wrapped cell data for this column
@@ -527,7 +538,7 @@ function createCategoryHeaderRow(
     id: `category-header-${categoryLabel}-${Date.now()}`,
     type: 'text',
     text: categoryLabel,
-    x: MARGIN + CELL_TEXT_PADDING + firstColPadding,
+    x: MARGIN_LEFT + CELL_TEXT_PADDING + firstColPadding,
     y: y + CELL_TEXT_PADDING,
     width: totalWidth - (CELL_TEXT_PADDING * 2) - firstColPadding,
     height: MIN_ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
@@ -559,7 +570,7 @@ function createTableRow(
   groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
-  let currentX = MARGIN;
+  let currentX = MARGIN_LEFT;
 
   columns.forEach((col, index) => {
     const value = formatCellValue(item, col.key);
@@ -608,7 +619,7 @@ function createTableRowWithWrapping(
   groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
-  let currentX = MARGIN;
+  let currentX = MARGIN_LEFT;
 
   columns.forEach((col, index) => {
     // Find the wrapped cell data for this column
@@ -683,7 +694,7 @@ function createTotalsPage(
   orientation: 'portrait' | 'landscape' = 'portrait'
 ): Page {
   const elements: TextElement[] = [];
-  const y = MARGIN;
+  const y = MARGIN_TOP;
 
   // Create unique group ID for totals page
   const groupId = `table-group-totals-${Date.now()}`;
@@ -710,7 +721,7 @@ function addTotalsToPage(
   columnWidths: number[]
 ): void {
   const lastElement = page.elements[page.elements.length - 1];
-  const y = lastElement ? lastElement.y + lastElement.height + CELL_TEXT_PADDING * 2 : MARGIN;
+  const y = lastElement ? lastElement.y + lastElement.height + CELL_TEXT_PADDING * 2 : MARGIN_TOP;
 
   // Use the same groupId as other elements on this page
   const existingGroupId = lastElement?.groupId;
@@ -732,7 +743,7 @@ function createTotalsRow(
   groupName?: string
 ): TextElement[] {
   const elements: TextElement[] = [];
-  let currentX = MARGIN;
+  let currentX = MARGIN_LEFT;
 
   columns.forEach((col, index) => {
     let value = '';
@@ -792,14 +803,14 @@ function checkSpaceForTotals(page: Page, availableHeight: number): boolean {
 /**
  * Create print header
  */
-function createPrintHeader(title: string): HeaderFooter {
+function createPrintHeader(title: string, visible: boolean = true): HeaderFooter {
   return {
     elements: [
       {
         id: `header-title-${Date.now()}`,
         type: 'text',
         text: title,
-        x: MARGIN,
+        x: MARGIN_LEFT,
         y: 20,
         width: 400,
         height: 30,
@@ -815,20 +826,21 @@ function createPrintHeader(title: string): HeaderFooter {
       },
     ],
     backgroundColor: '#ffffff',
+    visible,
   };
 }
 
 /**
  * Create print footer
  */
-function createPrintFooter(): HeaderFooter {
+function createPrintFooter(visible: boolean = true): HeaderFooter {
   return {
     elements: [
       {
         id: `footer-page-${Date.now()}`,
         type: 'text',
         text: 'Page {{pageNumber}} of {{totalPages}}',
-        x: MARGIN,
+        x: MARGIN_LEFT,
         y: 20,
         width: 200,
         height: 20,
@@ -844,5 +856,6 @@ function createPrintFooter(): HeaderFooter {
       },
     ],
     backgroundColor: '#ffffff',
+    visible,
   };
 }

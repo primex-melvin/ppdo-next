@@ -4,7 +4,8 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { Page, CanvasElement, ImageElement, HeaderFooter, MarginSettings } from './types';
-import { getPageDimensions, HEADER_HEIGHT, FOOTER_HEIGHT, POINTS_PER_INCH } from './constants';
+import { getPageDimensions } from './constants';
+import { getPageLayoutMetrics } from './layout';
 import TextElementComponent from './text-element';
 import ImageElementComponent from './image-element';
 import HeaderFooterSection from './header-footer-section';
@@ -98,6 +99,14 @@ export default function Canvas({
 
   const isEditingElementId = externalIsEditingElementId ?? localIsEditingElementId;
   const size = getPageDimensions(page.size, page.orientation);
+  const layout = getPageLayoutMetrics(size.width, size.height, header, footer, margins);
+  const bodyHeight = layout.bodyHeight;
+
+  useEffect(() => {
+    if ((activeSection === 'header' && header.visible === false) || (activeSection === 'footer' && footer.visible === false)) {
+      onActiveSectionChange('page');
+    }
+  }, [activeSection, header.visible, footer.visible, onActiveSectionChange]);
 
   const handleMouseDown = (e: React.MouseEvent, elementId: string) => {
     e.stopPropagation();
@@ -147,7 +156,6 @@ export default function Canvas({
 
       const rect = canvasRef.current.getBoundingClientRect();
       if (element) {
-        const bodyHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
         const newX = Math.max(0, Math.min(e.clientX - rect.left - dragOffset.x, size.width - element.width));
         const newY = Math.max(0, Math.min(e.clientY - rect.top - dragOffset.y, bodyHeight - element.height));
 
@@ -247,7 +255,6 @@ export default function Canvas({
           break;
       }
 
-      const bodyHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
       if (updates.x !== undefined && updates.width !== undefined) {
         if (updates.x + updates.width > size.width) {
           updates.x = size.width - updates.width;
@@ -362,8 +369,6 @@ export default function Canvas({
       console.error('Failed to parse dropped data:', error);
     }
   };
-
-  const bodyHeight = size.height - HEADER_HEIGHT - FOOTER_HEIGHT;
 
   // Calculate group bounding box for outline
   const getGroupBounds = (groupId: string) => {
