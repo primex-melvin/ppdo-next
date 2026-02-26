@@ -945,9 +945,10 @@ const captureElement = async (
 
   // Wait for web fonts to finish loading so text metrics match the preview/canvas editor.
   try {
-    if ('fonts' in document && (document as Document & { fonts: FontFaceSet }).fonts?.ready) {
+    const docWithFonts = document as Document & { fonts?: FontFaceSet };
+    if ('fonts' in document && docWithFonts.fonts) {
       await Promise.race([
-        (document as Document & { fonts: FontFaceSet }).fonts.ready,
+        docWithFonts.fonts.ready,
         new Promise((resolve) => setTimeout(resolve, 1500)),
       ]);
     }

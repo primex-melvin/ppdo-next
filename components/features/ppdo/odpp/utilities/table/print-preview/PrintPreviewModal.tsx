@@ -12,6 +12,7 @@ import { TextAlign } from './JustifyDropdown';
 import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
+import type { Page } from '@/app/(extra)/canvas/_components/editor/types';
 
 // Canvas components
 import Toolbar from '@/app/(extra)/canvas/_components/editor/toolbar';
@@ -735,7 +736,7 @@ export function PrintPreviewModal({
       footerHeight: layout.footerHeight,
     });
 
-    let nextPages = regenerated.pages.map((page) => ({
+    let nextPages: Page[] = regenerated.pages.map((page): Page => ({
       ...page,
       backgroundColor: state.appliedTemplate?.page.backgroundColor || page.backgroundColor,
     }));
