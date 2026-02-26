@@ -159,6 +159,7 @@ export const DEFAULT_HIDDEN_COLUMNS = new Set(
 
 export const AGENCY_SORT_OPTIONS: AgencySortOptionConfig[] = [
   { value: "lastModified", label: "Default: Last Modified" },
+  { value: "lastModifiedAsc", label: "Last Modified: Oldest First" },
   { value: "nameAsc", label: "Agency Name: A-Z" },
   { value: "nameDesc", label: "Agency Name: Z-A" },
   { value: "codeAsc", label: "Code: A-Z" },

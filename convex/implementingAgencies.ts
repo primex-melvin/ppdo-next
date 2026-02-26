@@ -1455,8 +1455,9 @@ export const deleteWithCascade = mutation({
   },
 });
 
-const BULK_DELETE_FALLBACK_CODE = "BLANK";
-const BULK_DELETE_FALLBACK_NAME = "BLANK";
+const BULK_DELETE_FALLBACK_CODE = "UNASSIGNED";
+const BULK_DELETE_FALLBACK_NAME = "Unassigned Agency";
+const LEGACY_BULK_DELETE_FALLBACK_CODE = "BLANK";
 
 type BulkDeleteMode = "reassign_to_blank" | "delete_all";
 
@@ -1693,21 +1694,70 @@ function summarizeLinkedRecords(linkedRecords: Record<string, any[]>) {
   return { byTable, totals };
 }
 
-async function ensureFallbackBlankAgency(ctx: any, userId: any) {
-  const existing = await ctx.db
+async function findExistingBulkDeleteFallbackAgency(ctx: any) {
+  const canonical = await ctx.db
     .query("implementingAgencies")
     .withIndex("code", (q: any) => q.eq("code", BULK_DELETE_FALLBACK_CODE))
     .first();
+  if (canonical) return { agency: canonical, legacy: false };
 
-  if (existing) {
-    if (!existing.isActive) {
+  const legacy = await ctx.db
+    .query("implementingAgencies")
+    .withIndex("code", (q: any) => q.eq("code", LEGACY_BULK_DELETE_FALLBACK_CODE))
+    .first();
+  if (legacy) return { agency: legacy, legacy: true };
+
+  return null;
+}
+
+function isProtectedBulkDeleteFallbackCode(code?: string | null) {
+  return code === BULK_DELETE_FALLBACK_CODE || code === LEGACY_BULK_DELETE_FALLBACK_CODE;
+}
+
+async function ensureFallbackUnassignedAgency(ctx: any, userId: any) {
+  const existingFallback = await findExistingBulkDeleteFallbackAgency(ctx);
+
+  if (existingFallback?.agency) {
+    const existing = existingFallback.agency;
+    const needsLegacyCodeMigration =
+      existingFallback.legacy && existing.code !== BULK_DELETE_FALLBACK_CODE;
+    const needsMetadataPatch =
+      !existing.isActive ||
+      !existing.isSystemDefault ||
+      existing.fullName !== BULK_DELETE_FALLBACK_NAME ||
+      needsLegacyCodeMigration;
+
+    if (needsMetadataPatch) {
       await ctx.db.patch(existing._id, {
+        ...(needsLegacyCodeMigration ? { code: BULK_DELETE_FALLBACK_CODE } : {}),
+        fullName: BULK_DELETE_FALLBACK_NAME,
         isActive: true,
+        isSystemDefault: true,
         updatedAt: Date.now(),
         updatedBy: userId,
       });
     }
-    return { agency: existing, created: false };
+
+    const updatedFallback = (await ctx.db.get(existing._id)) ?? existing;
+
+    await indexEntity(ctx, {
+      entityType: "agency",
+      entityId: updatedFallback._id,
+      primaryText: BULK_DELETE_FALLBACK_NAME,
+      secondaryText: BULK_DELETE_FALLBACK_CODE,
+      status: "active",
+      isDeleted: false,
+    });
+
+    if (needsLegacyCodeMigration) {
+      const legacyLinkedRecords = await fetchLinkedRecordsForAgencyCode(
+        ctx,
+        LEGACY_BULK_DELETE_FALLBACK_CODE
+      );
+      await reassignLinkedRecordsToFallback(ctx, legacyLinkedRecords, updatedFallback, userId);
+    }
+
+    return { agency: updatedFallback, created: false };
   }
 
   const now = Date.now();
@@ -1873,10 +1923,7 @@ export const getBulkDeletePreview = query({
     if (userId === null) throw new Error("Not authenticated");
 
     const uniqueIdStrings = dedupeAgencyIds(args.ids as any[]);
-    const fallbackAgency = await ctx.db
-      .query("implementingAgencies")
-      .withIndex("code", (q) => q.eq("code", BULK_DELETE_FALLBACK_CODE))
-      .first();
+    const fallbackAgency = await findExistingBulkDeleteFallbackAgency(ctx);
 
     const blockedAgencies: Array<{ id: string; code?: string; name?: string; reason: string }> = [];
     const previews: any[] = [];
@@ -1888,12 +1935,12 @@ export const getBulkDeletePreview = query({
         continue;
       }
 
-      if (agency.code === BULK_DELETE_FALLBACK_CODE) {
+      if (isProtectedBulkDeleteFallbackCode(agency.code)) {
         blockedAgencies.push({
           id: String(agency._id),
           code: agency.code,
           name: agency.fullName,
-          reason: 'Fallback agency "BLANK" cannot be deleted',
+          reason: 'Fallback agency "UNASSIGNED" cannot be deleted',
         });
         continue;
       }
@@ -1986,8 +2033,9 @@ export const getBulkDeletePreview = query({
       options: [
         {
           value: "reassign_to_blank",
-          label: "Reassign linked records to BLANK (Recommended)",
-          description: 'Preserves linked records and moves them to fallback agency "BLANK".',
+          label: "Reassign linked records to Unassigned Agency (Recommended)",
+          description:
+            'Preserves linked records and moves them to fallback agency "Unassigned Agency".',
         },
         {
           value: "delete_all",
@@ -2002,8 +2050,8 @@ export const getBulkDeletePreview = query({
         code: BULK_DELETE_FALLBACK_CODE,
         exists: !!fallbackAgency,
         willAutoCreate: !fallbackAgency,
-        id: fallbackAgency?._id ?? null,
-        name: fallbackAgency?.fullName ?? BULK_DELETE_FALLBACK_NAME,
+        id: fallbackAgency?.agency?._id ?? null,
+        name: BULK_DELETE_FALLBACK_NAME,
       },
       hasTrueImpact,
       trueImpactTotals,
@@ -2050,7 +2098,7 @@ export const bulkDeleteWithMode = mutation({
       | null = null;
 
     if (args.mode === "reassign_to_blank") {
-      fallbackResult = await ensureFallbackBlankAgency(ctx, userId);
+      fallbackResult = await ensureFallbackUnassignedAgency(ctx, userId);
     }
 
     const blockedAgencies: Array<{ id: string; code?: string; name?: string; reason: string }> = [];
@@ -2073,12 +2121,12 @@ export const bulkDeleteWithMode = mutation({
         continue;
       }
 
-      if (agency.code === BULK_DELETE_FALLBACK_CODE) {
+      if (isProtectedBulkDeleteFallbackCode(agency.code)) {
         blockedAgencies.push({
           id: String(agency._id),
           code: agency.code,
           name: agency.fullName,
-          reason: 'Fallback agency "BLANK" cannot be deleted',
+          reason: 'Fallback agency "UNASSIGNED" cannot be deleted',
         });
         continue;
       }

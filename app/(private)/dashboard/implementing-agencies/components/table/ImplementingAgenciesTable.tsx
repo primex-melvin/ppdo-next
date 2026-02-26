@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -40,6 +40,29 @@ export function ImplementingAgenciesTable({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleteModalAgencyIds, setDeleteModalAgencyIds] = useState<Id<"implementingAgencies">[]>([]);
+  const [showTooltipSummary, setShowTooltipSummary] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("implementing-agencies:show-tooltip-summary");
+      if (stored === "true") {
+        setShowTooltipSummary(true);
+      }
+    } catch {
+      // Ignore localStorage access issues (private mode, restricted environments).
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "implementing-agencies:show-tooltip-summary",
+        String(showTooltipSummary)
+      );
+    } catch {
+      // Ignore localStorage access issues.
+    }
+  }, [showTooltipSummary]);
 
   const {
     // Search
@@ -223,6 +246,8 @@ export function ImplementingAgenciesTable({
           onBulkPermanentDelete={handleOpenBulkPermanentDelete}
           onExportCSV={handleExportCSV}
           onFullscreen={handleFullscreen}
+          showTooltipSummary={showTooltipSummary}
+          onShowTooltipSummaryChange={setShowTooltipSummary}
           isAdmin={!!isAdmin}
           accentColor={accentColorValue}
         />
@@ -278,6 +303,7 @@ export function ImplementingAgenciesTable({
                       onStartRowResize={startResizeRow}
                       isSelected={selectedIds.has(agency._id)}
                       onSelectRow={handleSelectRow}
+                      showSummaryTooltip={showTooltipSummary}
                     />
                   );
                 })}

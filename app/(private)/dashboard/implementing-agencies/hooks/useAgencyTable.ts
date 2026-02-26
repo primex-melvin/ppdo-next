@@ -103,6 +103,8 @@ export function useAgencyTable(agencies: Agency[]) {
         return items.sort((a, b) => a.type.localeCompare(b.type));
       case "typeDesc":
         return items.sort((a, b) => b.type.localeCompare(a.type));
+      case "lastModifiedAsc":
+        return items.sort((a, b) => a.updatedAt - b.updatedAt);
       case "lastModified":
       default:
         return items.sort((a, b) => b.updatedAt - a.updatedAt);

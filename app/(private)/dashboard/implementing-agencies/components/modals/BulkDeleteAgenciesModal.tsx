@@ -152,10 +152,10 @@ export function BulkDeleteAgenciesModal({
       .slice(0, 120);
   }, [preview]);
 
-  const steps: Array<{ id: BulkDeleteStep; title: string; subtitle: string }> = [
-    { id: 1, title: "Handle linked records", subtitle: "Choose how linked items are handled" },
-    { id: 2, title: "Review affected items", subtitle: "Summary by table, agency, and preview" },
-    { id: 3, title: "Confirm with PIN", subtitle: "Final destructive confirmation" },
+  const steps: Array<{ id: BulkDeleteStep; title: string }> = [
+    { id: 1, title: "Handle linked records" },
+    { id: 2, title: "Review affected items" },
+    { id: 3, title: "Confirm with PIN" },
   ];
   const deletableAgencyLabel = summary.deletableCount === 1 ? "agency" : "agencies";
   const deleteVerbLabel = summary.deletableCount === 1 ? "Delete Agency" : "Delete Agencies";
@@ -209,14 +209,23 @@ export function BulkDeleteAgenciesModal({
         mode,
       });
 
-      const budgetNote =
-        mode === "delete_all"
-          ? " Linked budgets were permanently removed."
-          : ` Linked records were reassigned to ${result?.fallbackAgency?.code || "BLANK"}.`;
+      const deletedCount = Number(result?.deletedAgencyCount ?? 0);
+      const activeAffectedCount = Number(result?.affectedTotals?.activeCount ?? 0);
 
-      toast.success(
-        `${result?.deletedAgencyCount ?? 0} agenc${(result?.deletedAgencyCount ?? 0) === 1 ? "y" : "ies"} deleted.${budgetNote}`
-      );
+      if (activeAffectedCount === 0) {
+        toast.success(
+          `${deletedCount} agenc${deletedCount === 1 ? "y" : "ies"} deleted successfully`
+        );
+      } else {
+        const budgetNote =
+          mode === "delete_all"
+            ? " Linked budgets were permanently removed."
+            : ` Linked records were reassigned to ${result?.fallbackAgency?.name || "Unassigned Agency"}.`;
+
+        toast.success(
+          `${deletedCount} agenc${deletedCount === 1 ? "y" : "ies"} deleted.${budgetNote}`
+        );
+      }
       onSuccess?.();
       onOpenChange(false);
     } catch (err) {
@@ -265,8 +274,7 @@ export function BulkDeleteAgenciesModal({
                   </>
                 ) : (
                   <>
-                    Permanently deletes selected agencies from this table. Choose whether linked records are reassigned to{" "}
-                    <b>BLANK</b> or permanently deleted.
+                    Permanently deletes selected agencies from this table.
                   </>
                 )}
               </ResizableModalDescription>
@@ -303,7 +311,6 @@ export function BulkDeleteAgenciesModal({
                     </span>
                     <p className="text-xs font-medium text-foreground">{item.title}</p>
                   </div>
-                  <p className="mt-1 text-[11px] text-muted-foreground">{item.subtitle}</p>
                 </div>
               );
               })}
@@ -322,13 +329,10 @@ export function BulkDeleteAgenciesModal({
                     <p className="text-sm font-semibold text-foreground">
                       {preview?.question || "How do you want to handle linked records for the selected agencies?"}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Choose now, then review the affected summary before final confirmation.
-                    </p>
                   </div>
                   {preview?.fallbackAgency && (
                     <Badge variant="secondary" className="shrink-0">
-                      {preview.fallbackAgency.exists ? "BLANK exists" : "BLANK will auto-create"}
+                      {preview.fallbackAgency.exists ? "UNASSIGNED exists" : "UNASSIGNED will auto-create"}
                     </Badge>
                   )}
                 </div>
@@ -354,14 +358,10 @@ export function BulkDeleteAgenciesModal({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">
-                          Reassign linked records to BLANK (Recommended)
+                          Reassign linked records to Unassigned Agency (Recommended)
                         </span>
                         <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Safe</Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Selected agencies are permanently deleted, but linked projects/funds/breakdowns are preserved and moved to fallback agency{" "}
-                        <b>BLANK</b>.
-                      </p>
                     </div>
                   </label>
 
@@ -385,9 +385,6 @@ export function BulkDeleteAgenciesModal({
                         </span>
                         <Badge variant="destructive">Destructive</Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Selected agencies and linked records are permanently deleted. This affects allocated, utilized, and obligated budgets.
-                      </p>
                     </div>
                   </label>
                 </RadioGroup>
@@ -586,7 +583,7 @@ export function BulkDeleteAgenciesModal({
                     <AlertTitle>Final deletion confirmation</AlertTitle>
                     <AlertDescription>
                       {mode === "reassign_to_blank"
-                        ? 'Agencies will be permanently deleted and linked records will be reassigned to "BLANK".'
+                        ? 'Agencies will be permanently deleted and linked records will be reassigned to "Unassigned Agency".'
                         : "Agencies and linked records will be permanently deleted. Allocated, utilized, and obligated budgets will be affected."}
                     </AlertDescription>
                   </Alert>
@@ -595,7 +592,7 @@ export function BulkDeleteAgenciesModal({
                     <div className="rounded-lg border border-border bg-card p-4">
                       <p className="text-xs text-muted-foreground">Mode</p>
                       <p className="mt-1 text-sm font-semibold text-foreground">
-                        {mode === "reassign_to_blank" ? "Reassign to BLANK" : "Delete linked records"}
+                        {mode === "reassign_to_blank" ? "Reassign to Unassigned Agency" : "Delete linked records"}
                       </p>
                     </div>
                     <div className="rounded-lg border border-border bg-card p-4">
@@ -750,7 +747,7 @@ export function BulkDeleteAgenciesModal({
               ) : mode === "delete_all" ? (
                 `${deleteVerbLabel} + Linked Records`
               ) : (
-                `${deleteVerbLabel} (Reassign to BLANK)`
+                `${deleteVerbLabel} (Reassign to Unassigned Agency)`
               )}
             </Button>
           )}

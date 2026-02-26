@@ -15,6 +15,9 @@ import {
   ArrowDown,
   Check,
   Maximize2,
+  MoreVertical,
+  FileText,
+  Eye,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { GenericTableToolbar, TableActionButton } from "@/components/shared/table";
 import { ColumnVisibilityMenu } from "@/components/shared/table/ColumnVisibilityMenu";
 import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
@@ -59,6 +71,8 @@ interface AgencyTableToolbarProps {
   onExportCSV: () => void;
   onShare?: () => void;
   onFullscreen?: () => void;
+  showTooltipSummary: boolean;
+  onShowTooltipSummaryChange: (checked: boolean) => void;
   // Permissions
   isAdmin: boolean;
   accentColor: string;
@@ -152,13 +166,34 @@ export function AgencyTableToolbar({
   onExportCSV,
   onShare,
   onFullscreen,
+  showTooltipSummary,
+  onShowTooltipSummaryChange,
   isAdmin,
   accentColor,
 }: AgencyTableToolbarProps) {
+  const [featureComingSoonOpen, setFeatureComingSoonOpen] = useState(false);
+
   return (
-    <GenericTableToolbar
-      actions={
-        <div className="flex items-center gap-1 sm:gap-2">
+    <>
+      <Dialog open={featureComingSoonOpen} onOpenChange={setFeatureComingSoonOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Feature coming soon</DialogTitle>
+            <DialogDescription>
+              Print PDF is not available yet. This action will be added in a future update.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setFeatureComingSoonOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <GenericTableToolbar
+        actions={
+          <div className="flex items-center gap-1 sm:gap-2">
           {/* Selection Info */}
           {selectedCount > 0 && (
             <div className="hidden sm:flex items-center gap-2 mr-2">
@@ -242,6 +277,46 @@ export function AgencyTableToolbar({
                       title="Toggle Fullscreen"
                     />
                   )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-9 w-9" aria-label="More actions">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-72">
+                      <DropdownMenuLabel>More Options</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        onClick={() => onShowTooltipSummaryChange(!showTooltipSummary)}
+                        className="cursor-pointer items-start gap-3 py-2"
+                      >
+                        <Eye className="mt-0.5 h-4 w-4 text-zinc-500" />
+                        <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">Show tooltip summary</p>
+                            <p className="text-xs text-muted-foreground">
+                              Show row summary on hover
+                            </p>
+                          </div>
+                          <Switch
+                            checked={showTooltipSummary}
+                            onCheckedChange={onShowTooltipSummaryChange}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label="Toggle tooltip summary"
+                          />
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setFeatureComingSoonOpen(true)}
+                        className="cursor-pointer"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Print PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 {/* Mobile/Tablet more menu */}
@@ -335,5 +410,6 @@ export function AgencyTableToolbar({
         </motion.div>
       </div>
     </GenericTableToolbar>
+    </>
   );
 }

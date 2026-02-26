@@ -73,6 +73,7 @@ export interface AgencyRowHeights {
 
 export type AgencySortOption =
   | "lastModified"
+  | "lastModifiedAsc"
   | "nameAsc"
   | "nameDesc"
   | "codeAsc"

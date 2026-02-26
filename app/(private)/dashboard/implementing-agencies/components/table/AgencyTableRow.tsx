@@ -28,6 +28,7 @@ interface AgencyTableRowProps {
   onStartRowResize: (e: React.MouseEvent, rowId: string) => void;
   isSelected?: boolean;
   onSelectRow?: (id: string, checked: boolean) => void;
+  showSummaryTooltip?: boolean;
 }
 
 function formatCurrency(amount: number): string {
@@ -90,7 +91,7 @@ function formatCellValue(agency: Agency, column: AgencyColumnConfig): React.Reac
 }
 
 // Hook for mouse-following tooltip
-function useAgencyTooltip(agency: Agency) {
+function useAgencyTooltip(agency: Agency, enabled: boolean) {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showTooltip, setShowTooltip] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -105,14 +106,26 @@ function useAgencyTooltip(agency: Agency) {
     ? ((agency.utilizedBudget / agency.totalBudget) * 100).toFixed(1)
     : "0.0";
 
+  useEffect(() => {
+    if (enabled) return;
+    if (tooltipTimeout.current) {
+      clearTimeout(tooltipTimeout.current);
+      tooltipTimeout.current = null;
+    }
+    setIsVisible(false);
+    setShowTooltip(false);
+  }, [enabled]);
+
   const handleMouseEnter = useCallback(() => {
+    if (!enabled) return;
     tooltipTimeout.current = setTimeout(() => {
       setShowTooltip(true);
       requestAnimationFrame(() => setIsVisible(true));
     }, 500);
-  }, []);
+  }, [enabled]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!enabled) return;
     const x = e.clientX;
     const y = e.clientY;
     const viewportWidth = window.innerWidth;
@@ -132,7 +145,7 @@ function useAgencyTooltip(agency: Agency) {
     }
 
     setMousePos({ x, y });
-  }, []);
+  }, [enabled]);
 
   const handleMouseLeave = useCallback(() => {
     if (tooltipTimeout.current) {
@@ -255,8 +268,10 @@ export function AgencyTableRow({
   onStartRowResize,
   isSelected = false,
   onSelectRow,
+  showSummaryTooltip = false,
 }: AgencyTableRowProps) {
-  const { handleMouseEnter, handleMouseMove, handleMouseLeave, tooltipContent } = useAgencyTooltip(agency);
+  const { handleMouseEnter, handleMouseMove, handleMouseLeave, tooltipContent } =
+    useAgencyTooltip(agency, showSummaryTooltip);
   const [isClicking, setIsClicking] = useState(false);
 
   const isTooltipSuppressedTarget = useCallback((target: EventTarget | null) => {
@@ -371,6 +386,7 @@ export function AgencyTableRow({
 
       {/* Actions */}
       <td
+        data-no-row-tooltip="true"
         className="text-center"
         style={{ border: "1px solid rgb(228 228 231 / 1)" }}
       >
