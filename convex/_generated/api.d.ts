@@ -51,6 +51,7 @@ import type * as lib_projectActivityLogger from "../lib/projectActivityLogger.js
 import type * as lib_projectAggregation from "../lib/projectAggregation.js";
 import type * as lib_rbac from "../lib/rbac.js";
 import type * as lib_scrypt from "../lib/scrypt.js";
+import type * as lib_searchIndexSync from "../lib/searchIndexSync.js";
 import type * as lib_searchUtils from "../lib/searchUtils.js";
 import type * as lib_specialEducationFundActivityLogger from "../lib/specialEducationFundActivityLogger.js";
 import type * as lib_specialEducationFundBreakdownActivityLogger from "../lib/specialEducationFundBreakdownActivityLogger.js";
@@ -218,6 +219,7 @@ declare const fullApi: ApiFromModules<{
   "lib/projectAggregation": typeof lib_projectAggregation;
   "lib/rbac": typeof lib_rbac;
   "lib/scrypt": typeof lib_scrypt;
+  "lib/searchIndexSync": typeof lib_searchIndexSync;
   "lib/searchUtils": typeof lib_searchUtils;
   "lib/specialEducationFundActivityLogger": typeof lib_specialEducationFundActivityLogger;
   "lib/specialEducationFundBreakdownActivityLogger": typeof lib_specialEducationFundBreakdownActivityLogger;

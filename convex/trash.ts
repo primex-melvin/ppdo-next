@@ -11,6 +11,11 @@ import { recalculateProjectMetrics } from "./lib/projectAggregation";
 import { logBudgetActivity } from "./lib/budgetActivityLogger";
 import { logProjectActivity } from "./lib/projectActivityLogger";
 import { logGovtProjectActivity } from "./lib/govtProjectActivityLogger";
+import {
+  syncBudgetItemSearchIndex,
+  syncProjectBreakdownSearchIndex,
+  syncProjectSearchIndex,
+} from "./lib/searchIndexSync";
 
 // =============================================================================
 // TYPES (for reference - actual types inferred from return values)
@@ -460,6 +465,7 @@ export const moveToTrashWithConfirmation = mutation({
           deletedAt: now,
           deletedBy: userId,
         });
+        await syncProjectSearchIndex(ctx, project, { isDeleted: true });
 
         // 3. Trash Linked Breakdowns (Deep Cascade)
         const breakdowns = await ctx.db
@@ -473,6 +479,7 @@ export const moveToTrashWithConfirmation = mutation({
             deletedAt: now,
             deletedBy: userId,
           });
+          await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
         }
       }
 
@@ -491,6 +498,8 @@ export const moveToTrashWithConfirmation = mutation({
         newValues: { ...existing, isDeleted: true },
         reason: reason || "Moved to trash (Cascaded to children)",
       });
+
+      await syncBudgetItemSearchIndex(ctx, existing, { isDeleted: true });
 
       return { success: true, message: "Moved to trash" };
     }
@@ -521,6 +530,7 @@ export const moveToTrashWithConfirmation = mutation({
           deletedAt: now,
           deletedBy: userId,
         });
+        await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
       }
 
       // Update usage counts
@@ -554,6 +564,8 @@ export const moveToTrashWithConfirmation = mutation({
         reason: reason || "Moved to trash",
       });
 
+      await syncProjectSearchIndex(ctx, existing, { isDeleted: true });
+
       return { success: true, message: "Project moved to trash" };
     }
 
@@ -570,6 +582,7 @@ export const moveToTrashWithConfirmation = mutation({
         updatedAt: now,
         updatedBy: userId,
       });
+      await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
 
       // Recalculate Parent Project
       if (breakdown.projectId) {
@@ -918,6 +931,7 @@ export const restoreFromTrashWithConfirmation = mutation({
             deletedAt: undefined,
             deletedBy: undefined,
           });
+          await syncProjectSearchIndex(ctx, project, { isDeleted: false });
 
           // 3. Restore Linked Breakdowns
           const breakdowns = await ctx.db
@@ -932,6 +946,7 @@ export const restoreFromTrashWithConfirmation = mutation({
                 deletedAt: undefined,
                 deletedBy: undefined,
               });
+              await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: false });
             }
           }
         }
@@ -946,6 +961,8 @@ export const restoreFromTrashWithConfirmation = mutation({
 
       // Recalculate metrics immediately to ensure data is fresh
       await recalculateBudgetItemMetrics(ctx, entityId as Id<"budgetItems">, userId);
+
+      await syncBudgetItemSearchIndex(ctx, existing, { isDeleted: false });
 
       return { success: true, message: "Restored from trash" };
     }
@@ -976,6 +993,7 @@ export const restoreFromTrashWithConfirmation = mutation({
             deletedAt: undefined,
             deletedBy: undefined,
           });
+          await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: false });
         }
       }
 
@@ -1007,6 +1025,8 @@ export const restoreFromTrashWithConfirmation = mutation({
       // Recalculate the project itself
       await recalculateProjectMetrics(ctx, entityId as Id<"projects">, userId);
 
+      await syncProjectSearchIndex(ctx, existing, { isDeleted: false });
+
       return { success: true, message: "Project restored" };
     }
 
@@ -1022,6 +1042,7 @@ export const restoreFromTrashWithConfirmation = mutation({
         deletedBy: undefined,
         updatedAt: now,
       });
+      await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: false });
 
       // Recalculate Parent Project
       if (breakdown.projectId) {

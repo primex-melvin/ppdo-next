@@ -7,6 +7,7 @@ import { logTwentyPercentDFBreakdownActivity } from "./lib/twentyPercentDFActivi
 import { internal } from "./_generated/api";
 import { validateImplementingOffice } from "./lib/breakdownBase";
 import { Id } from "./_generated/dataModel";
+import { syncTwentyPercentDFBreakdownSearchIndex } from "./lib/searchIndexSync";
 
 // Reusable status validator
 const statusValidator = v.union(
@@ -212,6 +213,7 @@ export const moveToTrash = mutation({
             deletedAt: now,
             deletedBy: userId,
         });
+        await syncTwentyPercentDFBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
 
         // Note: Usage count NOT decremented for soft delete, only hard delete.
 
@@ -275,6 +277,7 @@ export const bulkMoveToTrash = mutation({
                     deletedAt: now,
                     deletedBy: userId,
                 });
+                await syncTwentyPercentDFBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
 
                 await logTwentyPercentDFBreakdownActivity(ctx, userId, {
                     action: "updated",

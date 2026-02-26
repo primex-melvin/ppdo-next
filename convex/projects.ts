@@ -7,6 +7,7 @@ import { recalculateProjectMetrics } from "./lib/projectAggregation";
 import { logProjectActivity } from "./lib/projectActivityLogger";
 import { internal } from "./_generated/api";
 import { indexEntity } from "./search/index";
+import { syncProjectBreakdownSearchIndex, syncProjectSearchIndex } from "./lib/searchIndexSync";
 // buildSlug no longer needed - project page uses encodeURIComponent(particulars) for URLs
 
 /**
@@ -117,6 +118,7 @@ export const moveToTrash = mutation({
         deletedAt: now,
         deletedBy: userId
       });
+      await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
     }
 
     // Update usage count for the project particular
@@ -219,6 +221,7 @@ export const restoreFromTrash = mutation({
           deletedAt: undefined,
           deletedBy: undefined
         });
+        await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: false });
       }
     }
 
@@ -1077,6 +1080,7 @@ export const bulkMoveToTrash = mutation({
           deletedAt: now,
           deletedBy: userId,
         });
+        await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
       }
 
       // Update usage counts
@@ -1108,6 +1112,8 @@ export const bulkMoveToTrash = mutation({
         previousValues: existing,
         reason: args.reason || "Bulk move to trash",
       });
+
+      await syncProjectSearchIndex(ctx, existing, { isDeleted: true });
 
       successCount++;
     }

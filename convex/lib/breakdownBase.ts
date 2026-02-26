@@ -16,6 +16,7 @@
 
 import { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { DataModel, Id } from "../_generated/dataModel";
+import { syncBreakdownSearchIndexByTable } from "./searchIndexSync";
 
 type MutationCtx = GenericMutationCtx<DataModel>;
 type QueryCtx = GenericQueryCtx<DataModel>;
@@ -148,6 +149,7 @@ export async function softDeleteBreakdown(
   userId: Id<"users">,
   reason?: string
 ): Promise<void> {
+  const current = await ctx.db.get(id as any);
   const softDeleteFields = createSoftDeleteFields(userId, reason);
 
   await ctx.db.patch(id as any, {
@@ -155,6 +157,10 @@ export async function softDeleteBreakdown(
     updatedAt: Date.now(),
     updatedBy: userId,
   });
+
+  if (current) {
+    await syncBreakdownSearchIndexByTable(ctx as any, tableName, current, { isDeleted: true });
+  }
 }
 
 /**
@@ -171,6 +177,7 @@ export async function restoreBreakdown(
   id: Id<"govtProjectBreakdowns"> | Id<"trustFundBreakdowns"> | Id<"specialEducationFundBreakdowns"> | Id<"specialHealthFundBreakdowns"> | Id<"twentyPercentDFBreakdowns">,
   userId: Id<"users">
 ): Promise<void> {
+  const current = await ctx.db.get(id as any);
   const restoreFields = createRestoreFields();
 
   await ctx.db.patch(id as any, {
@@ -178,6 +185,10 @@ export async function restoreBreakdown(
     updatedAt: Date.now(),
     updatedBy: userId,
   });
+
+  if (current) {
+    await syncBreakdownSearchIndexByTable(ctx as any, tableName, current, { isDeleted: false });
+  }
 }
 
 // ============================================================================

@@ -7,6 +7,11 @@ import {
   recalculateAllBudgetItems,
 } from "./lib/budgetAggregation";
 import { logBudgetActivity } from "./lib/budgetActivityLogger";
+import {
+  syncBudgetItemSearchIndex,
+  syncProjectBreakdownSearchIndex,
+  syncProjectSearchIndex,
+} from "./lib/searchIndexSync";
 
 /**
  * Get all ACTIVE budget items (Hides Trash)
@@ -91,6 +96,7 @@ export const moveToTrash = mutation({
         deletedAt: now,
         deletedBy: userId
       });
+      await syncProjectSearchIndex(ctx, project, { isDeleted: true });
 
       // 3. Trash Linked Breakdowns (Deep Cascade)
       const breakdowns = await ctx.db
@@ -104,6 +110,7 @@ export const moveToTrash = mutation({
           deletedAt: now,
           deletedBy: userId
         });
+        await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
       }
     }
 
@@ -122,6 +129,8 @@ export const moveToTrash = mutation({
       newValues: { ...existing, isDeleted: true },
       reason: args.reason || "Moved to trash (Cascaded to children)"
     });
+
+    await syncBudgetItemSearchIndex(ctx, existing, { isDeleted: true });
 
     return { success: true, message: "Moved to trash" };
   },
@@ -161,6 +170,7 @@ export const restoreFromTrash = mutation({
           deletedAt: undefined,
           deletedBy: undefined
         });
+        await syncProjectSearchIndex(ctx, project, { isDeleted: false });
 
         // 3. Restore Linked Breakdowns
         const breakdowns = await ctx.db
@@ -175,6 +185,7 @@ export const restoreFromTrash = mutation({
               deletedAt: undefined,
               deletedBy: undefined
             });
+            await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: false });
           }
         }
       }
@@ -189,6 +200,8 @@ export const restoreFromTrash = mutation({
 
     // Recalculate metrics immediately to ensure data is fresh
     await recalculateBudgetItemMetrics(ctx, args.id, userId);
+
+    await syncBudgetItemSearchIndex(ctx, existing, { isDeleted: false });
 
     return { success: true, message: "Restored from trash" };
   },
@@ -674,6 +687,7 @@ export const bulkMoveToTrash = mutation({
           deletedAt: now,
           deletedBy: userId,
         });
+        await syncProjectSearchIndex(ctx, project, { isDeleted: true });
 
         // 3. Trash Linked Breakdowns (Deep Cascade)
         const breakdowns = await ctx.db
@@ -687,6 +701,7 @@ export const bulkMoveToTrash = mutation({
             deletedAt: now,
             deletedBy: userId,
           });
+          await syncProjectBreakdownSearchIndex(ctx, breakdown, { isDeleted: true });
         }
       }
 
@@ -705,6 +720,8 @@ export const bulkMoveToTrash = mutation({
         newValues: { ...existing, isDeleted: true },
         reason: args.reason || "Bulk moved to trash (Cascaded to children)"
       });
+
+      await syncBudgetItemSearchIndex(ctx, existing, { isDeleted: true });
 
       successCount++;
     }
