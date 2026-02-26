@@ -9,8 +9,8 @@ type ActiveSection = 'header' | 'page' | 'footer';
 export function usePrintPreviewState() {
   // Canvas state
   const [pages, setPages] = useState<Page[]>([]);
-  const [header, setHeader] = useState<HeaderFooter>({ elements: [] });
-  const [footer, setFooter] = useState<HeaderFooter>({ elements: [] });
+  const [header, setHeader] = useState<HeaderFooter>({ elements: [], visible: false });
+  const [footer, setFooter] = useState<HeaderFooter>({ elements: [], visible: true });
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);

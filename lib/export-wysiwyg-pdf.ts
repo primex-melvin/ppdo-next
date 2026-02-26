@@ -24,6 +24,30 @@ interface TableStructure {
   tableHeight: number;
 }
 
+const median = (values: number[]): number => {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+};
+
+const inferCommonInnerGap = (positions: number[], sizeByPosition: Map<number, number>): number => {
+  const gaps: number[] = [];
+  for (let i = 0; i < positions.length - 1; i++) {
+    const pos = positions[i];
+    const next = positions[i + 1];
+    const size = sizeByPosition.get(pos) ?? 0;
+    const gap = next - pos - size;
+    if (gap >= 0) gaps.push(gap);
+  }
+  if (gaps.length === 0) return 0;
+  // Use the minimum positive gap to avoid first-column extra padding skewing the result.
+  const positive = gaps.filter(g => g > 0);
+  return positive.length > 0 ? Math.min(...positive) : median(gaps);
+};
+
 /**
  * Detect table structure from canvas elements
  * Groups elements by groupId and analyzes their layout
@@ -43,27 +67,63 @@ function detectTableStructure(elements: CanvasElement[]): TableStructure | null 
 
   if (uniqueX.length === 0 || uniqueY.length === 0) return null;
 
-  // Build column structure
-  const columns = uniqueX.map((x) => {
+  const widthByX = new Map<number, number>();
+  const heightByY = new Map<number, number>();
+
+  uniqueX.forEach((x) => {
     const cellsInColumn = tableElements.filter((el) => el.x === x);
-    const width = cellsInColumn.length > 0 ? cellsInColumn[0].width : 0;
-    return { x, width };
+    if (cellsInColumn.length > 0) widthByX.set(x, cellsInColumn[0].width);
   });
-
-  // Build row structure
-  const rows = uniqueY.map((y) => {
+  uniqueY.forEach((y) => {
     const cellsInRow = tableElements.filter((el) => el.y === y);
-    const height = cellsInRow.length > 0 ? cellsInRow[0].height : 0;
-    return { y, height };
+    if (cellsInRow.length > 0) heightByY.set(y, cellsInRow[0].height);
   });
 
-  // Calculate table bounds
-  const tableLeft = Math.min(...tableElements.map((el) => el.x));
-  const tableTop = Math.min(...tableElements.map((el) => el.y));
-  const tableRight = Math.max(...tableElements.map((el) => el.x + el.width));
-  const tableBottom = Math.max(...tableElements.map((el) => el.y + el.height));
-  const tableWidth = tableRight - tableLeft;
-  const tableHeight = tableBottom - tableTop;
+  // Infer inner padding gap from the generated text-grid layout (converter stores text boxes, not cell rectangles).
+  const commonColumnGap = inferCommonInnerGap(uniqueX, widthByX);
+  const commonRowGap = inferCommonInnerGap(uniqueY, heightByY);
+  const halfColumnGap = commonColumnGap / 2;
+  const halfRowGap = commonRowGap / 2;
+
+  // Build column structure as OUTER cell bounds (not text bounds)
+  const columns = uniqueX.map((x, index) => {
+    const width = widthByX.get(x) ?? 0;
+    let left = x - halfColumnGap;
+
+    // First column may include additional left text padding; infer and compensate.
+    if (index === 0 && uniqueX.length > 1) {
+      const firstGap = uniqueX[1] - x - width;
+      const extraLeftPadding = Math.max(0, firstGap - commonColumnGap);
+      left -= extraLeftPadding;
+    }
+
+    const right = index < uniqueX.length - 1
+      ? uniqueX[index + 1] - halfColumnGap
+      : x + width + halfColumnGap;
+
+    return { x: left, width: Math.max(0, right - left) };
+  });
+
+  // Build row structure from row-start to next-row-start spacing.
+  // This avoids false/double horizontal borders for multiline rows where the text
+  // box height can be shorter than the actual row height.
+  const rows = uniqueY.map((y, index) => {
+    const height = heightByY.get(y) ?? 0;
+    const top = y;
+    const bottom = index < uniqueY.length - 1
+      ? uniqueY[index + 1]
+      : y + height + halfRowGap;
+
+    return { y: top, height: Math.max(0, bottom - top) };
+  });
+
+  // Calculate table bounds from reconstructed outer cell bounds
+  const tableLeft = Math.min(...columns.map((c) => c.x));
+  const tableTop = Math.min(...rows.map((r) => r.y));
+  const tableRight = Math.max(...columns.map((c) => c.x + c.width));
+  const tableBottom = Math.max(...rows.map((r) => r.y + r.height));
+  const tableWidth = Math.max(0, tableRight - tableLeft);
+  const tableHeight = Math.max(0, tableBottom - tableTop);
 
   return {
     columns,
@@ -152,7 +212,7 @@ function createTableBordersImage(
   img.style.width = `${containerWidth}px`;
   img.style.height = `${containerHeight}px`;
   img.style.pointerEvents = 'none';
-  img.style.zIndex = '1';
+  img.style.zIndex = '1'; // keep above section background, below text
 
   return img;
 }
@@ -593,6 +653,20 @@ const processDynamicText = (text: string, pageNumber: number, totalPages: number
     .replace(/\{\{totalPages\}\}/g, totalPages.toString());
 };
 
+const resolveCanvasFontFamily = (fontFamily: string | undefined): string => {
+  if (!fontFamily) return 'sans-serif';
+
+  const googleFonts = ['Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat'];
+  if (googleFonts.includes(fontFamily)) {
+    return `'${fontFamily}', sans-serif`;
+  }
+  if (fontFamily === 'font-serif') return 'Georgia, serif';
+  if (fontFamily === 'font-mono') return 'monospace';
+  if (fontFamily.includes('light') || fontFamily.includes('bold')) return 'sans-serif';
+
+  return 'sans-serif';
+};
+
 /**
  * Generate filename with format: {sanitized_title}_{YYYY-MM-DD}_{HH-MM-SS}.pdf
  */
@@ -649,6 +723,12 @@ const createSectionDOM = (
     if (element.visible === false) return;
 
     if (element.type === 'text') {
+      const isTableText = Boolean(element.groupId && element.groupName?.toLowerCase().includes('table'));
+      // Export text metrics are slightly taller than preview/html DOM metrics.
+      // Keep the source geometry (converter owns middle alignment) and only add
+      // extra room below/inside the box to protect descenders in PDF rasterization.
+      const verticalSafetyPx = isTableText ? 6 : 0;
+      const topOffsetPx = 0;
       const displayText = pageNumber && totalPages
         ? processDynamicText(element.text, pageNumber, totalPages)
         : element.text;
@@ -656,55 +736,75 @@ const createSectionDOM = (
       const textEl = document.createElement('div');
       textEl.style.position = 'absolute';
       textEl.style.left = `${element.x}px`;
-      textEl.style.top = `${element.y}px`;
-      // Set width and height to match the element dimensions
+      textEl.style.top = `${Math.max(0, element.y - topOffsetPx)}px`;
+      textEl.style.margin = '0';
+      textEl.style.padding = '0';
+      textEl.style.boxSizing = 'border-box';
+      textEl.style.overflow = 'hidden'; // hard guard: never paint outside the cell box
+      textEl.style.display = 'block';
+      textEl.style.zIndex = '2'; // ensure glyphs render above table border overlay
+
+      // Set width and height to match the element dimensions (preview uses minHeight semantics)
       if (element.width) {
         textEl.style.width = `${element.width}px`;
       }
       if (element.height) {
-        textEl.style.height = `${element.height}px`;
+        const exportHeight = element.height + verticalSafetyPx;
+        textEl.style.minHeight = `${exportHeight}px`;
+        textEl.style.height = `${exportHeight}px`;
       }
+      const textContentEl = isTableText ? document.createElement('div') : textEl;
+      if (isTableText) {
+        textContentEl.style.width = '100%';
+        textContentEl.style.minWidth = '0';
+        textContentEl.style.boxSizing = 'border-box';
+      }
+
       // Font family with safe fallbacks for html2canvas
-      textEl.style.fontFamily = `${element.fontFamily}, Arial, sans-serif`;
-      textEl.style.fontSize = `${element.fontSize}px`;
-      textEl.style.fontWeight = element.bold ? 'bold' : 'normal';
-      textEl.style.fontStyle = element.italic ? 'italic' : 'normal';
-      textEl.style.textDecoration = element.underline ? 'underline' : 'none';
+      textContentEl.style.fontFamily = resolveCanvasFontFamily(element.fontFamily);
+      textContentEl.style.fontSize = `${element.fontSize}px`;
+      textContentEl.style.fontWeight = element.bold ? 'bold' : 'normal';
+      textContentEl.style.fontStyle = element.italic ? 'italic' : 'normal';
+      textContentEl.style.textDecoration = element.underline ? 'underline' : 'none';
       // Use black as fallback for text colors, with isBackground=false
       const textColor = convertColorToRGB(element.color, '#000000', false);
-      textEl.style.setProperty('color', textColor, 'important');
-      textEl.style.color = textColor;
+      textContentEl.style.setProperty('color', textColor, 'important');
+      textContentEl.style.color = textColor;
       // Text alignment
-      textEl.style.textAlign = element.textAlign || 'left';
+      textContentEl.style.textAlign = element.textAlign || 'left';
       // CRITICAL: Preserve whitespace and spacing - prevents space collapse in html2canvas
-      textEl.style.whiteSpace = 'pre-wrap';
-      textEl.style.wordBreak = 'break-word';
-      textEl.style.wordSpacing = 'normal';
-      textEl.style.letterSpacing = 'normal';
-      textEl.style.textRendering = 'auto';
+      textContentEl.style.whiteSpace = 'pre-wrap';
+      textContentEl.style.wordBreak = 'break-word';
+      textContentEl.style.overflowWrap = 'break-word';
+      textContentEl.style.wordSpacing = 'normal';
+      textContentEl.style.letterSpacing = 'normal';
+      textContentEl.style.textRendering = 'auto';
       // Ensure line height is set for proper text rendering
-      textEl.style.lineHeight = '1.2';
+      textContentEl.style.lineHeight = String(element.lineHeight ?? 'normal');
 
       if (element.backgroundColor) {
         const bgColor = convertColorToRGB(element.backgroundColor, 'transparent', true);
         // Set inline and force it to prevent any browser color space conversions
-        textEl.style.setProperty('background-color', bgColor, 'important');
-        textEl.style.backgroundColor = bgColor;
+        textContentEl.style.setProperty('background-color', bgColor, 'important');
+        textContentEl.style.backgroundColor = bgColor;
       } else {
         // Explicitly set transparent to prevent inheritance
-        textEl.style.setProperty('background-color', 'transparent', 'important');
+        textContentEl.style.setProperty('background-color', 'transparent', 'important');
       }
 
       if (element.shadow) {
         // Use explicit RGB values for shadow
-        textEl.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
+        textContentEl.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
       }
 
       if (element.outline) {
-        textEl.style.webkitTextStroke = '0.5px rgba(0,0,0,0.5)';
+        textContentEl.style.webkitTextStroke = '0.5px rgba(0,0,0,0.5)';
       }
 
-      textEl.textContent = displayText;
+      textContentEl.textContent = displayText;
+      if (isTableText) {
+        textEl.appendChild(textContentEl);
+      }
       container.appendChild(textEl);
     } else if (element.type === 'image') {
       const imgEl = document.createElement('img');
@@ -842,6 +942,18 @@ const captureElement = async (
 ): Promise<HTMLCanvasElement> => {
   // Wait for images to load
   await waitForImages(element);
+
+  // Wait for web fonts to finish loading so text metrics match the preview/canvas editor.
+  try {
+    if ('fonts' in document && (document as Document & { fonts: FontFaceSet }).fonts?.ready) {
+      await Promise.race([
+        (document as Document & { fonts: FontFaceSet }).fonts.ready,
+        new Promise((resolve) => setTimeout(resolve, 1500)),
+      ]);
+    }
+  } catch (fontError) {
+    console.warn('[PDF Export] Font readiness wait failed, continuing:', fontError);
+  }
 
   // Pre-normalize the original element (for any manually created elements)
   try {

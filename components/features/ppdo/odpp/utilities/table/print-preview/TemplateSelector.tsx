@@ -37,7 +37,7 @@ export function TemplateSelector({ isOpen, onClose, onComplete }: TemplateSelect
   // Setup State
   const [step, setStep] = useState<SetupStep>('template');
   const [selectedTemplate, setSelectedTemplate] = useState<CanvasTemplate | null>(null);
-  const [selectedOrientation, setSelectedOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [selectedOrientation, setSelectedOrientation] = useState<'portrait' | 'landscape'>('landscape');
 
   // UI State for Template Grid
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -258,7 +258,7 @@ export function TemplateSelector({ isOpen, onClose, onComplete }: TemplateSelect
           <PageOrientationTab
             onBack={() => setStep('template')}
             onSelectOrientation={handleOrientationSelected}
-            defaultOrientation={selectedTemplate?.page.orientation || 'portrait'}
+            defaultOrientation={selectedTemplate?.page.orientation || 'landscape'}
           />
         ) : (
           /* Step 3: Cover Page */

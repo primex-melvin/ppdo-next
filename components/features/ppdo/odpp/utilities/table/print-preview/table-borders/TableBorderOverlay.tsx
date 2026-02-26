@@ -117,10 +117,14 @@ function detectTableStructure(elements: CanvasElement[]): TableStructure | null 
     return { x, width };
   });
 
-  // Build row structure
-  const rows = uniqueY.map((y) => {
+  // Build row structure using row-start to next-row-start spacing.
+  // This is more robust than text-box heights when rows have multiline text and
+  // the text boxes are shorter than the actual row due to render safety slack.
+  const rows = uniqueY.map((y, index) => {
     const cellsInRow = tableElements.filter((el) => el.y === y);
-    const height = cellsInRow.length > 0 ? cellsInRow[0].height : 0;
+    const fallbackHeight = cellsInRow.length > 0 ? cellsInRow[0].height : 0;
+    const nextY = uniqueY[index + 1];
+    const height = nextY != null ? Math.max(0, nextY - y) : fallbackHeight;
     return { y, height };
   });
 

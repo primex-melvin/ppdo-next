@@ -123,6 +123,8 @@ export interface WrappedCellData {
 export interface WrappedRowData {
     cells: WrappedCellData[];
     rowHeight: number;
+    contentHeight?: number;
+    verticalSlack?: number;
 }
 
 /**
@@ -143,7 +145,8 @@ export function calculateWrappedRow(
     fontFamily: string,
     textPadding: number,
     minRowHeight: number,
-    lineHeight: number = 1.2
+    lineHeight: number = 1.2,
+    renderSafetyPx: number = 0
 ): WrappedRowData {
     const cells: WrappedCellData[] = [];
     let maxLineCount = 1;
@@ -164,9 +167,11 @@ export function calculateWrappedRow(
 
     // Calculate row height based on max line count
     const contentHeight = maxLineCount * fontSize * lineHeight;
-    const rowHeight = Math.max(contentHeight + (textPadding * 2), minRowHeight);
+    const baseRowHeight = contentHeight + (textPadding * 2);
+    const rowHeight = Math.max(baseRowHeight + renderSafetyPx, minRowHeight);
+    const verticalSlack = Math.max(0, rowHeight - baseRowHeight);
 
-    return { cells, rowHeight };
+    return { cells, rowHeight, contentHeight, verticalSlack };
 }
 
 /**
@@ -180,7 +185,8 @@ export function calculateWrappedHeader(
     fontFamily: string,
     textPadding: number,
     minRowHeight: number,
-    lineHeight: number = 1.2
+    lineHeight: number = 1.2,
+    renderSafetyPx: number = 0
 ): WrappedRowData {
     const cells: WrappedCellData[] = [];
     let maxLineCount = 1;
@@ -200,7 +206,9 @@ export function calculateWrappedHeader(
     }
 
     const contentHeight = maxLineCount * fontSize * lineHeight;
-    const rowHeight = Math.max(contentHeight + (textPadding * 2), minRowHeight);
+    const baseRowHeight = contentHeight + (textPadding * 2);
+    const rowHeight = Math.max(baseRowHeight + renderSafetyPx, minRowHeight);
+    const verticalSlack = Math.max(0, rowHeight - baseRowHeight);
 
-    return { cells, rowHeight };
+    return { cells, rowHeight, contentHeight, verticalSlack };
 }

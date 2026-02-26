@@ -100,7 +100,7 @@ export function PrintPreviewModal({
   const [hiddenColumnsVersion, setHiddenColumnsVersion] = useState(0);
 
   // --- Text Alignment State ---
-  const [textAlign, setTextAlign] = useState<TextAlign>('left');
+  const [textAlign, setTextAlign] = useState<TextAlign>('center');
 
   // --- Column Label Overrides (for inline renaming) ---
   const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
@@ -420,7 +420,7 @@ export function PrintPreviewModal({
           rowMarkers,
           margin: rulerState.margins.left,
           margins: rulerState.margins,
-          showHeader: true,
+          showHeader: false,
           showFooter: true,
         });
 

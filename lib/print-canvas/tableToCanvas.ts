@@ -31,12 +31,25 @@ let MARGIN_RIGHT = 22;
 let MARGIN_TOP = 22;
 let MARGIN_BOTTOM = 22;
 // Minimum row heights (rows will expand if text wraps)
-const MIN_ROW_HEIGHT = 24;
-const MIN_HEADER_ROW_HEIGHT = 28;
+const MIN_ROW_HEIGHT = 22;
+const MIN_HEADER_ROW_HEIGHT = 30;
 const LINE_HEIGHT = 1.2;
+// Extra row slack to absorb html2canvas/PDF font metric differences.
+// We center this slack in row placement so preview remains visually centered.
+const TABLE_ROW_RENDER_SAFETY = 8;
+const HEADER_ROW_RENDER_SAFETY = 5;
+// Explicit top slack (px). Remaining slack falls to the bottom, creating
+// a stable "more bottom padding" appearance in PDF output.
+const TABLE_TOP_SLACK_PX = 0;
+const HEADER_TOP_SLACK_PX = 0;
 
 // âœ… Internal padding for text inside cells (NOT cell spacing)
-const CELL_TEXT_PADDING = 4; // Small padding so text doesn't touch borders
+const CELL_TEXT_PADDING = 0; // Small padding so text doesn't touch borders
+// Separate top insets so we can reduce visible top padding without changing wrap width math.
+const DATA_ROW_TEXT_TOP_INSET = 0;
+const HEADER_ROW_TEXT_TOP_INSET = 0;
+const CATEGORY_ROW_TEXT_TOP_INSET = 0;
+const TOTAL_ROW_TEXT_TOP_INSET = 0;
 
 // âœ… Extra left padding for first column text (spacing from left border)
 const FIRST_COLUMN_LEFT_PADDING = 20;
@@ -101,7 +114,8 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
     'Inter',
     CELL_TEXT_PADDING,
     MIN_HEADER_ROW_HEIGHT,
-    LINE_HEIGHT
+    LINE_HEIGHT,
+    HEADER_ROW_RENDER_SAFETY
   );
   const dynamicHeaderHeight = includeHeaders ? headerWrappedData.rowHeight : 0;
 
@@ -126,7 +140,8 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
       'Inter',
       CELL_TEXT_PADDING,
       MIN_ROW_HEIGHT,
-      LINE_HEIGHT
+      LINE_HEIGHT,
+      TABLE_ROW_RENDER_SAFETY
     );
 
     preCalculatedRows.push({
@@ -446,7 +461,7 @@ function createTableHeaders(
       type: 'text',
       text: col.label,
       x: currentX + CELL_TEXT_PADDING + firstColPadding,
-      y: y + CELL_TEXT_PADDING,
+      y: y + HEADER_ROW_TEXT_TOP_INSET,
       width: columnWidths[index] - (CELL_TEXT_PADDING * 2) - firstColPadding,
       height: MIN_HEADER_ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
       fontSize: DEFAULT_TABLE_STYLE.headerFontSize,
@@ -491,14 +506,18 @@ function createTableHeadersWithWrapping(
     // Extra left padding for first column
     const firstColPadding = index === 0 ? FIRST_COLUMN_LEFT_PADDING : 0;
 
+    const verticalSlack = Math.max(0, wrappedData.verticalSlack ?? 0);
+    const verticalSlackTop = getTopSlackOffset(verticalSlack, HEADER_TOP_SLACK_PX);
+    const textBoxHeight = Math.max(1, wrappedData.rowHeight - (CELL_TEXT_PADDING * 2) - verticalSlack);
+
     elements.push({
       id: `header-${col.key}-${Date.now()}`,
       type: 'text',
       text: wrappedText,
       x: currentX + CELL_TEXT_PADDING + firstColPadding,
-      y: y + CELL_TEXT_PADDING,
+      y: y + HEADER_ROW_TEXT_TOP_INSET + verticalSlackTop,
       width: columnWidths[index] - (CELL_TEXT_PADDING * 2) - firstColPadding,
-      height: wrappedData.rowHeight - (CELL_TEXT_PADDING * 2),
+      height: textBoxHeight,
       fontSize: DEFAULT_TABLE_STYLE.headerFontSize,
       fontFamily: 'Inter',
       bold: true,
@@ -539,7 +558,7 @@ function createCategoryHeaderRow(
     type: 'text',
     text: categoryLabel,
     x: MARGIN_LEFT + CELL_TEXT_PADDING + firstColPadding,
-    y: y + CELL_TEXT_PADDING,
+    y: y + CATEGORY_ROW_TEXT_TOP_INSET,
     width: totalWidth - (CELL_TEXT_PADDING * 2) - firstColPadding,
     height: MIN_ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
     fontSize: 11,
@@ -583,7 +602,7 @@ function createTableRow(
       type: 'text',
       text: value,
       x: currentX + CELL_TEXT_PADDING + firstColPadding,
-      y: y + CELL_TEXT_PADDING,
+      y: y + DATA_ROW_TEXT_TOP_INSET,
       width: columnWidths[index] - (CELL_TEXT_PADDING * 2) - firstColPadding,
       height: MIN_ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
       fontSize: DEFAULT_TABLE_STYLE.dataFontSize,
@@ -629,14 +648,18 @@ function createTableRowWithWrapping(
     // Extra left padding for first column
     const firstColPadding = index === 0 ? FIRST_COLUMN_LEFT_PADDING : 0;
 
+    const verticalSlack = Math.max(0, wrappedData.verticalSlack ?? 0);
+    const verticalSlackTop = getTopSlackOffset(verticalSlack, TABLE_TOP_SLACK_PX);
+    const textBoxHeight = Math.max(1, wrappedData.rowHeight - (CELL_TEXT_PADDING * 2) - verticalSlack);
+
     elements.push({
       id: `cell-${item.id}-${col.key}-${Date.now()}`,
       type: 'text',
       text: wrappedText,
       x: currentX + CELL_TEXT_PADDING + firstColPadding,
-      y: y + CELL_TEXT_PADDING,
+      y: y + DATA_ROW_TEXT_TOP_INSET + verticalSlackTop,
       width: columnWidths[index] - (CELL_TEXT_PADDING * 2) - firstColPadding,
-      height: wrappedData.rowHeight - (CELL_TEXT_PADDING * 2),
+      height: textBoxHeight,
       fontSize: DEFAULT_TABLE_STYLE.dataFontSize,
       fontFamily: 'Inter',
       bold: false,
@@ -721,7 +744,7 @@ function addTotalsToPage(
   columnWidths: number[]
 ): void {
   const lastElement = page.elements[page.elements.length - 1];
-  const y = lastElement ? lastElement.y + lastElement.height + CELL_TEXT_PADDING * 2 : MARGIN_TOP;
+  const y = getPageTableOuterBottom(page) ?? (lastElement ? lastElement.y + lastElement.height + CELL_TEXT_PADDING * 2 : MARGIN_TOP);
 
   // Use the same groupId as other elements on this page
   const existingGroupId = lastElement?.groupId;
@@ -764,7 +787,7 @@ function createTotalsRow(
         type: 'text',
         text: value,
         x: currentX + CELL_TEXT_PADDING + firstColPadding,
-        y: y + CELL_TEXT_PADDING,
+        y: y + TOTAL_ROW_TEXT_TOP_INSET,
         width: columnWidths[index] - (CELL_TEXT_PADDING * 2) - firstColPadding,
         height: MIN_ROW_HEIGHT - (CELL_TEXT_PADDING * 2),
         fontSize: DEFAULT_TABLE_STYLE.totalsFontSize,
@@ -794,10 +817,77 @@ function createTotalsRow(
 function checkSpaceForTotals(page: Page, availableHeight: number): boolean {
   if (page.elements.length === 0) return true;
 
-  const lastElement = page.elements[page.elements.length - 1];
-  const lastElementBottom = lastElement.y + lastElement.height + CELL_TEXT_PADDING * 2;
+  const lastElementBottom = getPageTableOuterBottom(page) ?? (() => {
+    const lastElement = page.elements[page.elements.length - 1];
+    return lastElement.y + lastElement.height + CELL_TEXT_PADDING * 2;
+  })();
 
   return (lastElementBottom + MIN_ROW_HEIGHT) < availableHeight;
+}
+
+function getPageTableOuterBottom(page: Page): number | null {
+  let bottom: number | null = null;
+
+  for (const element of page.elements) {
+    if (element.type !== 'text') continue;
+    const rowBottom = estimateTableRowOuterBottom(element);
+    if (rowBottom == null) continue;
+    bottom = bottom == null ? rowBottom : Math.max(bottom, rowBottom);
+  }
+
+  return bottom;
+}
+
+function estimateTableRowOuterBottom(element: TextElement): number | null {
+  const rowKind = getTableRowKindFromElementId(element.id);
+  if (!rowKind) return null;
+
+  const lineCount = Math.max(1, (element.text?.split('\n').length ?? 1));
+  const lh = typeof element.lineHeight === 'number' ? element.lineHeight : LINE_HEIGHT;
+  const contentHeight = lineCount * element.fontSize * lh;
+  const baseRowHeight = contentHeight + (CELL_TEXT_PADDING * 2);
+
+  let minRowHeight = MIN_ROW_HEIGHT;
+  let renderSafety = 0;
+  let topInset = 0;
+  let topSlackPx = 0;
+
+  if (rowKind === 'header') {
+    minRowHeight = MIN_HEADER_ROW_HEIGHT;
+    renderSafety = HEADER_ROW_RENDER_SAFETY;
+    topInset = HEADER_ROW_TEXT_TOP_INSET;
+    topSlackPx = HEADER_TOP_SLACK_PX;
+  } else if (rowKind === 'data') {
+    minRowHeight = MIN_ROW_HEIGHT;
+    renderSafety = TABLE_ROW_RENDER_SAFETY;
+    topInset = DATA_ROW_TEXT_TOP_INSET;
+    topSlackPx = TABLE_TOP_SLACK_PX;
+  } else if (rowKind === 'category') {
+    minRowHeight = MIN_ROW_HEIGHT;
+    renderSafety = 0;
+    topInset = CATEGORY_ROW_TEXT_TOP_INSET;
+    topSlackPx = 0;
+  } else if (rowKind === 'total') {
+    minRowHeight = MIN_ROW_HEIGHT;
+    renderSafety = 0;
+    topInset = TOTAL_ROW_TEXT_TOP_INSET;
+    topSlackPx = 0;
+  }
+
+  const rowHeight = Math.max(baseRowHeight + renderSafety, minRowHeight);
+  const verticalSlack = Math.max(0, rowHeight - baseRowHeight);
+  const topSlack = getTopSlackOffset(verticalSlack, topSlackPx);
+  const rowTop = element.y - topInset - topSlack;
+
+  return rowTop + rowHeight;
+}
+
+function getTableRowKindFromElementId(id: string): 'header' | 'data' | 'category' | 'total' | null {
+  if (id.startsWith('header-')) return 'header';
+  if (id.startsWith('cell-')) return 'data';
+  if (id.startsWith('category-header-')) return 'category';
+  if (id.startsWith('total-')) return 'total';
+  return null;
 }
 
 /**
@@ -828,6 +918,13 @@ function createPrintHeader(title: string, visible: boolean = true): HeaderFooter
     backgroundColor: '#ffffff',
     visible,
   };
+}
+
+function getTopSlackOffset(verticalSlack: number, topSlackPx: number): number {
+  if (!Number.isFinite(verticalSlack) || verticalSlack <= 0) return 0;
+  // Integer pixels reduce rasterized text blur in html2canvas/jsPDF output.
+  const topSlack = Math.max(0, Math.floor(topSlackPx));
+  return Math.max(0, Math.min(verticalSlack, topSlack));
 }
 
 /**

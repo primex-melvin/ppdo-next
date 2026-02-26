@@ -16,7 +16,7 @@ interface PageOrientationTabProps {
 export function PageOrientationTab({
   onSelectOrientation,
   onBack,
-  defaultOrientation = 'portrait',
+  defaultOrientation = 'landscape',
 }: PageOrientationTabProps) {
   const [selectedOrientation, setSelectedOrientation] = useState<'portrait' | 'landscape'>(defaultOrientation);
 
