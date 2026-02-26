@@ -2,7 +2,6 @@
 
 "use client";
 
-import { useState } from "react";
 import {
   Trash2,
   FileSpreadsheet,
@@ -55,6 +54,7 @@ interface AgencyTableToolbarProps {
   // Actions
   onAdd?: () => void;
   onOpenTrash?: () => void;
+  onBulkPermanentDelete?: () => void;
   onExportCSV: () => void;
   onShare?: () => void;
   onFullscreen?: () => void;
@@ -146,6 +146,7 @@ export function AgencyTableToolbar({
   onClearSelection,
   onAdd,
   onOpenTrash,
+  onBulkPermanentDelete,
   onExportCSV,
   onShare,
   onFullscreen,
@@ -169,6 +170,20 @@ export function AgencyTableToolbar({
                 Clear
               </button>
             </div>
+          )}
+
+          {selectedCount > 0 && onBulkPermanentDelete && (
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              onClick={onBulkPermanentDelete}
+              className="gap-2"
+              title="Permanently delete selected agencies"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Permanent Delete</span>
+            </Button>
           )}
 
           {/* Collapsible toolbar actions */}
@@ -240,6 +255,15 @@ export function AgencyTableToolbar({
                       <FileSpreadsheet className="w-4 h-4 mr-2" />
                       Export CSV
                     </DropdownMenuItem>
+                    {selectedCount > 0 && onBulkPermanentDelete && (
+                      <DropdownMenuItem
+                        onClick={onBulkPermanentDelete}
+                        className="text-red-600 dark:text-red-400"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Permanent Delete Selected
+                      </DropdownMenuItem>
+                    )}
                     {isAdmin && onShare && (
                       <DropdownMenuItem onClick={onShare}>
                         <Share2 className="w-4 h-4 mr-2" />

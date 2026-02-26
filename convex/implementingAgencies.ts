@@ -1454,3 +1454,683 @@ export const deleteWithCascade = mutation({
     };
   },
 });
+
+const BULK_DELETE_FALLBACK_CODE = "BLANK";
+const BULK_DELETE_FALLBACK_NAME = "BLANK";
+
+type BulkDeleteMode = "reassign_to_blank" | "delete_all";
+
+const LINKED_AGENCY_TABLES = [
+  {
+    key: "projects",
+    label: "Projects (11 Plans)",
+    tableName: "projects",
+    indexName: "implementingOffice",
+    indexField: "implementingOffice",
+    primaryNameFields: ["particulars", "projectTitle", "projectName"],
+    allocatedField: "totalBudgetAllocated",
+    utilizedField: "totalBudgetUtilized",
+    obligatedField: "obligatedBudget",
+    secondaryField: "implementingOffice",
+    entityType: "projectItem",
+    supportsDepartmentId: true,
+  },
+  {
+    key: "twentyPercentDF",
+    label: "20% DF (Main Records)",
+    tableName: "twentyPercentDF",
+    indexName: "implementingOffice",
+    indexField: "implementingOffice",
+    primaryNameFields: ["particulars", "projectTitle", "projectName"],
+    allocatedField: "totalBudgetAllocated",
+    utilizedField: "totalBudgetUtilized",
+    obligatedField: "obligatedBudget",
+    secondaryField: "implementingOffice",
+    entityType: "twentyPercentDF",
+    supportsDepartmentId: true,
+  },
+  {
+    key: "trustFunds",
+    label: "Trust Funds",
+    tableName: "trustFunds",
+    indexName: "officeInCharge",
+    indexField: "officeInCharge",
+    primaryNameFields: ["projectTitle", "particulars", "projectName"],
+    allocatedField: "received",
+    utilizedField: "utilized",
+    obligatedField: "obligatedPR",
+    secondaryField: "officeInCharge",
+    entityType: "trustFund",
+    supportsDepartmentId: true,
+  },
+  {
+    key: "specialHealthFunds",
+    label: "Special Health Funds",
+    tableName: "specialHealthFunds",
+    indexName: "officeInCharge",
+    indexField: "officeInCharge",
+    primaryNameFields: ["projectTitle", "particulars", "projectName"],
+    allocatedField: "received",
+    utilizedField: "utilized",
+    obligatedField: "obligatedPR",
+    secondaryField: "officeInCharge",
+    entityType: "specialHealthFund",
+    supportsDepartmentId: true,
+  },
+  {
+    key: "specialEducationFunds",
+    label: "Special Education Funds",
+    tableName: "specialEducationFunds",
+    indexName: "officeInCharge",
+    indexField: "officeInCharge",
+    primaryNameFields: ["projectTitle", "particulars", "projectName"],
+    allocatedField: "received",
+    utilizedField: "utilized",
+    obligatedField: "obligatedPR",
+    secondaryField: "officeInCharge",
+    entityType: "specialEducationFund",
+    supportsDepartmentId: true,
+  },
+  {
+    key: "govtProjectBreakdowns",
+    label: "Govt Project Breakdowns",
+    tableName: "govtProjectBreakdowns",
+    indexName: "implementingOffice",
+    indexField: "implementingOffice",
+    primaryNameFields: ["projectName", "projectTitle", "particulars"],
+    allocatedField: "allocatedBudget",
+    utilizedField: "budgetUtilized",
+    obligatedField: "obligatedBudget",
+    secondaryField: "implementingOffice",
+    entityType: "projectBreakdown",
+    supportsDepartmentId: false,
+  },
+  {
+    key: "twentyPercentDFBreakdowns",
+    label: "20% DF Breakdowns",
+    tableName: "twentyPercentDFBreakdowns",
+    indexName: "implementingOffice",
+    indexField: "implementingOffice",
+    primaryNameFields: ["projectName", "projectTitle", "particulars"],
+    allocatedField: "allocatedBudget",
+    utilizedField: "budgetUtilized",
+    obligatedField: "obligatedBudget",
+    secondaryField: "implementingOffice",
+    entityType: "twentyPercentDFItem",
+    supportsDepartmentId: false,
+  },
+  {
+    key: "trustFundBreakdowns",
+    label: "Trust Fund Breakdowns",
+    tableName: "trustFundBreakdowns",
+    indexName: "implementingOffice",
+    indexField: "implementingOffice",
+    primaryNameFields: ["projectName", "projectTitle", "particulars"],
+    allocatedField: "allocatedBudget",
+    utilizedField: "budgetUtilized",
+    obligatedField: "obligatedBudget",
+    secondaryField: "implementingOffice",
+    entityType: "trustFundItem",
+    supportsDepartmentId: false,
+  },
+  {
+    key: "specialHealthFundBreakdowns",
+    label: "Special Health Breakdowns",
+    tableName: "specialHealthFundBreakdowns",
+    indexName: "implementingOffice",
+    indexField: "implementingOffice",
+    primaryNameFields: ["projectName", "projectTitle", "particulars"],
+    allocatedField: "allocatedBudget",
+    utilizedField: "budgetUtilized",
+    obligatedField: "obligatedBudget",
+    secondaryField: "implementingOffice",
+    entityType: "specialHealthFundItem",
+    supportsDepartmentId: false,
+  },
+  {
+    key: "specialEducationFundBreakdowns",
+    label: "Special Education Breakdowns",
+    tableName: "specialEducationFundBreakdowns",
+    indexName: "implementingOffice",
+    indexField: "implementingOffice",
+    primaryNameFields: ["projectName", "projectTitle", "particulars"],
+    allocatedField: "allocatedBudget",
+    utilizedField: "budgetUtilized",
+    obligatedField: "obligatedBudget",
+    secondaryField: "implementingOffice",
+    entityType: "specialEducationFundItem",
+    supportsDepartmentId: false,
+  },
+] as const;
+
+function sumField(items: any[], field: string): number {
+  return items.reduce((sum, item) => sum + (Number(item?.[field]) || 0), 0);
+}
+
+function getPrimaryText(record: any, candidateFields: readonly string[]): string {
+  for (const field of candidateFields) {
+    const value = record?.[field];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return "Unnamed Record";
+}
+
+function dedupeAgencyIds(ids: any[]): any[] {
+  return [...new Set(ids.map((id) => String(id)))];
+}
+
+async function getAgencyByStringId(ctx: any, idString: string) {
+  const agencies = await ctx.db.query("implementingAgencies").collect();
+  return agencies.find((agency: any) => String(agency._id) === idString) ?? null;
+}
+
+async function fetchLinkedRecordsForAgencyCode(ctx: any, code: string) {
+  const entries = await Promise.all(
+    LINKED_AGENCY_TABLES.map(async (config) => {
+      const items = await (ctx.db as any)
+        .query(config.tableName)
+        .withIndex(config.indexName, (q: any) => q.eq(config.indexField, code))
+        .collect();
+      return [config.key, items] as const;
+    })
+  );
+
+  return Object.fromEntries(entries) as Record<string, any[]>;
+}
+
+function summarizeLinkedRecords(linkedRecords: Record<string, any[]>) {
+  const byTable = LINKED_AGENCY_TABLES.map((config) => {
+    const items = linkedRecords[config.key] ?? [];
+    const activeItems = items.filter((item) => !item?.isDeleted);
+
+    const summary = {
+      key: config.key,
+      label: config.label,
+      totalCount: items.length,
+      activeCount: activeItems.length,
+      trashedCount: Math.max(0, items.length - activeItems.length),
+      budgetAllocated: sumField(activeItems, config.allocatedField),
+      budgetUtilized: sumField(activeItems, config.utilizedField),
+      budgetObligated: sumField(activeItems, config.obligatedField),
+      previewItems: activeItems.slice(0, 50).map((item) => ({
+        id: String(item._id),
+        name: getPrimaryText(item, config.primaryNameFields),
+        tableKey: config.key,
+        tableLabel: config.label,
+        status: typeof item.status === "string" ? item.status : undefined,
+        isDeleted: !!item.isDeleted,
+        budgetAllocated: Number(item?.[config.allocatedField]) || 0,
+        budgetUtilized: Number(item?.[config.utilizedField]) || 0,
+        budgetObligated: Number(item?.[config.obligatedField]) || 0,
+      })),
+    };
+
+    return summary;
+  }).filter((entry) => entry.totalCount > 0);
+
+  const totals = byTable.reduce(
+    (acc, entry) => {
+      acc.totalCount += entry.totalCount;
+      acc.activeCount += entry.activeCount;
+      acc.trashedCount += entry.trashedCount;
+      acc.budgetAllocated += entry.budgetAllocated;
+      acc.budgetUtilized += entry.budgetUtilized;
+      acc.budgetObligated += entry.budgetObligated;
+      return acc;
+    },
+    {
+      totalCount: 0,
+      activeCount: 0,
+      trashedCount: 0,
+      budgetAllocated: 0,
+      budgetUtilized: 0,
+      budgetObligated: 0,
+    }
+  );
+
+  return { byTable, totals };
+}
+
+async function ensureFallbackBlankAgency(ctx: any, userId: any) {
+  const existing = await ctx.db
+    .query("implementingAgencies")
+    .withIndex("code", (q: any) => q.eq("code", BULK_DELETE_FALLBACK_CODE))
+    .first();
+
+  if (existing) {
+    if (!existing.isActive) {
+      await ctx.db.patch(existing._id, {
+        isActive: true,
+        updatedAt: Date.now(),
+        updatedBy: userId,
+      });
+    }
+    return { agency: existing, created: false };
+  }
+
+  const now = Date.now();
+  const agencyId = await ctx.db.insert("implementingAgencies", {
+    code: BULK_DELETE_FALLBACK_CODE,
+    fullName: BULK_DELETE_FALLBACK_NAME,
+    type: "internal",
+    isActive: true,
+    isSystemDefault: true,
+    projectUsageCount: 0,
+    breakdownUsageCount: 0,
+    notes: "Auto-created fallback agency for bulk delete reassignment safety.",
+    createdBy: userId,
+    createdAt: now,
+    updatedAt: now,
+    updatedBy: userId,
+  });
+
+  await indexEntity(ctx, {
+    entityType: "agency",
+    entityId: agencyId,
+    primaryText: BULK_DELETE_FALLBACK_NAME,
+    secondaryText: BULK_DELETE_FALLBACK_CODE,
+    status: "active",
+    isDeleted: false,
+  });
+
+  const agency = await ctx.db.get(agencyId);
+  return { agency, created: true };
+}
+
+async function refreshLinkedRecordSearchIndex(ctx: any, config: (typeof LINKED_AGENCY_TABLES)[number], record: any) {
+  if (!config.entityType) return;
+
+  await indexEntity(ctx, {
+    entityType: config.entityType as any,
+    entityId: record._id,
+    primaryText: getPrimaryText(record, config.primaryNameFields),
+    secondaryText: String(record?.[config.secondaryField] ?? ""),
+    status: typeof record?.status === "string" ? record.status : undefined,
+    isDeleted: !!record?.isDeleted,
+  });
+}
+
+async function reassignLinkedRecordsToFallback(
+  ctx: any,
+  linkedRecords: Record<string, any[]>,
+  fallbackAgency: any,
+  userId: any
+) {
+  const now = Date.now();
+  const fallbackCode = fallbackAgency.code;
+
+  for (const config of LINKED_AGENCY_TABLES) {
+    const records = linkedRecords[config.key] ?? [];
+    for (const record of records) {
+      const patch: Record<string, any> = {
+        [config.secondaryField]: fallbackCode,
+        updatedAt: now,
+        updatedBy: userId,
+      };
+
+      if (config.supportsDepartmentId) {
+        patch.departmentId = fallbackAgency._id;
+      }
+
+      await ctx.db.patch(record._id, patch);
+
+      const patchedRecord = {
+        ...record,
+        ...patch,
+      };
+      await refreshLinkedRecordSearchIndex(ctx, config, patchedRecord);
+    }
+  }
+}
+
+async function permanentlyDeleteLinkedRecords(ctx: any, linkedRecords: Record<string, any[]>) {
+  for (const config of LINKED_AGENCY_TABLES) {
+    const records = linkedRecords[config.key] ?? [];
+    for (const record of records) {
+      await ctx.db.delete(record._id);
+      await removeFromIndex(ctx, { entityId: record._id });
+    }
+  }
+}
+
+async function recalculateUsageCountsFullInternal(ctx: any) {
+  const allAgencies = await ctx.db.query("implementingAgencies").collect();
+  const usageCounts: Record<string, { project: number; breakdown: number }> = {};
+
+  for (const agency of allAgencies) {
+    usageCounts[agency.code] = { project: 0, breakdown: 0 };
+  }
+
+  const projects = await ctx.db
+    .query("projects")
+    .filter((q: any) => q.neq(q.field("isDeleted"), true))
+    .collect();
+
+  for (const project of projects) {
+    if (usageCounts[project.implementingOffice]) {
+      usageCounts[project.implementingOffice].project += 1;
+    }
+  }
+
+  const breakdownTableNames = [
+    "govtProjectBreakdowns",
+    "twentyPercentDFBreakdowns",
+    "trustFundBreakdowns",
+    "specialHealthFundBreakdowns",
+    "specialEducationFundBreakdowns",
+  ];
+
+  for (const tableName of breakdownTableNames) {
+    const rows = await (ctx.db as any)
+      .query(tableName)
+      .filter((q: any) => q.neq(q.field("isDeleted"), true))
+      .collect();
+    for (const row of rows) {
+      if (usageCounts[row.implementingOffice]) {
+        usageCounts[row.implementingOffice].breakdown += 1;
+      }
+    }
+  }
+
+  const now = Date.now();
+  for (const agency of allAgencies) {
+    const counts = usageCounts[agency.code] || { project: 0, breakdown: 0 };
+    await ctx.db.patch(agency._id, {
+      projectUsageCount: counts.project,
+      breakdownUsageCount: counts.breakdown,
+      updatedAt: now,
+    });
+  }
+}
+
+async function buildAgencyBulkDeletePreview(ctx: any, agency: any) {
+  const linkedRecords = await fetchLinkedRecordsForAgencyCode(ctx, agency.code);
+  const summary = summarizeLinkedRecords(linkedRecords);
+
+  return {
+    agency: {
+      id: agency._id,
+      code: agency.code,
+      name: agency.fullName,
+      isSystemDefault: !!agency.isSystemDefault,
+    },
+    linkedRecords,
+    summary,
+  };
+}
+
+/**
+ * Bulk preview for permanent delete (table-only bulk action)
+ */
+export const getBulkDeletePreview = query({
+  args: {
+    ids: v.array(v.id("implementingAgencies")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+
+    const uniqueIdStrings = dedupeAgencyIds(args.ids as any[]);
+    const fallbackAgency = await ctx.db
+      .query("implementingAgencies")
+      .withIndex("code", (q) => q.eq("code", BULK_DELETE_FALLBACK_CODE))
+      .first();
+
+    const blockedAgencies: Array<{ id: string; code?: string; name?: string; reason: string }> = [];
+    const previews: any[] = [];
+
+    for (const idString of uniqueIdStrings) {
+      const agency = await getAgencyByStringId(ctx, idString);
+      if (!agency) {
+        blockedAgencies.push({ id: idString, reason: "Agency not found" });
+        continue;
+      }
+
+      if (agency.code === BULK_DELETE_FALLBACK_CODE) {
+        blockedAgencies.push({
+          id: String(agency._id),
+          code: agency.code,
+          name: agency.fullName,
+          reason: 'Fallback agency "BLANK" cannot be deleted',
+        });
+        continue;
+      }
+
+      if (agency.isSystemDefault) {
+        blockedAgencies.push({
+          id: String(agency._id),
+          code: agency.code,
+          name: agency.fullName,
+          reason: "System default agency cannot be deleted",
+        });
+        continue;
+      }
+
+      previews.push(await buildAgencyBulkDeletePreview(ctx, agency));
+    }
+
+    const byTableMap = new Map<string, any>();
+    const totals = {
+      totalCount: 0,
+      activeCount: 0,
+      trashedCount: 0,
+      budgetAllocated: 0,
+      budgetUtilized: 0,
+      budgetObligated: 0,
+    };
+
+    for (const preview of previews) {
+      totals.totalCount += preview.summary.totals.totalCount;
+      totals.activeCount += preview.summary.totals.activeCount;
+      totals.trashedCount += preview.summary.totals.trashedCount;
+      totals.budgetAllocated += preview.summary.totals.budgetAllocated;
+      totals.budgetUtilized += preview.summary.totals.budgetUtilized;
+      totals.budgetObligated += preview.summary.totals.budgetObligated;
+
+      for (const tableSummary of preview.summary.byTable) {
+        const existing = byTableMap.get(tableSummary.key);
+        if (existing) {
+          existing.totalCount += tableSummary.totalCount;
+          existing.activeCount += tableSummary.activeCount;
+          existing.trashedCount += tableSummary.trashedCount;
+          existing.budgetAllocated += tableSummary.budgetAllocated;
+          existing.budgetUtilized += tableSummary.budgetUtilized;
+          existing.budgetObligated += tableSummary.budgetObligated;
+        } else {
+          byTableMap.set(tableSummary.key, { ...tableSummary, previewItems: undefined });
+        }
+      }
+    }
+
+    return {
+      selectionSummary: {
+        selectedCount: uniqueIdStrings.length,
+        deletableCount: previews.length,
+        blockedCount: blockedAgencies.length,
+      },
+      question: "How do you want to handle linked records for the selected agencies?",
+      options: [
+        {
+          value: "reassign_to_blank",
+          label: "Reassign linked records to BLANK (Recommended)",
+          description: 'Preserves linked records and moves them to fallback agency "BLANK".',
+        },
+        {
+          value: "delete_all",
+          label: "Permanently delete linked records",
+          description:
+            "Deletes linked records and will affect allocated, utilized, and obligated budgets.",
+        },
+      ],
+      budgetImpactNotice:
+        "Budget allocated, utilized, and obligated budgets will be affected if linked records are permanently deleted.",
+      fallbackAgency: {
+        code: BULK_DELETE_FALLBACK_CODE,
+        exists: !!fallbackAgency,
+        willAutoCreate: !fallbackAgency,
+        id: fallbackAgency?._id ?? null,
+        name: fallbackAgency?.fullName ?? BULK_DELETE_FALLBACK_NAME,
+      },
+      totals,
+      byTable: Array.from(byTableMap.values()).sort((a, b) => b.totalCount - a.totalCount),
+      byAgency: previews.map((preview) => ({
+        agency: preview.agency,
+        totals: preview.summary.totals,
+        byTable: preview.summary.byTable,
+        previewItems: preview.summary.byTable.flatMap((entry: any) =>
+          entry.previewItems.map((item: any) => ({ ...item, agencyCode: preview.agency.code }))
+        ),
+      })),
+      blockedAgencies,
+    };
+  },
+});
+
+/**
+ * Bulk permanent delete for agencies (with mode selection for linked records)
+ */
+export const bulkDeleteWithMode = mutation({
+  args: {
+    ids: v.array(v.id("implementingAgencies")),
+    pin: v.string(),
+    mode: v.union(v.literal("reassign_to_blank"), v.literal("delete_all")),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const hashedPin = hashPin(args.pin);
+    const storedPin = user.deleteProtectionPin || hashPin(DEFAULT_PIN);
+    if (hashedPin !== storedPin) {
+      throw new Error("Invalid PIN code");
+    }
+
+    const uniqueIdStrings = dedupeAgencyIds(args.ids as any[]);
+    if (uniqueIdStrings.length === 0) {
+      throw new Error("No agencies selected");
+    }
+
+    let fallbackResult:
+      | { agency: any; created: boolean }
+      | null = null;
+
+    if (args.mode === "reassign_to_blank") {
+      fallbackResult = await ensureFallbackBlankAgency(ctx, userId);
+    }
+
+    const blockedAgencies: Array<{ id: string; code?: string; name?: string; reason: string }> = [];
+    const deletedAgencies: Array<{ id: string; code: string; name: string }> = [];
+    const totals = {
+      totalCount: 0,
+      activeCount: 0,
+      trashedCount: 0,
+      budgetAllocated: 0,
+      budgetUtilized: 0,
+      budgetObligated: 0,
+    };
+
+    const affectedByTable = new Map<string, any>();
+
+    for (const idString of uniqueIdStrings) {
+      const agency = await getAgencyByStringId(ctx, idString);
+      if (!agency) {
+        blockedAgencies.push({ id: idString, reason: "Agency not found" });
+        continue;
+      }
+
+      if (agency.code === BULK_DELETE_FALLBACK_CODE) {
+        blockedAgencies.push({
+          id: String(agency._id),
+          code: agency.code,
+          name: agency.fullName,
+          reason: 'Fallback agency "BLANK" cannot be deleted',
+        });
+        continue;
+      }
+
+      if (agency.isSystemDefault) {
+        blockedAgencies.push({
+          id: String(agency._id),
+          code: agency.code,
+          name: agency.fullName,
+          reason: "System default agency cannot be deleted",
+        });
+        continue;
+      }
+
+      const preview = await buildAgencyBulkDeletePreview(ctx, agency);
+      totals.totalCount += preview.summary.totals.totalCount;
+      totals.activeCount += preview.summary.totals.activeCount;
+      totals.trashedCount += preview.summary.totals.trashedCount;
+      totals.budgetAllocated += preview.summary.totals.budgetAllocated;
+      totals.budgetUtilized += preview.summary.totals.budgetUtilized;
+      totals.budgetObligated += preview.summary.totals.budgetObligated;
+
+      for (const tableSummary of preview.summary.byTable) {
+        const existing = affectedByTable.get(tableSummary.key);
+        if (existing) {
+          existing.totalCount += tableSummary.totalCount;
+          existing.activeCount += tableSummary.activeCount;
+          existing.trashedCount += tableSummary.trashedCount;
+          existing.budgetAllocated += tableSummary.budgetAllocated;
+          existing.budgetUtilized += tableSummary.budgetUtilized;
+          existing.budgetObligated += tableSummary.budgetObligated;
+        } else {
+          affectedByTable.set(tableSummary.key, {
+            key: tableSummary.key,
+            label: tableSummary.label,
+            totalCount: tableSummary.totalCount,
+            activeCount: tableSummary.activeCount,
+            trashedCount: tableSummary.trashedCount,
+            budgetAllocated: tableSummary.budgetAllocated,
+            budgetUtilized: tableSummary.budgetUtilized,
+            budgetObligated: tableSummary.budgetObligated,
+          });
+        }
+      }
+
+      if (args.mode === "reassign_to_blank") {
+        await reassignLinkedRecordsToFallback(ctx, preview.linkedRecords, fallbackResult!.agency, userId);
+      } else {
+        await permanentlyDeleteLinkedRecords(ctx, preview.linkedRecords);
+      }
+
+      await ctx.db.delete(agency._id);
+      await removeFromIndex(ctx, { entityId: agency._id });
+      deletedAgencies.push({
+        id: String(agency._id),
+        code: agency.code,
+        name: agency.fullName,
+      });
+    }
+
+    if (args.mode === "reassign_to_blank") {
+      await recalculateUsageCountsFullInternal(ctx);
+    }
+
+    return {
+      success: true,
+      mode: args.mode as BulkDeleteMode,
+      deletedAgencyCount: deletedAgencies.length,
+      deletedAgencies,
+      blockedAgencies,
+      fallbackAgency:
+        args.mode === "reassign_to_blank"
+          ? {
+              code: fallbackResult!.agency.code,
+              name: fallbackResult!.agency.fullName,
+              id: fallbackResult!.agency._id,
+              created: fallbackResult!.created,
+            }
+          : null,
+      affectedTotals: totals,
+      affectedByTable: Array.from(affectedByTable.values()).sort((a, b) => b.totalCount - a.totalCount),
+    };
+  },
+});

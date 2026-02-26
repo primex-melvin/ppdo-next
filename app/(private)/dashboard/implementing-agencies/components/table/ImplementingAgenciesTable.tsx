@@ -4,7 +4,7 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { AgencyTableToolbar } from "./AgencyTableToolbar";
 import { AgencyTableHeader } from "./AgencyTableHeader";
 import { AgencyTableRow } from "./AgencyTableRow";
 import { EmptyState } from "./EmptyState";
+import { BulkDeleteAgenciesModal } from "../modals/BulkDeleteAgenciesModal";
 
 interface ImplementingAgenciesTableProps {
   agencies: Agency[];
@@ -39,6 +40,7 @@ export function ImplementingAgenciesTable({
 
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const {
     // Search
@@ -160,97 +162,117 @@ export function ImplementingAgenciesTable({
     setIsFullscreen((prev) => !prev);
   }, []);
 
+  const handleOpenBulkPermanentDelete = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleteOpen(true);
+  }, [selectedIds]);
+
+  const handleBulkDeleteSuccess = useCallback(() => {
+    handleClearSelection();
+    setBulkDeleteOpen(false);
+  }, [handleClearSelection]);
+
   const containerClass = isFullscreen
     ? "fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-900"
     : "flex flex-col bg-white dark:bg-zinc-900 border rounded-lg overflow-hidden h-[calc(100vh-200px)] min-h-[500px]";
 
   return (
-    <div
-      className={containerClass}
-      style={!isFullscreen ? { borderColor: "rgb(228 228 231 / 1)" } : undefined}
-    >
-      {/* TOOLBAR */}
-      <AgencyTableToolbar
-        search={search}
-        setSearch={setSearch}
-        isSearchFocused={isSearchFocused}
-        setIsSearchFocused={setIsSearchFocused}
-        isSearchExpanded={isSearchExpanded}
-        sortOption={sortOption}
-        setSortOption={setSortOption}
-        columns={columns as any}
-        hiddenColumns={hiddenColumns}
-        onToggleColumn={handleToggleColumn}
-        onShowAllColumns={handleShowAllColumns}
-        onHideAllColumns={handleHideAllColumns}
-        selectedCount={selectedIds.size}
-        onClearSelection={handleClearSelection}
-        onAdd={onAdd}
-        onOpenTrash={onOpenTrash}
-        onExportCSV={handleExportCSV}
-        onFullscreen={handleFullscreen}
-        isAdmin={!!isAdmin}
-        accentColor={accentColorValue}
+    <>
+      <BulkDeleteAgenciesModal
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        agencyIds={Array.from(selectedIds) as Id<"implementingAgencies">[]}
+        onSuccess={handleBulkDeleteSuccess}
       />
 
-      {/* TABLE WRAPPER */}
-      <div className="flex-1 overflow-auto border-t border-zinc-200 dark:border-zinc-800">
-        <table
-          className="w-full"
-          style={{
-            borderCollapse: "collapse",
-            tableLayout: "fixed",
-            minWidth: "100%",
-          }}
-        >
-          {/* HEADER */}
-          <AgencyTableHeader
-            columns={visibleColumns as any}
-            canEditLayout={canEditLayout}
-            onDragStart={onDragStart}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            onStartResize={startResizeColumn}
-            isAllSelected={isAllSelected}
-            isIndeterminate={isIndeterminate}
-            onSelectAll={handleSelectAll}
-          />
+      <div
+        className={containerClass}
+        style={!isFullscreen ? { borderColor: "rgb(228 228 231 / 1)" } : undefined}
+      >
+        {/* TOOLBAR */}
+        <AgencyTableToolbar
+          search={search}
+          setSearch={setSearch}
+          isSearchFocused={isSearchFocused}
+          setIsSearchFocused={setIsSearchFocused}
+          isSearchExpanded={isSearchExpanded}
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          columns={columns as any}
+          hiddenColumns={hiddenColumns}
+          onToggleColumn={handleToggleColumn}
+          onShowAllColumns={handleShowAllColumns}
+          onHideAllColumns={handleHideAllColumns}
+          selectedCount={selectedIds.size}
+          onClearSelection={handleClearSelection}
+          onAdd={onAdd}
+          onOpenTrash={onOpenTrash}
+          onBulkPermanentDelete={handleOpenBulkPermanentDelete}
+          onExportCSV={handleExportCSV}
+          onFullscreen={handleFullscreen}
+          isAdmin={!!isAdmin}
+          accentColor={accentColorValue}
+        />
 
-          {/* BODY */}
-          {sortedAgencies.length === 0 ? (
-            <tbody>
-              <tr>
-                <td colSpan={visibleColumns.length + 3}>
-                  <EmptyState searchQuery={search} />
-                </td>
-              </tr>
-            </tbody>
-          ) : (
-            <tbody>
-              {sortedAgencies.map((agency, index) => {
-                const height = rowHeights[agency._id] ?? DEFAULT_ROW_HEIGHT;
+        {/* TABLE WRAPPER */}
+        <div className="flex-1 overflow-auto border-t border-zinc-200 dark:border-zinc-800">
+          <table
+            className="w-full"
+            style={{
+              borderCollapse: "collapse",
+              tableLayout: "fixed",
+              minWidth: "100%",
+            }}
+          >
+            {/* HEADER */}
+            <AgencyTableHeader
+              columns={visibleColumns as any}
+              canEditLayout={canEditLayout}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              onStartResize={startResizeColumn}
+              isAllSelected={isAllSelected}
+              isIndeterminate={isIndeterminate}
+              onSelectAll={handleSelectAll}
+            />
 
-                return (
-                  <AgencyTableRow
-                    key={agency._id}
-                    agency={agency}
-                    index={index}
-                    columns={visibleColumns as any}
-                    rowHeight={height}
-                    canEditLayout={canEditLayout}
-                    onRowClick={handleRowClick}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onStartRowResize={startResizeRow}
-                    isSelected={selectedIds.has(agency._id)}
-                    onSelectRow={handleSelectRow}
-                  />
-                );
-              })}
-            </tbody>
-          )}
-        </table>
+            {/* BODY */}
+            {sortedAgencies.length === 0 ? (
+              <tbody>
+                <tr>
+                  <td colSpan={visibleColumns.length + 3}>
+                    <EmptyState searchQuery={search} />
+                  </td>
+                </tr>
+              </tbody>
+            ) : (
+              <tbody>
+                {sortedAgencies.map((agency, index) => {
+                  const height = rowHeights[agency._id] ?? DEFAULT_ROW_HEIGHT;
+
+                  return (
+                    <AgencyTableRow
+                      key={agency._id}
+                      agency={agency}
+                      index={index}
+                      columns={visibleColumns as any}
+                      rowHeight={height}
+                      canEditLayout={canEditLayout}
+                      onRowClick={handleRowClick}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onStartRowResize={startResizeRow}
+                      isSelected={selectedIds.has(agency._id)}
+                      onSelectRow={handleSelectRow}
+                    />
+                  );
+                })}
+              </tbody>
+            )}
+          </table>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
