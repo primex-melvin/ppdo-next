@@ -22,7 +22,6 @@ interface ImplementingAgenciesTableProps {
   agencies: Agency[];
   onAdd?: () => void;
   onEdit?: (agency: Agency) => void;
-  onDelete?: (id: string) => void;
   onOpenTrash?: () => void;
 }
 
@@ -30,7 +29,6 @@ export function ImplementingAgenciesTable({
   agencies,
   onAdd,
   onEdit,
-  onDelete,
   onOpenTrash,
 }: ImplementingAgenciesTableProps) {
   const router = useRouter();
@@ -41,6 +39,7 @@ export function ImplementingAgenciesTable({
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [deleteModalAgencyIds, setDeleteModalAgencyIds] = useState<Id<"implementingAgencies">[]>([]);
 
   const {
     // Search
@@ -164,13 +163,27 @@ export function ImplementingAgenciesTable({
 
   const handleOpenBulkPermanentDelete = useCallback(() => {
     if (selectedIds.size === 0) return;
+    setDeleteModalAgencyIds(Array.from(selectedIds) as Id<"implementingAgencies">[]);
     setBulkDeleteOpen(true);
   }, [selectedIds]);
 
+  const handleOpenSinglePermanentDelete = useCallback((id: string) => {
+    setDeleteModalAgencyIds([id as Id<"implementingAgencies">]);
+    setBulkDeleteOpen(true);
+  }, []);
+
   const handleBulkDeleteSuccess = useCallback(() => {
     handleClearSelection();
+    setDeleteModalAgencyIds([]);
     setBulkDeleteOpen(false);
   }, [handleClearSelection]);
+
+  const handleDeleteModalOpenChange = useCallback((open: boolean) => {
+    setBulkDeleteOpen(open);
+    if (!open) {
+      setDeleteModalAgencyIds([]);
+    }
+  }, []);
 
   const containerClass = isFullscreen
     ? "fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-900"
@@ -180,8 +193,8 @@ export function ImplementingAgenciesTable({
     <>
       <BulkDeleteAgenciesModal
         open={bulkDeleteOpen}
-        onOpenChange={setBulkDeleteOpen}
-        agencyIds={Array.from(selectedIds) as Id<"implementingAgencies">[]}
+        onOpenChange={handleDeleteModalOpenChange}
+        agencyIds={deleteModalAgencyIds}
         onSuccess={handleBulkDeleteSuccess}
       />
 
@@ -261,7 +274,7 @@ export function ImplementingAgenciesTable({
                       canEditLayout={canEditLayout}
                       onRowClick={handleRowClick}
                       onEdit={onEdit}
-                      onDelete={onDelete}
+                      onDelete={handleOpenSinglePermanentDelete}
                       onStartRowResize={startResizeRow}
                       isSelected={selectedIds.has(agency._id)}
                       onSelectRow={handleSelectRow}

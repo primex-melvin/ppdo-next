@@ -1944,6 +1944,38 @@ export const getBulkDeletePreview = query({
       }
     }
 
+    const byTable = Array.from(byTableMap.values()).sort((a, b) => b.totalCount - a.totalCount);
+    const byAgency = previews.map((preview) => ({
+      agency: preview.agency,
+      totals: preview.summary.totals,
+      byTable: preview.summary.byTable,
+      previewItems: preview.summary.byTable.flatMap((entry: any) =>
+        entry.previewItems.map((item: any) => ({ ...item, agencyCode: preview.agency.code }))
+      ),
+    }));
+
+    const trueImpactByTable = byTable
+      .filter((entry) => (entry.activeCount || 0) > 0)
+      .sort((a, b) => b.activeCount - a.activeCount);
+
+    const trueImpactByAgency = byAgency
+      .map((entry) => ({
+        ...entry,
+        byTable: (entry.byTable || []).filter((table: any) => (table.activeCount || 0) > 0),
+      }))
+      .filter((entry) => (entry.totals?.activeCount || 0) > 0);
+
+    const trueImpactTotals = {
+      activeCount: totals.activeCount,
+      budgetAllocated: totals.budgetAllocated,
+      budgetUtilized: totals.budgetUtilized,
+      budgetObligated: totals.budgetObligated,
+      tableCount: trueImpactByTable.length,
+      agencyCount: trueImpactByAgency.length,
+    };
+
+    const hasTrueImpact = trueImpactTotals.activeCount > 0;
+
     return {
       selectionSummary: {
         selectedCount: uniqueIdStrings.length,
@@ -1973,16 +2005,13 @@ export const getBulkDeletePreview = query({
         id: fallbackAgency?._id ?? null,
         name: fallbackAgency?.fullName ?? BULK_DELETE_FALLBACK_NAME,
       },
+      hasTrueImpact,
+      trueImpactTotals,
       totals,
-      byTable: Array.from(byTableMap.values()).sort((a, b) => b.totalCount - a.totalCount),
-      byAgency: previews.map((preview) => ({
-        agency: preview.agency,
-        totals: preview.summary.totals,
-        byTable: preview.summary.byTable,
-        previewItems: preview.summary.byTable.flatMap((entry: any) =>
-          entry.previewItems.map((item: any) => ({ ...item, agencyCode: preview.agency.code }))
-        ),
-      })),
+      byTable,
+      trueImpactByTable,
+      byAgency,
+      trueImpactByAgency,
       blockedAgencies,
     };
   },

@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from "react";
 import {
   Trash2,
   FileSpreadsheet,
@@ -70,6 +71,7 @@ function AgencySortDropdown({
   value: AgencySortOption;
   onChange: (v: AgencySortOption) => void;
 }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const currentOption = AGENCY_SORT_OPTIONS.find((opt) => opt.value === value);
   const displayLabel = currentOption?.label || "Sort By";
 
@@ -81,10 +83,10 @@ function AgencySortDropdown({
 
   return (
     <TooltipProvider>
-      <Tooltip>
+      <Tooltip open={isDropdownOpen ? false : undefined}>
         <TooltipTrigger asChild>
           <div>
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={setIsDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <ArrowUpDown className="w-4 h-4" />

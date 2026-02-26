@@ -259,6 +259,10 @@ export function AgencyTableRow({
   const { handleMouseEnter, handleMouseMove, handleMouseLeave, tooltipContent } = useAgencyTooltip(agency);
   const [isClicking, setIsClicking] = useState(false);
 
+  const isTooltipSuppressedTarget = useCallback((target: EventTarget | null) => {
+    return target instanceof HTMLElement && !!target.closest("[data-no-row-tooltip='true']");
+  }, []);
+
   const handleRowClick = (e: React.MouseEvent) => {
     setIsClicking(true);
     // Small delay to show the animation before navigation
@@ -266,6 +270,22 @@ export function AgencyTableRow({
       onRowClick(agency, e);
     }, 150);
   };
+
+  const handleRowMouseEnter = useCallback((e: React.MouseEvent) => {
+    if (isTooltipSuppressedTarget(e.target)) {
+      handleMouseLeave();
+      return;
+    }
+    handleMouseEnter();
+  }, [handleMouseEnter, handleMouseLeave, isTooltipSuppressedTarget]);
+
+  const handleRowMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isTooltipSuppressedTarget(e.target)) {
+      handleMouseLeave();
+      return;
+    }
+    handleMouseMove(e);
+  }, [handleMouseMove, handleMouseLeave, isTooltipSuppressedTarget]);
 
   // Table row content
   const rowContent = (
@@ -279,12 +299,13 @@ export function AgencyTableRow({
         }`}
       style={{ height: rowHeight }}
       onClick={handleRowClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
+      onMouseEnter={handleRowMouseEnter}
+      onMouseMove={handleRowMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {/* Checkbox */}
       <td
+        data-no-row-tooltip="true"
         className="text-center px-2"
         style={{ border: "1px solid rgb(228 228 231 / 1)" }}
         onClick={(e) => e.stopPropagation()}

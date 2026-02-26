@@ -2,14 +2,10 @@
 
 import { useState, useCallback } from "react"
 import { Building2, TrendingUp, FileText, Users, Loader2, Eye, EyeOff, LayoutGrid, List } from "lucide-react"
-import { ThemeToggle } from "@/components/shared"
-import { useQuery, useMutation } from "convex/react"
+import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
-import { Id } from "@/convex/_generated/dataModel"
-import { toast } from "sonner"
 import { ImplementingAgenciesTable } from "./components/table"
 import { Agency } from "./types/agency-table.types"
-import { DeleteAgencyModal } from "./components/modals/DeleteAgencyModal"
 import { EditAgencyModal } from "./components/modals/EditAgencyModal"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -28,10 +24,6 @@ export function formatCurrency(amount: number): string {
 export default function ImplementingAgenciesPage() {
   const implementingAgencies = useQuery(api.implementingAgencies.list, { includeInactive: true })
 
-  // Delete Modal State
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [selectedAgencyId, setSelectedAgencyId] = useState<Id<"implementingAgencies"> | null>(null)
-
   // Edit Modal State
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null)
@@ -48,16 +40,6 @@ export default function ImplementingAgenciesPage() {
 
   // Avoid division by zero
   const avgUtilization = totalBudget > 0 ? ((totalUtilized / totalBudget) * 100).toFixed(1) : "0.0"
-
-  const handleDelete = useCallback((id: string) => {
-    setSelectedAgencyId(id as Id<"implementingAgencies">)
-    setDeleteModalOpen(true)
-  }, [])
-
-  const handleDeleteSuccess = useCallback(() => {
-    setDeleteModalOpen(false)
-    setSelectedAgencyId(null)
-  }, [])
 
   const handleEdit = useCallback((agency: Agency) => {
     setSelectedAgency(agency)
@@ -79,13 +61,6 @@ export default function ImplementingAgenciesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-
-      <DeleteAgencyModal
-        open={deleteModalOpen}
-        onOpenChange={setDeleteModalOpen}
-        agencyId={selectedAgencyId}
-        onSuccess={handleDeleteSuccess}
-      />
 
       <EditAgencyModal
         agency={selectedAgency}
@@ -205,7 +180,6 @@ export default function ImplementingAgenciesPage() {
 
             <ImplementingAgenciesTable
               agencies={implementingAgencies as Agency[]}
-              onDelete={handleDelete}
               onEdit={handleEdit}
             />
           </TabsContent>

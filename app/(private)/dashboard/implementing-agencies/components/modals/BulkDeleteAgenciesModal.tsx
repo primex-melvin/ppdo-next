@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -32,6 +32,8 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import {
   AlertTriangle,
   Building2,
+  Eye,
+  EyeOff,
   Loader2,
   ShieldAlert,
   Trash2,
@@ -39,6 +41,7 @@ import {
 import { toast } from "sonner";
 
 type BulkDeleteMode = "reassign_to_blank" | "delete_all";
+type BulkDeleteStep = 1 | 2 | 3;
 
 interface BulkDeleteAgenciesModalProps {
   open: boolean;
@@ -56,16 +59,32 @@ function formatCurrency(amount: number): string {
   }).format(amount || 0);
 }
 
+function BudgetImpactWarning() {
+  return (
+    <Alert variant="destructive" className="border-red-200/70 dark:border-red-900/50">
+      <AlertTriangle className="h-4 w-4" />
+      <AlertTitle>Budget impact warning</AlertTitle>
+      <AlertDescription>
+        Budget allocated, utilized, and obligated budgets will be affected if linked records are permanently deleted.
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 export function BulkDeleteAgenciesModal({
   open,
   onOpenChange,
   agencyIds,
   onSuccess,
 }: BulkDeleteAgenciesModalProps) {
+  const [step, setStep] = useState<BulkDeleteStep>(1);
   const [mode, setMode] = useState<BulkDeleteMode>("reassign_to_blank");
   const [pin, setPin] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const pinInputRef = useRef<any>(null);
+  const hasAutoFocusedSinglePinRef = useRef(false);
 
   const preview = useQuery(
     (api as any).implementingAgencies.getBulkDeletePreview,
@@ -78,10 +97,13 @@ export function BulkDeleteAgenciesModal({
 
   useEffect(() => {
     if (!open) return;
+    setStep(1);
     setMode("reassign_to_blank");
     setPin("");
+    setShowPin(false);
     setError(null);
     setIsSubmitting(false);
+    hasAutoFocusedSinglePinRef.current = false;
   }, [open, agencyIds]);
 
   const totals = preview?.totals ?? {
@@ -98,19 +120,73 @@ export function BulkDeleteAgenciesModal({
     deletableCount: 0,
     blockedCount: 0,
   };
+  const singleDeletableAgency =
+    summary.deletableCount === 1 && preview?.byAgency?.length === 1
+      ? preview.byAgency[0]?.agency
+      : null;
 
   const isLoading = open && agencyIds.length > 0 && preview === undefined;
+  const hasTrueImpact = Boolean(preview?.hasTrueImpact ?? false);
+  const showThreeStepWizard = !isLoading && hasTrueImpact;
   const canSubmit = pin.length === 6 && summary.deletableCount > 0 && !isSubmitting;
+  const canProceedToPreview = !isLoading;
+  const canProceedToPin = !isLoading && summary.deletableCount > 0;
+  const impactTotals = preview?.trueImpactTotals ?? {
+    activeCount: totals.activeCount,
+    budgetAllocated: totals.budgetAllocated,
+    budgetUtilized: totals.budgetUtilized,
+    budgetObligated: totals.budgetObligated,
+  };
+  const displayByTable = (preview?.trueImpactByTable ?? preview?.byTable ?? []) as any[];
+  const displayByAgency = (preview?.trueImpactByAgency ?? preview?.byAgency ?? []) as any[];
 
   const flattenedPreviewItems = useMemo(() => {
     if (!preview?.byAgency) return [];
-    return preview.byAgency.flatMap((agencyGroup: any) =>
-      (agencyGroup.previewItems || []).slice(0, 12).map((item: any) => ({
-        ...item,
-        agencyName: agencyGroup.agency?.name,
-      }))
-    ).slice(0, 120);
+    return preview.byAgency
+      .flatMap((agencyGroup: any) =>
+        (agencyGroup.previewItems || []).slice(0, 12).map((item: any) => ({
+          ...item,
+          agencyName: agencyGroup.agency?.name,
+        }))
+      )
+      .slice(0, 120);
   }, [preview]);
+
+  const steps: Array<{ id: BulkDeleteStep; title: string; subtitle: string }> = [
+    { id: 1, title: "Handle linked records", subtitle: "Choose how linked items are handled" },
+    { id: 2, title: "Review affected items", subtitle: "Summary by table, agency, and preview" },
+    { id: 3, title: "Confirm with PIN", subtitle: "Final destructive confirmation" },
+  ];
+  const deletableAgencyLabel = summary.deletableCount === 1 ? "agency" : "agencies";
+  const deleteVerbLabel = summary.deletableCount === 1 ? "Delete Agency" : "Delete Agencies";
+  const agenciesToDeleteLabel = summary.deletableCount === 1 ? "Agency to Delete" : "Agencies to Delete";
+
+  useEffect(() => {
+    if (!open || isLoading) return;
+    if (!hasTrueImpact) {
+      setStep(3);
+    }
+  }, [open, isLoading, hasTrueImpact]);
+
+  useEffect(() => {
+    if (
+      !open ||
+      isLoading ||
+      !singleDeletableAgency ||
+      showThreeStepWizard ||
+      step !== 3 ||
+      hasAutoFocusedSinglePinRef.current
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      pinInputRef.current?.focus?.();
+      hasAutoFocusedSinglePinRef.current = true;
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [open, isLoading, singleDeletableAgency, showThreeStepWizard, step]);
 
   const handleConfirm = async () => {
     if (pin.length !== 6) {
@@ -178,297 +254,439 @@ export function BulkDeleteAgenciesModal({
             </div>
             <div className="space-y-1">
               <ResizableModalTitle className="text-red-600 dark:text-red-400">
-                Bulk Permanent Delete (Table Selection)
+                {singleDeletableAgency
+                  ? `Delete Agency: ${singleDeletableAgency.name}`
+                  : "Bulk Permanent Delete (Table Selection)"}
               </ResizableModalTitle>
               <ResizableModalDescription>
-                Permanently deletes selected agencies from this table. Choose whether linked records are reassigned to{" "}
-                <b>BLANK</b> or permanently deleted.
+                {singleDeletableAgency ? (
+                  <>
+                    Permanently deletes <b>{singleDeletableAgency.name}</b> from this table.
+                  </>
+                ) : (
+                  <>
+                    Permanently deletes selected agencies from this table. Choose whether linked records are reassigned to{" "}
+                    <b>BLANK</b> or permanently deleted.
+                  </>
+                )}
               </ResizableModalDescription>
             </div>
           </div>
+
+          {showThreeStepWizard && (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {steps.map((item) => {
+              const isCurrent = step === item.id;
+              const isComplete = step > item.id;
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-md border px-3 py-2 ${
+                    isCurrent
+                      ? "border-primary bg-primary/5"
+                      : isComplete
+                        ? "border-emerald-500/40 bg-emerald-500/5"
+                        : "border-border bg-muted/20"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${
+                        isCurrent
+                          ? "bg-primary text-primary-foreground"
+                          : isComplete
+                            ? "bg-emerald-600 text-white"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {item.id}
+                    </span>
+                    <p className="text-xs font-medium text-foreground">{item.title}</p>
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{item.subtitle}</p>
+                </div>
+              );
+              })}
+            </div>
+          )}
         </ResizableModalHeader>
 
         <ResizableModalBody className="px-6 py-5 space-y-5">
-          <Alert variant="destructive" className="border-red-200/70 dark:border-red-900/50">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Budget impact warning</AlertTitle>
-            <AlertDescription>
-              Budget allocated, utilized, and obligated budgets will be affected if linked records are permanently deleted.
-            </AlertDescription>
-          </Alert>
+          {showThreeStepWizard && step === 1 && (
+            <>
+              <BudgetImpactWarning />
 
-          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  {preview?.question || "How do you want to handle linked records for the selected agencies?"}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Keep this choice clear: preserve linked records by reassigning to BLANK, or permanently delete linked records too.
-                </p>
-              </div>
-              {preview?.fallbackAgency && (
-                <Badge variant="secondary" className="shrink-0">
-                  {preview.fallbackAgency.exists ? "BLANK exists" : "BLANK will auto-create"}
-                </Badge>
-              )}
-            </div>
-
-            <RadioGroup
-              value={mode}
-              onValueChange={(value) => setMode(value as BulkDeleteMode)}
-              className="gap-3"
-            >
-              <label
-                htmlFor="bulk-delete-mode-reassign"
-                className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${
-                  mode === "reassign_to_blank"
-                    ? "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-900/20"
-                    : "border-border hover:bg-muted/50"
-                }`}
-              >
-                <RadioGroupItem id="bulk-delete-mode-reassign" value="reassign_to_blank" className="mt-0.5" />
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Reassign linked records to BLANK (Recommended)
-                    </span>
-                    <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Safe</Badge>
+              <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {preview?.question || "How do you want to handle linked records for the selected agencies?"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Choose now, then review the affected summary before final confirmation.
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Selected agencies are permanently deleted, but linked projects/funds/breakdowns are preserved and moved to fallback agency{" "}
-                    <b>BLANK</b>.
-                  </p>
-                </div>
-              </label>
-
-              <label
-                htmlFor="bulk-delete-mode-delete"
-                className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${
-                  mode === "delete_all"
-                    ? "border-red-500 bg-red-50/70 dark:bg-red-900/20"
-                    : "border-border hover:bg-muted/50"
-                }`}
-              >
-                <RadioGroupItem id="bulk-delete-mode-delete" value="delete_all" className="mt-0.5" />
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Permanently delete linked records
-                    </span>
-                    <Badge variant="destructive">Destructive</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Selected agencies and linked records are permanently deleted. This affects allocated, utilized, and obligated budgets.
-                  </p>
-                </div>
-              </label>
-            </RadioGroup>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">Agencies</p>
-              <p className="mt-1 text-xl font-semibold text-foreground">
-                {summary.deletableCount} deletable / {summary.selectedCount} selected
-              </p>
-              {summary.blockedCount > 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  {summary.blockedCount} blocked (not deletable)
-                </p>
-              )}
-            </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">Affected Records</p>
-              <p className="mt-1 text-xl font-semibold text-foreground">{totals.activeCount}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {totals.trashedCount > 0 ? `${totals.trashedCount} already in trash (also affected)` : "Active records previewed"}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">Budget Impact (Active Records)</p>
-              <p className="mt-1 text-sm font-semibold text-foreground">
-                Allocated: {formatCurrency(totals.budgetAllocated)}
-              </p>
-              <p className="text-sm text-foreground">
-                Utilized: {formatCurrency(totals.budgetUtilized)}
-              </p>
-              <p className="text-sm text-foreground">
-                Obligated: {formatCurrency(totals.budgetObligated)}
-              </p>
-            </div>
-          </div>
-
-          {summary.blockedCount > 0 && (
-            <div className="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-900/10 p-4 space-y-2">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                <Building2 className="h-4 w-4" />
-                <p className="text-sm font-medium">Blocked agencies (will be skipped)</p>
-              </div>
-              <div className="max-h-32 overflow-auto space-y-1">
-                {(preview?.blockedAgencies || []).map((item: any) => (
-                  <div
-                    key={`${item.id}-${item.reason}`}
-                    className="flex flex-wrap items-center gap-2 text-xs text-amber-900 dark:text-amber-200"
-                  >
-                    <Badge variant="outline" className="border-amber-300 dark:border-amber-700">
-                      {item.code || "Unknown"}
+                  {preview?.fallbackAgency && (
+                    <Badge variant="secondary" className="shrink-0">
+                      {preview.fallbackAgency.exists ? "BLANK exists" : "BLANK will auto-create"}
                     </Badge>
-                    <span>{item.name || item.id}</span>
-                    <span className="text-amber-700/90 dark:text-amber-300/90">- {item.reason}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <Accordion type="multiple" className="w-full space-y-2">
-            <AccordionItem value="by-table" className="border rounded-lg px-3">
-              <AccordionTrigger className="text-sm py-3 hover:no-underline">
-                Affected Summary by Table
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="space-y-2">
-                  {(preview?.byTable || []).map((table: any) => (
-                    <div
-                      key={table.key}
-                      className="rounded-md border border-border bg-muted/30 px-3 py-2"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{table.label}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {table.activeCount} active / {table.totalCount} total
-                          </p>
-                        </div>
-                        <div className="text-right text-xs">
-                          <p>Allocated: {formatCurrency(table.budgetAllocated)}</p>
-                          <p>Utilized: {formatCurrency(table.budgetUtilized)}</p>
-                          <p>Obligated: {formatCurrency(table.budgetObligated)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {(preview?.byTable || []).length === 0 && (
-                    <p className="text-xs text-muted-foreground">No linked records found for the selected deletable agencies.</p>
                   )}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
 
-            <AccordionItem value="by-agency" className="border rounded-lg px-3">
-              <AccordionTrigger className="text-sm py-3 hover:no-underline">
-                Affected Preview by Agency
-              </AccordionTrigger>
-              <AccordionContent className="pb-3 space-y-3">
-                {(preview?.byAgency || []).map((agencyGroup: any) => (
-                  <div key={agencyGroup.agency.id} className="rounded-md border border-border bg-card p-3 space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {agencyGroup.agency.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {agencyGroup.agency.code}
-                        </p>
+                <RadioGroup
+                  value={mode}
+                  onValueChange={(value) => setMode(value as BulkDeleteMode)}
+                  className="gap-3"
+                >
+                  <label
+                    htmlFor="bulk-delete-mode-reassign"
+                    className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${
+                      mode === "reassign_to_blank"
+                        ? "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-900/20"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <RadioGroupItem
+                      id="bulk-delete-mode-reassign"
+                      value="reassign_to_blank"
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">
+                          Reassign linked records to BLANK (Recommended)
+                        </span>
+                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Safe</Badge>
                       </div>
-                      <div className="text-right text-xs text-muted-foreground">
-                        <p>{agencyGroup.totals.activeCount} active / {agencyGroup.totals.totalCount} total</p>
-                        <p>Allocated: {formatCurrency(agencyGroup.totals.budgetAllocated)}</p>
-                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Selected agencies are permanently deleted, but linked projects/funds/breakdowns are preserved and moved to fallback agency{" "}
+                        <b>BLANK</b>.
+                      </p>
                     </div>
+                  </label>
 
-                    <div className="max-h-40 overflow-auto space-y-1 pr-1">
-                      {(agencyGroup.previewItems || []).slice(0, 40).map((item: any) => (
-                        <div
-                          key={`${agencyGroup.agency.id}-${item.id}`}
-                          className="flex items-center justify-between gap-3 rounded border border-border px-2 py-1.5 text-xs"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-foreground">{item.name}</p>
-                            <p className="truncate text-muted-foreground">{item.tableLabel}</p>
-                          </div>
-                          <div className="shrink-0 text-right text-muted-foreground">
-                            <p>{formatCurrency(item.budgetAllocated)}</p>
+                  <label
+                    htmlFor="bulk-delete-mode-delete"
+                    className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${
+                      mode === "delete_all"
+                        ? "border-red-500 bg-red-50/70 dark:bg-red-900/20"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <RadioGroupItem
+                      id="bulk-delete-mode-delete"
+                      value="delete_all"
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">
+                          Permanently delete linked records
+                        </span>
+                        <Badge variant="destructive">Destructive</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Selected agencies and linked records are permanently deleted. This affects allocated, utilized, and obligated budgets.
+                      </p>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </div>
+            </>
+          )}
+
+          {showThreeStepWizard && step === 2 && (
+            <>
+              <BudgetImpactWarning />
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Agencies</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">
+                    {summary.deletableCount} deletable / {summary.selectedCount} selected
+                  </p>
+                  {summary.blockedCount > 0 && (
+                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                      {summary.blockedCount} blocked (not deletable)
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Affected Records</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">{impactTotals.activeCount}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {totals.trashedCount > 0
+                      ? `${totals.trashedCount} already in trash (also affected)`
+                      : "Active records previewed"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Budget Impact (Active Records)</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
+                    Allocated: {formatCurrency(impactTotals.budgetAllocated)}
+                  </p>
+                  <p className="text-sm text-foreground">
+                    Utilized: {formatCurrency(impactTotals.budgetUtilized)}
+                  </p>
+                  <p className="text-sm text-foreground">
+                    Obligated: {formatCurrency(impactTotals.budgetObligated)}
+                  </p>
+                </div>
+              </div>
+
+              {summary.blockedCount > 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/40 dark:bg-amber-900/10">
+                  <div className="mb-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                    <Building2 className="h-4 w-4" />
+                    <p className="text-sm font-medium">Blocked agencies (will be skipped)</p>
+                  </div>
+                  <div className="max-h-32 space-y-1 overflow-auto">
+                    {(preview?.blockedAgencies || []).map((item: any) => (
+                      <div
+                        key={`${item.id}-${item.reason}`}
+                        className="flex flex-wrap items-center gap-2 text-xs text-amber-900 dark:text-amber-200"
+                      >
+                        <Badge variant="outline" className="border-amber-300 dark:border-amber-700">
+                          {item.code || "Unknown"}
+                        </Badge>
+                        <span>{item.name || item.id}</span>
+                        <span className="text-amber-700/90 dark:text-amber-300/90">- {item.reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Accordion type="multiple" className="w-full space-y-2">
+                <AccordionItem value="by-table" className="rounded-lg border px-3">
+                  <AccordionTrigger className="py-3 text-sm hover:no-underline">
+                    Affected Summary by Table
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3">
+                    <div className="space-y-2">
+                      {displayByTable.map((table: any) => (
+                        <div key={table.key} className="rounded-md border border-border bg-muted/30 px-3 py-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{table.label}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {table.activeCount} active / {table.totalCount} total
+                              </p>
+                            </div>
+                            <div className="text-right text-xs">
+                              <p>Allocated: {formatCurrency(table.budgetAllocated)}</p>
+                              <p>Utilized: {formatCurrency(table.budgetUtilized)}</p>
+                              <p>Obligated: {formatCurrency(table.budgetObligated)}</p>
+                            </div>
                           </div>
                         </div>
                       ))}
-                      {(agencyGroup.previewItems || []).length === 0 && (
-                        <p className="text-xs text-muted-foreground">No active linked records to preview.</p>
+                      {displayByTable.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          No linked records found for the selected deletable agencies.
+                        </p>
                       )}
                     </div>
-                  </div>
-                ))}
-                {(preview?.byAgency || []).length === 0 && (
-                  <p className="text-xs text-muted-foreground">No deletable agencies in the current selection.</p>
-                )}
-              </AccordionContent>
-            </AccordionItem>
+                  </AccordionContent>
+                </AccordionItem>
 
-            <AccordionItem value="quick-list" className="border rounded-lg px-3">
-              <AccordionTrigger className="text-sm py-3 hover:no-underline">
-                Quick Preview List (sample)
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="max-h-48 overflow-auto space-y-1 pr-1">
-                  {flattenedPreviewItems.map((item: any, idx: number) => (
-                    <div key={`${item.id}-${idx}`} className="flex items-center justify-between gap-2 rounded border border-border px-2 py-1.5 text-xs">
-                      <div className="min-w-0">
-                        <p className="truncate text-foreground">{item.name}</p>
-                        <p className="truncate text-muted-foreground">
-                          {item.agencyCode || item.agencyName} • {item.tableLabel}
-                        </p>
+                <AccordionItem value="by-agency" className="rounded-lg border px-3">
+                  <AccordionTrigger className="py-3 text-sm hover:no-underline">
+                    Affected Summary by Agency
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3 pb-3">
+                    {displayByAgency.map((agencyGroup: any) => (
+                      <div key={agencyGroup.agency.id} className="rounded-md border border-border bg-card p-3">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              {agencyGroup.agency.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {agencyGroup.agency.code}
+                            </p>
+                          </div>
+                          <div className="text-right text-xs text-muted-foreground">
+                            <p>
+                              {agencyGroup.totals.activeCount} active / {agencyGroup.totals.totalCount} total
+                            </p>
+                            <p>Allocated: {formatCurrency(agencyGroup.totals.budgetAllocated)}</p>
+                          </div>
+                        </div>
+
+                        <div className="max-h-40 space-y-1 overflow-auto pr-1">
+                          {(agencyGroup.previewItems || []).slice(0, 40).map((item: any) => (
+                            <div
+                              key={`${agencyGroup.agency.id}-${item.id}`}
+                              className="flex items-center justify-between gap-3 rounded border border-border px-2 py-1.5 text-xs"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-foreground">{item.name}</p>
+                                <p className="truncate text-muted-foreground">{item.tableLabel}</p>
+                              </div>
+                              <div className="shrink-0 text-right text-muted-foreground">
+                                <p>{formatCurrency(item.budgetAllocated)}</p>
+                              </div>
+                            </div>
+                          ))}
+                          {(agencyGroup.previewItems || []).length === 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              No active linked records to preview.
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <Badge variant="outline" className="shrink-0">
-                        {item.status || "n/a"}
-                      </Badge>
-                    </div>
-                  ))}
-                  {flattenedPreviewItems.length === 0 && (
-                    <p className="text-xs text-muted-foreground">No preview items available.</p>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                    ))}
+                    {displayByAgency.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        No deletable agencies in the current selection.
+                      </p>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
 
-          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Trash2 className="h-4 w-4 text-red-500" />
-              Confirm with 6-digit PIN
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {mode === "reassign_to_blank"
-                ? 'Selected agencies will be permanently deleted. Linked records will be reassigned to "BLANK".'
-                : "Selected agencies and linked records will be permanently deleted. Budgets will be affected."}
-            </p>
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={6}
-                pattern={REGEXP_ONLY_DIGITS}
-                value={pin}
-                onChange={(value) => {
-                  setPin(value);
-                  setError(null);
-                }}
-                disabled={isSubmitting}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            {error && (
-              <p className="text-center text-xs font-medium text-red-600 dark:text-red-400">
-                {error}
-              </p>
-            )}
-          </div>
+                <AccordionItem value="quick-list" className="rounded-lg border px-3">
+                  <AccordionTrigger className="py-3 text-sm hover:no-underline">
+                    Quick Preview List (sample)
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3">
+                    <div className="max-h-48 space-y-1 overflow-auto pr-1">
+                      {flattenedPreviewItems.map((item: any, idx: number) => (
+                        <div
+                          key={`${item.id}-${idx}`}
+                          className="flex items-center justify-between gap-2 rounded border border-border px-2 py-1.5 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-foreground">{item.name}</p>
+                            <p className="truncate text-muted-foreground">
+                              {item.agencyCode || item.agencyName} - {item.tableLabel}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="shrink-0">
+                            {item.status || "n/a"}
+                          </Badge>
+                        </div>
+                      ))}
+                      {flattenedPreviewItems.length === 0 && (
+                        <p className="text-xs text-muted-foreground">No preview items available.</p>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              {showThreeStepWizard ? (
+                <>
+                  <Alert variant="destructive" className="border-red-200/70 dark:border-red-900/50">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Final deletion confirmation</AlertTitle>
+                    <AlertDescription>
+                      {mode === "reassign_to_blank"
+                        ? 'Agencies will be permanently deleted and linked records will be reassigned to "BLANK".'
+                        : "Agencies and linked records will be permanently deleted. Allocated, utilized, and obligated budgets will be affected."}
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div className="rounded-lg border border-border bg-card p-4">
+                      <p className="text-xs text-muted-foreground">Mode</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">
+                        {mode === "reassign_to_blank" ? "Reassign to BLANK" : "Delete linked records"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-card p-4">
+                      <p className="text-xs text-muted-foreground">Agencies to Delete</p>
+                      <p className="mt-1 text-xl font-semibold text-foreground">{summary.deletableCount}</p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-card p-4">
+                      <p className="text-xs text-muted-foreground">Affected Active Records</p>
+                      <p className="mt-1 text-xl font-semibold text-foreground">{impactTotals.activeCount}</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <p className="text-sm font-semibold text-foreground">{deleteVerbLabel}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    No active linked records were found for the selected deletable {deletableAgencyLabel}. Proceed with PIN confirmation.
+                  </p>
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">{agenciesToDeleteLabel}</p>
+                      <p className="text-xl font-semibold text-foreground">{summary.deletableCount}</p>
+                    </div>
+                    {!singleDeletableAgency && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Blocked (Skipped)</p>
+                        <p className="text-xl font-semibold text-foreground">{summary.blockedCount}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                  Confirm with 6-digit PIN
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter your PIN to proceed with this permanent delete action.
+                </p>
+                <div className="flex justify-center">
+                  <div className="flex items-center gap-2">
+                    <InputOTP
+                      ref={pinInputRef}
+                      maxLength={6}
+                      pattern={REGEXP_ONLY_DIGITS}
+                      value={pin}
+                      onChange={(value) => {
+                        setPin(value);
+                        setError(null);
+                      }}
+                      disabled={isSubmitting}
+                      autoFocus={Boolean(singleDeletableAgency && !showThreeStepWizard && step === 3)}
+                      containerClassName="justify-center"
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} masked={!showPin} className="bg-background border-zinc-300 dark:border-zinc-700 text-foreground shadow-sm" />
+                        <InputOTPSlot index={1} masked={!showPin} className="bg-background border-zinc-300 dark:border-zinc-700 text-foreground shadow-sm" />
+                        <InputOTPSlot index={2} masked={!showPin} className="bg-background border-zinc-300 dark:border-zinc-700 text-foreground shadow-sm" />
+                        <InputOTPSlot index={3} masked={!showPin} className="bg-background border-zinc-300 dark:border-zinc-700 text-foreground shadow-sm" />
+                        <InputOTPSlot index={4} masked={!showPin} className="bg-background border-zinc-300 dark:border-zinc-700 text-foreground shadow-sm" />
+                        <InputOTPSlot index={5} masked={!showPin} className="bg-background border-zinc-300 dark:border-zinc-700 text-foreground shadow-sm" />
+                      </InputOTPGroup>
+                    </InputOTP>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowPin((prev) => !prev)}
+                      aria-label={showPin ? "Hide PIN" : "Show PIN"}
+                      title={showPin ? "Hide PIN" : "Show PIN"}
+                      className="h-10 w-10 shrink-0"
+                    >
+                      {showPin ? (
+                        <EyeOff className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="h-4 w-4" aria-hidden="true" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                {error && (
+                  <p className="text-center text-xs font-medium text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </ResizableModalBody>
 
         <ResizableModalFooter>
@@ -480,24 +698,62 @@ export function BulkDeleteAgenciesModal({
           >
             Cancel
           </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={handleConfirm}
-            disabled={!canSubmit}
-            className="min-w-[220px]"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : mode === "delete_all" ? (
-              "Delete Agencies + Linked Records"
-            ) : (
-              "Delete Agencies (Reassign to BLANK)"
-            )}
-          </Button>
+
+          {showThreeStepWizard && step > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep((prev) => (Math.max(1, prev - 1) as BulkDeleteStep))}
+              disabled={isSubmitting}
+            >
+              Back
+            </Button>
+          )}
+
+          {showThreeStepWizard && step === 1 && (
+            <Button
+              type="button"
+              onClick={() => setStep(2)}
+              disabled={!canProceedToPreview}
+              className="min-w-[180px]"
+            >
+              Review Affected Items
+            </Button>
+          )}
+
+          {showThreeStepWizard && step === 2 && (
+            <Button
+              type="button"
+              onClick={() => setStep(3)}
+              disabled={!canProceedToPin}
+              className="min-w-[160px]"
+            >
+              Continue to PIN
+            </Button>
+          )}
+
+          {step === 3 && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirm}
+              disabled={!canSubmit}
+              className="min-w-[220px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : !hasTrueImpact ? (
+                deleteVerbLabel
+              ) : mode === "delete_all" ? (
+                `${deleteVerbLabel} + Linked Records`
+              ) : (
+                `${deleteVerbLabel} (Reassign to BLANK)`
+              )}
+            </Button>
+          )}
         </ResizableModalFooter>
       </ResizableModalContent>
     </ResizableModal>
