@@ -62,7 +62,7 @@ type FooterPageLabelPosition = 'left' | 'right';
 const FOOTER_PAGE_LABEL_ID_PREFIX = 'footer-page-';
 const FIRST_PREVIEW_DEFAULT_PAGE_SIZE: 'A4' | 'Short' | 'Long' = 'Long';
 const FIRST_PREVIEW_DEFAULT_ORIENTATION: 'portrait' | 'landscape' = 'landscape';
-const FIRST_PREVIEW_DEFAULT_TEXT_ALIGN: TextAlign = 'left';
+const FIRST_PREVIEW_DEFAULT_TEXT_ALIGN: TextAlign = 'center';
 const FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE = 9;
 const FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION: FooterPageLabelPosition = 'right';
 
