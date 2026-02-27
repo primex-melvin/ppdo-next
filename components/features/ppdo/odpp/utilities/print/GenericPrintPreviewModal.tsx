@@ -218,11 +218,12 @@ export function GenericPrintPreviewModal({
     const baseSize = PAGE_SIZES[pageSizeStr as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;
     const size = orientation === 'landscape' ? { width: baseSize.height, height: baseSize.width } : baseSize;
     const totalAvailableWidth = size.width - marginLeft - marginRight;
+    const firstColumnX = marginLeft;
     const oldLeftEdge = allColumns[0][1].originalX;
     const totalVisibleOriginalWidth = visibleCols.reduce((sum, [, info]) => sum + info.originalWidth, 0);
     const scaleX = totalVisibleOriginalWidth > 0 ? totalAvailableWidth / totalVisibleOriginalWidth : 1;
     const newColumnLayout = new Map<string, { x: number; width: number }>();
-    let currentX = marginLeft;
+    let currentX = firstColumnX;
     visibleCols.forEach(([key, info]) => {
       const newWidth = totalAvailableWidth * (info.originalWidth / totalVisibleOriginalWidth);
       newColumnLayout.set(key, { x: currentX, width: newWidth });
@@ -233,6 +234,10 @@ export function GenericPrintPreviewModal({
       if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) return el;
       const columnKey = extractColumnKey(el.id);
       if (!columnKey) {
+        const isCategoryRow = el.id.startsWith('category-header-');
+        if (isCategoryRow) {
+          return { ...el, x: firstColumnX, width: totalAvailableWidth, visible: true };
+        }
         return { ...el, x: marginLeft + (el.x - oldLeftEdge) * scaleX, width: el.width * scaleX };
       }
       if (hiddenColumnsSet.has(columnKey)) return { ...el, visible: false };
@@ -719,6 +724,7 @@ export function GenericPrintPreviewModal({
           onToggleMarginGuides={toggleMarginGuides}
           pageOrientation={currentPage.orientation}
           pageSize={currentPage.size}
+          onPageSizeChange={changePageSize}
           currentMargin={currentMarginInches}
           onMarginChange={handleMarginChangeInches}
           textAlign={textAlign}
@@ -754,6 +760,7 @@ export function GenericPrintPreviewModal({
             onToggleMarginGuides={toggleMarginGuides}
             currentMargin={currentMarginInches}
             onMarginChange={handleMarginChangeInches}
+            showPageSizeControl={false}
           />
         </div>
 

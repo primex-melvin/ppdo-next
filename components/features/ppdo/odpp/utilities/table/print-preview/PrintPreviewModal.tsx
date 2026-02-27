@@ -9,7 +9,14 @@ import { TemplateSelector } from './TemplateSelector';
 import { TemplateApplicationModal } from './TemplateApplicationModal';
 import { ColumnVisibilityPanel } from './ColumnVisibilityPanel';
 import { TextAlign } from './JustifyDropdown';
-import { PrintDraft, ColumnDefinition, BudgetTotals, RowMarker } from '@/lib/print-canvas/types';
+import {
+  PrintDraft,
+  ColumnDefinition,
+  BudgetTotals,
+  RowMarker,
+  DEFAULT_TABLE_FONT_SIZE,
+  clampTableFontSize,
+} from '@/lib/print-canvas/types';
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
 import type { Page } from '@/app/(extra)/canvas/_components/editor/types';
@@ -102,6 +109,7 @@ export function PrintPreviewModal({
 
   // --- Text Alignment State ---
   const [textAlign, setTextAlign] = useState<TextAlign>('center');
+  const [tableFontSize, setTableFontSize] = useState<number>(DEFAULT_TABLE_FONT_SIZE);
 
   // --- Column Label Overrides (for inline renaming) ---
   const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
@@ -170,6 +178,18 @@ export function PrintPreviewModal({
     return !pageHasTableElements(first);
   }, [pageHasTableElements]);
 
+  const inferTableFontSizeFromPages = useCallback((pages: Page[]) => {
+    for (const page of pages) {
+      for (const element of page.elements) {
+        if (element.type !== 'text') continue;
+        if (!(element.groupId && element.groupName?.toLowerCase().includes('table'))) continue;
+        return clampTableFontSize(element.fontSize);
+      }
+    }
+
+    return DEFAULT_TABLE_FONT_SIZE;
+  }, []);
+
   // Helper: Extract column key from any table element ID
   const extractColumnKey = useCallback((id: string): string | null => {
     if (id.startsWith('category-')) return null;
@@ -229,6 +249,16 @@ export function PrintPreviewModal({
       if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) return el;
       const columnKey = extractColumnKey(el.id);
       if (!columnKey) {
+        const isCategoryRow = el.id.startsWith('category-header-');
+        if (isCategoryRow) {
+          return {
+            ...el,
+            x: firstColumnX,
+            y: marginTop + (el.y - oldTopEdge),
+            width: totalAvailableWidth,
+            visible: true,
+          };
+        }
         return {
           ...el,
           x: marginLeft + (el.x - oldLeftEdge) * scaleX,
@@ -423,6 +453,7 @@ export function PrintPreviewModal({
           margins: rulerState.margins,
           showHeader: false,
           showFooter: true,
+          tableFontSize,
         });
 
         let finalPages = result.pages;
@@ -461,7 +492,7 @@ export function PrintPreviewModal({
         toast.error('Failed to convert table to canvas');
       }
     },
-    [budgetItems, totals, columns, hiddenColumns, year, particular, rowMarkers, rulerState.margins.left, state]
+    [budgetItems, totals, columns, hiddenColumns, year, particular, rowMarkers, rulerState.margins, state, tableFontSize]
   );
 
   // âœ… Handler: Called when user finishes the Setup Wizard
@@ -498,6 +529,11 @@ export function PrintPreviewModal({
     state.setPages(existingDraft.canvasState.pages);
     state.setHeader(existingDraft.canvasState.header);
     state.setFooter(existingDraft.canvasState.footer);
+    setTableFontSize(
+      clampTableFontSize(
+        existingDraft.tableFontSize ?? inferTableFontSizeFromPages(existingDraft.canvasState.pages)
+      )
+    );
     setIncludeCoverPage(inferCoverPageFromPages(existingDraft.canvasState.pages));
     state.setCurrentPageIndex(existingDraft.canvasState.currentPageIndex);
     state.setLastSavedTime(existingDraft.timestamp);
@@ -505,7 +541,7 @@ export function PrintPreviewModal({
     state.setIsDirty(false);
     state.setHasInitialized(true);
     setSavedTemplate(null);
-  }, [existingDraft, inferCoverPageFromPages, state]);
+  }, [existingDraft, inferCoverPageFromPages, inferTableFontSizeFromPages, state]);
 
   // Handle applying template to live canvas (from toolbar button)
   const handleApplyLiveTemplate = useCallback(
@@ -565,6 +601,7 @@ export function PrintPreviewModal({
       setShowLiveTemplateSelector(false);
       setShowSetupModal(false);
       setIncludeCoverPage(true);
+      setTableFontSize(DEFAULT_TABLE_FONT_SIZE);
       initializationStartedRef.current = false;
       lastLayoutReflowSignatureRef.current = null;
       setHiddenCanvasColumns(new Set());
@@ -589,6 +626,11 @@ export function PrintPreviewModal({
       // console.log('ðŸ“¦ Existing draft detected');
       const draftTitle = existingDraft.documentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
       state.setDocumentTitle(draftTitle);
+      setTableFontSize(
+        clampTableFontSize(
+          existingDraft.tableFontSize ?? inferTableFontSizeFromPages(existingDraft.canvasState.pages)
+        )
+      );
       setIncludeCoverPage(inferCoverPageFromPages(existingDraft.canvasState.pages));
 
       if (existingDraft.appliedTemplate) {
@@ -619,6 +661,7 @@ export function PrintPreviewModal({
     // console.log('ðŸ†• New draft, showing setup wizard...');
     const defaultTitle = particular ? `Budget ${year} - ${particular}` : `Budget ${year}`;
     state.setDocumentTitle(defaultTitle);
+    setTableFontSize(DEFAULT_TABLE_FONT_SIZE);
     setShowSetupModal(true);
     // Don't set hasInitialized yet - wait for wizard completion
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -649,6 +692,7 @@ export function PrintPreviewModal({
     filterState,
     year,
     particular,
+    tableFontSize,
     existingDraft,
     onDraftSaved,
     isDirty: state.isDirty,
@@ -662,6 +706,14 @@ export function PrintPreviewModal({
 
   const formattedLastSaved = state.lastSavedTime ? formatTimestamp(state.lastSavedTime) : '';
   const handleTitleChange = useCallback((newTitle: string) => { state.setDocumentTitle(newTitle); state.setIsDirty(true); }, [state]);
+  const handleTableFontSizeChange = useCallback((nextSize: number) => {
+    const normalizedSize = clampTableFontSize(nextSize);
+    setTableFontSize(prev => {
+      if (prev === normalizedSize) return prev;
+      state.setIsDirty(true);
+      return normalizedSize;
+    });
+  }, [state]);
 
   // Margin conversion: internal state is pixels, dropdown operates in inches
   const currentMarginInches = rulerState.margins.left / POINTS_PER_INCH;
@@ -734,6 +786,7 @@ export function PrintPreviewModal({
       showFooter: state.footer.visible !== false,
       headerHeight: layout.headerHeight,
       footerHeight: layout.footerHeight,
+      tableFontSize,
     });
 
     let nextPages: Page[] = regenerated.pages.map((page): Page => ({
@@ -758,6 +811,7 @@ export function PrintPreviewModal({
     columns,
     hiddenColumns,
     rowMarkers,
+    tableFontSize,
   ]);
 
   useEffect(() => {
@@ -770,6 +824,7 @@ export function PrintPreviewModal({
       includeCoverPage,
       pageSize: state.currentPage.size,
       orientation: state.currentPage.orientation,
+      tableFontSize,
     });
 
     if (lastLayoutReflowSignatureRef.current === null) {
@@ -790,6 +845,7 @@ export function PrintPreviewModal({
     state.currentPage.orientation,
     rulerState.margins,
     includeCoverPage,
+    tableFontSize,
     regenerateTablePagesForLayout,
   ]);
 
@@ -826,10 +882,13 @@ export function PrintPreviewModal({
           onToggleMarginGuides={toggleMarginGuides}
           pageOrientation={state.currentPage.orientation}
           pageSize={state.currentPage.size}
+          onPageSizeChange={actions.changePageSize}
           currentMargin={currentMarginInches}
           onMarginChange={handleMarginChangeInches}
           textAlign={textAlign}
           onTextAlignChange={setTextAlign}
+          tableFontSize={tableFontSize}
+          onTableFontSizeChange={handleTableFontSizeChange}
           showPageHeader={state.header.visible !== false}
           onShowPageHeaderChange={handlePageHeaderVisibilityChange}
           showPageFooter={state.footer.visible !== false}
@@ -865,6 +924,7 @@ export function PrintPreviewModal({
             onToggleMarginGuides={toggleMarginGuides}
             currentMargin={currentMarginInches}
             onMarginChange={handleMarginChangeInches}
+            showPageSizeControl={false}
           />
         </div>
 

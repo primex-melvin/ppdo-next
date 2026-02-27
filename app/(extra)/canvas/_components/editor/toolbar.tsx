@@ -52,6 +52,7 @@ interface ToolbarProps {
   onToggleMarginGuides?: () => void;
   currentMargin?: number;
   onMarginChange?: (value: number) => void;
+  showPageSizeControl?: boolean;
 }
 
 const FONT_FAMILIES = [
@@ -105,6 +106,7 @@ export default function Toolbar({
   onToggleMarginGuides,
   currentMargin,
   onMarginChange,
+  showPageSizeControl = true,
 }: ToolbarProps) {
   const isDisabled = !selectedElement || !onUpdateElement;
   const isTextElement = selectedElement?.type === 'text';
@@ -310,16 +312,18 @@ export default function Toolbar({
 
             <Separator orientation="vertical" className="h-5" />
 
-            <Select value={pageSize} onValueChange={onPageSizeChange}>
-              <SelectTrigger className="w-28 h-8 text-xs bg-white">
-                <SelectValue placeholder="Page Size" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="A4">A4</SelectItem>
-                <SelectItem value="Short">Short (8.5 x 11")</SelectItem>
-                <SelectItem value="Long">Long (8.5 x 13")</SelectItem>
-              </SelectContent>
-            </Select>
+            {showPageSizeControl && (
+              <Select value={pageSize} onValueChange={onPageSizeChange}>
+                <SelectTrigger className="w-28 h-8 text-xs bg-white">
+                  <SelectValue placeholder="Page Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="A4">A4</SelectItem>
+                  <SelectItem value="Short">Short (8.5 x 11")</SelectItem>
+                  <SelectItem value="Long">Long (8.5 x 13")</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
 
             <Select value={orientation} onValueChange={onOrientationChange}>
               <SelectTrigger className="w-28 h-8 text-xs bg-white">

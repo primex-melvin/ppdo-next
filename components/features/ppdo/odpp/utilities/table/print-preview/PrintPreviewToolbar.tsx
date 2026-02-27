@@ -13,6 +13,8 @@ import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { MarginDropdown } from '@/app/(extra)/canvas/_components/editor/margin-dropdown';
 import { JustifyDropdown, TextAlign } from './JustifyDropdown';
+import { TableFontSizeDropdown } from './TableFontSizeDropdown';
+import { PageSizeDropdown } from './PageSizeDropdown';
 
 interface PrintPreviewToolbarProps {
   documentTitle: string;
@@ -31,11 +33,14 @@ interface PrintPreviewToolbarProps {
   marginGuidesVisible?: boolean;
   onToggleMarginGuides?: () => void;
   pageOrientation?: 'portrait' | 'landscape';
-  pageSize?: string;
+  pageSize?: 'A4' | 'Short' | 'Long';
+  onPageSizeChange?: (size: 'A4' | 'Short' | 'Long') => void;
   currentMargin?: number;
   onMarginChange?: (value: number) => void;
   textAlign?: TextAlign;
   onTextAlignChange?: (align: TextAlign) => void;
+  tableFontSize?: number;
+  onTableFontSizeChange?: (fontSize: number) => void;
   showPageHeader?: boolean;
   onShowPageHeaderChange?: (enabled: boolean) => void;
   showPageFooter?: boolean;
@@ -61,10 +66,13 @@ export function PrintPreviewToolbar({
   onToggleMarginGuides,
   pageOrientation = 'portrait',
   pageSize = 'A4',
+  onPageSizeChange,
   currentMargin,
   onMarginChange,
   textAlign,
   onTextAlignChange,
+  tableFontSize,
+  onTableFontSizeChange,
   showPageHeader = true,
   onShowPageHeaderChange,
   showPageFooter = true,
@@ -177,6 +185,14 @@ export function PrintPreviewToolbar({
             <JustifyDropdown value={textAlign} onChange={onTextAlignChange} />
           )}
 
+          {onPageSizeChange && (
+            <PageSizeDropdown value={pageSize} onChange={onPageSizeChange} />
+          )}
+
+          {typeof tableFontSize === 'number' && onTableFontSizeChange && (
+            <TableFontSizeDropdown value={tableFontSize} onChange={onTableFontSizeChange} />
+          )}
+
           {/* Ruler Toggle Button */}
           {onToggleRuler && (
             <TooltipProvider>
@@ -273,6 +289,14 @@ export function PrintPreviewToolbar({
 
           {textAlign && onTextAlignChange && (
             <JustifyDropdown value={textAlign} onChange={onTextAlignChange} />
+          )}
+
+          {onPageSizeChange && (
+            <PageSizeDropdown value={pageSize} onChange={onPageSizeChange} />
+          )}
+
+          {typeof tableFontSize === 'number' && onTableFontSizeChange && (
+            <TableFontSizeDropdown value={tableFontSize} onChange={onTableFontSizeChange} />
           )}
 
           <ResponsiveMoreMenu>

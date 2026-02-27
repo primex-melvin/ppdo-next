@@ -26,9 +26,11 @@ export default function TextElementComponent({
   onUpdateText,
   onEditingChange,
 }: TextElementComponentProps) {
+  const CATEGORY_ROW_TEXT_LEFT_PADDING = 6;
   const [editText, setEditText] = useState(element.text);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [isEditingLocal, setIsEditingLocal] = useState(isEditing);
+  const isCategoryRow = element.id.startsWith('category-header-');
 
   React.useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -69,7 +71,7 @@ export default function TextElementComponent({
       fontStyle: element.italic ? 'italic' : 'normal',
       textDecoration: element.underline ? 'underline' : 'none',
       color: element.color,
-      backgroundColor: element.backgroundColor,
+      backgroundColor: isCategoryRow ? undefined : element.backgroundColor,
       textShadow: element.shadow ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
       WebkitTextStroke: element.outline ? '0.5px rgba(0,0,0,0.5)' : 'none',
       lineHeight: element.lineHeight ?? 'normal', // Apply line height multiplier
@@ -107,7 +109,11 @@ export default function TextElementComponent({
         left: `${element.x}px`,
         top: `${element.y}px`,
         width: `${element.width}px`,
+        height: isCategoryRow ? `${element.height}px` : undefined,
         minHeight: `${element.height}px`,
+        backgroundColor: isCategoryRow ? element.backgroundColor : undefined,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       {isEditing ? (
@@ -127,7 +133,15 @@ export default function TextElementComponent({
           onClick={(e) => e.stopPropagation()}
           className={`w-full h-full break-words whitespace-pre-wrap ${isSelected ? 'bg-blue-50' : ''
             }`}
-          style={getTextStyles()}
+          style={{
+            ...getTextStyles(),
+            ...(isCategoryRow ? {
+              display: 'flex',
+              alignItems: 'center',
+              paddingLeft: `${CATEGORY_ROW_TEXT_LEFT_PADDING}px`,
+              boxSizing: 'border-box',
+            } : {}),
+          }}
         >
           {element.text}
         </div>

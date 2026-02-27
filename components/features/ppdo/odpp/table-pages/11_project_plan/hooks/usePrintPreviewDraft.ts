@@ -27,6 +27,7 @@ interface UsePrintPreviewDraftProps {
   };
   year: number;
   particular?: string;
+  tableFontSize: number;
   existingDraft?: PrintDraft | null;
   onDraftSaved?: (draft: PrintDraft) => void;
   isDirty: boolean;
@@ -51,6 +52,7 @@ export function usePrintPreviewDraft({
   filterState,
   year,
   particular,
+  tableFontSize,
   existingDraft,
   onDraftSaved,
   isDirty,
@@ -74,6 +76,7 @@ export function usePrintPreviewDraft({
       documentTitle: documentTitle || particular ? `Budget ${year} - ${particular}` : `Budget ${year}`,
       budgetYear: year,
       budgetParticular: particular,
+      tableFontSize,
       filterState: {
         ...filterState,
         hiddenColumns: Array.from(hiddenColumns),
@@ -132,6 +135,7 @@ export function usePrintPreviewDraft({
     filterState,
     year,
     particular,
+    tableFontSize,
     onDraftSaved,
     existingDraft,
     setLastSavedTime,

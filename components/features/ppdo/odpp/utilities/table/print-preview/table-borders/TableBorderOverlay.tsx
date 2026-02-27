@@ -14,11 +14,35 @@ interface TableBorderOverlayProps {
 interface TableStructure {
   columns: { x: number; width: number }[];
   rows: { y: number; height: number }[];
+  mergedRows: { y: number; height: number }[];
   tableLeft: number;
   tableTop: number;
   tableWidth: number;
   tableHeight: number;
 }
+
+const median = (values: number[]): number => {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+};
+
+const inferCommonInnerGap = (positions: number[], sizeByPosition: Map<number, number>): number => {
+  const gaps: number[] = [];
+  for (let i = 0; i < positions.length - 1; i++) {
+    const pos = positions[i];
+    const next = positions[i + 1];
+    const size = sizeByPosition.get(pos) ?? 0;
+    const gap = next - pos - size;
+    if (gap >= 0) gaps.push(gap);
+  }
+  if (gaps.length === 0) return 0;
+  const positive = gaps.filter((gap) => gap > 0);
+  return positive.length > 0 ? Math.min(...positive) : median(gaps);
+};
 
 /**
  * TableBorderOverlay Component
@@ -32,6 +56,9 @@ export function TableBorderOverlay({ elements, tableStructure: providedStructure
   }, [elements, providedStructure]);
 
   if (!structure) return null;
+
+  const mergedIntervals = getMergedIntervals(structure.mergedRows);
+  const tableBottom = structure.tableTop + structure.tableHeight;
 
   return (
     <svg
@@ -57,18 +84,18 @@ export function TableBorderOverlay({ elements, tableStructure: providedStructure
       {/* Vertical column borders */}
       {structure.columns.slice(0, -1).map((col, index) => {
         const x = col.x + col.width;
-        return (
+        return getVerticalLineSegments(structure.tableTop, tableBottom, mergedIntervals).map((segment, segmentIndex) => (
           <line
-            key={`col-${index}`}
+            key={`col-${index}-seg-${segmentIndex}`}
             x1={x}
-            y1={structure.tableTop}
+            y1={segment.start}
             x2={x}
-            y2={structure.tableTop + structure.tableHeight}
+            y2={segment.end}
             stroke="#000000"
             strokeWidth="1"
             vectorEffect="non-scaling-stroke"
           />
-        );
+        ));
       })}
 
       {/* Horizontal row borders */}
@@ -97,51 +124,140 @@ export function TableBorderOverlay({ elements, tableStructure: providedStructure
  * Only considers visible elements to support column hiding
  */
 function detectTableStructure(elements: CanvasElement[]): TableStructure | null {
+  const isCategoryElement = (el: CanvasElement): boolean =>
+    el.type === 'text' && el.id.startsWith('category-header-');
+
   // Find visible table elements (filter out hidden columns)
   const tableElements = elements.filter(
     (el) => el.groupId && el.groupName?.toLowerCase().includes('table') && el.visible !== false
   );
+  const regularCellElements = tableElements.filter((el) => !isCategoryElement(el));
 
-  if (tableElements.length === 0) return null;
+  if (tableElements.length === 0 || regularCellElements.length === 0) return null;
 
   // Get unique X positions (columns) and Y positions (rows)
-  const uniqueX = Array.from(new Set(tableElements.map((el) => el.x))).sort((a, b) => a - b);
+  const uniqueX = Array.from(new Set(regularCellElements.map((el) => el.x))).sort((a, b) => a - b);
   const uniqueY = Array.from(new Set(tableElements.map((el) => el.y))).sort((a, b) => a - b);
 
   if (uniqueX.length === 0 || uniqueY.length === 0) return null;
 
-  // Build column structure
-  const columns = uniqueX.map((x) => {
-    const cellsInColumn = tableElements.filter((el) => el.x === x);
-    const width = cellsInColumn.length > 0 ? cellsInColumn[0].width : 0;
-    return { x, width };
-  });
+  const widthByX = new Map<number, number>();
+  const heightByY = new Map<number, number>();
 
-  // Build row structure using row-start to next-row-start spacing.
-  // This is more robust than text-box heights when rows have multiline text and
-  // the text boxes are shorter than the actual row due to render safety slack.
-  const rows = uniqueY.map((y, index) => {
+  uniqueX.forEach((x) => {
+    const cellsInColumn = regularCellElements.filter((el) => el.x === x);
+    if (cellsInColumn.length > 0) widthByX.set(x, cellsInColumn[0].width);
+  });
+  uniqueY.forEach((y) => {
     const cellsInRow = tableElements.filter((el) => el.y === y);
-    const fallbackHeight = cellsInRow.length > 0 ? cellsInRow[0].height : 0;
-    const nextY = uniqueY[index + 1];
-    const height = nextY != null ? Math.max(0, nextY - y) : fallbackHeight;
-    return { y, height };
+    if (cellsInRow.length > 0) heightByY.set(y, cellsInRow[0].height);
   });
 
-  // Calculate table bounds
-  const tableLeft = Math.min(...tableElements.map((el) => el.x));
-  const tableTop = Math.min(...tableElements.map((el) => el.y));
-  const tableRight = Math.max(...tableElements.map((el) => el.x + el.width));
-  const tableBottom = Math.max(...tableElements.map((el) => el.y + el.height));
-  const tableWidth = tableRight - tableLeft;
-  const tableHeight = tableBottom - tableTop;
+  const commonColumnGap = inferCommonInnerGap(uniqueX, widthByX);
+  const commonRowGap = inferCommonInnerGap(uniqueY, heightByY);
+  const halfColumnGap = commonColumnGap / 2;
+  const halfRowGap = commonRowGap / 2;
+
+  // Reconstruct outer column bounds from text bounds.
+  const columns = uniqueX.map((x, index) => {
+    const width = widthByX.get(x) ?? 0;
+    let left = x - halfColumnGap;
+
+    // Compensate first-column custom left padding when present.
+    if (index === 0 && uniqueX.length > 1) {
+      const firstGap = uniqueX[1] - x - width;
+      const extraLeftPadding = Math.max(0, firstGap - commonColumnGap);
+      left -= extraLeftPadding;
+    }
+
+    const right = index < uniqueX.length - 1
+      ? uniqueX[index + 1] - halfColumnGap
+      : x + width + halfColumnGap;
+
+    return { x: left, width: Math.max(0, right - left) };
+  });
+
+  // Reconstruct row bounds from start-to-next-start spacing.
+  const rows = uniqueY.map((y, index) => {
+    const rowHeight = heightByY.get(y) ?? 0;
+    const bottom = index < uniqueY.length - 1
+      ? uniqueY[index + 1]
+      : y + rowHeight + halfRowGap;
+
+    return { y, height: Math.max(0, bottom - y) };
+  });
+
+  const mergedRows = rows.filter((row) =>
+    tableElements.some((el) => el.y === row.y && isCategoryElement(el))
+  );
+
+  // Calculate bounds from reconstructed outer cell bounds.
+  const tableLeft = Math.min(...columns.map((column) => column.x));
+  const tableTop = Math.min(...rows.map((row) => row.y));
+  const tableRight = Math.max(...columns.map((column) => column.x + column.width));
+  const tableBottom = Math.max(...rows.map((row) => row.y + row.height));
+  const tableWidth = Math.max(0, tableRight - tableLeft);
+  const tableHeight = Math.max(0, tableBottom - tableTop);
 
   return {
     columns,
     rows,
+    mergedRows,
     tableLeft,
     tableTop,
     tableWidth,
     tableHeight,
   };
+}
+
+function getMergedIntervals(rows: Array<{ y: number; height: number }>): Array<{ start: number; end: number }> {
+  if (rows.length === 0) return [];
+
+  const intervals = rows
+    .map((row) => ({ start: row.y, end: row.y + row.height }))
+    .sort((a, b) => a.start - b.start);
+
+  const merged: Array<{ start: number; end: number }> = [];
+  for (const interval of intervals) {
+    const last = merged[merged.length - 1];
+    if (!last || interval.start > last.end) {
+      merged.push({ ...interval });
+    } else {
+      last.end = Math.max(last.end, interval.end);
+    }
+  }
+
+  return merged;
+}
+
+function getVerticalLineSegments(
+  top: number,
+  bottom: number,
+  skipIntervals: Array<{ start: number; end: number }>
+): Array<{ start: number; end: number }> {
+  if (bottom <= top) return [];
+
+  if (skipIntervals.length === 0) {
+    return [{ start: top, end: bottom }];
+  }
+
+  const segments: Array<{ start: number; end: number }> = [];
+  let cursor = top;
+
+  for (const interval of skipIntervals) {
+    const skipStart = Math.max(top, interval.start);
+    const skipEnd = Math.min(bottom, interval.end);
+    if (skipEnd <= skipStart) continue;
+
+    if (skipStart > cursor) {
+      segments.push({ start: cursor, end: skipStart });
+    }
+    cursor = Math.max(cursor, skipEnd);
+  }
+
+  if (cursor < bottom) {
+    segments.push({ start: cursor, end: bottom });
+  }
+
+  return segments.filter((segment) => segment.end > segment.start);
 }

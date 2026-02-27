@@ -4,6 +4,18 @@ import { Page, HeaderFooter, MarginSettings } from '@/app/(extra)/canvas/_compon
 import { CanvasTemplate } from '@/app/(extra)/canvas/_components/editor/types/template';
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 
+export const TABLE_FONT_SIZE_MIN = 9;
+export const TABLE_FONT_SIZE_MAX = 14;
+export const DEFAULT_TABLE_FONT_SIZE = 10;
+
+export function clampTableFontSize(size: number | undefined): number {
+  if (typeof size !== 'number' || Number.isNaN(size)) {
+    return DEFAULT_TABLE_FONT_SIZE;
+  }
+
+  return Math.min(TABLE_FONT_SIZE_MAX, Math.max(TABLE_FONT_SIZE_MIN, Math.round(size)));
+}
+
 /**
  * Column definition for table-to-canvas conversion
  */
@@ -47,6 +59,7 @@ export interface ConversionConfig {
   showFooter?: boolean; // default true
   headerHeight?: number; // override reserved header height for pagination
   footerHeight?: number; // override reserved footer height for pagination
+  tableFontSize?: number; // table-only text size (headers/data/category/totals)
 }
 
 /**
@@ -103,6 +116,7 @@ export interface PrintDraft {
   documentTitle?: string; // User-defined document name (optional for backward compatibility)
   budgetYear: number;
   budgetParticular?: string;
+  tableFontSize?: number; // backward-compatible table font size preference
 
   filterState: {
     searchQuery: string;

@@ -18,6 +18,7 @@ const PAGE_SIZES: Record<string, { width: number; height: number }> = {
 interface TableStructure {
   columns: { x: number; width: number }[];
   rows: { y: number; height: number }[];
+  mergedRows: { y: number; height: number }[];
   tableLeft: number;
   tableTop: number;
   tableWidth: number;
@@ -54,15 +55,19 @@ const inferCommonInnerGap = (positions: number[], sizeByPosition: Map<number, nu
  * Only considers visible elements to support column hiding
  */
 function detectTableStructure(elements: CanvasElement[]): TableStructure | null {
+  const isCategoryElement = (el: CanvasElement): boolean =>
+    el.type === 'text' && el.id.startsWith('category-header-');
+
   // Find visible table elements (filter out hidden columns)
   const tableElements = elements.filter(
     (el) => el.groupId && el.groupName?.toLowerCase().includes('table') && el.visible !== false
   );
+  const regularCellElements = tableElements.filter((el) => !isCategoryElement(el));
 
-  if (tableElements.length === 0) return null;
+  if (tableElements.length === 0 || regularCellElements.length === 0) return null;
 
   // Get unique X positions (columns) and Y positions (rows)
-  const uniqueX = Array.from(new Set(tableElements.map((el) => el.x))).sort((a, b) => a - b);
+  const uniqueX = Array.from(new Set(regularCellElements.map((el) => el.x))).sort((a, b) => a - b);
   const uniqueY = Array.from(new Set(tableElements.map((el) => el.y))).sort((a, b) => a - b);
 
   if (uniqueX.length === 0 || uniqueY.length === 0) return null;
@@ -71,7 +76,7 @@ function detectTableStructure(elements: CanvasElement[]): TableStructure | null 
   const heightByY = new Map<number, number>();
 
   uniqueX.forEach((x) => {
-    const cellsInColumn = tableElements.filter((el) => el.x === x);
+    const cellsInColumn = regularCellElements.filter((el) => el.x === x);
     if (cellsInColumn.length > 0) widthByX.set(x, cellsInColumn[0].width);
   });
   uniqueY.forEach((y) => {
@@ -117,6 +122,10 @@ function detectTableStructure(elements: CanvasElement[]): TableStructure | null 
     return { y: top, height: Math.max(0, bottom - top) };
   });
 
+  const mergedRows = rows.filter((row) =>
+    tableElements.some((el) => el.y === row.y && isCategoryElement(el))
+  );
+
   // Calculate table bounds from reconstructed outer cell bounds
   const tableLeft = Math.min(...columns.map((c) => c.x));
   const tableTop = Math.min(...rows.map((r) => r.y));
@@ -128,11 +137,61 @@ function detectTableStructure(elements: CanvasElement[]): TableStructure | null 
   return {
     columns,
     rows,
+    mergedRows,
     tableLeft,
     tableTop,
     tableWidth,
     tableHeight,
   };
+}
+
+function getMergedIntervals(rows: Array<{ y: number; height: number }>): Array<{ start: number; end: number }> {
+  if (rows.length === 0) return [];
+
+  const intervals = rows
+    .map((row) => ({ start: row.y, end: row.y + row.height }))
+    .sort((a, b) => a.start - b.start);
+
+  const merged: Array<{ start: number; end: number }> = [];
+  for (const interval of intervals) {
+    const last = merged[merged.length - 1];
+    if (!last || interval.start > last.end) {
+      merged.push({ ...interval });
+    } else {
+      last.end = Math.max(last.end, interval.end);
+    }
+  }
+
+  return merged;
+}
+
+function getVerticalLineSegments(
+  top: number,
+  bottom: number,
+  skipIntervals: Array<{ start: number; end: number }>
+): Array<{ start: number; end: number }> {
+  if (bottom <= top) return [];
+  if (skipIntervals.length === 0) return [{ start: top, end: bottom }];
+
+  const segments: Array<{ start: number; end: number }> = [];
+  let cursor = top;
+
+  for (const interval of skipIntervals) {
+    const skipStart = Math.max(top, interval.start);
+    const skipEnd = Math.min(bottom, interval.end);
+    if (skipEnd <= skipStart) continue;
+
+    if (skipStart > cursor) {
+      segments.push({ start: cursor, end: skipStart });
+    }
+    cursor = Math.max(cursor, skipEnd);
+  }
+
+  if (cursor < bottom) {
+    segments.push({ start: cursor, end: bottom });
+  }
+
+  return segments.filter((segment) => segment.end > segment.start);
 }
 
 /**
@@ -175,15 +234,20 @@ function createTableBordersImage(
     `vector-effect="non-scaling-stroke"/>`
   );
 
+  const mergedIntervals = getMergedIntervals(structure.mergedRows);
+  const tableBottom = structure.tableTop + structure.tableHeight;
+
   // Vertical column borders (skip the last column - outer border handles it)
   structure.columns.slice(0, -1).forEach((col) => {
     const x = col.x + col.width;
-    lines.push(
-      `<line x1="${x}" y1="${structure.tableTop}" ` +
-      `x2="${x}" y2="${structure.tableTop + structure.tableHeight}" ` +
-      `stroke="${borderColor}" stroke-width="${borderWidth}" ` +
-      `vector-effect="non-scaling-stroke"/>`
-    );
+    getVerticalLineSegments(structure.tableTop, tableBottom, mergedIntervals).forEach((segment) => {
+      lines.push(
+        `<line x1="${x}" y1="${segment.start}" ` +
+        `x2="${x}" y2="${segment.end}" ` +
+        `stroke="${borderColor}" stroke-width="${borderWidth}" ` +
+        `vector-effect="non-scaling-stroke"/>`
+      );
+    });
   });
 
   // Horizontal row borders (skip the last row - outer border handles it)
@@ -724,10 +788,12 @@ const createSectionDOM = (
 
     if (element.type === 'text') {
       const isTableText = Boolean(element.groupId && element.groupName?.toLowerCase().includes('table'));
+      const isCategoryText = element.id.startsWith('category-header-');
+      const categoryRowTextLeftPadding = 6;
       // Export text metrics are slightly taller than preview/html DOM metrics.
       // Keep the source geometry (converter owns middle alignment) and only add
       // extra room below/inside the box to protect descenders in PDF rasterization.
-      const verticalSafetyPx = isTableText ? 6 : 0;
+      const verticalSafetyPx = isTableText && !isCategoryText ? 6 : 0;
       const topOffsetPx = 0;
       const displayText = pageNumber && totalPages
         ? processDynamicText(element.text, pageNumber, totalPages)
@@ -781,12 +847,25 @@ const createSectionDOM = (
       textContentEl.style.textRendering = 'auto';
       // Ensure line height is set for proper text rendering
       textContentEl.style.lineHeight = String(element.lineHeight ?? 'normal');
+      if (isCategoryText) {
+        textEl.style.display = 'flex';
+        textEl.style.alignItems = 'center';
+        textContentEl.style.paddingLeft = `${categoryRowTextLeftPadding}px`;
+        textContentEl.style.boxSizing = 'border-box';
+      }
 
       if (element.backgroundColor) {
         const bgColor = convertColorToRGB(element.backgroundColor, 'transparent', true);
-        // Set inline and force it to prevent any browser color space conversions
-        textContentEl.style.setProperty('background-color', bgColor, 'important');
-        textContentEl.style.backgroundColor = bgColor;
+        if (isCategoryText) {
+          // Category rows must fill the entire merged row area.
+          textEl.style.setProperty('background-color', bgColor, 'important');
+          textEl.style.backgroundColor = bgColor;
+          textContentEl.style.setProperty('background-color', 'transparent', 'important');
+        } else {
+          // Set inline and force it to prevent any browser color space conversions
+          textContentEl.style.setProperty('background-color', bgColor, 'important');
+          textContentEl.style.backgroundColor = bgColor;
+        }
       } else {
         // Explicitly set transparent to prevent inheritance
         textContentEl.style.setProperty('background-color', 'transparent', 'important');
