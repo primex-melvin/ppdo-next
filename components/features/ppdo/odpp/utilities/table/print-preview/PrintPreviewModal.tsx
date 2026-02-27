@@ -320,6 +320,7 @@ export function PrintPreviewModal({
 
     return elements.map(el => {
       if (!el.groupId || !el.groupName?.toLowerCase().includes('table')) return el;
+      const textAlignPatch = el.type === 'text' ? { textAlign } : {};
       const columnKey = extractColumnKey(el.id);
       if (!columnKey) {
         const isCategoryRow = el.id.startsWith('category-header-');
@@ -330,6 +331,7 @@ export function PrintPreviewModal({
             y: marginTop + (el.y - oldTopEdge),
             width: totalAvailableWidth,
             visible: true,
+            ...textAlignPatch,
           };
         }
         return {
@@ -337,6 +339,7 @@ export function PrintPreviewModal({
           x: marginLeft + (el.x - oldLeftEdge) * scaleX,
           y: marginTop + (el.y - oldTopEdge),
           width: el.width * scaleX,
+          ...textAlignPatch,
         };
       }
       if (hiddenColumnsSet.has(columnKey)) return { ...el, visible: false };
@@ -344,10 +347,10 @@ export function PrintPreviewModal({
       if (newLayout) {
         return {
           ...el, x: newLayout.x, y: marginTop + (el.y - oldTopEdge), width: newLayout.width, visible: true,
-          ...(textAlign !== 'left' && el.type === 'text' ? { textAlign } : {}),
+          ...textAlignPatch,
         };
       }
-      return el.type === 'text' && textAlign !== 'left' ? { ...el, textAlign } : el;
+      return el.type === 'text' ? { ...el, textAlign } : el;
     });
   }, [effectiveMargins, extractColumnKey, hiddenCanvasColumns, textAlign]);
 

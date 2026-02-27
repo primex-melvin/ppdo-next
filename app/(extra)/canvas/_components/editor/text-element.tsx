@@ -7,6 +7,46 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { TextElement } from "../editor";
 
+const TABLE_LINE_HEIGHT = 1.2;
+const TABLE_MIN_ROW_HEIGHT = 22;
+const TABLE_MIN_HEADER_ROW_HEIGHT = 30;
+const TABLE_ROW_RENDER_SAFETY = 8;
+const TABLE_HEADER_RENDER_SAFETY = 5;
+
+function resolveLineHeight(lineHeight: TextElement['lineHeight']): number {
+  if (typeof lineHeight === 'number' && Number.isFinite(lineHeight) && lineHeight > 0) {
+    return lineHeight;
+  }
+  return TABLE_LINE_HEIGHT;
+}
+
+function getTableRowKind(elementId: string): 'header' | 'data' | 'category' | 'total' | null {
+  if (elementId.startsWith('header-')) return 'header';
+  if (elementId.startsWith('cell-')) return 'data';
+  if (elementId.startsWith('category-header-')) return 'category';
+  if (elementId.startsWith('total-')) return 'total';
+  return null;
+}
+
+function getPreviewTableRowHeight(element: TextElement): number {
+  const rowKind = getTableRowKind(element.id);
+  if (rowKind === 'category' || rowKind === 'total') {
+    return Math.max(TABLE_MIN_ROW_HEIGHT, element.height);
+  }
+
+  if (rowKind === 'header' || rowKind === 'data') {
+    const lineHeight = resolveLineHeight(element.lineHeight);
+    const lineCount = Math.max(1, element.text.split('\n').length);
+    const contentHeight = lineCount * element.fontSize * lineHeight;
+    const minRowHeight = rowKind === 'header' ? TABLE_MIN_HEADER_ROW_HEIGHT : TABLE_MIN_ROW_HEIGHT;
+    const renderSafety = rowKind === 'header' ? TABLE_HEADER_RENDER_SAFETY : TABLE_ROW_RENDER_SAFETY;
+    const normalizedHeight = Math.max(contentHeight + renderSafety, minRowHeight);
+    return Math.max(normalizedHeight, element.height);
+  }
+
+  return Math.max(TABLE_MIN_ROW_HEIGHT, element.height);
+}
+
 interface TextElementComponentProps {
   element: TextElement;
   isSelected: boolean;
@@ -31,6 +71,11 @@ export default function TextElementComponent({
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [isEditingLocal, setIsEditingLocal] = useState(isEditing);
   const isCategoryRow = element.id.startsWith('category-header-');
+  const isTableText = Boolean(
+    element.groupId && element.groupName?.toLowerCase().includes('table')
+  );
+  const tableRowHeight = isTableText ? getPreviewTableRowHeight(element) : null;
+  const textStyles = getTextStyles();
 
   React.useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -64,7 +109,7 @@ export default function TextElementComponent({
     }
   };
 
-  const getTextStyles = () => {
+  function getTextStyles() {
     const styles: React.CSSProperties = {
       fontSize: `${element.fontSize}px`,
       fontWeight: element.bold ? 700 : 400,
@@ -96,7 +141,7 @@ export default function TextElementComponent({
     }
 
     return styles;
-  };
+  }
 
   return (
     <div
@@ -109,8 +154,8 @@ export default function TextElementComponent({
         left: `${element.x}px`,
         top: `${element.y}px`,
         width: `${element.width}px`,
-        height: isCategoryRow ? `${element.height}px` : undefined,
-        minHeight: `${element.height}px`,
+        height: isCategoryRow ? `${element.height}px` : tableRowHeight ? `${tableRowHeight}px` : undefined,
+        minHeight: `${tableRowHeight ?? element.height}px`,
         backgroundColor: isCategoryRow ? element.backgroundColor : undefined,
         boxSizing: 'border-box',
         overflow: 'hidden',
@@ -134,7 +179,11 @@ export default function TextElementComponent({
           className={`w-full h-full break-words whitespace-pre-wrap ${isSelected ? 'bg-blue-50' : ''
             }`}
           style={{
-            ...getTextStyles(),
+            ...textStyles,
+            ...(isTableText && !isCategoryRow ? {
+              display: 'flex',
+              alignItems: 'center',
+            } : {}),
             ...(isCategoryRow ? {
               display: 'flex',
               alignItems: 'center',
@@ -143,7 +192,20 @@ export default function TextElementComponent({
             } : {}),
           }}
         >
-          {element.text}
+          {isTableText && !isCategoryRow ? (
+            <div
+              className="w-full break-words whitespace-pre-wrap"
+              style={{
+                ...textStyles,
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            >
+              {element.text}
+            </div>
+          ) : (
+            element.text
+          )}
         </div>
       )}
 
