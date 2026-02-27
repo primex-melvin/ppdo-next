@@ -55,6 +55,23 @@ const TOTAL_ROW_TEXT_TOP_INSET = 0;
 // âœ… Extra left padding for first column text (spacing from left border)
 const FIRST_COLUMN_LEFT_PADDING = 20;
 
+function toCamelCaseHeaderLabel(rawLabel: string): string {
+  const normalized = rawLabel
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!normalized) return rawLabel;
+
+  return normalized
+    .split(' ')
+    .map((word) => {
+      const lower = word.toLowerCase();
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(' ');
+}
+
 /**
  * Converts budget table data into canvas pages
  * Supports row markers for category/group headers and dynamic text wrapping
@@ -108,7 +125,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
 
   // Pre-calculate header height with text wrapping
   const columnLabels = new Map<string, string>();
-  visibleColumns.forEach(col => columnLabels.set(col.key, col.label));
+  visibleColumns.forEach(col => columnLabels.set(col.key, toCamelCaseHeaderLabel(col.label)));
   const headerWrappedData = calculateWrappedHeader(
     columnLabels,
     columnWidthMap,
@@ -478,13 +495,15 @@ function createTableHeaders(
   let currentX = MARGIN_LEFT;
 
   columns.forEach((col, index) => {
+    const headerLabel = toCamelCaseHeaderLabel(col.label);
+
     // Extra left padding for first column
     const firstColPadding = index === 0 ? FIRST_COLUMN_LEFT_PADDING : 0;
 
     elements.push({
       id: `header-${col.key}-${Date.now()}`,
       type: 'text',
-      text: col.label,
+      text: headerLabel,
       x: currentX + CELL_TEXT_PADDING + firstColPadding,
       y: y + HEADER_ROW_TEXT_TOP_INSET,
       width: columnWidths[index] - (CELL_TEXT_PADDING * 2) - firstColPadding,
@@ -527,7 +546,9 @@ function createTableHeadersWithWrapping(
   columns.forEach((col, index) => {
     // Find the wrapped cell data for this column
     const cellData = wrappedData.cells.find(c => c.columnKey === col.key);
-    const wrappedText = cellData ? cellData.lines.join('\n') : col.label;
+    const wrappedText = cellData
+      ? cellData.lines.join('\n')
+      : toCamelCaseHeaderLabel(col.label);
 
     // Extra left padding for first column
     const firstColPadding = index === 0 ? FIRST_COLUMN_LEFT_PADDING : 0;
