@@ -109,6 +109,8 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   const reservedHeaderHeight = showHeader ? (config.headerHeight ?? HEADER_HEIGHT) : 0;
   const reservedFooterHeight = showFooter ? (config.footerHeight ?? FOOTER_HEIGHT) : 0;
   const availableHeight = size.height - reservedHeaderHeight - reservedFooterHeight - MARGIN_TOP - MARGIN_BOTTOM;
+  const contentTop = MARGIN_TOP;
+  const contentBottom = contentTop + availableHeight;
 
   // Filter visible columns
   const visibleColumns = columns.filter(col => !hiddenColumns.has(col.key));
@@ -183,7 +185,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   let itemIndex = 0;
   while (itemIndex < preCalculatedRows.length) {
     const pageElements: TextElement[] = [];
-    let currentY = MARGIN_TOP;
+    let currentY = contentTop;
     const globalRowIndex = itemIndex;
 
     // Create unique group ID for this page's table data
@@ -215,7 +217,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
       }
 
       // Check if this row fits on the current page
-      if (currentY + rowHeightNeeded > availableHeight && pageElements.length > (includeHeaders ? visibleColumns.length : 0)) {
+      if (currentY + rowHeightNeeded > contentBottom && pageElements.length > (includeHeaders ? visibleColumns.length : 0)) {
         // Row doesn't fit and we have content, start a new page
         break;
       }
@@ -263,7 +265,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   // Add totals page if requested
   if (includeTotals && pages.length > 0) {
     const lastPage = pages[pages.length - 1];
-    const hasSpace = checkSpaceForTotals(lastPage, availableHeight);
+    const hasSpace = checkSpaceForTotals(lastPage, contentBottom);
 
     if (hasSpace) {
       addTotalsToPage(lastPage, totals, visibleColumns, columnWidths, tableFontSize);
@@ -880,7 +882,7 @@ function createTotalsRow(
 /**
  * Check if page has space for totals row
  */
-function checkSpaceForTotals(page: Page, availableHeight: number): boolean {
+function checkSpaceForTotals(page: Page, contentBottom: number): boolean {
   if (page.elements.length === 0) return true;
 
   const lastElementBottom = getPageTableOuterBottom(page) ?? (() => {
@@ -888,7 +890,7 @@ function checkSpaceForTotals(page: Page, availableHeight: number): boolean {
     return lastElement.y + lastElement.height + CELL_TEXT_PADDING * 2;
   })();
 
-  return (lastElementBottom + MIN_ROW_HEIGHT) < availableHeight;
+  return (lastElementBottom + MIN_ROW_HEIGHT) <= contentBottom;
 }
 
 function getPageTableOuterBottom(page: Page): number | null {
