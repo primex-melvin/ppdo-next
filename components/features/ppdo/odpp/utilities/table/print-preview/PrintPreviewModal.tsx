@@ -131,6 +131,11 @@ export function PrintPreviewModal({
   // Track initialization to prevent re-triggering
   const initializationStartedRef = useRef(false);
   const lastLayoutReflowSignatureRef = useRef<string | null>(null);
+  const footerVisible = state.footer.visible !== false;
+  const effectiveMargins = useMemo(() => ({
+    ...rulerState.margins,
+    bottom: footerVisible ? 0 : rulerState.margins.bottom,
+  }), [rulerState.margins, footerVisible]);
 
   const inferFooterPageLabelPosition = useCallback((
     footer: import('@/app/(extra)/canvas/_components/editor/types').HeaderFooter,
@@ -293,9 +298,9 @@ export function PrintPreviewModal({
 
     if (visibleColumns.length === 0) return elements;
 
-    const marginLeft = rulerState.margins.left;
-    const marginRight = rulerState.margins.right;
-    const marginTop = rulerState.margins.top;
+    const marginLeft = effectiveMargins.left;
+    const marginRight = effectiveMargins.right;
+    const marginTop = effectiveMargins.top;
     const PAGE_SIZES = { A4: { width: 595, height: 842 }, Short: { width: 612, height: 792 }, Long: { width: 612, height: 936 } };
     const baseSize = PAGE_SIZES[pageSizeStr as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;
     const size = orientation === 'landscape' ? { width: baseSize.height, height: baseSize.width } : baseSize;
@@ -344,7 +349,7 @@ export function PrintPreviewModal({
       }
       return el.type === 'text' && textAlign !== 'left' ? { ...el, textAlign } : el;
     });
-  }, [extractColumnKey, hiddenCanvasColumns, rulerState.margins, textAlign]);
+  }, [effectiveMargins, extractColumnKey, hiddenCanvasColumns, textAlign]);
 
   // Filter and redistribute canvas elements based on hidden columns and margins (current page only - for preview)
   const visibleElements = useMemo(() => {
@@ -517,8 +522,8 @@ export function PrintPreviewModal({
           title: includeCoverPage ? `Budget Tracking ${year}` : undefined,
           subtitle: includeCoverPage && particular ? `Particular: ${particular}` : undefined,
           rowMarkers,
-          margin: rulerState.margins.left,
-          margins: rulerState.margins,
+          margin: effectiveMargins.left,
+          margins: effectiveMargins,
           showHeader: false,
           showFooter: true,
           tableFontSize,
@@ -571,7 +576,7 @@ export function PrintPreviewModal({
       year,
       particular,
       rowMarkers,
-      rulerState.margins,
+      effectiveMargins,
       state,
       tableFontSize,
       applyFooterPageLabelPosition,
@@ -926,7 +931,7 @@ export function PrintPreviewModal({
     const pageDims = getPageDimensions(tableRefPage.size, tableRefPage.orientation);
     const headerForLayout = { ...state.header };
     const footerForLayout = { ...state.footer };
-    const layout = getPageLayoutMetrics(pageDims.width, pageDims.height, headerForLayout, footerForLayout, rulerState.margins);
+    const layout = getPageLayoutMetrics(pageDims.width, pageDims.height, headerForLayout, footerForLayout, effectiveMargins);
 
     const regenerated = convertTableToCanvas({
       items: budgetItems,
@@ -938,8 +943,8 @@ export function PrintPreviewModal({
       includeHeaders: true,
       includeTotals: true,
       rowMarkers,
-      margin: rulerState.margins.left,
-      margins: rulerState.margins,
+      margin: effectiveMargins.left,
+      margins: effectiveMargins,
       showHeader: state.header.visible !== false,
       showFooter: state.footer.visible !== false,
       headerHeight: layout.headerHeight,
@@ -963,7 +968,7 @@ export function PrintPreviewModal({
     pageHasTableElements,
     includeCoverPage,
     inferCoverPageFromPages,
-    rulerState.margins,
+    effectiveMargins,
     budgetItems,
     totals,
     columns,
@@ -976,7 +981,7 @@ export function PrintPreviewModal({
     if (!isOpen || !state.hasInitialized) return;
 
     const signature = JSON.stringify({
-      margins: rulerState.margins,
+      margins: effectiveMargins,
       headerVisible: state.header.visible !== false,
       footerVisible: state.footer.visible !== false,
       includeCoverPage,
@@ -1001,7 +1006,7 @@ export function PrintPreviewModal({
     state.footer.visible,
     state.currentPage.size,
     state.currentPage.orientation,
-    rulerState.margins,
+    effectiveMargins,
     includeCoverPage,
     tableFontSize,
     regenerateTablePagesForLayout,
@@ -1141,7 +1146,7 @@ export function PrintPreviewModal({
               <div style={{ transform: `translateY(${-scrollTop}px)`, marginTop: 0 }}>
                 <VerticalRuler
                   height={getPageDimensions(state.currentPage.size, state.currentPage.orientation).height}
-                  rulerState={rulerState}
+                  rulerState={{ ...rulerState, margins: effectiveMargins }}
                   onMarginChange={handleRulerMarginChange}
                   scrollTop={0}
                   showHeaderFooter={true}
@@ -1186,7 +1191,7 @@ export function PrintPreviewModal({
                 isEditorMode={isEditorMode}
                 onSetDirty={state.setIsDirty}
                 showMarginGuides={rulerState.showMarginGuides}
-                margins={rulerState.margins}
+                margins={effectiveMargins}
               />
             </div>
 

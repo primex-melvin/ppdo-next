@@ -98,7 +98,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   MARGIN_LEFT = config.margins?.left ?? uniformMargin;
   MARGIN_RIGHT = config.margins?.right ?? uniformMargin;
   MARGIN_TOP = config.margins?.top ?? uniformMargin;
-  MARGIN_BOTTOM = config.margins?.bottom ?? uniformMargin;
+  MARGIN_BOTTOM = showFooter ? 0 : (config.margins?.bottom ?? uniformMargin);
 
   const isLandscape = config.orientation === 'landscape';
   const baseSize = PAGE_SIZES[pageSize as keyof typeof PAGE_SIZES] || PAGE_SIZES.A4;
@@ -743,7 +743,7 @@ function formatCellValue(item: BudgetItem, key: string): string {
   }
 
   // Percentage formatting
-  if (key === 'utilizationRate') {
+  if (key === 'utilizationRate' || key === 'utilRate') {
     return `${value.toFixed(1)}%`;
   }
 
@@ -753,6 +753,21 @@ function formatCellValue(item: BudgetItem, key: string): string {
   }
 
   return String(value);
+}
+
+function calculateTotalsUtilizationRate(totals: BudgetTotals): number {
+  const explicitRate = (totals as any).utilizationRate;
+  if (typeof explicitRate === 'number' && Number.isFinite(explicitRate)) {
+    return explicitRate;
+  }
+
+  const allocated = Number((totals as any).totalBudgetAllocated ?? 0);
+  const utilized = Number((totals as any).totalBudgetUtilized ?? 0);
+
+  if (!Number.isFinite(allocated) || allocated <= 0) return 0;
+  if (!Number.isFinite(utilized)) return 0;
+
+  return (utilized / allocated) * 100;
 }
 
 /**
@@ -835,12 +850,15 @@ function createTotalsRow(
 ): TextElement[] {
   const elements: TextElement[] = [];
   let currentX = MARGIN_LEFT;
+  const totalUtilizationRate = calculateTotalsUtilizationRate(totals);
 
   columns.forEach((col, index) => {
     let value = '';
 
     if (col.key === 'particular') {
       value = 'TOTAL';
+    } else if (col.key === 'utilizationRate' || col.key === 'utilRate') {
+      value = `${totalUtilizationRate.toFixed(1)}%`;
     } else if (col.key in totals) {
       const totalValue = (totals as any)[col.key];
       value = formatCellValue({ [col.key]: totalValue } as any, col.key);

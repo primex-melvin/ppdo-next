@@ -124,10 +124,13 @@ export default function VerticalRuler({
     type: 'topMargin' | 'bottomMargin',
     startValue: number
   ) => {
+    if (type === 'bottomMargin' && footerVisible) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setDragging({ type, startY: e.clientY, startValue });
-  }, []);
+  }, [footerVisible]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!dragging || !rulerRef.current) return;
@@ -141,10 +144,11 @@ export default function VerticalRuler({
         onMarginChange('top', newValue / zoom);
         break;
       case 'bottomMargin':
+        if (footerVisible) break;
         onMarginChange('bottom', (bodyHeight - newValue) / zoom);
         break;
     }
-  }, [dragging, scrollTop, headerHeight, bodyHeight, zoom, onMarginChange]);
+  }, [dragging, scrollTop, headerHeight, bodyHeight, zoom, onMarginChange, footerVisible]);
 
   const handleMouseUp = useCallback(() => {
     setDragging(null);
@@ -274,25 +278,27 @@ export default function VerticalRuler({
         )}
       </div>
 
-      {/* Bottom margin marker */}
-      <div
-        className={`absolute left-0 right-0 cursor-ns-resize ${dragging?.type === 'bottomMargin' ? 'z-20' : 'z-10'}`}
-        style={{ top: bottomMarginPos - 4 }}
-        onMouseDown={(e) => handleMouseDown(e, 'bottomMargin', margins.bottom)}
-        onMouseEnter={() => setHoveredMarker('bottomMargin')}
-        onMouseLeave={() => setHoveredMarker(null)}
-      >
-        <div className={`h-2 transition-colors ${
-          hoveredMarker === 'bottomMargin' || dragging?.type === 'bottomMargin'
-            ? 'bg-blue-500'
-            : 'bg-blue-400'
-        }`} />
-        {(hoveredMarker === 'bottomMargin' || dragging?.type === 'bottomMargin') && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 px-1.5 py-0.5 bg-stone-800 text-white text-[10px] rounded whitespace-nowrap z-30">
-            Bottom Margin
-          </div>
-        )}
-      </div>
+      {/* Bottom margin marker (available only when footer is hidden) */}
+      {!footerVisible && (
+        <div
+          className={`absolute left-0 right-0 cursor-ns-resize ${dragging?.type === 'bottomMargin' ? 'z-20' : 'z-10'}`}
+          style={{ top: bottomMarginPos - 4 }}
+          onMouseDown={(e) => handleMouseDown(e, 'bottomMargin', margins.bottom)}
+          onMouseEnter={() => setHoveredMarker('bottomMargin')}
+          onMouseLeave={() => setHoveredMarker(null)}
+        >
+          <div className={`h-2 transition-colors ${
+            hoveredMarker === 'bottomMargin' || dragging?.type === 'bottomMargin'
+              ? 'bg-blue-500'
+              : 'bg-blue-400'
+          }`} />
+          {(hoveredMarker === 'bottomMargin' || dragging?.type === 'bottomMargin') && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 px-1.5 py-0.5 bg-stone-800 text-white text-[10px] rounded whitespace-nowrap z-30">
+              Bottom Margin
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Dragging line indicator */}
       {dragging && (
