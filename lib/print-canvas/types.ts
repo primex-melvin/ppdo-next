@@ -117,6 +117,7 @@ export interface PrintDraft {
   budgetYear: number;
   budgetParticular?: string;
   tableFontSize?: number; // backward-compatible table font size preference
+  footerPageLabelPosition?: 'left' | 'right'; // footer page label placement preference
 
   filterState: {
     searchQuery: string;

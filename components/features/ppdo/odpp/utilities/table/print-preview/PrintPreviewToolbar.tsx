@@ -45,6 +45,8 @@ interface PrintPreviewToolbarProps {
   onShowPageHeaderChange?: (enabled: boolean) => void;
   showPageFooter?: boolean;
   onShowPageFooterChange?: (enabled: boolean) => void;
+  footerPageLabelPosition?: 'left' | 'right';
+  onFooterPageLabelPositionChange?: (position: 'left' | 'right') => void;
 }
 
 
@@ -77,6 +79,8 @@ export function PrintPreviewToolbar({
   onShowPageHeaderChange,
   showPageFooter = true,
   onShowPageFooterChange,
+  footerPageLabelPosition = 'left',
+  onFooterPageLabelPositionChange,
 }: PrintPreviewToolbarProps) {
 
   return (
@@ -172,6 +176,40 @@ export function PrintPreviewToolbar({
                     className="scale-90"
                   />
                 </div>
+              )}
+              {onShowPageFooterChange && onFooterPageLabelPositionChange && showPageFooter && (
+                <>
+                  <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium">Footer Label</span>
+                    <div className="inline-flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
+                      <button
+                        type="button"
+                        aria-pressed={footerPageLabelPosition === 'left'}
+                        onClick={() => onFooterPageLabelPositionChange('left')}
+                        className={`px-2 py-1 text-xs transition-colors ${
+                          footerPageLabelPosition === 'left'
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                            : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        Left
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={footerPageLabelPosition === 'right'}
+                        onClick={() => onFooterPageLabelPositionChange('right')}
+                        className={`px-2 py-1 text-xs transition-colors ${
+                          footerPageLabelPosition === 'right'
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                            : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        Right
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
             <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 mx-1 hidden lg:block" />
@@ -328,6 +366,38 @@ export function PrintPreviewToolbar({
                   onCheckedChange={onShowPageFooterChange}
                   className="scale-75"
                 />
+              </div>
+            )}
+
+            {onShowPageFooterChange && onFooterPageLabelPositionChange && showPageFooter && (
+              <div className="px-2 py-1.5">
+                <span className="text-xs font-medium">Footer Label Position</span>
+                <div className="mt-1 inline-flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
+                  <button
+                    type="button"
+                    aria-pressed={footerPageLabelPosition === 'left'}
+                    onClick={() => onFooterPageLabelPositionChange('left')}
+                    className={`px-2 py-1 text-xs transition-colors ${
+                      footerPageLabelPosition === 'left'
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    Left
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={footerPageLabelPosition === 'right'}
+                    onClick={() => onFooterPageLabelPositionChange('right')}
+                    className={`px-2 py-1 text-xs transition-colors ${
+                      footerPageLabelPosition === 'right'
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    Right
+                  </button>
+                </div>
               </div>
             )}
 

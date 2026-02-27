@@ -28,6 +28,7 @@ interface UsePrintPreviewDraftProps {
   year: number;
   particular?: string;
   tableFontSize: number;
+  footerPageLabelPosition: 'left' | 'right';
   existingDraft?: PrintDraft | null;
   onDraftSaved?: (draft: PrintDraft) => void;
   isDirty: boolean;
@@ -53,6 +54,7 @@ export function usePrintPreviewDraft({
   year,
   particular,
   tableFontSize,
+  footerPageLabelPosition,
   existingDraft,
   onDraftSaved,
   isDirty,
@@ -77,6 +79,7 @@ export function usePrintPreviewDraft({
       budgetYear: year,
       budgetParticular: particular,
       tableFontSize,
+      footerPageLabelPosition,
       filterState: {
         ...filterState,
         hiddenColumns: Array.from(hiddenColumns),
@@ -136,6 +139,7 @@ export function usePrintPreviewDraft({
     year,
     particular,
     tableFontSize,
+    footerPageLabelPosition,
     onDraftSaved,
     existingDraft,
     setLastSavedTime,
