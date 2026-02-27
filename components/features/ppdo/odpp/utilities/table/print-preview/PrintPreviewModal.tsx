@@ -14,7 +14,6 @@ import {
   ColumnDefinition,
   BudgetTotals,
   RowMarker,
-  DEFAULT_TABLE_FONT_SIZE,
   clampTableFontSize,
 } from '@/lib/print-canvas/types';
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
@@ -61,6 +60,11 @@ interface PrintPreviewModalProps {
 
 type FooterPageLabelPosition = 'left' | 'right';
 const FOOTER_PAGE_LABEL_ID_PREFIX = 'footer-page-';
+const FIRST_PREVIEW_DEFAULT_PAGE_SIZE: 'A4' | 'Short' | 'Long' = 'Long';
+const FIRST_PREVIEW_DEFAULT_ORIENTATION: 'portrait' | 'landscape' = 'landscape';
+const FIRST_PREVIEW_DEFAULT_TEXT_ALIGN: TextAlign = 'left';
+const FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE = 9;
+const FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION: FooterPageLabelPosition = 'right';
 
 export function PrintPreviewModal({
   isOpen,
@@ -111,9 +115,9 @@ export function PrintPreviewModal({
   const [hiddenColumnsVersion, setHiddenColumnsVersion] = useState(0);
 
   // --- Text Alignment State ---
-  const [textAlign, setTextAlign] = useState<TextAlign>('center');
-  const [tableFontSize, setTableFontSize] = useState<number>(DEFAULT_TABLE_FONT_SIZE);
-  const [footerPageLabelPosition, setFooterPageLabelPosition] = useState<FooterPageLabelPosition>('left');
+  const [textAlign, setTextAlign] = useState<TextAlign>(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
+  const [tableFontSize, setTableFontSize] = useState<number>(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
+  const [footerPageLabelPosition, setFooterPageLabelPosition] = useState<FooterPageLabelPosition>(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
 
   // --- Column Label Overrides (for inline renaming) ---
   const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
@@ -251,7 +255,7 @@ export function PrintPreviewModal({
       }
     }
 
-    return DEFAULT_TABLE_FONT_SIZE;
+    return FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE;
   }, []);
 
   // Helper: Extract column key from any table element ID
@@ -494,7 +498,7 @@ export function PrintPreviewModal({
 
   // Initialize from table data with template and orientation
   const initializeFromTableData = useCallback(
-    (template?: CanvasTemplate | null, orientation: 'portrait' | 'landscape' = 'portrait', includeCoverPage: boolean = true) => {
+    (template?: CanvasTemplate | null, orientation: 'portrait' | 'landscape' = FIRST_PREVIEW_DEFAULT_ORIENTATION, includeCoverPage: boolean = true) => {
       console.group('ðŸŽ¨ INITIALIZING PRINT PREVIEW');
       console.log('Template:', template?.name || 'none');
       console.log('Orientation:', orientation);
@@ -506,7 +510,7 @@ export function PrintPreviewModal({
           totals,
           columns,
           hiddenColumns,
-          pageSize: template?.page.size || 'A4',
+          pageSize: template?.page.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE,
           orientation: orientation,
           includeHeaders: true,
           includeTotals: true,
@@ -523,7 +527,7 @@ export function PrintPreviewModal({
         let finalPages = result.pages;
         let finalHeader = result.header;
         let finalFooter = result.footer;
-        const targetPageSize = template?.page.size || 'A4';
+        const targetPageSize = template?.page.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE;
 
         if (template) {
           const merged = mergeTemplateWithCanvas(
@@ -709,8 +713,9 @@ export function PrintPreviewModal({
       setShowLiveTemplateSelector(false);
       setShowSetupModal(false);
       setIncludeCoverPage(true);
-      setTableFontSize(DEFAULT_TABLE_FONT_SIZE);
-      setFooterPageLabelPosition('left');
+      setTextAlign(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
+      setTableFontSize(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
+      setFooterPageLabelPosition(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
       initializationStartedRef.current = false;
       lastLayoutReflowSignatureRef.current = null;
       setHiddenCanvasColumns(new Set());
@@ -783,8 +788,9 @@ export function PrintPreviewModal({
     // console.log('ðŸ†• New draft, showing setup wizard...');
     const defaultTitle = particular ? `Budget ${year} - ${particular}` : `Budget ${year}`;
     state.setDocumentTitle(defaultTitle);
-    setTableFontSize(DEFAULT_TABLE_FONT_SIZE);
-    setFooterPageLabelPosition('left');
+    setTextAlign(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
+    setTableFontSize(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
+    setFooterPageLabelPosition(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
     setShowSetupModal(true);
     // Don't set hasInitialized yet - wait for wizard completion
     // eslint-disable-next-line react-hooks/exhaustive-deps

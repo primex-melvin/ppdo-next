@@ -33,8 +33,8 @@ export function usePrintPreviewState() {
 
   const currentPage = pages[currentPageIndex] || {
     id: 'empty',
-    size: 'A4' as const,
-    orientation: 'portrait' as const,
+    size: 'Long' as const,
+    orientation: 'landscape' as const,
     elements: [],
     backgroundColor: '#ffffff',
   };
