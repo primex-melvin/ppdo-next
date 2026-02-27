@@ -141,7 +141,18 @@ export function GenericPrintPreviewModal({
       const containerWidth = scrollEl.clientWidth;
       const canvasWidth = pageDimensions.width;
       const padding = 32; // px-8 padding
-      setCanvasOffsetLeft(Math.max(padding, (containerWidth - canvasWidth) / 2));
+      const centeredOffset = (containerWidth - canvasWidth) / 2;
+      const isLongWithExpandedPanelAndRuler = (
+        currentPage.size === 'Long' &&
+        !isPanelCollapsed &&
+        rulerState.visible
+      );
+
+      setCanvasOffsetLeft(
+        isLongWithExpandedPanelAndRuler
+          ? Math.max(0, centeredOffset)
+          : Math.max(padding, centeredOffset)
+      );
     };
 
     // Initial calculation
@@ -153,7 +164,7 @@ export function GenericPrintPreviewModal({
     observer.observe(scrollEl);
 
     return () => observer.disconnect();
-  }, [pages, currentPageIndex]);
+  }, [pages, currentPageIndex, isPanelCollapsed, rulerState.visible]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
