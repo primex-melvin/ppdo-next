@@ -12,6 +12,7 @@ const TABLE_MIN_ROW_HEIGHT = 22;
 const TABLE_MIN_HEADER_ROW_HEIGHT = 30;
 const TABLE_ROW_RENDER_SAFETY = 8;
 const TABLE_HEADER_RENDER_SAFETY = 5;
+const TABLE_CELL_HORIZONTAL_PADDING = 6;
 
 function resolveLineHeight(lineHeight: TextElement['lineHeight']): number {
   if (typeof lineHeight === 'number' && Number.isFinite(lineHeight) && lineHeight > 0) {
@@ -66,7 +67,7 @@ export default function TextElementComponent({
   onUpdateText,
   onEditingChange,
 }: TextElementComponentProps) {
-  const CATEGORY_ROW_TEXT_LEFT_PADDING = 6;
+  const CATEGORY_ROW_TEXT_LEFT_PADDING = TABLE_CELL_HORIZONTAL_PADDING;
   const [editText, setEditText] = useState(element.text);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [isEditingLocal, setIsEditingLocal] = useState(isEditing);
@@ -75,6 +76,15 @@ export default function TextElementComponent({
     element.groupId && element.groupName?.toLowerCase().includes('table')
   );
   const tableRowHeight = isTableText ? getPreviewTableRowHeight(element) : null;
+  const resolvedTextAlign = element.textAlign || 'left';
+  const tableHorizontalInsetStyle: React.CSSProperties =
+    !isTableText || isCategoryRow
+      ? {}
+      : resolvedTextAlign === 'right'
+        ? { paddingRight: `${TABLE_CELL_HORIZONTAL_PADDING}px` }
+        : resolvedTextAlign === 'left'
+          ? { paddingLeft: `${TABLE_CELL_HORIZONTAL_PADDING}px` }
+          : {};
   const textStyles = getTextStyles();
 
   React.useEffect(() => {
@@ -170,7 +180,11 @@ export default function TextElementComponent({
           onKeyDown={handleKeyDown}
           onClick={(e) => e.stopPropagation()}
           className="w-full h-full border border-blue-500 rounded resize-none focus:outline-none"
-          style={getTextStyles()}
+          style={{
+            ...getTextStyles(),
+            boxSizing: 'border-box',
+            ...tableHorizontalInsetStyle,
+          }}
         />
       ) : (
         <div
@@ -199,6 +213,7 @@ export default function TextElementComponent({
                 ...textStyles,
                 width: '100%',
                 boxSizing: 'border-box',
+                ...tableHorizontalInsetStyle,
               }}
             >
               {element.text}

@@ -790,6 +790,7 @@ const createSectionDOM = (
       const isTableText = Boolean(element.groupId && element.groupName?.toLowerCase().includes('table'));
       const isCategoryText = element.id.startsWith('category-header-');
       const categoryRowTextLeftPadding = 6;
+      const tableCellHorizontalPadding = 6;
       // Export text metrics are slightly taller than preview/html DOM metrics.
       // Keep the source geometry (converter owns middle alignment) and only add
       // extra room below/inside the box to protect descenders in PDF rasterization.
@@ -838,6 +839,16 @@ const createSectionDOM = (
       textContentEl.style.color = textColor;
       // Text alignment
       textContentEl.style.textAlign = element.textAlign || 'left';
+      if (isTableText && !isCategoryText) {
+        const resolvedTextAlign = element.textAlign || 'left';
+        if (resolvedTextAlign === 'left') {
+          textContentEl.style.paddingLeft = `${tableCellHorizontalPadding}px`;
+          textContentEl.style.boxSizing = 'border-box';
+        } else if (resolvedTextAlign === 'right') {
+          textContentEl.style.paddingRight = `${tableCellHorizontalPadding}px`;
+          textContentEl.style.boxSizing = 'border-box';
+        }
+      }
       // CRITICAL: Preserve whitespace and spacing - prevents space collapse in html2canvas
       textContentEl.style.whiteSpace = 'pre-wrap';
       textContentEl.style.wordBreak = 'break-word';
