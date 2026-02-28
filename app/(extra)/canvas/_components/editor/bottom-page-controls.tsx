@@ -110,33 +110,37 @@ export default function BottomPageControls({
                 Layers
               </Button>
             )}
-            <Button
-              onClick={onAddPage}
-              size="sm"
-              variant="outline"
-              className="gap-2 bg-transparent"
-            >
-              <Plus className="w-4 h-4" />
-              Add Page
-            </Button>
-            <Button
-              onClick={onDuplicatePage}
-              size="sm"
-              variant="outline"
-              className="gap-2 bg-transparent"
-            >
-              <Copy className="w-4 h-4" />
-              Duplicate Page
-            </Button>
-            <Button
-              onClick={onDeletePage}
-              size="sm"
-              variant="outline"
-              className="gap-2 bg-transparent"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Page
-            </Button>
+            {isEditorMode && (
+              <>
+                <Button
+                  onClick={onAddPage}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 bg-transparent"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Page
+                </Button>
+                <Button
+                  onClick={onDuplicatePage}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 bg-transparent"
+                >
+                  <Copy className="w-4 h-4" />
+                  Duplicate Page
+                </Button>
+                <Button
+                  onClick={onDeletePage}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 bg-transparent"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Page
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
