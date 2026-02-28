@@ -21,6 +21,12 @@ interface TableStructure {
   tableHeight: number;
 }
 
+const TABLE_LINE_HEIGHT = 1.2;
+const TABLE_MIN_ROW_HEIGHT = 22;
+const TABLE_MIN_HEADER_ROW_HEIGHT = 30;
+const TABLE_ROW_RENDER_SAFETY = 8;
+const TABLE_HEADER_RENDER_SAFETY = 5;
+
 const median = (values: number[]): number => {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
@@ -43,6 +49,43 @@ const inferCommonInnerGap = (positions: number[], sizeByPosition: Map<number, nu
   const positive = gaps.filter((gap) => gap > 0);
   return positive.length > 0 ? Math.min(...positive) : median(gaps);
 };
+
+function getTableRowKindFromElementId(id: string): 'header' | 'data' | 'category' | 'total' | null {
+  if (id.startsWith('header-')) return 'header';
+  if (id.startsWith('cell-')) return 'data';
+  if (id.startsWith('category-header-')) return 'category';
+  if (id.startsWith('total-')) return 'total';
+  return null;
+}
+
+function estimateLastRowOuterHeight(rowElements: CanvasElement[]): number {
+  if (rowElements.length === 0) return 0;
+
+  const rowTexts = rowElements.filter((el): el is Extract<CanvasElement, { type: 'text' }> => el.type === 'text');
+  if (rowTexts.length === 0) return rowElements[0].height;
+
+  const rowKind = getTableRowKindFromElementId(rowTexts[0].id);
+  const maxLineCount = Math.max(
+    1,
+    ...rowTexts.map((el) => Math.max(1, (el.text || '').split('\n').length))
+  );
+  const fontSize = Math.max(1, ...rowTexts.map((el) => el.fontSize || 0));
+  const lineHeight = rowTexts.find((el) => typeof el.lineHeight === 'number')?.lineHeight ?? TABLE_LINE_HEIGHT;
+  const contentHeight = maxLineCount * fontSize * lineHeight;
+
+  const minRowHeight = rowKind === 'header' ? TABLE_MIN_HEADER_ROW_HEIGHT : TABLE_MIN_ROW_HEIGHT;
+  const renderSafety =
+    rowKind === 'header'
+      ? TABLE_HEADER_RENDER_SAFETY
+      : rowKind === 'data'
+        ? TABLE_ROW_RENDER_SAFETY
+        : 0;
+
+  const estimatedOuterHeight = Math.max(contentHeight + renderSafety, minRowHeight);
+  const maxTextBoxHeight = Math.max(...rowTexts.map((el) => el.height));
+
+  return Math.max(estimatedOuterHeight, maxTextBoxHeight);
+}
 
 /**
  * TableBorderOverlay Component
@@ -154,9 +197,11 @@ function detectTableStructure(elements: CanvasElement[]): TableStructure | null 
   });
 
   const commonColumnGap = inferCommonInnerGap(uniqueX, widthByX);
-  const commonRowGap = inferCommonInnerGap(uniqueY, heightByY);
+  const elementsByY = new Map<number, CanvasElement[]>();
+  uniqueY.forEach((y) => {
+    elementsByY.set(y, tableElements.filter((el) => el.y === y));
+  });
   const halfColumnGap = commonColumnGap / 2;
-  const halfRowGap = commonRowGap / 2;
 
   // Reconstruct outer column bounds from text bounds.
   const columns = uniqueX.map((x, index) => {
@@ -180,9 +225,10 @@ function detectTableStructure(elements: CanvasElement[]): TableStructure | null 
   // Reconstruct row bounds from start-to-next-start spacing.
   const rows = uniqueY.map((y, index) => {
     const rowHeight = heightByY.get(y) ?? 0;
+    const rowElements = elementsByY.get(y) ?? [];
     const bottom = index < uniqueY.length - 1
       ? uniqueY[index + 1]
-      : y + rowHeight + halfRowGap;
+      : y + Math.max(rowHeight, estimateLastRowOuterHeight(rowElements));
 
     return { y, height: Math.max(0, bottom - y) };
   });
