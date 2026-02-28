@@ -123,9 +123,14 @@ export function PrintPreviewModal({
   const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('printPreview.panelCollapsed') === 'true';
+      const persisted = localStorage.getItem('printPreview.panelCollapsed');
+      if (persisted === null) {
+        // First-open default: keep the column visibility panel collapsed.
+        return true;
+      }
+      return persisted === 'true';
     }
-    return false;
+    return true;
   });
 
   // Track initialization to prevent re-triggering
