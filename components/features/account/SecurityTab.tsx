@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
@@ -10,8 +10,18 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { Button } from "@/components/ui/button";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { Lock, Key, AlertTriangle, CheckCircle2, Loader2, Shield } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Key,
+  LifeBuoy,
+  Loader2,
+  Lock,
+  Shield,
+} from "lucide-react";
 
 interface SecurityTabProps {
   user: {
@@ -21,26 +31,40 @@ interface SecurityTabProps {
   };
 }
 
-export function SecurityTab({ user }: SecurityTabProps) {
+export function SecurityTab({}: SecurityTabProps) {
   const pinStatus = useQuery(api.userPin.getPinStatus);
   const setPinMutation = useMutation(api.userPin.setPin);
-  
+  const requestPinResetMutation = useMutation(api.userPin.requestPinReset);
+
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRequestingReset, setIsRequestingReset] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [step, setStep] = useState<"current" | "new">(pinStatus?.hasCustomPin ? "current" : "new");
+  const [step, setStep] = useState<"current" | "new">("new");
 
   const hasCustomPin = pinStatus?.hasCustomPin ?? false;
-  const isDefaultPin = !hasCustomPin && pinStatus?.hasPinSet;
+  const isDefaultPin = !hasCustomPin && Boolean(pinStatus?.hasPinSet);
+  const mustChangeDeletePin = pinStatus?.mustChangeDeletePin ?? false;
+  const hasPendingResetRequest = pinStatus?.hasPendingResetRequest ?? false;
+
+  useEffect(() => {
+    if (pinStatus === undefined) return;
+
+    if (pinStatus.mustChangeDeletePin || !pinStatus.hasCustomPin) {
+      setStep("new");
+      return;
+    }
+
+    setStep("current");
+  }, [pinStatus]);
 
   const handleSetPin = async () => {
     setError(null);
     setSuccess(null);
 
-    // Validation
     if (step === "current" && currentPin.length !== 6) {
       setError("Please enter your current 6-digit PIN");
       return;
@@ -70,14 +94,10 @@ export function SecurityTab({ user }: SecurityTabProps) {
       });
 
       setSuccess(result.message);
-      
-      // Reset form
       setCurrentPin("");
       setNewPin("");
       setConfirmPin("");
-      setStep("new");
 
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update PIN");
@@ -86,13 +106,33 @@ export function SecurityTab({ user }: SecurityTabProps) {
     }
   };
 
-  const canSubmit = step === "new" 
+  const handleRequestReset = async () => {
+    setError(null);
+    setSuccess(null);
+    setIsRequestingReset(true);
+
+    try {
+      const result = await requestPinResetMutation({
+        userAgent: typeof window !== "undefined" ? window.navigator.userAgent : undefined,
+      });
+      setSuccess(result.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to request PIN reset");
+    } finally {
+      setIsRequestingReset(false);
+    }
+  };
+
+  const canSubmit = step === "new"
     ? newPin.length === 6 && confirmPin.length === 6
     : currentPin.length === 6 && newPin.length === 6 && confirmPin.length === 6;
 
+  const pendingResetDate = pinStatus?.pendingResetRequestedAt
+    ? new Date(pinStatus.pendingResetRequestedAt).toLocaleString()
+    : null;
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
           <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -107,8 +147,32 @@ export function SecurityTab({ user }: SecurityTabProps) {
         </div>
       </div>
 
-      {/* Status Alert */}
-      {isDefaultPin && (
+      {mustChangeDeletePin ? (
+        <div className="flex items-start gap-3 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-900/50">
+          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">
+              PIN reset completed
+            </p>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              A super admin reset your delete-protection PIN. You must create a new 6-digit PIN now before permanent delete actions will work again.
+            </p>
+          </div>
+        </div>
+      ) : hasPendingResetRequest ? (
+        <div className="flex items-start gap-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-900/50">
+          <Clock3 className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              PIN reset request pending
+            </p>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+              Your forgot-PIN request is waiting for super admin approval.
+              {pendingResetDate ? ` Requested on ${pendingResetDate}.` : ""}
+            </p>
+          </div>
+        </div>
+      ) : isDefaultPin ? (
         <div className="flex items-start gap-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-900/50">
           <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div>
@@ -116,14 +180,12 @@ export function SecurityTab({ user }: SecurityTabProps) {
               Using Default PIN
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              You are currently using the default PIN (123456). For better security, 
+              You are currently using the default PIN (123456). For better security,
               please set a custom PIN below.
             </p>
           </div>
         </div>
-      )}
-
-      {hasCustomPin && (
+      ) : hasCustomPin ? (
         <div className="flex items-center gap-3 rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-900/50">
           <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
           <div>
@@ -135,9 +197,58 @@ export function SecurityTab({ user }: SecurityTabProps) {
             </p>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Error/Success Messages */}
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <LifeBuoy className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              Forgot your PIN?
+            </p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              Request a super admin reset. Permanent delete will remain blocked until the request is approved and you create a new PIN.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRequestReset}
+            disabled={isRequestingReset || hasPendingResetRequest || mustChangeDeletePin}
+            className="gap-2"
+          >
+            {isRequestingReset ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Requesting...
+              </>
+            ) : hasPendingResetRequest ? (
+              <>
+                <Clock3 className="h-4 w-4" />
+                Request Pending
+              </>
+            ) : mustChangeDeletePin ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Reset Complete
+              </>
+            ) : (
+              <>
+                <LifeBuoy className="h-4 w-4" />
+                Request PIN Reset
+              </>
+            )}
+          </Button>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Recovery is admin-approved only. OTP and email reset are not enabled in this system.
+          </span>
+        </div>
+      </div>
+
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -152,9 +263,7 @@ export function SecurityTab({ user }: SecurityTabProps) {
         </div>
       )}
 
-      {/* PIN Form */}
       <div className="space-y-6">
-        {/* Step 1: Current PIN (if already set) */}
         {step === "current" && (
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -184,11 +293,10 @@ export function SecurityTab({ user }: SecurityTabProps) {
           </div>
         )}
 
-        {/* Step 2: New PIN */}
         <div className="space-y-3">
           <label className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             <Lock className="h-4 w-4" />
-            {step === "current" ? "New PIN" : "Set Your PIN"}
+            {step === "current" ? "New PIN" : mustChangeDeletePin ? "Create New PIN" : "Set Your PIN"}
           </label>
           <div className="flex justify-center">
             <InputOTP
@@ -208,13 +316,14 @@ export function SecurityTab({ user }: SecurityTabProps) {
             </InputOTP>
           </div>
           <p className="text-xs text-center text-zinc-500 dark:text-zinc-400">
-            {step === "current" 
-              ? "Enter your new 6-digit PIN" 
-              : "Create a 6-digit PIN for delete protection"}
+            {step === "current"
+              ? "Enter your new 6-digit PIN"
+              : mustChangeDeletePin
+                ? "Create a new 6-digit PIN to restore permanent delete access"
+                : "Create a 6-digit PIN for delete protection"}
           </p>
         </div>
 
-        {/* Step 3: Confirm New PIN */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Confirm PIN
@@ -241,7 +350,6 @@ export function SecurityTab({ user }: SecurityTabProps) {
           </p>
         </div>
 
-        {/* PIN Match Indicator */}
         {newPin && confirmPin && (
           <div className="text-center">
             {newPin === confirmPin ? (
@@ -259,7 +367,6 @@ export function SecurityTab({ user }: SecurityTabProps) {
         )}
       </div>
 
-      {/* Info Box */}
       <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-4 border border-zinc-200 dark:border-zinc-800">
         <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
           When is the PIN required?
@@ -271,7 +378,6 @@ export function SecurityTab({ user }: SecurityTabProps) {
         </ul>
       </div>
 
-      {/* Submit Button */}
       <div className="flex justify-end pt-4 border-t border-zinc-200 dark:border-zinc-800">
         <button
           onClick={handleSetPin}
@@ -286,7 +392,7 @@ export function SecurityTab({ user }: SecurityTabProps) {
           ) : (
             <>
               <Lock className="h-4 w-4" />
-              {hasCustomPin ? "Update PIN" : "Set PIN"}
+              {mustChangeDeletePin ? "Save New PIN" : hasCustomPin ? "Update PIN" : "Set PIN"}
             </>
           )}
         </button>

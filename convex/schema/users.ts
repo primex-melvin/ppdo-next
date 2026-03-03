@@ -237,6 +237,21 @@ export const userTables = {
      * Timestamp when PIN was last changed
      */
     deletePinUpdatedAt: v.optional(v.number()),
+
+    /**
+     * Whether the user must create a new PIN before sensitive delete actions are allowed
+     */
+    mustChangeDeletePin: v.optional(v.boolean()),
+
+    /**
+     * Timestamp when the PIN was last reset by an administrator
+     */
+    deletePinResetAt: v.optional(v.number()),
+
+    /**
+     * Administrator who last reset the PIN
+     */
+    deletePinResetBy: v.optional(v.id("users")),
   })
     .index("email", ["email"])
     .index("phone", ["phone"])

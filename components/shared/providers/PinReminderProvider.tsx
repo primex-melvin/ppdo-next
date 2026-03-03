@@ -18,15 +18,13 @@ const REMINDER_COOLDOWN_HOURS = 24;
 export function PinReminderProvider({ children }: PinReminderProviderProps) {
   const pinStatus = useQuery(api.userPin.getPinStatus);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
     // Only check after we've loaded the pin status
     if (pinStatus === undefined) return;
 
-    // If user has custom PIN, don't show reminder
-    if (pinStatus?.hasCustomPin) {
-      setHasChecked(true);
+    // If user already has a custom PIN, or is in forced reset flow, don't show reminder
+    if (pinStatus?.hasCustomPin || pinStatus?.mustChangeDeletePin) {
       return;
     }
 
@@ -38,7 +36,6 @@ export function PinReminderProvider({ children }: PinReminderProviderProps) {
       
       if (Date.now() - dismissedTime < cooldownMs) {
         // Still in cooldown, don't show
-        setHasChecked(true);
         return;
       }
     }
@@ -46,7 +43,6 @@ export function PinReminderProvider({ children }: PinReminderProviderProps) {
     // Show the reminder modal after a short delay (let the app load first)
     const timer = setTimeout(() => {
       setIsModalOpen(true);
-      setHasChecked(true);
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -60,8 +56,7 @@ export function PinReminderProvider({ children }: PinReminderProviderProps) {
     }));
   };
 
-  // Don't render until we've checked the PIN status
-  if (!hasChecked && pinStatus === undefined) {
+  if (pinStatus === undefined) {
     return <>{children}</>;
   }
 

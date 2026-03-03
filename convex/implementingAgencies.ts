@@ -1385,6 +1385,10 @@ export const deleteWithCascade = mutation({
     if (!user) throw new Error("User not found");
 
     // 1. Verify PIN
+    if (user.mustChangeDeletePin) {
+      throw new Error("Your PIN was reset. Please create a new PIN in Account Settings before performing permanent delete.");
+    }
+
     const hashedPin = hashPin(args.pin);
     const storedPin = user.deleteProtectionPin || hashPin(DEFAULT_PIN);
 
@@ -2081,6 +2085,10 @@ export const bulkDeleteWithMode = mutation({
 
     const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
+
+    if (user.mustChangeDeletePin) {
+      throw new Error("Your PIN was reset. Please create a new PIN in Account Settings before performing permanent delete.");
+    }
 
     const hashedPin = hashPin(args.pin);
     const storedPin = user.deleteProtectionPin || hashPin(DEFAULT_PIN);

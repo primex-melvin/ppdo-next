@@ -64,10 +64,10 @@ export function PinReminderModal({
 
   // Close modal if user already has custom PIN
   useEffect(() => {
-    if (pinStatus?.hasCustomPin) {
+    if (pinStatus?.hasCustomPin || pinStatus?.mustChangeDeletePin) {
       onClose();
     }
-  }, [pinStatus?.hasCustomPin, onClose]);
+  }, [pinStatus?.hasCustomPin, pinStatus?.mustChangeDeletePin, onClose]);
 
   const handleDismiss = () => {
     localStorage.setItem(REMINDER_DISMISS_KEY, Date.now().toString());

@@ -94,6 +94,9 @@ export function BulkDeleteAgenciesModal({
   const bulkDeleteWithMode = useMutation(
     (api as any).implementingAgencies.bulkDeleteWithMode
   ) as any;
+  const pinStatus = useQuery(api.userPin.getPinStatus);
+  const requestPinReset = useMutation(api.userPin.requestPinReset);
+  const [isRequestingReset, setIsRequestingReset] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -128,7 +131,13 @@ export function BulkDeleteAgenciesModal({
   const isLoading = open && agencyIds.length > 0 && preview === undefined;
   const hasTrueImpact = Boolean(preview?.hasTrueImpact ?? false);
   const showThreeStepWizard = !isLoading && hasTrueImpact;
-  const canSubmit = pin.length === 6 && summary.deletableCount > 0 && !isSubmitting;
+  const requiresPinChange = Boolean(pinStatus?.mustChangeDeletePin);
+  const hasPendingResetRequest = Boolean(pinStatus?.hasPendingResetRequest);
+  const canSubmit =
+    pin.length === 6 &&
+    summary.deletableCount > 0 &&
+    !isSubmitting &&
+    !requiresPinChange;
   const canProceedToPreview = !isLoading;
   const canProceedToPin = !isLoading && summary.deletableCount > 0;
   const impactTotals = preview?.trueImpactTotals ?? {
@@ -189,6 +198,11 @@ export function BulkDeleteAgenciesModal({
   }, [open, isLoading, singleDeletableAgency, showThreeStepWizard, step]);
 
   const handleConfirm = async () => {
+    if (requiresPinChange) {
+      setError("Your PIN was reset. Open Account Settings and create a new PIN before permanent delete is allowed.");
+      return;
+    }
+
     if (pin.length !== 6) {
       setError("Please enter your 6-digit PIN.");
       return;
@@ -234,6 +248,33 @@ export function BulkDeleteAgenciesModal({
       setError(message);
       toast.error(message);
       setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenAccountSettings = () => {
+    window.dispatchEvent(
+      new CustomEvent("open-account-settings", {
+        detail: { tab: "security" },
+      })
+    );
+    onOpenChange(false);
+  };
+
+  const handleRequestPinReset = async () => {
+    setError(null);
+    setIsRequestingReset(true);
+
+    try {
+      const result = await requestPinReset({
+        userAgent: typeof window !== "undefined" ? window.navigator.userAgent : undefined,
+      });
+      toast.success(result?.message || "PIN reset request submitted.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to request PIN reset";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsRequestingReset(false);
     }
   };
 
@@ -645,7 +686,7 @@ export function BulkDeleteAgenciesModal({
                         setPin(value);
                         setError(null);
                       }}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || requiresPinChange}
                       autoFocus={Boolean(singleDeletableAgency && !showThreeStepWizard && step === 3)}
                       containerClassName="justify-center"
                     >
@@ -681,6 +722,45 @@ export function BulkDeleteAgenciesModal({
                     {error}
                   </p>
                 )}
+                <div className="space-y-2 pt-1">
+                  {requiresPinChange ? (
+                    <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-center text-xs text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-300">
+                      Your PIN reset was approved. Create a new PIN in Account Settings before trying this delete again.
+                    </div>
+                  ) : hasPendingResetRequest ? (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs text-amber-700 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
+                      A PIN reset request is already pending super admin approval.
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRequestPinReset}
+                      disabled={isRequestingReset || hasPendingResetRequest || requiresPinChange}
+                    >
+                      {isRequestingReset ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Requesting...
+                        </>
+                      ) : hasPendingResetRequest ? (
+                        "Reset Request Pending"
+                      ) : (
+                        "Forgot PIN? Request Reset"
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleOpenAccountSettings}
+                    >
+                      Open Account Security
+                    </Button>
+                  </div>
+                </div>
               </div>
             </>
           )}

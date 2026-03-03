@@ -9,15 +9,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import type { UserFilters as UserFilterState } from "../hooks/useUserFilters";
 
 interface UserFiltersProps {
   search: string;
-  role: string;
-  status: string;
+  role: UserFilterState["role"];
+  status: UserFilterState["status"];
   onSearchChange: (value: string) => void;
-  onRoleChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
-  accentColor: string;
+  onRoleChange: (value: UserFilterState["role"]) => void;
+  onStatusChange: (value: UserFilterState["status"]) => void;
 }
 
 export function UserFilters({
@@ -27,7 +27,6 @@ export function UserFilters({
   onSearchChange,
   onRoleChange,
   onStatusChange,
-  accentColor,
 }: UserFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">

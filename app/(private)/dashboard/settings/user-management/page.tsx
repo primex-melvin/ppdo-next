@@ -13,7 +13,7 @@ import { UserModal } from "./components/UserModal";
 import { UserDeleteDialog } from "./components/UserDeleteDialog";
 import { DepartmentModal } from "./components/DepartmentModal";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Building2, KeyRound } from "lucide-react";
+import { Plus, Loader2, Building2, KeyRound, ShieldAlert } from "lucide-react";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { formatDate, getInitials } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -53,6 +53,11 @@ export default function UserManagementPage() {
     { status: "pending" }
   );
   const pendingCount = pendingResets?.length || 0;
+  const pendingPinResets = useQuery(
+    api.userPin.listPinResetRequests,
+    { status: "pending" }
+  );
+  const pendingPinCount = pendingPinResets?.length || 0;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -122,6 +127,10 @@ export default function UserManagementPage() {
     router.push("/dashboard/settings/user-management/password-reset-management");
   };
 
+  const handlePinResetManagement = () => {
+    router.push("/dashboard/settings/user-management/pin-reset-management");
+  };
+
   // Authorization check
   if (!isAdmin && !isSuperAdmin) {
     return (
@@ -131,7 +140,7 @@ export default function UserManagementPage() {
             Access Denied
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            You don't have permission to access user management.
+            You don&apos;t have permission to access user management.
           </p>
         </div>
       </div>
@@ -178,12 +187,28 @@ export default function UserManagementPage() {
             {/* Password Reset Management Button - Only for Admin and Super Admin */}
             {(isAdmin || isSuperAdmin) && (
               <Button
+                onClick={handlePinResetManagement}
+                variant="outline"
+                className="border-zinc-300 dark:border-zinc-700 relative"
+              >
+                <ShieldAlert className="mr-2 h-4 w-4" />
+                PIN Reset Requests
+                {pendingPinCount > 0 && (
+                  <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold animate-pulse">
+                    {pendingPinCount > 99 ? "99+" : pendingPinCount}
+                  </span>
+                )}
+              </Button>
+            )}
+
+            {(isAdmin || isSuperAdmin) && (
+              <Button
                 onClick={handlePasswordResetManagement}
                 variant="outline"
                 className="border-zinc-300 dark:border-zinc-700 relative"
               >
                 <KeyRound className="mr-2 h-4 w-4" />
-                Reset Requests
+                Password Reset Requests
                 {pendingCount > 0 && (
                   <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold animate-pulse">
                     {pendingCount > 99 ? "99+" : pendingCount}
@@ -212,9 +237,8 @@ export default function UserManagementPage() {
           role={filters.role}
           status={filters.status}
           onSearchChange={(value) => updateFilter("search", value)}
-          onRoleChange={(value: any) => updateFilter("role", value)}
-          onStatusChange={(value: any) => updateFilter("status", value)}
-          accentColor={accentColorValue}
+          onRoleChange={(value) => updateFilter("role", value)}
+          onStatusChange={(value) => updateFilter("status", value)}
         />
       </div>
 

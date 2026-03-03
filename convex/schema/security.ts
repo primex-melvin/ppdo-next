@@ -458,4 +458,104 @@ export const securityTables = {
     .index("blockedBy", ["blockedBy"])
     .index("blockedAt", ["blockedAt"])
     .index("expiresAt", ["expiresAt"]),
+
+  /**
+   * Delete PIN reset requests.
+   * Used when a user forgets their permanent-delete PIN and needs super admin approval.
+   */
+  pinResetRequests: defineTable({
+    /**
+     * User requesting the PIN reset
+     */
+    requesterId: v.id("users"),
+
+    /**
+     * Email captured at request time for admin visibility
+     */
+    email: v.string(),
+
+    /**
+     * Optional note from the requester
+     */
+    message: v.optional(v.string()),
+
+    /**
+     * Current status of the request
+     */
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+
+    /**
+     * Optional IP address of the requester
+     */
+    ipAddress: v.optional(v.string()),
+
+    /**
+     * Optional user agent of the requester
+     */
+    userAgent: v.optional(v.string()),
+
+    /**
+     * Timestamp when the request was submitted
+     */
+    requestedAt: v.number(),
+
+    /**
+     * Administrator who reviewed the request
+     */
+    reviewedBy: v.optional(v.id("users")),
+
+    /**
+     * Timestamp when the request was reviewed
+     */
+    reviewedAt: v.optional(v.number()),
+
+    /**
+     * Admin notes attached to the decision
+     */
+    adminNotes: v.optional(v.string()),
+
+    /**
+     * Timestamp when the request reached a terminal state
+     */
+    resolvedAt: v.optional(v.number()),
+  })
+    .index("requesterId", ["requesterId"])
+    .index("email", ["email"])
+    .index("status", ["status"])
+    .index("requestedAt", ["requestedAt"])
+    .index("reviewedBy", ["reviewedBy"])
+    .index("requesterIdAndStatus", ["requesterId", "status"])
+    .index("requesterIdAndRequestedAt", ["requesterId", "requestedAt"]),
+
+  /**
+   * Daily rate limit tracker for PIN reset requests.
+   */
+  pinResetAttempts: defineTable({
+    /**
+     * User making reset attempts
+     */
+    requesterId: v.id("users"),
+
+    /**
+     * Date key in YYYY-MM-DD format
+     */
+    dateKey: v.string(),
+
+    /**
+     * Number of requests made on the given day
+     */
+    attemptCount: v.number(),
+
+    /**
+     * Timestamp of the most recent request
+     */
+    lastAttemptAt: v.number(),
+  })
+    .index("requesterId", ["requesterId"])
+    .index("dateKey", ["dateKey"])
+    .index("requesterIdAndDate", ["requesterId", "dateKey"]),
 };
