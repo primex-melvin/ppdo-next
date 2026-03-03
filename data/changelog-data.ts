@@ -18,6 +18,26 @@ export interface ChangelogItem {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v1.11.1",
+    date: "March 3, 2026",
+    author: "Melvin Nogoy",
+    title: "Reset PIN Code Feature Is Now Available",
+    description: "Users can now request a delete-protection PIN reset, and super admins can approve recovery without OTP or email.",
+    changes: [
+      {
+        category: "feature",
+        title: "Delete Protection PIN Recovery",
+        description: "Admin-mediated PIN reset recovery is now available for users who forget their permanent-delete PIN.",
+        items: [
+          "Added Forgot PIN recovery requests for delete-protection PIN",
+          "Added super admin approval flow for PIN reset requests",
+          "Users must create a new PIN before permanent delete is allowed again",
+          "Permanent delete remains blocked until the new PIN is set",
+        ],
+      },
+    ],
+  },
+  {
     version: "v1.11.0",
     date: "February 17, 2026",
     author: "Melvin Nogoy",
