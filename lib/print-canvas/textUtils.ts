@@ -8,6 +8,13 @@
 // Cache for the measurement canvas context
 let measurementContext: CanvasRenderingContext2D | null = null;
 
+function resolveFontWeight(weight?: number | boolean): string {
+    if (typeof weight === 'number' && Number.isFinite(weight)) {
+        return String(weight);
+    }
+    return weight ? '700' : '400';
+}
+
 /**
  * Gets or creates a shared canvas context for text measurement.
  */
@@ -33,7 +40,7 @@ export function measureTextWidth(
     text: string,
     fontSize: number,
     fontFamily: string,
-    bold: boolean = false
+    fontWeight: number | boolean = false
 ): number {
     const ctx = getMeasurementContext();
     if (!ctx) {
@@ -42,7 +49,7 @@ export function measureTextWidth(
         return text.length * avgCharWidth;
     }
 
-    ctx.font = `${bold ? 'bold ' : ''}${fontSize}px ${fontFamily}`;
+    ctx.font = `${resolveFontWeight(fontWeight)} ${fontSize}px ${fontFamily}`;
     return ctx.measureText(text).width;
 }
 
@@ -60,7 +67,7 @@ export function wrapText(
     maxWidth: number,
     fontSize: number,
     fontFamily: string,
-    bold: boolean = false
+    fontWeight: number | boolean = false
 ): string[] {
     if (!text || maxWidth <= 0) {
         return [text || ''];
@@ -72,7 +79,7 @@ export function wrapText(
 
     for (const word of words) {
         const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const testWidth = measureTextWidth(testLine, fontSize, fontFamily, bold);
+        const testWidth = measureTextWidth(testLine, fontSize, fontFamily, fontWeight);
 
         if (testWidth > maxWidth && currentLine) {
             lines.push(currentLine);
@@ -105,10 +112,17 @@ export function calculateTextHeight(
     fontSize: number,
     fontFamily: string,
     lineHeight: number = 1.2,
-    bold: boolean = false
+    fontWeight: number | boolean = false
 ): number {
-    const lines = wrapText(text, maxWidth, fontSize, fontFamily, bold);
+    const lines = wrapText(text, maxWidth, fontSize, fontFamily, fontWeight);
     return lines.length * fontSize * lineHeight;
+}
+
+export interface HeaderTextStyle {
+    fontSize: number;
+    fontFamily: string;
+    fontWeight: number;
+    lineHeight: number;
 }
 
 /**
@@ -181,20 +195,30 @@ export function calculateWrappedRow(
 export function calculateWrappedHeader(
     columnLabels: Map<string, string>,
     columnWidths: Map<string, number>,
-    fontSize: number,
-    fontFamily: string,
+    headerStyleByColumn: Map<string, HeaderTextStyle>,
     textPadding: number,
     minRowHeight: number,
-    lineHeight: number = 1.2,
     renderSafetyPx: number = 0
 ): WrappedRowData {
     const cells: WrappedCellData[] = [];
-    let maxLineCount = 1;
+    let maxContentHeight = 0;
 
     for (const [columnKey, label] of columnLabels) {
         const colWidth = columnWidths.get(columnKey) || 100;
         const availableWidth = colWidth - (textPadding * 2);
-        const lines = wrapText(label, availableWidth, fontSize, fontFamily, true);
+        const headerStyle = headerStyleByColumn.get(columnKey) || {
+            fontSize: 10,
+            fontFamily: 'Inter',
+            fontWeight: 700,
+            lineHeight: 1.2,
+        };
+        const lines = wrapText(
+            label,
+            availableWidth,
+            headerStyle.fontSize,
+            headerStyle.fontFamily,
+            headerStyle.fontWeight
+        );
 
         cells.push({
             columnKey,
@@ -202,10 +226,13 @@ export function calculateWrappedHeader(
             lineCount: lines.length,
         });
 
-        maxLineCount = Math.max(maxLineCount, lines.length);
+        maxContentHeight = Math.max(
+            maxContentHeight,
+            lines.length * headerStyle.fontSize * headerStyle.lineHeight
+        );
     }
 
-    const contentHeight = maxLineCount * fontSize * lineHeight;
+    const contentHeight = Math.max(maxContentHeight, 0);
     const baseRowHeight = contentHeight + (textPadding * 2);
     const rowHeight = Math.max(baseRowHeight + renderSafetyPx, minRowHeight);
     const verticalSlack = Math.max(0, rowHeight - baseRowHeight);

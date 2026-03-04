@@ -34,7 +34,8 @@ const drawElementsOnCanvas = (
         : element.text;
 
       ctx.save();
-      ctx.font = `${element.italic ? 'italic ' : ''}${element.bold ? 'bold ' : ''}${element.fontSize}px ${element.fontFamily}`;
+      const resolvedFontWeight = element.fontWeight ?? (element.bold ? 700 : 400);
+      ctx.font = `${element.italic ? 'italic ' : ''}${resolvedFontWeight} ${element.fontSize}px ${element.fontFamily}`;
       ctx.fillStyle = element.color;
       ctx.textBaseline = 'top';
 

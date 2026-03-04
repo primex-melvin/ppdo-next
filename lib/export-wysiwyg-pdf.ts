@@ -886,7 +886,7 @@ const renderCategoryLabelCanvas = (
   ctx.clearRect(0, 0, cssWidth, cssHeight);
 
   const resolvedFontFamily = resolveCanvasFontFamily(element.fontFamily);
-  const fontWeight = element.bold ? '700' : '400';
+  const fontWeight = String(element.fontWeight ?? (element.bold ? 700 : 400));
   const fontStyle = element.italic ? 'italic' : 'normal';
   ctx.font = getCanvasFontString(fontWeight, element.fontSize, resolvedFontFamily, fontStyle);
   ctx.fillStyle = convertColorToRGB(element.color, '#000000', false);
@@ -1048,7 +1048,7 @@ const createSectionDOM = (
       // Font family with safe fallbacks for html2canvas
       textContentEl.style.fontFamily = resolveCanvasFontFamily(element.fontFamily);
       textContentEl.style.fontSize = `${element.fontSize}px`;
-      textContentEl.style.fontWeight = element.bold ? 'bold' : 'normal';
+      textContentEl.style.fontWeight = String(element.fontWeight ?? (element.bold ? 700 : 400));
       textContentEl.style.fontStyle = element.italic ? 'italic' : 'normal';
       textContentEl.style.textDecoration = element.underline ? 'underline' : 'none';
       // Use black as fallback for text colors, with isBackground=false

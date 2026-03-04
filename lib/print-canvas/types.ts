@@ -25,6 +25,11 @@ export interface ColumnDefinition {
   align: 'left' | 'center' | 'right';
   sortable?: boolean;
   filterable?: boolean;
+  printVariant?: 'default' | 'status-count';
+  widthWeight?: number;
+  compactWidthWeight?: number;
+  minWidth?: number;
+  compactMinWidth?: number;
 }
 
 /**
@@ -60,6 +65,7 @@ export interface ConversionConfig {
   headerHeight?: number; // override reserved header height for pagination
   footerHeight?: number; // override reserved footer height for pagination
   tableFontSize?: number; // table-only text size (headers/data/category/totals)
+  statusCountColumnMode?: 'compact' | 'classic';
 }
 
 /**

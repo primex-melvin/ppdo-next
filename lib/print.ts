@@ -36,7 +36,7 @@ const renderElements = (
         width: ${element.width}px;
         min-height: ${element.height}px;
         font-size: ${element.fontSize}px;
-        font-weight: ${element.bold ? '700' : '400'};
+        font-weight: ${element.fontWeight ?? (element.bold ? '700' : '400')};
         font-style: ${element.italic ? 'italic' : 'normal'};
         text-decoration: ${element.underline ? 'underline' : 'none'};
         color: ${element.color};

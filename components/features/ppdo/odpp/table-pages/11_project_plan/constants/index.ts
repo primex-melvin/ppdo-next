@@ -93,6 +93,10 @@ export const BUDGET_TABLE_COLUMNS = [
     sortable: true,
     filterable: false,
     align: "right" as const,
+    printVariant: "status-count" as const,
+    widthWeight: 1.2,
+    compactWidthWeight: 0.8,
+    compactMinWidth: 40,
   },
   {
     key: "projectDelayed",
@@ -100,6 +104,10 @@ export const BUDGET_TABLE_COLUMNS = [
     sortable: true,
     filterable: false,
     align: "right" as const,
+    printVariant: "status-count" as const,
+    widthWeight: 1.2,
+    compactWidthWeight: 0.8,
+    compactMinWidth: 40,
   },
   {
     key: "projectsOngoing",
@@ -107,6 +115,10 @@ export const BUDGET_TABLE_COLUMNS = [
     sortable: true,
     filterable: false,
     align: "right" as const,
+    printVariant: "status-count" as const,
+    widthWeight: 1.2,
+    compactWidthWeight: 0.8,
+    compactMinWidth: 40,
   },
 ] as const;
 

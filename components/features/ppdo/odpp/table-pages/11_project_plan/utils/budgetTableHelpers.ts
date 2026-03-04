@@ -1,7 +1,7 @@
 // app/dashboard/project/[year]/components/utils/budgetTableHelpers.ts
 
-import { BudgetItem, BudgetTotals } from "../types";
-import { BudgetTotals as PrintBudgetTotals } from "@/lib/print-canvas/types";
+import { BudgetTotals } from "../types";
+import { BudgetTotals as PrintBudgetTotals, ColumnDefinition } from "@/lib/print-canvas/types";
 import { BUDGET_TABLE_COLUMNS } from "../constants";
 
 /**
@@ -42,7 +42,7 @@ export function convertToPrintTotals(totals: BudgetTotals): PrintBudgetTotals {
     totalBudgetUtilized: totals.totalBudgetUtilized,
     projectCompleted: totals.projectCompleted,
     projectDelayed: totals.projectDelayed,
-    projectsOngoing: (totals as any).projectsOngoing,
+    projectsOngoing: totals.projectsOngoing,
   };
 }
 
@@ -50,12 +50,19 @@ export function convertToPrintTotals(totals: BudgetTotals): PrintBudgetTotals {
  * Get visible columns for print/export
  */
 export function getVisibleColumns(hiddenColumns: Set<string>) {
-  return BUDGET_TABLE_COLUMNS
+  const allColumns = BUDGET_TABLE_COLUMNS as ReadonlyArray<ColumnDefinition>;
+
+  return allColumns
     .filter(col => !hiddenColumns.has(col.key))
     .map(col => ({
       key: col.key,
       label: col.label,
       align: col.align,
+      printVariant: col.printVariant,
+      widthWeight: col.widthWeight,
+      compactWidthWeight: col.compactWidthWeight,
+      minWidth: col.minWidth,
+      compactMinWidth: col.compactMinWidth,
     }));
 }
 

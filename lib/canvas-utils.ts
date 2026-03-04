@@ -211,7 +211,7 @@ async function drawTextElement(
   ctx.save();
   
   // Set text properties
-  ctx.font = `${computed.fontWeight} ${parseInt(computed.fontSize) * scale}px ${computed.fontFamily}`;
+  ctx.font = `${computed.fontStyle} ${computed.fontWeight} ${parseInt(computed.fontSize) * scale}px ${computed.fontFamily}`;
   ctx.fillStyle = computed.color;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';

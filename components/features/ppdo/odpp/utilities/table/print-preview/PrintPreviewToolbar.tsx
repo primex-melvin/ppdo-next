@@ -41,6 +41,9 @@ interface PrintPreviewToolbarProps {
   onTextAlignChange?: (align: TextAlign) => void;
   tableFontSize?: number;
   onTableFontSizeChange?: (fontSize: number) => void;
+  statusColumnMode?: 'compact' | 'classic';
+  onStatusColumnModeChange?: (mode: 'compact' | 'classic') => void;
+  showStatusColumnModeControl?: boolean;
   showPageHeader?: boolean;
   onShowPageHeaderChange?: (enabled: boolean) => void;
   showPageFooter?: boolean;
@@ -75,6 +78,9 @@ export function PrintPreviewToolbar({
   onTextAlignChange,
   tableFontSize,
   onTableFontSizeChange,
+  statusColumnMode = 'compact',
+  onStatusColumnModeChange,
+  showStatusColumnModeControl = false,
   showPageHeader = true,
   onShowPageHeaderChange,
   showPageFooter = true,
@@ -82,6 +88,37 @@ export function PrintPreviewToolbar({
   footerPageLabelPosition = 'left',
   onFooterPageLabelPositionChange,
 }: PrintPreviewToolbarProps) {
+  const statusColumnModeControl = showStatusColumnModeControl && onStatusColumnModeChange ? (
+    <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
+      <span className="text-xs font-medium">Status Columns</span>
+      <div className="inline-flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
+        <button
+          type="button"
+          aria-pressed={statusColumnMode === 'compact'}
+          onClick={() => onStatusColumnModeChange('compact')}
+          className={`px-2 py-1 text-xs transition-colors ${
+            statusColumnMode === 'compact'
+              ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+              : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+          }`}
+        >
+          Compact
+        </button>
+        <button
+          type="button"
+          aria-pressed={statusColumnMode === 'classic'}
+          onClick={() => onStatusColumnModeChange('classic')}
+          className={`px-2 py-1 text-xs transition-colors ${
+            statusColumnMode === 'classic'
+              ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+              : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+          }`}
+        >
+          Classic
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 sm:px-6">
@@ -230,6 +267,8 @@ export function PrintPreviewToolbar({
           {typeof tableFontSize === 'number' && onTableFontSizeChange && (
             <TableFontSizeDropdown value={tableFontSize} onChange={onTableFontSizeChange} />
           )}
+
+          {statusColumnModeControl}
 
           {/* Ruler Toggle Button */}
           {onToggleRuler && (
@@ -396,6 +435,38 @@ export function PrintPreviewToolbar({
                     }`}
                   >
                     Right
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showStatusColumnModeControl && onStatusColumnModeChange && (
+              <div className="px-2 py-1.5">
+                <span className="text-xs font-medium">Status Columns</span>
+                <div className="mt-1 inline-flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
+                  <button
+                    type="button"
+                    aria-pressed={statusColumnMode === 'compact'}
+                    onClick={() => onStatusColumnModeChange('compact')}
+                    className={`px-2 py-1 text-xs transition-colors ${
+                      statusColumnMode === 'compact'
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    Compact
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={statusColumnMode === 'classic'}
+                    onClick={() => onStatusColumnModeChange('classic')}
+                    className={`px-2 py-1 text-xs transition-colors ${
+                      statusColumnMode === 'classic'
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    Classic
                   </button>
                 </div>
               </div>

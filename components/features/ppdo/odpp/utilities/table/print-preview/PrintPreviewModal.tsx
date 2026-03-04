@@ -72,6 +72,7 @@ const FIRST_PREVIEW_DEFAULT_ORIENTATION: 'portrait' | 'landscape' = 'landscape';
 const FIRST_PREVIEW_DEFAULT_TEXT_ALIGN: TextAlign = 'center';
 const FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE = 9;
 const FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION: FooterPageLabelPosition = 'right';
+const FIRST_PREVIEW_DEFAULT_STATUS_COLUMN_MODE: 'compact' | 'classic' = 'compact';
 
 export function PrintPreviewModal({
   isOpen,
@@ -129,6 +130,7 @@ export function PrintPreviewModal({
   const [textAlign, setTextAlign] = useState<TextAlign>(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
   const [tableFontSize, setTableFontSize] = useState<number>(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
   const [footerPageLabelPosition, setFooterPageLabelPosition] = useState<FooterPageLabelPosition>(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
+  const [statusColumnMode, setStatusColumnMode] = useState<'compact' | 'classic'>(FIRST_PREVIEW_DEFAULT_STATUS_COLUMN_MODE);
 
   // --- Column Label Overrides (for inline renaming) ---
   const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
@@ -256,6 +258,24 @@ export function PrintPreviewModal({
     () => sourceVisibleColumns.slice(0, maxSelectableColumns).map((column) => column.key),
     [sourceVisibleColumns, maxSelectableColumns]
   );
+  const enrichPrintColumns = useCallback((columnsToMerge: ColumnDefinition[]): ColumnDefinition[] => {
+    const sourceByKey = new Map(sourceVisibleColumns.map((column) => [column.key, column]));
+
+    return columnsToMerge.map((column) => {
+      const sourceColumn = sourceByKey.get(column.key);
+      if (!sourceColumn) return column;
+
+      return {
+        ...sourceColumn,
+        ...column,
+        printVariant: sourceColumn.printVariant,
+        widthWeight: sourceColumn.widthWeight,
+        compactWidthWeight: sourceColumn.compactWidthWeight,
+        minWidth: sourceColumn.minWidth,
+        compactMinWidth: sourceColumn.compactMinWidth,
+      };
+    });
+  }, [sourceVisibleColumns]);
 
   // Prepare table data for ColumnVisibilityPanel (with label overrides)
   const tables = useMemo(() => [{
@@ -538,20 +558,23 @@ export function PrintPreviewModal({
       template?: CanvasTemplate | null,
       orientation: 'portrait' | 'landscape' = FIRST_PREVIEW_DEFAULT_ORIENTATION,
       includeCoverPage: boolean = true,
-      columnsOverride: ColumnDefinition[] = activePrintColumns
+      columnsOverride: ColumnDefinition[] = activePrintColumns,
+      pageSizeOverride?: 'A4' | 'Short' | 'Long'
     ) => {
       console.group('ðŸŽ¨ INITIALIZING PRINT PREVIEW');
       console.log('Template:', template?.name || 'none');
       console.log('Orientation:', orientation);
       console.log('Include Cover Page:', includeCoverPage);
 
+      const normalizedColumns = enrichPrintColumns(columnsOverride);
+
       try {
         const result = convertTableToCanvas({
           items: budgetItems,
           totals,
-          columns: columnsOverride,
+          columns: normalizedColumns,
           hiddenColumns,
-          pageSize: template?.page.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE,
+          pageSize: pageSizeOverride || template?.page.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE,
           orientation: orientation,
           includeHeaders: true,
           includeTotals: true,
@@ -565,12 +588,13 @@ export function PrintPreviewModal({
           showHeader: false,
           showFooter: true,
           tableFontSize,
+          statusCountColumnMode: statusColumnMode,
         });
 
         let finalPages = result.pages;
         let finalHeader = result.header;
         let finalFooter = result.footer;
-        const targetPageSize = template?.page.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE;
+        const targetPageSize = pageSizeOverride || template?.page.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE;
 
         if (template) {
           const merged = mergeTemplateWithCanvas(
@@ -619,6 +643,8 @@ export function PrintPreviewModal({
       effectiveMargins,
       state,
       tableFontSize,
+      statusColumnMode,
+      enrichPrintColumns,
       applyFooterPageLabelPosition,
       footerPageLabelPosition,
     ]
@@ -632,11 +658,14 @@ export function PrintPreviewModal({
     selectedColumnKeys?: string[];
   }) => {
     console.log('ðŸŽ¯ Setup complete, closing modal and initializing...');
-    const nextColumns = setupNeedsColumnSelection && result.selectedColumnKeys?.length
-      ? sourceVisibleColumns.filter((column) => result.selectedColumnKeys!.includes(column.key))
-      : sourceVisibleColumns;
+    const nextColumns = enrichPrintColumns(
+      setupNeedsColumnSelection && result.selectedColumnKeys?.length
+        ? sourceVisibleColumns.filter((column) => result.selectedColumnKeys!.includes(column.key))
+        : sourceVisibleColumns
+    );
 
     setActivePrintColumns(nextColumns);
+    setStatusColumnMode(FIRST_PREVIEW_DEFAULT_STATUS_COLUMN_MODE);
     setShowSetupModal(false);
     setIncludeCoverPage(result.includeCoverPage);
 
@@ -644,63 +673,84 @@ export function PrintPreviewModal({
     setTimeout(() => {
       initializeFromTableData(result.template, result.orientation, result.includeCoverPage, nextColumns);
     }, 100);
-  }, [initializeFromTableData, setupNeedsColumnSelection, sourceVisibleColumns]);
+  }, [enrichPrintColumns, initializeFromTableData, setupNeedsColumnSelection, sourceVisibleColumns]);
 
   const handleApplySavedTemplate = useCallback(() => {
     if (!savedTemplate) return;
     console.log('ðŸ“‹ Applying saved template from existing draft...');
     setIsLoadingTemplate(true);
     setShowTemplateApplicationModal(false);
+    const draftPage = existingDraft?.canvasState.pages[existingDraft.canvasState.currentPageIndex]
+      || existingDraft?.canvasState.pages[0];
+    const draftPageSize = draftPage?.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE;
+    const draftColumns = enrichPrintColumns(
+      existingDraft?.tableSnapshot.columns?.length
+        ? existingDraft.tableSnapshot.columns
+        : activePrintColumns
+    );
 
     setTimeout(() => {
-      initializeFromTableData(savedTemplate, savedTemplate.page.orientation, includeCoverPage);
+      initializeFromTableData(
+        savedTemplate,
+        savedTemplate.page.orientation,
+        includeCoverPage,
+        draftColumns,
+        draftPageSize
+      );
       if (existingDraft) state.setLastSavedTime(existingDraft.timestamp);
       setIsLoadingTemplate(false);
       setSavedTemplate(null);
     }, 500);
-  }, [savedTemplate, initializeFromTableData, existingDraft, state, includeCoverPage]);
+  }, [savedTemplate, existingDraft, enrichPrintColumns, activePrintColumns, initializeFromTableData, state, includeCoverPage]);
 
   const handleSkipTemplate = useCallback(() => {
     if (!existingDraft) return;
     console.log('â­ï¸ Skipping template application, loading existing draft as-is...');
     setShowTemplateApplicationModal(false);
 
-    state.setPages(existingDraft.canvasState.pages);
-    state.setHeader(existingDraft.canvasState.header);
     const draftPage = existingDraft.canvasState.pages[existingDraft.canvasState.currentPageIndex] || existingDraft.canvasState.pages[0];
     const draftPageSize = draftPage?.size || 'A4';
     const draftOrientation = draftPage?.orientation || 'portrait';
     const nextFooterPosition = existingDraft.footerPageLabelPosition
       || inferFooterPageLabelPosition(existingDraft.canvasState.footer, draftPageSize, draftOrientation);
+    const draftColumns = enrichPrintColumns(
+      existingDraft.tableSnapshot.columns?.length
+        ? existingDraft.tableSnapshot.columns
+        : sourceVisibleColumns
+    );
 
     setFooterPageLabelPosition(nextFooterPosition);
-    state.setFooter(
-      applyFooterPageLabelPosition(
-        existingDraft.canvasState.footer,
-        nextFooterPosition,
-        draftPageSize,
-        draftOrientation
-      )
-    );
     setTableFontSize(
       clampTableFontSize(
         existingDraft.tableFontSize ?? inferTableFontSizeFromPages(existingDraft.canvasState.pages)
       )
     );
-    setIncludeCoverPage(inferCoverPageFromPages(existingDraft.canvasState.pages));
-    state.setCurrentPageIndex(existingDraft.canvasState.currentPageIndex);
+    setStatusColumnMode(FIRST_PREVIEW_DEFAULT_STATUS_COLUMN_MODE);
+    setActivePrintColumns(draftColumns);
+    const nextIncludeCoverPage = inferCoverPageFromPages(existingDraft.canvasState.pages);
+    setIncludeCoverPage(nextIncludeCoverPage);
     state.setLastSavedTime(existingDraft.timestamp);
     if (existingDraft.appliedTemplate) state.setAppliedTemplate(existingDraft.appliedTemplate);
-    state.setIsDirty(false);
-    state.setHasInitialized(true);
     setSavedTemplate(null);
+    setTimeout(() => {
+      initializeFromTableData(
+        null,
+        draftOrientation,
+        nextIncludeCoverPage,
+        draftColumns,
+        draftPageSize
+      );
+      state.setLastSavedTime(existingDraft.timestamp);
+    }, 0);
   }, [
+    initializeFromTableData,
     existingDraft,
+    enrichPrintColumns,
+    sourceVisibleColumns,
     inferCoverPageFromPages,
     inferTableFontSizeFromPages,
     state,
     inferFooterPageLabelPosition,
-    applyFooterPageLabelPosition,
   ]);
 
   // Handle applying template to live canvas (from toolbar button)
@@ -778,7 +828,8 @@ export function PrintPreviewModal({
       setTextAlign(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
       setTableFontSize(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
       setFooterPageLabelPosition(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
-      setActivePrintColumns(sourceVisibleColumns);
+      setStatusColumnMode(FIRST_PREVIEW_DEFAULT_STATUS_COLUMN_MODE);
+      setActivePrintColumns(enrichPrintColumns(sourceVisibleColumns));
       initializationStartedRef.current = false;
       lastLayoutReflowSignatureRef.current = null;
       setHiddenCanvasColumns(new Set());
@@ -804,8 +855,14 @@ export function PrintPreviewModal({
       const draftTitle = existingDraft.documentTitle
         || defaultDocumentTitle
         || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
+      const draftColumns = enrichPrintColumns(
+        existingDraft.tableSnapshot.columns?.length
+          ? existingDraft.tableSnapshot.columns
+          : sourceVisibleColumns
+      );
       state.setDocumentTitle(draftTitle);
-      setActivePrintColumns(existingDraft.tableSnapshot.columns?.length ? existingDraft.tableSnapshot.columns : sourceVisibleColumns);
+      setStatusColumnMode(FIRST_PREVIEW_DEFAULT_STATUS_COLUMN_MODE);
+      setActivePrintColumns(draftColumns);
       setTableFontSize(
         clampTableFontSize(
           existingDraft.tableFontSize ?? inferTableFontSizeFromPages(existingDraft.canvasState.pages)
@@ -831,21 +888,16 @@ export function PrintPreviewModal({
       // No template in draft, load as-is
       // NOTE: Temporarily disabled to reduce console noise during search debug
       // console.log('ðŸ“„ Loading existing draft without template...');
-      state.setPages(existingDraft.canvasState.pages);
-      state.setHeader(existingDraft.canvasState.header);
-      state.setFooter(
-        applyFooterPageLabelPosition(
-          existingDraft.canvasState.footer,
-          nextFooterPosition,
-          draftPageSize,
-          draftOrientation
-        )
+      const nextIncludeCoverPage = inferCoverPageFromPages(existingDraft.canvasState.pages);
+      setIncludeCoverPage(nextIncludeCoverPage);
+      initializeFromTableData(
+        null,
+        draftOrientation,
+        nextIncludeCoverPage,
+        draftColumns,
+        draftPageSize
       );
-      setIncludeCoverPage(inferCoverPageFromPages(existingDraft.canvasState.pages));
-      state.setCurrentPageIndex(existingDraft.canvasState.currentPageIndex);
       state.setLastSavedTime(existingDraft.timestamp);
-      state.setIsDirty(false);
-      state.setHasInitialized(true);
       return;
     }
 
@@ -854,13 +906,14 @@ export function PrintPreviewModal({
     // console.log('ðŸ†• New draft, showing setup wizard...');
     const defaultTitle = defaultDocumentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
     state.setDocumentTitle(defaultTitle);
-    setActivePrintColumns(sourceVisibleColumns);
+    setActivePrintColumns(enrichPrintColumns(sourceVisibleColumns));
     setTextAlign(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
     setTableFontSize(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
     setFooterPageLabelPosition(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
+    setStatusColumnMode(FIRST_PREVIEW_DEFAULT_STATUS_COLUMN_MODE);
     setShowSetupModal(true);
     // Don't set hasInitialized yet - wait for wizard completion
-  }, [isOpen, existingDraft, particular, year, defaultDocumentTitle, sourceVisibleColumns, state, inferTableFontSizeFromPages, inferCoverPageFromPages, inferFooterPageLabelPosition, applyFooterPageLabelPosition]);
+  }, [isOpen, existingDraft, particular, year, defaultDocumentTitle, sourceVisibleColumns, state, inferTableFontSizeFromPages, inferCoverPageFromPages, inferFooterPageLabelPosition, enrichPrintColumns, initializeFromTableData]);
 
   const actions = usePrintPreviewActions({
     currentPageIndex: state.currentPageIndex,
@@ -948,6 +1001,10 @@ export function PrintPreviewModal({
       return position;
     });
   }, [state]);
+  const hasStatusCountColumns = useMemo(
+    () => activePrintColumns.some((column) => column.printVariant === 'status-count'),
+    [activePrintColumns]
+  );
 
   useEffect(() => {
     if (!state.hasInitialized) return;
@@ -1011,6 +1068,7 @@ export function PrintPreviewModal({
       headerHeight: layout.headerHeight,
       footerHeight: layout.footerHeight,
       tableFontSize,
+      statusCountColumnMode: statusColumnMode,
     });
 
     let nextPages: Page[] = regenerated.pages.map((page): Page => ({
@@ -1036,6 +1094,7 @@ export function PrintPreviewModal({
     hiddenColumns,
     rowMarkers,
     tableFontSize,
+    statusColumnMode,
   ]);
 
   useEffect(() => {
@@ -1049,6 +1108,7 @@ export function PrintPreviewModal({
       pageSize: state.currentPage.size,
       orientation: state.currentPage.orientation,
       tableFontSize,
+      statusColumnMode,
     });
 
     if (lastLayoutReflowSignatureRef.current === null) {
@@ -1070,6 +1130,7 @@ export function PrintPreviewModal({
     effectiveMargins,
     includeCoverPage,
     tableFontSize,
+    statusColumnMode,
     regenerateTablePagesForLayout,
   ]);
 
@@ -1113,6 +1174,9 @@ export function PrintPreviewModal({
           onTextAlignChange={setTextAlign}
           tableFontSize={tableFontSize}
           onTableFontSizeChange={handleTableFontSizeChange}
+          statusColumnMode={statusColumnMode}
+          onStatusColumnModeChange={setStatusColumnMode}
+          showStatusColumnModeControl={hasStatusCountColumns}
           showPageHeader={state.header.visible !== false}
           onShowPageHeaderChange={handlePageHeaderVisibilityChange}
           showPageFooter={state.footer.visible !== false}

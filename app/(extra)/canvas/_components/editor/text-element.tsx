@@ -120,9 +120,10 @@ export default function TextElementComponent({
   };
 
   function getTextStyles() {
+    const resolvedFontWeight = element.fontWeight ?? (element.bold ? 700 : 400);
     const styles: React.CSSProperties = {
       fontSize: `${element.fontSize}px`,
-      fontWeight: element.bold ? 700 : 400,
+      fontWeight: resolvedFontWeight,
       fontStyle: element.italic ? 'italic' : 'normal',
       textDecoration: element.underline ? 'underline' : 'none',
       color: element.color,
@@ -141,10 +142,10 @@ export default function TextElementComponent({
     } else if (element.fontFamily === 'font-mono') {
       styles.fontFamily = 'monospace';
     } else if (element.fontFamily.includes('light')) {
-      styles.fontWeight = 300;
+      styles.fontWeight = element.fontWeight ?? 300;
       styles.fontFamily = 'sans-serif';
     } else if (element.fontFamily.includes('bold')) {
-      styles.fontWeight = 700;
+      styles.fontWeight = element.fontWeight ?? 700;
       styles.fontFamily = 'sans-serif';
     } else {
       styles.fontFamily = 'sans-serif';

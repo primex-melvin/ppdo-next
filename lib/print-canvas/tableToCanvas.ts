@@ -14,6 +14,7 @@ import {
   calculateWrappedRow,
   calculateWrappedHeader,
   WrappedRowData,
+  HeaderTextStyle,
 } from './textUtils';
 
 const PAGE_SIZES = {
@@ -49,11 +50,15 @@ const DATA_ROW_TEXT_TOP_INSET = 0;
 const HEADER_ROW_TEXT_TOP_INSET = 0;
 const CATEGORY_ROW_TEXT_TOP_INSET = 0;
 const TOTAL_ROW_TEXT_TOP_INSET = 0;
+const COMPACT_STATUS_HEADER_FONT_SIZE = 7;
+const COMPACT_STATUS_HEADER_FONT_WEIGHT = 600;
+const COMPACT_STATUS_HEADER_LINE_HEIGHT = 1.05;
 
 // âœ… Extra left padding for first column text (spacing from left border)
 const FIRST_COLUMN_LEFT_PADDING = 20;
 type FlexibleBudgetItem = BudgetItem & Record<string, number>;
 type FlexibleBudgetTotals = BudgetTotals & Record<string, number>;
+type StatusCountColumnMode = 'compact' | 'classic';
 
 function toCamelCaseHeaderLabel(rawLabel: string): string {
   const normalized = rawLabel
@@ -92,6 +97,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
     showFooter = true,
   } = config;
   const tableFontSize = clampTableFontSize(config.tableFontSize);
+  const statusCountColumnMode = config.statusCountColumnMode ?? 'compact';
 
   // Set module-level margins from config (safe: synchronous, single-threaded)
   const uniformMargin = config.margin ?? 22;
@@ -115,7 +121,11 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   // Filter visible columns
   const visibleColumns = columns.filter(col => !hiddenColumns.has(col.key));
 
-  const columnWidths = calculateColumnWidths(visibleColumns, size.width - MARGIN_LEFT - MARGIN_RIGHT);
+  const columnWidths = calculateColumnWidths(
+    visibleColumns,
+    size.width - MARGIN_LEFT - MARGIN_RIGHT,
+    statusCountColumnMode
+  );
 
   // Create column width map for text wrapping calculations
   // First column gets reduced width to account for extra left padding
@@ -128,14 +138,16 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
   // Pre-calculate header height with text wrapping
   const columnLabels = new Map<string, string>();
   visibleColumns.forEach(col => columnLabels.set(col.key, toCamelCaseHeaderLabel(col.label)));
+  const headerStyleByColumn = new Map<string, HeaderTextStyle>();
+  visibleColumns.forEach((column) => {
+    headerStyleByColumn.set(column.key, getHeaderCellStyle(column, tableFontSize, statusCountColumnMode));
+  });
   const headerWrappedData = calculateWrappedHeader(
     columnLabels,
     columnWidthMap,
-    tableFontSize,
-    'Inter',
+    headerStyleByColumn,
     CELL_TEXT_PADDING,
     MIN_HEADER_ROW_HEIGHT,
-    LINE_HEIGHT,
     HEADER_ROW_RENDER_SAFETY
   );
   const dynamicHeaderHeight = includeHeaders ? headerWrappedData.rowHeight : 0;
@@ -199,7 +211,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
         columnWidths,
         currentY,
         headerWrappedData,
-        tableFontSize,
+        headerStyleByColumn,
         groupId,
         groupName
       ));
@@ -306,7 +318,7 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
 /**
  * Calculate column widths based on content and alignment
  */
-function calculateColumnWidths(columns: ColumnDefinition[], totalWidth: number): number[] {
+function getDefaultColumnWeight(columnKey: string): number {
   const weights: Record<string, number> = {
     aipRefCode: 1.6,
     particular: 3,
@@ -332,12 +344,93 @@ function calculateColumnWidths(columns: ColumnDefinition[], totalWidth: number):
     remarks: 1.5,
   };
 
-  const totalWeight = columns.reduce((sum, col) => sum + (weights[col.key] || 1), 0);
+  return weights[columnKey] || 1;
+}
 
-  return columns.map(col => {
-    const weight = weights[col.key] || 1;
-    return (totalWidth * weight) / totalWeight;
+function calculateColumnWidths(
+  columns: ColumnDefinition[],
+  totalWidth: number,
+  statusCountColumnMode: StatusCountColumnMode = 'compact'
+): number[] {
+  if (columns.length === 0) return [];
+
+  const resolved = columns.map((column) => {
+    const weight = statusCountColumnMode === 'compact' && column.printVariant === 'status-count'
+      ? column.compactWidthWeight ?? column.widthWeight ?? getDefaultColumnWeight(column.key)
+      : column.widthWeight ?? getDefaultColumnWeight(column.key);
+    const minWidth = statusCountColumnMode === 'compact' && column.printVariant === 'status-count'
+      ? column.compactMinWidth ?? column.minWidth ?? 0
+      : column.minWidth ?? 0;
+
+    return { weight, minWidth };
   });
+
+  const totalWeight = resolved.reduce((sum, column) => sum + column.weight, 0) || columns.length;
+  const widths = resolved.map(({ weight }) => (totalWidth * weight) / totalWeight);
+
+  const locked = new Set<number>();
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    let lockedWidth = 0;
+    let unlockedWeight = 0;
+
+    resolved.forEach((column, index) => {
+      if (locked.has(index)) {
+        lockedWidth += widths[index];
+      } else {
+        unlockedWeight += column.weight;
+      }
+    });
+
+    const remainingWidth = Math.max(0, totalWidth - lockedWidth);
+
+    resolved.forEach((column, index) => {
+      if (locked.has(index)) return;
+      widths[index] = unlockedWeight > 0
+        ? (remainingWidth * column.weight) / unlockedWeight
+        : remainingWidth / Math.max(1, columns.length - locked.size);
+    });
+
+    resolved.forEach((column, index) => {
+      if (!locked.has(index) && widths[index] < column.minWidth) {
+        widths[index] = column.minWidth;
+        locked.add(index);
+        changed = true;
+      }
+    });
+  }
+
+  const totalCalculatedWidth = widths.reduce((sum, width) => sum + width, 0);
+  const correction = totalWidth - totalCalculatedWidth;
+  if (Math.abs(correction) > 0.001 && widths.length > 0) {
+    widths[widths.length - 1] += correction;
+  }
+
+  return widths;
+}
+
+function getHeaderCellStyle(
+  column: ColumnDefinition,
+  tableFontSize: number,
+  statusCountColumnMode: StatusCountColumnMode
+): HeaderTextStyle {
+  if (column.printVariant === 'status-count' && statusCountColumnMode === 'compact') {
+    return {
+      fontSize: COMPACT_STATUS_HEADER_FONT_SIZE,
+      fontFamily: 'Inter',
+      fontWeight: COMPACT_STATUS_HEADER_FONT_WEIGHT,
+      lineHeight: COMPACT_STATUS_HEADER_LINE_HEIGHT,
+    };
+  }
+
+  return {
+    fontSize: tableFontSize,
+    fontFamily: 'Inter',
+    fontWeight: 700,
+    lineHeight: LINE_HEIGHT,
+  };
 }
 
 /**
@@ -543,7 +636,7 @@ function createTableHeadersWithWrapping(
   columnWidths: number[],
   y: number,
   wrappedData: WrappedRowData,
-  tableFontSize: number = DEFAULT_TABLE_STYLE.dataFontSize,
+  headerStyleByColumn: Map<string, HeaderTextStyle>,
   groupId?: string,
   groupName?: string
 ): TextElement[] {
@@ -563,6 +656,12 @@ function createTableHeadersWithWrapping(
     const verticalSlack = Math.max(0, wrappedData.verticalSlack ?? 0);
     const verticalSlackTop = getTopSlackOffset(verticalSlack, HEADER_TOP_SLACK_PX);
     const textBoxHeight = Math.max(1, wrappedData.rowHeight - (CELL_TEXT_PADDING * 2) - verticalSlack);
+    const headerStyle = headerStyleByColumn.get(col.key) || {
+      fontSize: DEFAULT_TABLE_STYLE.headerFontSize,
+      fontFamily: 'Inter',
+      fontWeight: 700,
+      lineHeight: LINE_HEIGHT,
+    };
 
     elements.push({
       id: `header-${col.key}-${Date.now()}`,
@@ -572,16 +671,17 @@ function createTableHeadersWithWrapping(
       y: y + HEADER_ROW_TEXT_TOP_INSET + verticalSlackTop,
       width: columnWidths[index] - (CELL_TEXT_PADDING * 2) - firstColPadding,
       height: textBoxHeight,
-      fontSize: tableFontSize,
-      fontFamily: 'Inter',
+      fontSize: headerStyle.fontSize,
+      fontFamily: headerStyle.fontFamily,
       bold: true,
+      fontWeight: headerStyle.fontWeight,
       italic: false,
       underline: false,
       color: DEFAULT_TABLE_STYLE.headerColor,
       shadow: false,
       outline: false,
       visible: true,
-      lineHeight: LINE_HEIGHT,
+      lineHeight: headerStyle.lineHeight,
       groupId,
       groupName,
     });

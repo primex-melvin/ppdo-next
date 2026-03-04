@@ -107,6 +107,11 @@ export interface TableColumn {
     sortable?: boolean;
     filterable?: boolean;
     align?: "left" | "center" | "right";
+    printVariant?: "default" | "status-count";
+    widthWeight?: number;
+    compactWidthWeight?: number;
+    minWidth?: number;
+    compactMinWidth?: number;
 }
 
 // ============================================================================

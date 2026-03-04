@@ -64,6 +64,11 @@ export function getTwentyPercentDFPrintColumns(hiddenColumns: Set<string>): Colu
         key: column.id,
         label: column.label,
         align: column.align || 'left',
+        printVariant: column.printVariant,
+        widthWeight: column.widthWeight,
+        compactWidthWeight: column.compactWidthWeight,
+        minWidth: column.minWidth,
+        compactMinWidth: column.compactMinWidth,
     }));
 
     return allColumns.filter(col => !hiddenColumns.has(col.key));

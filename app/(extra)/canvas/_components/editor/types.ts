@@ -9,6 +9,7 @@ export interface TextElement {
   fontSize: number;
   fontFamily: string;
   bold: boolean;
+  fontWeight?: number;
   italic: boolean;
   underline: boolean;
   color: string;
