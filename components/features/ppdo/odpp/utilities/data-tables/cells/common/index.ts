@@ -4,3 +4,4 @@ export { PercentageCell } from "./PercentageCell";
 export { DateCell } from "./DateCell";
 export { TextCell } from "./TextCell";
 export { CountCell } from "./CountCell";
+export { AipRefCodeCell } from "./AipRefCodeCell";

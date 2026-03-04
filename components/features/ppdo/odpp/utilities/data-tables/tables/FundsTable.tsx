@@ -12,6 +12,7 @@ import {
 } from "../core";
 import { FUNDS_TABLE_COLUMNS } from "../configs";
 import {
+    AipRefCodeCell,
     FundTitleCell,
     FundStatusCell,
     FundAmountCell,
@@ -161,6 +162,8 @@ export function FundsTable<T extends BaseFund>({
     const renderCell = (item: T, column: ColumnConfig) => {
         const fundItem = item as unknown as BaseFund;
         switch (column.key) {
+            case "aipRefCode":
+                return <AipRefCodeCell value={fundItem.aipRefCode} />;
             case "projectTitle":
                 return <FundTitleCell item={fundItem} onPin={onPin as (item: BaseFund) => void} onClick={(e) => onRowClick(item, e)} />;
             case "status":

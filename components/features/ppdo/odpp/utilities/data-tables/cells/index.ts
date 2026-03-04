@@ -6,6 +6,7 @@ export {
     DateCell,
     TextCell,
     CountCell,
+    AipRefCodeCell,
 } from "./common";
 
 // Projects-specific cells

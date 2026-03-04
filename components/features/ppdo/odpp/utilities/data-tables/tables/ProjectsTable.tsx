@@ -12,6 +12,7 @@ import {
 } from "../core";
 import { PROJECT_TABLE_COLUMNS } from "../configs";
 import {
+    AipRefCodeCell,
     ProjectNameCell,
     ProjectStatusCell,
     ProjectBudgetCell,
@@ -177,6 +178,8 @@ export function ProjectsTable({
 
     const renderCell = (project: Project, column: ColumnConfig) => {
         switch (column.key) {
+            case "aipRefCode":
+                return <AipRefCodeCell value={project.aipRefCode} />;
             case "particulars":
                 return <ProjectNameCell project={project} />;
             case "status":
