@@ -22,9 +22,9 @@ export function PinReminderProvider({ children }: PinReminderProviderProps) {
 
   useEffect(() => {
     // Only check after we've loaded the pin status
-    if (pinStatus === undefined || onboardingStatus === undefined) return;
+    if (pinStatus === undefined || onboardingStatus === undefined || onboardingStatus === null) return;
 
-    if (onboardingStatus?.hasPendingOnboarding) {
+    if (onboardingStatus.hasPendingOnboarding) {
       return;
     }
 
@@ -61,7 +61,7 @@ export function PinReminderProvider({ children }: PinReminderProviderProps) {
     }));
   };
 
-  if (pinStatus === undefined || onboardingStatus === undefined) {
+  if (pinStatus === undefined || onboardingStatus === undefined || onboardingStatus === null) {
     return <>{children}</>;
   }
 
