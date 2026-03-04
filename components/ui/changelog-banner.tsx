@@ -118,6 +118,7 @@ export function ChangelogBanner({
   return (
     <div
       ref={bannerRef}
+      data-changelog-banner="true"
       className={cn(
         "relative w-full border-b transition-all duration-300 z-[9999]",
         "bg-green-700 border-green-800",

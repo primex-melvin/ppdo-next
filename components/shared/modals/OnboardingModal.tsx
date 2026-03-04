@@ -231,6 +231,20 @@ export function OnboardingModal() {
     ? "/onboarding/onboarding-reset-pin-arrow.webp"
     : "/onboarding/onboarding-reset-pin.webp";
 
+  const isBannerTarget = (target: EventTarget | null) =>
+    target instanceof Element && !!target.closest("[data-changelog-banner='true']");
+
+  const handleOutsideInteract = (event: {
+    target: EventTarget | null;
+    preventDefault: () => void;
+  }) => {
+    if (isBannerTarget(event.target)) {
+      return;
+    }
+
+    event.preventDefault();
+  };
+
   // Prevent render if not mounted or status isn't loaded yet
   if (!mounted || !status) return null;
 
@@ -244,7 +258,7 @@ export function OnboardingModal() {
           showCloseButton={false}
           overlayClassName="top-[var(--changelog-banner-height,0px)]"
           className="sm:max-w-[500px] p-0 overflow-hidden gap-0 border-0 shadow-2xl focus:outline-none"
-          onInteractOutside={(e) => e.preventDefault()}
+          onInteractOutside={handleOutsideInteract}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <DialogTitle className="sr-only">Onboarding Setup</DialogTitle>
@@ -599,7 +613,10 @@ export function OnboardingModal() {
           maxHeight="100vh"
           overlayClassName="top-[var(--changelog-banner-height,0px)]"
           className="rounded-none border-0 bg-black p-0 shadow-none"
-          preventOutsideClick
+          closeAriaLabel="Close full screen image"
+          closeButtonClassName="right-5 top-5 rounded-full border border-white/25 bg-white/90 p-3 opacity-100 shadow-xl backdrop-blur-md hover:bg-white focus:ring-white focus:ring-offset-0 dark:border-black/30 dark:bg-zinc-900/90 dark:hover:bg-zinc-900"
+          closeIconClassName="h-6 w-6 text-zinc-900 hover:text-zinc-950 dark:text-zinc-100 dark:hover:text-white"
+          onPointerDownOutside={handleOutsideInteract}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <ResizableModalTitle className="sr-only">Reset PIN onboarding image</ResizableModalTitle>

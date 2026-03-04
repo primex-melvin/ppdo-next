@@ -23,6 +23,9 @@ interface ResizableModalContentProps extends React.ComponentPropsWithoutRef<type
   preventOutsideClick?: boolean;
   allowOverflow?: boolean; // NEW PROP: Control overflow behavior
   overlayClassName?: string;
+  closeButtonClassName?: string;
+  closeIconClassName?: string;
+  closeAriaLabel?: string;
 }
 
 interface ResizableModalHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -89,6 +92,9 @@ const ResizableModalContent = React.forwardRef<
   preventOutsideClick = false,
   allowOverflow = false, // NEW PROP: Default to false for backward compatibility
   overlayClassName,
+  closeButtonClassName,
+  closeIconClassName,
+  closeAriaLabel = 'Close',
   ...props
 }, ref) => {
   const styleOverrides = {
@@ -144,11 +150,18 @@ const ResizableModalContent = React.forwardRef<
             'focus:outline-none focus:ring-2 focus:ring-stone-950 focus:ring-offset-2',
             'disabled:pointer-events-none',
             'dark:ring-offset-stone-950 dark:focus:ring-stone-300',
-            'p-2 -m-2'
+            'p-2 -m-2',
+            closeButtonClassName
           )}
+          aria-label={closeAriaLabel}
         >
-          <X className="h-5 w-5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" />
-          <span className="sr-only">Close</span>
+          <X
+            className={cn(
+              'h-5 w-5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors',
+              closeIconClassName
+            )}
+          />
+          <span className="sr-only">{closeAriaLabel}</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </ResizableModalPortal>
