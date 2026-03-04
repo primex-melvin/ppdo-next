@@ -27,7 +27,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Get environment variable
   const env = process.env.NEXT_PUBLIC_APP_ENV;
-  const shouldShowOnboarding = env === "production" || process.env.NODE_ENV === "development";
+  const shouldShowOnboarding = env === "production";
 
   // Check if current page should show beta banner
   const shouldShowBetaBanner = pathname === "/dashboard/particulars";
@@ -100,8 +100,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* AI Assistant */}
       {/* AI Assistant removed */}
 
-      {/* Global Onboarding Modal - Only show in production */}
-      {/* {shouldShowOnboarding && <OnboardingModal />} */}
+      {shouldShowOnboarding && <OnboardingModal />}
     </div>
   );
 }

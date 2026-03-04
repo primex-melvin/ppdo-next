@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, ExternalLink, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,22 +50,50 @@ export function ChangelogBanner({
 }: ChangelogBannerProps) {
   const PRIMARY_COLOR = "#15803D"; // Green-700
 
-  // Check if banner was previously dismissed
-  const [isDismissed, setIsDismissed] = useState(false);
-
-  // Check localStorage after mount
-  useEffect(() => {
-    if (!dismissible || !storageKey) return;
+  const [isDismissed, setIsDismissed] = useState(() => {
+    if (typeof window === "undefined" || !dismissible || !storageKey) {
+      return false;
+    }
 
     try {
-      const dismissed = localStorage.getItem(storageKey) === "true";
-      if (dismissed) {
-        setIsDismissed(true);
-      }
+      return localStorage.getItem(storageKey) === "true";
     } catch (error) {
       console.error("Failed to read banner dismissal state:", error);
+      return false;
     }
-  }, [dismissible, storageKey]);
+  });
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (isDismissed) {
+      root.style.removeProperty("--changelog-banner-height");
+      return;
+    }
+
+    const bannerElement = bannerRef.current;
+    if (!bannerElement) {
+      return;
+    }
+
+    const updateHeight = () => {
+      root.style.setProperty("--changelog-banner-height", `${bannerElement.offsetHeight}px`);
+    };
+
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    resizeObserver.observe(bannerElement);
+
+    return () => {
+      resizeObserver.disconnect();
+      root.style.removeProperty("--changelog-banner-height");
+    };
+  }, [isDismissed]);
 
   const handleDismiss = () => {
     if (!dismissible) return;
@@ -89,6 +117,7 @@ export function ChangelogBanner({
 
   return (
     <div
+      ref={bannerRef}
       className={cn(
         "relative w-full border-b transition-all duration-300 z-[9999]",
         "bg-green-700 border-green-800",

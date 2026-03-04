@@ -6,6 +6,8 @@ import { convexAuth } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import type { Id } from "./_generated/dataModel";
+import { getNextOnboardingFlow } from "./config/onboardingConfig";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [Password],
@@ -444,9 +446,14 @@ export const getOnboardingStatus = query({
       .withIndex("isActive", (q) => q.eq("isActive", true))
       .collect();
 
+    const completedSteps = user.completedOnboardingSteps || [];
+    const nextFlow = getNextOnboardingFlow(completedSteps);
+
     const result = {
       userId: user._id,
-      completedSteps: user.completedOnboardingSteps || [],
+      completedSteps,
+      nextFlow,
+      hasPendingOnboarding: nextFlow !== null,
       currentUserName: user.user_name || "",
       currentDepartmentId: user.departmentId,
       departments: departments.map(d => ({ _id: d._id, name: d.name, code: d.code })),
@@ -478,7 +485,14 @@ export const completeInitialOnboarding = mutation({
     const completedSteps = new Set(user.completedOnboardingSteps || []);
     completedSteps.add("initial_profile");
 
-    const updates: any = {
+    const updates: {
+      user_name: string;
+      departmentId: Id<"departments">;
+      completedOnboardingSteps: string[];
+      updatedAt: number;
+      image?: string;
+      imageStorageId?: string;
+    } = {
       user_name: args.username,
       departmentId: args.departmentId,
       completedOnboardingSteps: Array.from(completedSteps),
@@ -488,7 +502,9 @@ export const completeInitialOnboarding = mutation({
     // If an image was uploaded, generate the URL and save both ID and URL
     if (args.imageStorageId) {
       const imageUrl = await ctx.storage.getUrl(args.imageStorageId);
-      updates.image = imageUrl;
+      if (imageUrl) {
+        updates.image = imageUrl;
+      }
       updates.imageStorageId = args.imageStorageId;
     }
 
@@ -529,6 +545,30 @@ export const completeBugReportOnboarding = mutation({
 
     await ctx.db.patch(userId, {
       completedOnboardingSteps: Array.from(completedSteps),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Complete the reset PIN feature onboarding step.
+ */
+export const completeResetPinFeatureOnboarding = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const completedSteps = new Set(user.completedOnboardingSteps || []);
+    completedSteps.add("reset_pin_feature_onboarding");
+
+    await ctx.db.patch(userId, {
+      completedOnboardingSteps: Array.from(completedSteps),
+      updatedAt: Date.now(),
     });
 
     return { success: true };

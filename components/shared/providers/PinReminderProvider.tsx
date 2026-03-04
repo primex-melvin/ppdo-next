@@ -17,11 +17,16 @@ const REMINDER_COOLDOWN_HOURS = 24;
 
 export function PinReminderProvider({ children }: PinReminderProviderProps) {
   const pinStatus = useQuery(api.userPin.getPinStatus);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const onboardingStatus = useQuery(api.auth.getOnboardingStatus, {});
+  const [isReminderReady, setIsReminderReady] = useState(false);
 
   useEffect(() => {
     // Only check after we've loaded the pin status
-    if (pinStatus === undefined) return;
+    if (pinStatus === undefined || onboardingStatus === undefined) return;
+
+    if (onboardingStatus?.hasPendingOnboarding) {
+      return;
+    }
 
     // If user already has a custom PIN, or is in forced reset flow, don't show reminder
     if (pinStatus?.hasCustomPin || pinStatus?.mustChangeDeletePin) {
@@ -42,11 +47,11 @@ export function PinReminderProvider({ children }: PinReminderProviderProps) {
 
     // Show the reminder modal after a short delay (let the app load first)
     const timer = setTimeout(() => {
-      setIsModalOpen(true);
+      setIsReminderReady(true);
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [pinStatus]);
+  }, [pinStatus, onboardingStatus]);
 
   // Handle navigation to settings
   const handleNavigateToSettings = () => {
@@ -56,16 +61,22 @@ export function PinReminderProvider({ children }: PinReminderProviderProps) {
     }));
   };
 
-  if (pinStatus === undefined) {
+  if (pinStatus === undefined || onboardingStatus === undefined) {
     return <>{children}</>;
   }
+
+  const isModalOpen =
+    isReminderReady &&
+    !onboardingStatus.hasPendingOnboarding &&
+    !pinStatus.hasCustomPin &&
+    !pinStatus.mustChangeDeletePin;
 
   return (
     <>
       {children}
       <PinReminderModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => setIsReminderReady(false)}
         onNavigateToSettings={handleNavigateToSettings}
       />
     </>

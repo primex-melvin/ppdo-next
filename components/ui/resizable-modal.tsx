@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface ResizableModalProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  modal?: boolean;
   children: React.ReactNode;
 }
 
@@ -21,6 +22,7 @@ interface ResizableModalContentProps extends React.ComponentPropsWithoutRef<type
   onCloseClick?: () => void;
   preventOutsideClick?: boolean;
   allowOverflow?: boolean; // NEW PROP: Control overflow behavior
+  overlayClassName?: string;
 }
 
 interface ResizableModalHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -45,7 +47,13 @@ const toCSSValue = (value: string | number | undefined): string | undefined => {
   return value;
 };
 
-const ResizableModal = DialogPrimitive.Root;
+function ResizableModal({
+  children,
+  ...props
+}: ResizableModalProps) {
+  return <DialogPrimitive.Root {...props}>{children}</DialogPrimitive.Root>;
+}
+
 const ResizableModalTrigger = DialogPrimitive.Trigger;
 const ResizableModalPortal = DialogPrimitive.Portal;
 
@@ -80,6 +88,7 @@ const ResizableModalContent = React.forwardRef<
   onCloseClick,
   preventOutsideClick = false,
   allowOverflow = false, // NEW PROP: Default to false for backward compatibility
+  overlayClassName,
   ...props
 }, ref) => {
   const styleOverrides = {
@@ -91,7 +100,7 @@ const ResizableModalContent = React.forwardRef<
 
   return (
     <ResizableModalPortal>
-      <ResizableModalOverlay />
+      <ResizableModalOverlay className={overlayClassName} />
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
