@@ -67,7 +67,7 @@ export function ResizableTableHeader({
                     className="text-center py-2 px-2"
                     style={{
                         width: '40px',
-                        border: '1px solid rgb(228 228 231 / 1)',
+                        border: "1px solid var(--border)",
                     }}
                 >
                     {onSelectAll && (
@@ -85,8 +85,8 @@ export function ResizableTableHeader({
                     className="text-center py-2 text-[11px] sm:text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wide"
                     style={{
                         width: '48px',
-                        border: '1px solid rgb(228 228 231 / 1)',
-                        borderColor: 'rgb(228 228 231 / 1)',
+                        border: "1px solid var(--border)",
+                        borderColor: "var(--border)",
                     }}
                 >
                     #
@@ -105,7 +105,7 @@ export function ResizableTableHeader({
                         style={{
                             width: `${getColumnWidth(column)}px`,
                             minWidth: `${column.minWidth || 60}px`,
-                            border: '1px solid rgb(228 228 231 / 1)',
+                            border: "1px solid var(--border)",
                             textAlign: column.align,
                         }}
                     >
@@ -153,7 +153,7 @@ export function ResizableTableHeader({
                         className="text-center py-2 text-[11px] sm:text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wide"
                         style={{
                             width: `${actionsColumnWidth}px`,
-                            border: '1px solid rgb(228 228 231 / 1)',
+                            border: "1px solid var(--border)",
                         }}
                     >
                         Actions

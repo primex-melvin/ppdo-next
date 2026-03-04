@@ -52,7 +52,7 @@ export function ResizableTableRow<T extends { _id: string }>({
             <td
                 className="text-center px-2"
                 style={{
-                    border: '1px solid rgb(228 228 231 / 1)',
+                    border: "1px solid var(--border)",
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -69,7 +69,7 @@ export function ResizableTableRow<T extends { _id: string }>({
             <td
                 className="text-center text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 relative"
                 style={{
-                    border: '1px solid rgb(228 228 231 / 1)',
+                    border: "1px solid var(--border)",
                 }}
             >
                 {index + 1}
@@ -98,7 +98,7 @@ export function ResizableTableRow<T extends { _id: string }>({
                     key={column.key as string}
                     className="px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-900 dark:text-zinc-100"
                     style={{
-                        border: '1px solid rgb(228 228 231 / 1)',
+                        border: "1px solid var(--border)",
                         textAlign: column.align,
                     }}
                 >
@@ -111,7 +111,7 @@ export function ResizableTableRow<T extends { _id: string }>({
                 <td
                     className="text-center"
                     style={{
-                        border: '1px solid rgb(228 228 231 / 1)',
+                        border: "1px solid var(--border)",
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >

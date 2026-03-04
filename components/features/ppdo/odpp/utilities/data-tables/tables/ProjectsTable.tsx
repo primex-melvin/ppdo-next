@@ -88,8 +88,8 @@ function ProjectsTotalsRow({ columns, projects, columnWidths }: ProjectsTotalsRo
 
     return (
         <tr className="sticky bottom-0 bg-zinc-50 dark:bg-zinc-800 font-bold z-20 shadow-[0_-1px_0_0_rgba(0,0,0,0.1)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.1)]">
-            <td className="text-center py-2" style={{ border: '2px solid rgb(228 228 231 / 1)', width: '40px' }} />
-            <td className="text-center py-2 text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-200" style={{ border: '2px solid rgb(228 228 231 / 1)', width: '40px' }} />
+            <td className="text-center py-2" style={{ border: "2px solid var(--border)", width: '40px' }} />
+            <td className="text-center py-2 text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-200" style={{ border: "2px solid var(--border)", width: '40px' }} />
             {columns.map(column => {
                 let cellContent = "";
                 if (column.key === "totalBudgetAllocated") {
@@ -117,7 +117,7 @@ function ProjectsTotalsRow({ columns, projects, columnWidths }: ProjectsTotalsRo
                         key={column.key as string}
                         className="px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-200"
                         style={{
-                            border: '2px solid rgb(228 228 231 / 1)',
+                            border: "2px solid var(--border)",
                             textAlign: column.align,
                             width: `${width}px`,
                             minWidth: `${column.minWidth ?? 60}px`,
@@ -128,7 +128,7 @@ function ProjectsTotalsRow({ columns, projects, columnWidths }: ProjectsTotalsRo
                     </td>
                 );
             })}
-            <td className="text-center" style={{ border: '2px solid rgb(228 228 231 / 1)', width: '64px' }} />
+            <td className="text-center" style={{ border: "2px solid var(--border)", width: '64px' }} />
         </tr>
     );
 }

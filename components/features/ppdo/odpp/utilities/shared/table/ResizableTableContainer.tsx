@@ -27,7 +27,7 @@ export function ResizableTableContainer({
         <div
             className={`inline-block bg-white dark:bg-zinc-900 border rounded-lg overflow-hidden ${className}`}
             style={{
-                borderColor: 'rgb(228 228 231 / 1)',
+                borderColor: "var(--border)",
                 maxWidth: '100%',
             }}
         >

@@ -506,7 +506,7 @@ export function BreakdownHistoryTable({
         <div
           className="flex flex-col bg-white dark:bg-zinc-900 border rounded-lg overflow-hidden h-[calc(100vh-200px)] min-h-[500px]"
           style={{
-            borderColor: 'rgb(228 228 231 / 1)',
+            borderColor: "var(--border)",
           }}
         >
           {/* TOOLBAR */}

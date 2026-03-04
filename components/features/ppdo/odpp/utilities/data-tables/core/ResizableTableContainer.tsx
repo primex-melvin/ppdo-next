@@ -29,7 +29,7 @@ export const ResizableTableContainer = forwardRef<HTMLDivElement, ResizableTable
                 ref={ref}
                 className={`block w-full bg-white dark:bg-zinc-900 border rounded-lg overflow-hidden ${className}`}
                 style={{
-                    borderColor: 'rgb(228 228 231 / 1)',
+                    borderColor: "var(--border)",
                 }}
             >
                 {toolbar}

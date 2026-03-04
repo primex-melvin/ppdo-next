@@ -141,7 +141,7 @@ export function TableRow({
           <td
             className="text-center px-2"
             style={{
-              border: '1px solid rgb(228 228 231 / 1)',
+              border: "1px solid var(--border)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -158,7 +158,7 @@ export function TableRow({
           <td
             className="text-center text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 relative"
             style={{
-              border: '1px solid rgb(228 228 231 / 1)',
+              border: "1px solid var(--border)",
             }}
           >
             {index + 1}
@@ -194,7 +194,7 @@ export function TableRow({
                   width: `${column.width}px`,
                   minWidth: column.minWidth ? `${column.minWidth}px` : '80px',
                   maxWidth: column.maxWidth ? `${column.maxWidth}px` : '450px',
-                  border: '1px solid rgb(228 228 231 / 1)',
+                  border: "1px solid var(--border)",
                   textAlign: column.align,
                 }}
                 onMouseEnter={() => isStatusColumn && !isUpdating && setIsHoveringStatus(true)}
@@ -286,10 +286,10 @@ export function TableRow({
 
           {/* Actions */}
           <td
-            className="text-center"
-            style={{
-              border: '1px solid rgb(228 228 231 / 1)',
-            }}
+              className="text-center"
+              style={{
+                border: "1px solid var(--border)",
+              }}
           >
             <div className="flex items-center justify-center gap-1">
               {onEdit && (

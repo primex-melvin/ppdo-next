@@ -111,13 +111,13 @@ export function GenericTotalsRow<T>({
             {/* Checkbox column (empty) */}
             <td
                 className="text-center py-2"
-                style={{ border: "1px solid rgb(228 228 231 / 1)" }}
+                style={{ border: "1px solid var(--border)" }}
             />
 
             {/* Row number column (empty) */}
             <td
                 className="text-center py-2 text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-200"
-                style={{ border: "1px solid rgb(228 228 231 / 1)" }}
+                style={{ border: "1px solid var(--border)" }}
             />
 
             {/* Data columns */}
@@ -162,7 +162,7 @@ export function GenericTotalsRow<T>({
                             "text-zinc-800 dark:text-zinc-200"
                         )}
                         style={{
-                            border: "1px solid rgb(228 228 231 / 1)",
+                            border: "1px solid var(--border)",
                             textAlign: column.align,
                         }}
                     >
@@ -174,7 +174,7 @@ export function GenericTotalsRow<T>({
             {/* Actions column (empty) */}
             <td
                 className="text-center"
-                style={{ border: "1px solid rgb(228 228 231 / 1)" }}
+                style={{ border: "1px solid var(--border)" }}
             />
         </tr>
     );
