@@ -95,10 +95,10 @@ export default function PDFExportModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="border-stone-200 bg-white text-stone-950 sm:max-w-[600px] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
         <DialogHeader>
-          <DialogTitle>Export as PDF</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-stone-950 dark:text-zinc-50">Export as PDF</DialogTitle>
+          <DialogDescription className="text-stone-600 dark:text-zinc-300">
             Choose the quality level for your PDF export. Higher quality produces larger files.
           </DialogDescription>
         </DialogHeader>
@@ -117,8 +117,8 @@ export default function PDFExportModal({
                   className={`
                     relative p-4 rounded-lg border-2 text-left transition-all
                     ${isSelected
-                      ? 'border-[#4FBA76] bg-[#4FBA76]/5 shadow-md'
-                      : 'border-stone-200 hover:border-stone-300 bg-white'
+                      ? 'border-[#4FBA76] bg-[#4FBA76]/8 shadow-md dark:border-[#4FBA76] dark:bg-[#123222]'
+                      : 'border-stone-200 hover:border-stone-300 bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700'
                     }
                     ${isExporting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   `}
@@ -132,9 +132,9 @@ export default function PDFExportModal({
                   )}
 
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-stone-900">{option.label}</h3>
+                    <h3 className="font-semibold text-stone-900 dark:text-zinc-50">{option.label}</h3>
 
-                    <div className="flex gap-3 text-xs text-stone-600">
+                    <div className="flex gap-3 text-xs text-stone-600 dark:text-zinc-300">
                       <div>
                         <span className="font-medium">Scale:</span> {option.scale}x
                       </div>
@@ -143,11 +143,11 @@ export default function PDFExportModal({
                       </div>
                     </div>
 
-                    <p className="text-sm text-stone-600 leading-relaxed">
+                    <p className="text-sm leading-relaxed text-stone-600 dark:text-zinc-300">
                       {option.description}
                     </p>
 
-                    <div className="text-xs text-stone-500">
+                    <div className="text-xs text-stone-500 dark:text-zinc-400">
                       Est. size: ~{estimatedSize} MB
                     </div>
                   </div>
@@ -158,11 +158,11 @@ export default function PDFExportModal({
 
           {isExporting && (
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-stone-600">
+              <div className="flex items-center justify-between text-sm text-stone-600 dark:text-zinc-300">
                 <span>Exporting...</span>
                 <span>{progress}%</span>
               </div>
-              <div className="w-full bg-stone-200 rounded-full h-2 overflow-hidden">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-zinc-800">
                 <div
                   className="bg-[#4FBA76] h-full transition-all duration-300 ease-out"
                   style={{ width: `${progress}%` }}
@@ -177,6 +177,7 @@ export default function PDFExportModal({
             variant="outline"
             onClick={onClose}
             disabled={isExporting}
+            className="border-stone-300 bg-white text-stone-700 hover:bg-stone-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
             Cancel
           </Button>

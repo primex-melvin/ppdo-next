@@ -771,6 +771,10 @@ export function BudgetTrackingTable({
         budgetItems={filteredAndSortedItems}
         totals={printTotals}
         columns={getVisibleColumns(hiddenColumns)}
+        setupColumnSelection={{
+          sourceColumns: getVisibleColumns(hiddenColumns),
+          maxColumns: 12,
+        }}
         hiddenColumns={hiddenColumns}
         filterState={{
           searchQuery,

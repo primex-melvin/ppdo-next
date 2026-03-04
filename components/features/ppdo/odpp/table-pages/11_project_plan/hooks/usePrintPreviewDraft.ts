@@ -75,7 +75,7 @@ export function usePrintPreviewDraft({
       id: existingDraft?.id || `draft-${year}-${particular || 'all'}-${Date.now()}`,
       timestamp: existingDraft?.timestamp || Date.now(),
       lastModified: Date.now(),
-      documentTitle: documentTitle || particular ? `Budget ${year} - ${particular}` : `Budget ${year}`,
+      documentTitle: documentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`),
       budgetYear: year,
       budgetParticular: particular,
       tableFontSize,

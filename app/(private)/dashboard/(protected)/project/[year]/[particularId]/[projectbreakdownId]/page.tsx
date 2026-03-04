@@ -157,8 +157,6 @@ export default function ProjectBreakdownPage() {
     }
   };
 
-  const handlePrint = () => window.print();
-
   const handleAdd = async (breakdownData: Omit<Breakdown, "_id">) => {
     try {
       if (!project) {
@@ -280,7 +278,6 @@ export default function ProjectBreakdownPage() {
             breakdowns={sortedItems}
             sortOption={sortOption}
             onSortChange={setSortOption}
-            onPrint={handlePrint}
             onAdd={() => setShowAddModal(true)}
             onEdit={handleEdit}
             onDelete={handleDelete}

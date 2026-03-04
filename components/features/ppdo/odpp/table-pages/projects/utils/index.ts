@@ -171,7 +171,7 @@ export const groupProjectsByCategory = (
     });
 
     return Object.entries(groups)
-        .filter(([_, group]) => group.projects.length > 0)
+        .filter(([, group]) => group.projects.length > 0)
         .sort((a, b) => {
             if (a[0] === "uncategorized") return 1;
             if (b[0] === "uncategorized") return -1;
@@ -212,7 +212,7 @@ export const calculateProjectTotals = (projects: Project[]): ProjectTotals => {
  * Counts visible label columns (particulars, implementingOffice, year, status)
  */
 export const countVisibleLabelColumns = (hiddenColumns: Set<string>): number => {
-    const labels = ["particulars", "implementingOffice", "year", "status"];
+    const labels = ["aipRefCode", "particulars", "implementingOffice", "year", "status"];
     return labels.filter((id) => !hiddenColumns.has(id)).length;
 };
 
@@ -267,7 +267,7 @@ export const generateProjectsCSV = (
     const rows = projects.map((project) => {
         return visibleCols
             .map((col) => {
-                let val = (project as any)[col.id];
+                const val = (project as Project & Record<string, unknown>)[col.id];
                 if (val === undefined || val === null) return "";
                 if (col.id === "utilizationRate") return (val as number).toFixed(2);
                 if (typeof val === "string") {
@@ -305,7 +305,7 @@ export const getParticularFullName = (particular: string): string => {
 /**
  * Calculates project stats for summary
  */
-export const calculateProjectStats = (projects: any[]) => {
+export const calculateProjectStats = (projects: Project[]) => {
     const totalAllocated = projects.reduce(
         (sum, project) => sum + project.totalBudgetAllocated,
         0

@@ -152,11 +152,6 @@ export {
 } from "./form";
 
 // ============================================================================
-// PRINT ADAPTER
-// ============================================================================
-export { BreakdownPrintAdapter } from "./lib/print-adapters/BreakdownPrintAdapter";
-
-// ============================================================================
 // SHARE MODAL
 // ============================================================================
 export { BreakdownShareModal } from "./components/BreakdownShareModal";

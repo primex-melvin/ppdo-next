@@ -29,6 +29,9 @@ export interface PrintPreviewModalProps {
   filterState: FilterState;
   year: number;
   particular?: string;
+  coverTitle?: string;
+  coverSubtitle?: string;
+  defaultDocumentTitle?: string;
   existingDraft?: any | null;
   onDraftSaved?: (draft: any) => void;
 }
@@ -65,6 +68,7 @@ export interface DraftInfo {
   key: string;
   year: number;
   particular?: string;
+  label?: string;
   timestamp: number;
   pageCount: number;
 }

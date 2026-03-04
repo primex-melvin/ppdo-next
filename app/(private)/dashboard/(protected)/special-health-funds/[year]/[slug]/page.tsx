@@ -142,8 +142,6 @@ export default function SpecialHealthFundBreakdownPage({ params }: PageProps) {
     const toggleAutoCalculate = useMutation(api.specialHealthFunds.toggleAutoCalculateFinancials);
 
     // Handlers
-    const handlePrint = () => window.print();
-
     const handleAdd = async (breakdownData: Omit<Breakdown, "_id">) => {
         try {
             if (!fund) {
@@ -302,7 +300,6 @@ export default function SpecialHealthFundBreakdownPage({ params }: PageProps) {
                 ) : (
                     <BreakdownHistoryTable
                         breakdowns={sortedBreakdowns}
-                        onPrint={handlePrint}
                         onAdd={() => setShowAddModal(true)}
                         onEdit={handleEdit}
                         onDelete={handleDelete}

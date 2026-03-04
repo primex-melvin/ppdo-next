@@ -777,6 +777,155 @@ const resolveCanvasFontFamily = (fontFamily: string | undefined): string => {
   return 'sans-serif';
 };
 
+const getCategoryTextCanvasScale = (): number => {
+  if (typeof window === 'undefined') return 2;
+  return Math.min(3, Math.max(2, Math.ceil(window.devicePixelRatio || 1)));
+};
+
+const getCanvasFontString = (
+  fontWeight: string,
+  fontSize: number,
+  fontFamily: string,
+  fontStyle = 'normal'
+): string => {
+  return `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+};
+
+const wrapLongCategoryToken = (
+  ctx: CanvasRenderingContext2D,
+  token: string,
+  maxWidth: number
+): string[] => {
+  if (!token) return [''];
+  if (maxWidth <= 0) return [token];
+
+  const segments: string[] = [];
+  let current = '';
+
+  for (const char of token) {
+    const next = current + char;
+    if (current && ctx.measureText(next).width > maxWidth) {
+      segments.push(current);
+      current = char;
+    } else {
+      current = next;
+    }
+  }
+
+  if (current) segments.push(current);
+  return segments.length > 0 ? segments : [token];
+};
+
+const wrapCategoryLines = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] => {
+  const paragraphs = (text || '').split('\n');
+  const wrappedLines: string[] = [];
+
+  paragraphs.forEach((paragraph) => {
+    if (!paragraph.trim()) {
+      wrappedLines.push('');
+      return;
+    }
+
+    const tokens = paragraph.split(/\s+/).filter(Boolean);
+    let currentLine = '';
+
+    tokens.forEach((token) => {
+      if (ctx.measureText(token).width > maxWidth) {
+        if (currentLine) {
+          wrappedLines.push(currentLine);
+          currentLine = '';
+        }
+        wrappedLines.push(...wrapLongCategoryToken(ctx, token, maxWidth));
+        return;
+      }
+
+      const nextLine = currentLine ? `${currentLine} ${token}` : token;
+      if (currentLine && ctx.measureText(nextLine).width > maxWidth) {
+        wrappedLines.push(currentLine);
+        currentLine = token;
+      } else {
+        currentLine = nextLine;
+      }
+    });
+
+    if (currentLine || tokens.length === 0) {
+      wrappedLines.push(currentLine);
+    }
+  });
+
+  return wrappedLines.length > 0 ? wrappedLines : [''];
+};
+
+const renderCategoryLabelCanvas = (
+  element: Extract<CanvasElement, { type: 'text' }>,
+  displayText: string,
+  rowWidth: number,
+  rowHeight: number,
+  paddingLeft: number
+): HTMLCanvasElement => {
+  const canvas = document.createElement('canvas');
+  const cssWidth = Math.max(1, Math.round(rowWidth));
+  const cssHeight = Math.max(1, Math.round(rowHeight));
+  const exportCanvasScale = getCategoryTextCanvasScale();
+
+  canvas.width = Math.max(1, Math.round(cssWidth * exportCanvasScale));
+  canvas.height = Math.max(1, Math.round(cssHeight * exportCanvasScale));
+  canvas.style.width = `${cssWidth}px`;
+  canvas.style.height = `${cssHeight}px`;
+  canvas.style.display = 'block';
+  canvas.style.backgroundColor = 'transparent';
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.scale(exportCanvasScale, exportCanvasScale);
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+  const resolvedFontFamily = resolveCanvasFontFamily(element.fontFamily);
+  const fontWeight = element.bold ? '700' : '400';
+  const fontStyle = element.italic ? 'italic' : 'normal';
+  ctx.font = getCanvasFontString(fontWeight, element.fontSize, resolvedFontFamily, fontStyle);
+  ctx.fillStyle = convertColorToRGB(element.color, '#000000', false);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+
+  const availableTextWidth = Math.max(1, cssWidth - paddingLeft);
+  const lineHeightMultiplier =
+    typeof element.lineHeight === 'number' && Number.isFinite(element.lineHeight) && element.lineHeight > 0
+      ? element.lineHeight
+      : 1.2;
+
+  const lines = wrapCategoryLines(ctx, displayText, availableTextWidth);
+  const lineMetrics = lines.map((line) => {
+    const metrics = ctx.measureText(line || ' ');
+    const ascent = metrics.actualBoundingBoxAscent || element.fontSize * 0.8;
+    const descent = metrics.actualBoundingBoxDescent || element.fontSize * 0.2;
+    return {
+      line,
+      ascent,
+      descent,
+      glyphHeight: ascent + descent,
+    };
+  });
+
+  const maxLineGlyphHeight = Math.max(0, ...lineMetrics.map((metric) => metric.glyphHeight));
+  const lineBoxHeight = Math.max(element.fontSize * lineHeightMultiplier, maxLineGlyphHeight);
+  const totalBlockHeight = lineMetrics.length * lineBoxHeight;
+  const topPadding = Math.max(0, (cssHeight - totalBlockHeight) / 2);
+
+  lineMetrics.forEach((metric, index) => {
+    const lineTop = topPadding + index * lineBoxHeight;
+    const baselineY = lineTop + ((lineBoxHeight - metric.glyphHeight) / 2) + metric.ascent;
+    ctx.fillText(metric.line, paddingLeft, baselineY);
+  });
+
+  return canvas;
+};
+
 /**
  * Generate filename with format: {sanitized_title}_{YYYY-MM-DD}_{HH-MM-SS}.pdf
  */
@@ -866,6 +1015,29 @@ const createSectionDOM = (
         textEl.style.minHeight = `${exportHeight}px`;
         textEl.style.height = `${exportHeight}px`;
       }
+
+      if (isCategoryText) {
+        if (element.backgroundColor) {
+          const bgColor = convertColorToRGB(element.backgroundColor, 'transparent', true);
+          textEl.style.setProperty('background-color', bgColor, 'important');
+          textEl.style.backgroundColor = bgColor;
+        } else {
+          textEl.style.setProperty('background-color', 'transparent', 'important');
+        }
+
+        const categoryCanvas = renderCategoryLabelCanvas(
+          element,
+          displayText,
+          element.width,
+          element.height,
+          categoryRowTextLeftPadding
+        );
+
+        textEl.appendChild(categoryCanvas);
+        container.appendChild(textEl);
+        return;
+      }
+
       const textContentEl = isTableText ? document.createElement('div') : textEl;
       if (isTableText) {
         textContentEl.style.width = '100%';
@@ -904,25 +1076,12 @@ const createSectionDOM = (
       textContentEl.style.textRendering = 'auto';
       // Ensure line height is set for proper text rendering
       textContentEl.style.lineHeight = String(element.lineHeight ?? 'normal');
-      if (isCategoryText) {
-        textEl.style.display = 'flex';
-        textEl.style.alignItems = 'center';
-        textContentEl.style.paddingLeft = `${categoryRowTextLeftPadding}px`;
-        textContentEl.style.boxSizing = 'border-box';
-      }
 
       if (element.backgroundColor) {
         const bgColor = convertColorToRGB(element.backgroundColor, 'transparent', true);
-        if (isCategoryText) {
-          // Category rows must fill the entire merged row area.
-          textEl.style.setProperty('background-color', bgColor, 'important');
-          textEl.style.backgroundColor = bgColor;
-          textContentEl.style.setProperty('background-color', 'transparent', 'important');
-        } else {
-          // Set inline and force it to prevent any browser color space conversions
-          textContentEl.style.setProperty('background-color', bgColor, 'important');
-          textContentEl.style.backgroundColor = bgColor;
-        }
+        // Set inline and force it to prevent any browser color space conversions
+        textContentEl.style.setProperty('background-color', bgColor, 'important');
+        textContentEl.style.backgroundColor = bgColor;
       } else {
         // Explicitly set transparent to prevent inheritance
         textContentEl.style.setProperty('background-color', 'transparent', 'important');
@@ -938,6 +1097,7 @@ const createSectionDOM = (
       }
 
       textContentEl.textContent = displayText;
+
       if (isTableText) {
         textEl.appendChild(textContentEl);
       }

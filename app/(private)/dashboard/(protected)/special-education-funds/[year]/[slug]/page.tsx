@@ -140,8 +140,6 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
     const toggleAutoCalculate = useMutation(api.specialEducationFunds.toggleAutoCalculateFinancials);
 
     // Handlers
-    const handlePrint = () => window.print();
-
     const handleAdd = async (breakdownData: Omit<Breakdown, "_id">) => {
         try {
             if (!fund) {
@@ -300,7 +298,6 @@ export default function SpecialEducationFundBreakdownPage({ params }: PageProps)
                 ) : (
                     <BreakdownHistoryTable
                         breakdowns={sortedBreakdowns}
-                        onPrint={handlePrint}
                         onAdd={() => setShowAddModal(true)}
                         onEdit={handleEdit}
                         onDelete={handleDelete}

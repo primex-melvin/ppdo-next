@@ -43,6 +43,10 @@ interface PrintPreviewModalProps {
   budgetItems: BudgetItem[];
   totals: BudgetTotals;
   columns: ColumnDefinition[];
+  setupColumnSelection?: {
+    sourceColumns: ColumnDefinition[];
+    maxColumns: number;
+  };
   hiddenColumns: Set<string>;
   filterState: {
     searchQuery: string;
@@ -53,6 +57,9 @@ interface PrintPreviewModalProps {
   };
   year: number;
   particular?: string;
+  coverTitle?: string;
+  coverSubtitle?: string;
+  defaultDocumentTitle?: string;
   existingDraft?: PrintDraft | null;
   onDraftSaved?: (draft: PrintDraft) => void;
   rowMarkers?: RowMarker[];
@@ -72,10 +79,14 @@ export function PrintPreviewModal({
   budgetItems,
   totals,
   columns,
+  setupColumnSelection,
   hiddenColumns,
   filterState,
   year,
   particular,
+  coverTitle,
+  coverSubtitle,
+  defaultDocumentTitle,
   existingDraft,
   onDraftSaved,
   rowMarkers,
@@ -121,6 +132,7 @@ export function PrintPreviewModal({
 
   // --- Column Label Overrides (for inline renaming) ---
   const [columnLabelOverrides, setColumnLabelOverrides] = useState<Map<string, string>>(new Map());
+  const [activePrintColumns, setActivePrintColumns] = useState<ColumnDefinition[]>(columns);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const persisted = localStorage.getItem('printPreview.panelCollapsed');
@@ -136,6 +148,7 @@ export function PrintPreviewModal({
   // Track initialization to prevent re-triggering
   const initializationStartedRef = useRef(false);
   const lastLayoutReflowSignatureRef = useRef<string | null>(null);
+  const previousIsOpenRef = useRef(isOpen);
   const footerVisible = state.footer.visible !== false;
   const effectiveMargins = useMemo(() => ({
     ...rulerState.margins,
@@ -234,16 +247,26 @@ export function PrintPreviewModal({
     }
   }, [isPanelCollapsed]);
 
+  const sourceVisibleColumns = setupColumnSelection?.sourceColumns?.length
+    ? setupColumnSelection.sourceColumns
+    : columns;
+  const maxSelectableColumns = setupColumnSelection?.maxColumns ?? 12;
+  const setupNeedsColumnSelection = sourceVisibleColumns.length > maxSelectableColumns;
+  const defaultSelectedColumnKeys = useMemo(
+    () => sourceVisibleColumns.slice(0, maxSelectableColumns).map((column) => column.key),
+    [sourceVisibleColumns, maxSelectableColumns]
+  );
+
   // Prepare table data for ColumnVisibilityPanel (with label overrides)
   const tables = useMemo(() => [{
     tableId: 'main-table',
     tableName: 'Budget Table',
-    columns: columns.map(col => ({
+    columns: activePrintColumns.map(col => ({
       key: col.key,
       label: columnLabelOverrides.get(col.key) || col.label,
-      required: col.key === 'particular'
+      required: col.key === 'particular' || col.key === 'particulars' || col.key === 'projectTitle'
     }))
-  }], [columns, columnLabelOverrides]);
+  }], [activePrintColumns, columnLabelOverrides]);
 
   const pageHasTableElements = useCallback((page: { elements: Array<{ groupId?: string; groupName?: string }> }) => {
     return page.elements.some(el => el.groupId && el.groupName?.toLowerCase().includes('table'));
@@ -336,7 +359,7 @@ export function PrintPreviewModal({
             y: marginTop + (el.y - oldTopEdge),
             width: totalAvailableWidth,
             visible: true,
-            ...textAlignPatch,
+            ...(el.type === 'text' ? { textAlign: 'left' as const } : {}),
           };
         }
         return {
@@ -511,7 +534,12 @@ export function PrintPreviewModal({
 
   // Initialize from table data with template and orientation
   const initializeFromTableData = useCallback(
-    (template?: CanvasTemplate | null, orientation: 'portrait' | 'landscape' = FIRST_PREVIEW_DEFAULT_ORIENTATION, includeCoverPage: boolean = true) => {
+    (
+      template?: CanvasTemplate | null,
+      orientation: 'portrait' | 'landscape' = FIRST_PREVIEW_DEFAULT_ORIENTATION,
+      includeCoverPage: boolean = true,
+      columnsOverride: ColumnDefinition[] = activePrintColumns
+    ) => {
       console.group('ðŸŽ¨ INITIALIZING PRINT PREVIEW');
       console.log('Template:', template?.name || 'none');
       console.log('Orientation:', orientation);
@@ -521,14 +549,16 @@ export function PrintPreviewModal({
         const result = convertTableToCanvas({
           items: budgetItems,
           totals,
-          columns,
+          columns: columnsOverride,
           hiddenColumns,
           pageSize: template?.page.size || FIRST_PREVIEW_DEFAULT_PAGE_SIZE,
           orientation: orientation,
           includeHeaders: true,
           includeTotals: true,
-          title: includeCoverPage ? `Budget Tracking ${year}` : undefined,
-          subtitle: includeCoverPage && particular ? `Particular: ${particular}` : undefined,
+          title: includeCoverPage ? (coverTitle || `Budget Tracking ${year}`) : undefined,
+          subtitle: includeCoverPage
+            ? (coverSubtitle || (particular ? `Particular: ${particular}` : undefined))
+            : undefined,
           rowMarkers,
           margin: effectiveMargins.left,
           margins: effectiveMargins,
@@ -579,10 +609,12 @@ export function PrintPreviewModal({
     [
       budgetItems,
       totals,
-      columns,
+      activePrintColumns,
       hiddenColumns,
       year,
       particular,
+      coverTitle,
+      coverSubtitle,
       rowMarkers,
       effectiveMargins,
       state,
@@ -593,16 +625,26 @@ export function PrintPreviewModal({
   );
 
   // âœ… Handler: Called when user finishes the Setup Wizard
-  const handleSetupComplete = useCallback((result: { template: CanvasTemplate | null, orientation: 'portrait' | 'landscape', includeCoverPage: boolean }) => {
+  const handleSetupComplete = useCallback((result: {
+    template: CanvasTemplate | null;
+    orientation: 'portrait' | 'landscape';
+    includeCoverPage: boolean;
+    selectedColumnKeys?: string[];
+  }) => {
     console.log('ðŸŽ¯ Setup complete, closing modal and initializing...');
+    const nextColumns = setupNeedsColumnSelection && result.selectedColumnKeys?.length
+      ? sourceVisibleColumns.filter((column) => result.selectedColumnKeys!.includes(column.key))
+      : sourceVisibleColumns;
+
+    setActivePrintColumns(nextColumns);
     setShowSetupModal(false);
     setIncludeCoverPage(result.includeCoverPage);
 
     // Defer slightly to allow modal unmount animation to start cleanly
     setTimeout(() => {
-      initializeFromTableData(result.template, result.orientation, result.includeCoverPage);
+      initializeFromTableData(result.template, result.orientation, result.includeCoverPage, nextColumns);
     }, 100);
-  }, [initializeFromTableData]);
+  }, [initializeFromTableData, setupNeedsColumnSelection, sourceVisibleColumns]);
 
   const handleApplySavedTemplate = useCallback(() => {
     if (!savedTemplate) return;
@@ -715,12 +757,19 @@ export function PrintPreviewModal({
     //   existingDraft: !!existingDraft,
     // });
 
-    // Reset when modal closes
+    const wasOpen = previousIsOpenRef.current;
+    previousIsOpenRef.current = isOpen;
+
+    // Reset only on open -> close transition
     if (!isOpen) {
+      if (!wasOpen) {
+        return;
+      }
       // NOTE: Temporarily disabled to reduce console noise during search debug
       // console.log('ðŸšª Modal closed, resetting all state...');
       state.setHasInitialized(false);
       state.setDocumentTitle('');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSavedTemplate(null);
       setShowTemplateApplicationModal(false);
       setShowLiveTemplateSelector(false);
@@ -729,6 +778,7 @@ export function PrintPreviewModal({
       setTextAlign(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
       setTableFontSize(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
       setFooterPageLabelPosition(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
+      setActivePrintColumns(sourceVisibleColumns);
       initializationStartedRef.current = false;
       lastLayoutReflowSignatureRef.current = null;
       setHiddenCanvasColumns(new Set());
@@ -751,8 +801,11 @@ export function PrintPreviewModal({
     if (existingDraft) {
       // NOTE: Temporarily disabled to reduce console noise during search debug
       // console.log('ðŸ“¦ Existing draft detected');
-      const draftTitle = existingDraft.documentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
+      const draftTitle = existingDraft.documentTitle
+        || defaultDocumentTitle
+        || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
       state.setDocumentTitle(draftTitle);
+      setActivePrintColumns(existingDraft.tableSnapshot.columns?.length ? existingDraft.tableSnapshot.columns : sourceVisibleColumns);
       setTableFontSize(
         clampTableFontSize(
           existingDraft.tableFontSize ?? inferTableFontSizeFromPages(existingDraft.canvasState.pages)
@@ -799,15 +852,15 @@ export function PrintPreviewModal({
     // Case 2: No existing draft - show setup wizard
     // NOTE: Temporarily disabled to reduce console noise during search debug
     // console.log('ðŸ†• New draft, showing setup wizard...');
-    const defaultTitle = particular ? `Budget ${year} - ${particular}` : `Budget ${year}`;
+    const defaultTitle = defaultDocumentTitle || (particular ? `Budget ${year} - ${particular}` : `Budget ${year}`);
     state.setDocumentTitle(defaultTitle);
+    setActivePrintColumns(sourceVisibleColumns);
     setTextAlign(FIRST_PREVIEW_DEFAULT_TEXT_ALIGN);
     setTableFontSize(FIRST_PREVIEW_DEFAULT_TABLE_FONT_SIZE);
     setFooterPageLabelPosition(FIRST_PREVIEW_DEFAULT_FOOTER_LABEL_POSITION);
     setShowSetupModal(true);
     // Don't set hasInitialized yet - wait for wizard completion
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, existingDraft, particular, year]);
+  }, [isOpen, existingDraft, particular, year, defaultDocumentTitle, sourceVisibleColumns, state, inferTableFontSizeFromPages, inferCoverPageFromPages, inferFooterPageLabelPosition, applyFooterPageLabelPosition]);
 
   const actions = usePrintPreviewActions({
     currentPageIndex: state.currentPageIndex,
@@ -829,7 +882,7 @@ export function PrintPreviewModal({
     currentPageIndex: state.currentPageIndex,
     budgetItems,
     totals,
-    columns,
+    columns: activePrintColumns,
     hiddenColumns,
     filterState,
     year,
@@ -894,7 +947,7 @@ export function PrintPreviewModal({
       state.setIsDirty(true);
       return position;
     });
-  }, [state.setIsDirty]);
+  }, [state]);
 
   useEffect(() => {
     if (!state.hasInitialized) return;
@@ -913,7 +966,7 @@ export function PrintPreviewModal({
     state.currentPage.orientation,
     footerPageLabelPosition,
     applyFooterPageLabelPosition,
-    state.setFooter,
+    state,
   ]);
 
   const regenerateTablePagesForLayout = useCallback(() => {
@@ -944,7 +997,7 @@ export function PrintPreviewModal({
     const regenerated = convertTableToCanvas({
       items: budgetItems,
       totals,
-      columns,
+      columns: activePrintColumns,
       hiddenColumns,
       pageSize: tableRefPage.size,
       orientation: tableRefPage.orientation,
@@ -979,7 +1032,7 @@ export function PrintPreviewModal({
     effectiveMargins,
     budgetItems,
     totals,
-    columns,
+    activePrintColumns,
     hiddenColumns,
     rowMarkers,
     tableFontSize,
@@ -1247,6 +1300,17 @@ export function PrintPreviewModal({
             isOpen={true}
             onClose={handleClose}
             onComplete={handleSetupComplete}
+            initialStep={setupNeedsColumnSelection ? 'column-selection' : 'orientation'}
+            columnSelection={setupNeedsColumnSelection ? {
+              enabled: true,
+              columns: sourceVisibleColumns.map((column) => ({
+                key: column.key,
+                label: column.label,
+              })),
+              maxColumns: maxSelectableColumns,
+              initialSelectedKeys: defaultSelectedColumnKeys,
+              description: 'This table has more than 12 visible columns. Print preview and exported PDF support up to 12 columns only. Select which columns to load into print preview.',
+            } : undefined}
           />
         )
       }

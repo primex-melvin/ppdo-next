@@ -29,6 +29,7 @@ export {
  * Available columns for project table
  */
 export const AVAILABLE_COLUMNS: TableColumn[] = [
+    { id: "aipRefCode", label: "AIP Ref. Code", align: "left" },
     { id: "particulars", label: "Particulars", sortable: true, align: "left" },
     { id: "implementingOffice", label: "Implementing Office", filterable: true, align: "left" },
     { id: "year", label: "Year", filterable: true, align: "center" },
@@ -79,6 +80,7 @@ export const EXPORT = {
 // ============================================================================
 
 export const DEFAULT_COLUMN_WIDTHS = {
+    aipRefCode: 140,
     particulars: 260,
     implementingOffice: 200,
 } as const;

@@ -5,14 +5,12 @@ import {
   ConversionConfig,
   ConversionResult,
   DEFAULT_TABLE_STYLE,
-  CellBounds,
   ColumnDefinition,
   BudgetTotals,
   clampTableFontSize,
 } from './types';
 import { BudgetItem } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/types";
 import {
-  wrapText,
   calculateWrappedRow,
   calculateWrappedHeader,
   WrappedRowData,
@@ -54,6 +52,8 @@ const TOTAL_ROW_TEXT_TOP_INSET = 0;
 
 // âœ… Extra left padding for first column text (spacing from left border)
 const FIRST_COLUMN_LEFT_PADDING = 20;
+type FlexibleBudgetItem = BudgetItem & Record<string, number>;
+type FlexibleBudgetTotals = BudgetTotals & Record<string, number>;
 
 function toCamelCaseHeaderLabel(rawLabel: string): string {
   const normalized = rawLabel
@@ -308,14 +308,22 @@ export function convertTableToCanvas(config: ConversionConfig): ConversionResult
  */
 function calculateColumnWidths(columns: ColumnDefinition[], totalWidth: number): number[] {
   const weights: Record<string, number> = {
+    aipRefCode: 1.6,
     particular: 3,
     particulars: 3,
+    projectTitle: 3.4,
     implementingOffice: 2,
+    officeInCharge: 2,
     year: 1,
     status: 1.2,
+    dateReceived: 1.4,
     totalBudgetAllocated: 2,
     obligatedBudget: 2,
     totalBudgetUtilized: 2,
+    received: 2,
+    obligatedPR: 2,
+    utilized: 2,
+    balance: 2,
     utilizationRate: 1.5,
     projectCompleted: 1.2,
     projectDelayed: 1.2,
@@ -423,6 +431,7 @@ function createTitlePage(pageSize: string, title: string, subtitle?: string, ori
  * Create data page with table rows and optional category markers
  * @deprecated Use the new height-based pagination in convertTableToCanvas instead
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function createDataPage(
   pageSize: string,
   items: BudgetItem[],
@@ -434,10 +443,6 @@ function createDataPage(
   orientation: 'portrait' | 'landscape' = 'portrait',
   rowMarkers: import('./types').RowMarker[] = []
 ): Page {
-  const baseSize = PAGE_SIZES[pageSize as keyof typeof PAGE_SIZES];
-  const size = orientation === 'landscape'
-    ? { width: baseSize.height, height: baseSize.width }
-    : baseSize;
   const elements: TextElement[] = [];
   let currentY = MARGIN_TOP;
 
@@ -618,6 +623,7 @@ function createCategoryHeaderRow(
     outline: false,
     backgroundColor: '#e5e7eb',
     visible: true,
+    textAlign: 'left',
     lineHeight: LINE_HEIGHT,
     groupId,
     groupName,
@@ -733,36 +739,62 @@ function createTableRowWithWrapping(
  * Format cell value based on column type
  */
 function formatCellValue(item: BudgetItem, key: string): string {
-  const value = (item as any)[key];
+  const value = (item as FlexibleBudgetItem)[key] as number | null | undefined;
 
   if (value === null || value === undefined) return '-';
 
+  const currencyKeys = new Set([
+    'totalBudgetAllocated',
+    'obligatedBudget',
+    'totalBudgetUtilized',
+    'received',
+    'obligatedPR',
+    'utilized',
+    'balance',
+    'allocatedBudget',
+    'budgetUtilized',
+  ]);
+  const dateKeys = new Set(['dateReceived', 'dateStarted', 'targetDate', 'completionDate']);
+
   // Currency formatting
-  if (key.includes('Budget') || key.includes('budget')) {
+  if (currencyKeys.has(key) || key.includes('Budget') || key.includes('budget')) {
     return `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  }
+
+  if (dateKeys.has(key)) {
+    const dateValue = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(dateValue) || dateValue <= 0) return '-';
+
+    return new Date(dateValue).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 
   // Percentage formatting
   if (key === 'utilizationRate' || key === 'utilRate') {
-    return `${value.toFixed(1)}%`;
+    return `${Number(value).toFixed(1)}%`;
   }
 
   // Status formatting
   if (key === 'status') {
-    return value.charAt(0).toUpperCase() + value.slice(1);
+    const normalizedStatus = String(value).replace(/_/g, ' ');
+    return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
   }
 
   return String(value);
 }
 
 function calculateTotalsUtilizationRate(totals: BudgetTotals): number {
-  const explicitRate = (totals as any).utilizationRate;
+  const totalsRecord = totals as FlexibleBudgetTotals;
+  const explicitRate = totalsRecord.utilizationRate;
   if (typeof explicitRate === 'number' && Number.isFinite(explicitRate)) {
     return explicitRate;
   }
 
-  const allocated = Number((totals as any).totalBudgetAllocated ?? 0);
-  const utilized = Number((totals as any).totalBudgetUtilized ?? 0);
+  const allocated = Number(totalsRecord.totalBudgetAllocated ?? 0);
+  const utilized = Number(totalsRecord.totalBudgetUtilized ?? 0);
 
   if (!Number.isFinite(allocated) || allocated <= 0) return 0;
   if (!Number.isFinite(utilized)) return 0;
@@ -855,13 +887,13 @@ function createTotalsRow(
   columns.forEach((col, index) => {
     let value = '';
 
-    if (col.key === 'particular') {
+    if (col.key === 'particular' || col.key === 'particulars' || col.key === 'projectTitle') {
       value = 'TOTAL';
     } else if (col.key === 'utilizationRate' || col.key === 'utilRate') {
       value = `${totalUtilizationRate.toFixed(1)}%`;
     } else if (col.key in totals) {
-      const totalValue = (totals as any)[col.key];
-      value = formatCellValue({ [col.key]: totalValue } as any, col.key);
+      const totalValue = (totals as FlexibleBudgetTotals)[col.key];
+      value = formatCellValue({ [col.key]: totalValue } as FlexibleBudgetItem, col.key);
     }
 
     // Extra left padding for first column

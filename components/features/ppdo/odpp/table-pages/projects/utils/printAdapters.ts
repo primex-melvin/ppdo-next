@@ -7,6 +7,7 @@
 import { Project } from '../types';
 import { GroupedProjects, ProjectCategory } from '../types';
 import { ColumnDefinition, RowMarker } from '@/lib/print-canvas/types';
+import { AVAILABLE_COLUMNS } from '../constants';
 
 /**
  * Result of preparing projects for print
@@ -67,20 +68,11 @@ export function flattenGroupedProjectsForPrint(
  * @returns Array of visible column definitions
  */
 export function getProjectPrintColumns(hiddenColumns: Set<string>): ColumnDefinition[] {
-    const allColumns: ColumnDefinition[] = [
-        { key: 'particulars', label: 'Particulars', align: 'left' },
-        { key: 'implementingOffice', label: 'Implementing Office', align: 'left' },
-        { key: 'year', label: 'Year', align: 'center' },
-        { key: 'status', label: 'Status', align: 'center' },
-        { key: 'totalBudgetAllocated', label: 'Allocated Budget', align: 'right' },
-        { key: 'obligatedBudget', label: 'Obligated Budget', align: 'right' },
-        { key: 'totalBudgetUtilized', label: 'Utilized Budget', align: 'right' },
-        { key: 'utilizationRate', label: 'Utilization Rate', align: 'right' },
-        { key: 'projectCompleted', label: 'COMPLETED', align: 'right' },
-        { key: 'projectDelayed', label: 'DELAYED', align: 'right' },
-        { key: 'projectsOngoing', label: 'ONGOING', align: 'right' },
-        { key: 'remarks', label: 'Remarks', align: 'left' },
-    ];
+    const allColumns: ColumnDefinition[] = AVAILABLE_COLUMNS.map((column) => ({
+        key: column.id,
+        label: column.label,
+        align: column.align || 'left',
+    }));
 
     return allColumns.filter(col => !hiddenColumns.has(col.key));
 }

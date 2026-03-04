@@ -1171,6 +1171,10 @@ export function ProjectsTable({
                     })) as unknown as BudgetItem[]}
                     rowMarkers={printData.rowMarkers}
                     columns={printColumns}
+                    setupColumnSelection={{
+                        sourceColumns: printColumns,
+                        maxColumns: 12,
+                    }}
                     hiddenColumns={hiddenColumns}
                     totals={printTotals}
                     filterState={{

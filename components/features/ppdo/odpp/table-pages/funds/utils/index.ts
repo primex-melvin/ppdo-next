@@ -107,6 +107,7 @@ export const exportToCSV = <T extends BaseFund>(
                 .filter(col => !hiddenColumns.has(col.id))
                 .map(col => {
                     switch (col.id) {
+                        case "aipRefCode": return item.aipRefCode || "";
                         case "projectTitle": return item.projectTitle;
                         case "officeInCharge": return item.officeInCharge;
                         case "status": return formatStatus(item.status);

@@ -9,15 +9,16 @@
 // ============================================================================
 
 export const AVAILABLE_COLUMNS = [
+    { id: "aipRefCode", label: "AIP Ref. Code" },
     { id: "projectTitle", label: "Project Title", resizable: true },
     { id: "officeInCharge", label: "Office In-Charge" },
-    { id: "status", label: "Status" },
     { id: "dateReceived", label: "Date Received" },
+    { id: "status", label: "Status" },
     { id: "received", label: "Received" },
     { id: "obligatedPR", label: "Obligated PR" },
     { id: "utilized", label: "Utilized" },
-    { id: "utilizationRate", label: "Utilization %" },
     { id: "balance", label: "Balance" },
+    { id: "utilizationRate", label: "Utilization %" },
     { id: "remarks", label: "Remarks", resizable: true },
 ] as const;
 

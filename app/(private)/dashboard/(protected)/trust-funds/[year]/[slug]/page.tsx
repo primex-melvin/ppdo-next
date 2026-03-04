@@ -150,8 +150,6 @@ export default function TrustFundBreakdownPage() {
   const toggleAutoCalculate = useMutation(api.trustFunds.toggleAutoCalculateFinancials);
 
   // Handlers
-  const handlePrint = () => window.print();
-
   const handleAdd = async (breakdownData: Omit<Breakdown, "_id">) => {
     try {
       if (!trustFund) {
@@ -312,7 +310,6 @@ export default function TrustFundBreakdownPage() {
         ) : (
           <BreakdownHistoryTable
             breakdowns={sortedBreakdowns}
-            onPrint={handlePrint}
             onAdd={() => setShowAddModal(true)}
             onEdit={handleEdit}
             onDelete={handleDelete}

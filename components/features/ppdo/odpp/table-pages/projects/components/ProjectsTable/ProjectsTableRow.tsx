@@ -100,6 +100,12 @@ export function ProjectsTableRow({
                 </td>
             )}
 
+            {!hiddenColumns.has('aipRefCode') && (
+                <td className="px-3 py-3 text-sm text-zinc-600 dark:text-zinc-300">
+                    {project.aipRefCode || "-"}
+                </td>
+            )}
+
             {/* Particulars */}
             {!hiddenColumns.has('particulars') && (
                 <td className="px-3 py-3">

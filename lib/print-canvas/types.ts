@@ -159,6 +159,7 @@ export interface DraftInfo {
   key: string;
   year: number;
   particular?: string;
+  label?: string;
   timestamp: number;
   lastModified?: number; // Last modification time (optional for backward compatibility)
   documentTitle?: string; // Document title (optional for backward compatibility)

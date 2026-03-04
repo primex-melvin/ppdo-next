@@ -58,7 +58,6 @@ export interface ColumnConfig {
 
 export interface BreakdownHistoryTableProps {
   breakdowns: Breakdown[];
-  onPrint: () => void;
   onAdd?: () => void;
   onEdit?: (breakdown: Breakdown) => void;
   onDelete?: (id: string) => void;

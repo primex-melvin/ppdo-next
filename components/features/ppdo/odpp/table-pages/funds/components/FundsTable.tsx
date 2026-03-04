@@ -14,16 +14,17 @@ import { ConfirmationModal } from "@/components/features/ppdo/odpp/table-pages/1
 import { ActivityLogSheet } from "@/components/shared/activity/ActivityLogSheet";
 import { FundsTableToolbar } from "./toolbar/FundsTableToolbar";
 import { FundsContextMenu } from "./context-menu/FundsContextMenu";
-import { GenericPrintPreviewModal } from "@/components/features/ppdo/odpp/utilities/print";
+import { PrintPreviewModal } from "@/components/features/ppdo/odpp/utilities/table/print-preview/PrintPreviewModal";
 import { FundsResizableTable } from "./FundsResizableTable";
 import { BaseFund, FundsTableProps, ContextMenuState, SortField, SortDirection } from "../types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, Table as TableIcon } from "lucide-react";
 import { FundsKanban } from "./FundsKanban";
 import { exportToCSV, calculateTotals, formatTimestamp, createFundSlug } from "../utils";
-import { useTableSort, useTableFilter, useTableSelection, useFundsPrintDraft, FundsPrintAdapter } from "..";
+import { useTableSort, useTableFilter, useTableSelection, useFundsPrintDraft } from "..";
 import { AVAILABLE_COLUMNS } from "../constants";
 import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighlight";
+import { createFundsPrintPreviewData } from "../utils/printPreview";
 export function FundsTable<T extends BaseFund>({
     data,
     onAdd,
@@ -313,24 +314,30 @@ export function FundsTable<T extends BaseFund>({
         setShowPrintModal(true);
     };
 
-    const printAdapter = useMemo(() => {
-        const columns = AVAILABLE_COLUMNS.map(col => ({
-            key: col.id,
-            label: col.label,
-            align: (['received', 'utilized', 'balance', 'utilizationRate', 'obligatedPR'].includes(col.id) ? 'right' : 'left') as 'left' | 'right' | 'center',
-            sortable: true,
-            filterable: true
-        }));
+    const sourceVisibleColumns = useMemo(() => (
+        AVAILABLE_COLUMNS
+            .filter((column) => !hiddenColumns.has(column.id))
+            .map((column) => ({
+                key: column.id,
+                label: column.label,
+                align: (['received', 'utilized', 'balance', 'utilizationRate', 'obligatedPR'].includes(column.id)
+                    ? 'right'
+                    : column.id === 'dateReceived'
+                        ? 'center'
+                        : 'left') as 'left' | 'right' | 'center',
+            }))
+    ), [hiddenColumns]);
 
-        return new FundsPrintAdapter(
-            filteredAndSortedData,
+    const printPreviewData = useMemo(() => (
+        createFundsPrintPreviewData({
+            funds: filteredAndSortedData,
             totals,
-            columns,
+            columns: sourceVisibleColumns,
             year,
-            fundType,
-            title
-        );
-    }, [filteredAndSortedData, totals, year, fundType, title]);
+            title,
+        })
+    ), [filteredAndSortedData, totals, sourceVisibleColumns, year, title]);
+
     return (
         <>
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "kanban")} className="w-full">
@@ -360,7 +367,7 @@ export function FundsTable<T extends BaseFund>({
                             hiddenColumns={hiddenColumns}
                             onToggleColumn={handleToggleColumn}
                             onShowAllColumns={() => setHiddenColumns(new Set())}
-                            onHideAllColumns={() => setHiddenColumns(new Set(['projectTitle', 'officeInCharge', 'status', 'dateReceived', 'received', 'obligatedPR', 'utilized', 'utilizationRate', 'balance', 'remarks']))}
+                            onHideAllColumns={() => setHiddenColumns(new Set(AVAILABLE_COLUMNS.map((column) => column.id)))}
                             onExportCSV={handleExportCSV}
                             onOpenPrintPreview={handleOpenPrintPreview}
                             hasPrintDraft={hasDraft}
@@ -556,20 +563,31 @@ export function FundsTable<T extends BaseFund>({
 
             {/* Print Preview Modal */}
             {showPrintModal && (
-                <GenericPrintPreviewModal
+                <PrintPreviewModal
                     isOpen={showPrintModal}
                     onClose={() => setShowPrintModal(false)}
-                    adapter={printAdapter}
+                    budgetItems={printPreviewData.budgetItems}
+                    totals={printPreviewData.totals}
+                    columns={printPreviewData.columns}
+                    setupColumnSelection={{
+                        sourceColumns: sourceVisibleColumns,
+                        maxColumns: 12,
+                    }}
+                    hiddenColumns={hiddenColumns}
+                    year={printPreviewData.year}
+                    coverTitle={printPreviewData.coverTitle}
+                    coverSubtitle={printPreviewData.coverSubtitle}
+                    defaultDocumentTitle={printPreviewData.defaultDocumentTitle}
                     existingDraft={draftState}
                     onDraftSaved={saveDraft}
-                    hiddenColumns={hiddenColumns}
                     filterState={{
                         searchQuery,
-                        statusFilter: Array.from(visibleStatuses),
+                        statusFilter: [],
                         yearFilter: [year],
-                        sortField,
-                        sortDirection
+                        sortField: sortField as string | null,
+                        sortDirection,
                     }}
+                    particular={title}
                 />
             )}
 

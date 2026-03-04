@@ -9,23 +9,16 @@
 
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { Trash2, Printer, Plus, LayoutGrid, Table2, FileSpreadsheet, Share2, Search, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { SortOption } from "@/types/sort";
+import { LayoutGrid, Table2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAccentColor } from "@/contexts/AccentColorContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BreakdownKanban } from "../kanban";
-import { StatusVisibilityMenu } from "../../../utilities/shared/toolbar";
-import { KanbanFieldVisibilityMenu } from "../../../utilities/shared/kanban/KanbanFieldVisibilityMenu";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ResponsiveMoreMenu } from "@/components/shared/table/ResponsiveMoreMenu";
 
 // Import types
 import {
@@ -36,7 +29,7 @@ import {
 } from "../types/breakdown.types";
 
 // Import constants
-import { TABLE_HEIGHT, DEFAULT_ROW_HEIGHT } from "../constants/table.constants";
+import { DEFAULT_ROW_HEIGHT } from "../constants/table.constants";
 
 // Import utilities
 import {
@@ -45,6 +38,7 @@ import {
   generateGridTemplate,
   isInteractiveElement,
 } from "../utils/helpers";
+import { createBreakdownPrintPreviewData } from "../utils/printPreview";
 
 import {
   buildBreakdownDetailPath,
@@ -62,31 +56,34 @@ import { useTableResize } from "../hooks/useTableResize";
 import { useColumnDragDrop } from "../hooks/useColumnDragDrop";
 import { useAutoScrollHighlight } from "@/lib/shared/hooks/useAutoScrollHighlight";
 
-// Import shared table components
-import {
-  GenericTableToolbar,
-  TableActionButton,
-  SortDropdown,
-} from "@/components/shared/table";
-import { ColumnVisibilityMenu } from "@/components/shared/table/ColumnVisibilityMenu";
+// Import shared toolbar
+import { TableToolbar } from "@/components/features/ppdo/odpp/utilities/table/toolbar";
+import { PrintPreviewModal } from "@/components/features/ppdo/odpp/utilities/table/print-preview/PrintPreviewModal";
+import { useTablePrintDraft } from "@/components/features/ppdo/odpp/utilities/table/print-preview/useTablePrintDraft";
+import { ConfirmationModal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
 
 // Import table sub-components
 import { TableHeader } from "./TableHeader";
 import { TableRow } from "./TableRow";
 import { TableTotalsRow } from "./TableTotalsRow";
 import { EmptyState } from "./EmptyState";
-import { GenericPrintPreviewModal } from "@/components/features/ppdo/odpp/utilities/print";
 import { exportToCSV, createBreakdownExportConfig } from "@/services";
-
-// Import print adapter
-import { BreakdownPrintAdapter } from "../lib/print-adapters/BreakdownPrintAdapter";
 
 // Import share modal
 import { BreakdownShareModal } from "../components/BreakdownShareModal";
 
+const KANBAN_FIELD_CONFIG = [
+  { id: "allocatedBudget", label: "Allocated Budget" },
+  { id: "obligatedBudget", label: "Obligated Budget" },
+  { id: "budgetUtilized", label: "Budget Utilized" },
+  { id: "balance", label: "Balance" },
+  { id: "utilizationRate", label: "Utilization Rate" },
+  { id: "date", label: "Date" },
+  { id: "remarks", label: "Remarks" },
+] as const;
+
 export function BreakdownHistoryTable({
   breakdowns,
-  onPrint,
   onAdd,
   onEdit,
   onDelete,
@@ -104,11 +101,10 @@ export function BreakdownHistoryTable({
   const params = useParams();
   const searchParams = useSearchParams();
   const { accentColorValue } = useAccentColor();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Search state
   const [search, setSearch] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const isSearchExpanded = isSearchFocused || search.length > 0;
 
   // Column visibility state
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
@@ -117,8 +113,8 @@ export function BreakdownHistoryTable({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Print preview state
-  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
-  const [printAdapter, setPrintAdapter] = useState<BreakdownPrintAdapter | null>(null);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [showDraftConfirm, setShowDraftConfirm] = useState(false);
 
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false);
@@ -151,6 +147,34 @@ export function BreakdownHistoryTable({
     return navigationParams?.projectbreakdownId || (params as any).projectbreakdownId as string;
   }, [entityType, navigationParams, params]);
 
+  const breakdownYear = useMemo(() => {
+    const rawYear = navigationParams?.year || (params as { year?: string | string[] }).year;
+    const normalizedYear = Array.isArray(rawYear) ? rawYear[0] : rawYear;
+    const parsedYear = Number(normalizedYear);
+
+    return Number.isFinite(parsedYear) ? parsedYear : new Date().getFullYear();
+  }, [navigationParams?.year, params]);
+
+  const breakdownDraftKey = useMemo(() => {
+    if (!shareEntityId) return null;
+    return `breakdown_print_draft:${entityType}:${breakdownYear}:${shareEntityId}`;
+  }, [breakdownYear, entityType, shareEntityId]);
+
+  const {
+    draftState,
+    saveDraft,
+    hasDraft,
+    deleteDraft,
+    formattedLastSaved,
+  } = useTablePrintDraft({
+    storageKey: breakdownDraftKey,
+    metadata: {
+      year: breakdownYear,
+      label: `${entityName || "Breakdown"} (${entityType}, ${breakdownYear})`,
+      documentTitleFallback: `${entityName || "Breakdown"} - ${breakdownYear}`,
+    },
+  });
+
   // Keyboard shortcut to toggle view tabs visibility
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -177,15 +201,25 @@ export function BreakdownHistoryTable({
     "utilizationRate",
   ]));
 
-  const handleToggleField = (fieldId: string, isChecked: boolean) => {
-    const newVisible = new Set(visibleFields);
-    if (isChecked) {
-      newVisible.add(fieldId);
-    } else {
-      newVisible.delete(fieldId);
-    }
-    setVisibleFields(newVisible);
-  };
+  const handleToggleField = useCallback((fieldId: string, isChecked: boolean) => {
+    setVisibleFields((prev) => {
+      const next = new Set(prev);
+      if (isChecked) {
+        next.add(fieldId);
+      } else {
+        next.delete(fieldId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleShowAllFields = useCallback(() => {
+    setVisibleFields(new Set(KANBAN_FIELD_CONFIG.map((field) => field.id)));
+  }, []);
+
+  const handleHideAllFields = useCallback(() => {
+    setVisibleFields(new Set());
+  }, []);
 
   // Determine table identifier based on entity type
   const tableIdentifier =
@@ -314,40 +348,26 @@ export function BreakdownHistoryTable({
      PRINT HANDLER
   ======================= */
 
-  const handlePrint = useCallback(() => {
-    try {
-      // Determine breakdown ID from params or navigation params
-      let breakdownId: string | undefined;
-
-      if (entityType === "trustfund") {
-        breakdownId = navigationParams?.slug || (params as any).slug as string;
-      } else if (entityType === "specialeducationfund") {
-        breakdownId = navigationParams?.slug || (params as any).slug as string;
-      } else if (entityType === "specialhealthfund") {
-        breakdownId = navigationParams?.slug || (params as any).slug as string;
-      } else if (entityType === "twentyPercentDF") {
-        breakdownId = navigationParams?.slug || (params as any).slug as string;
-      } else {
-        breakdownId = navigationParams?.projectbreakdownId || (params as any).projectbreakdownId as string;
-      }
-
-      if (!breakdownId) {
-        console.warn("No breakdown ID found for print adapter");
-        return;
-      }
-
-      const adapter = new BreakdownPrintAdapter(
-        breakdowns,
-        breakdownId,
-        columns as any[],
-        entityName
-      );
-      setPrintAdapter(adapter);
-      setIsPrintPreviewOpen(true);
-    } catch (error) {
-      console.error('Failed to open print preview:', error);
+  const handleOpenPrintPreview = useCallback(() => {
+    if (hasDraft) {
+      setShowDraftConfirm(true);
+      return;
     }
-  }, [breakdowns, params, navigationParams, columns, entityType]);
+
+    setShowPrintPreview(true);
+  }, [hasDraft]);
+
+  const handleLoadDraft = useCallback(() => {
+    setShowDraftConfirm(false);
+    setShowPrintPreview(true);
+  }, []);
+
+  const handleStartFresh = useCallback(() => {
+    if (!hasDraft || deleteDraft()) {
+      setShowDraftConfirm(false);
+      setShowPrintPreview(true);
+    }
+  }, [deleteDraft, hasDraft]);
 
   /* =======================
      NAVIGATION HANDLER
@@ -403,6 +423,14 @@ export function BreakdownHistoryTable({
     return filterBreakdowns(breakdowns, search);
   }, [breakdowns, search]);
 
+  const rowsForPrintPreview = useMemo(() => {
+    if (selectedIds.size === 0) {
+      return filteredRows;
+    }
+
+    return filteredRows.filter((breakdown) => selectedIds.has(breakdown._id));
+  }, [filteredRows, selectedIds]);
+
   // Selection state
   const isAllSelected = filteredRows.length > 0 && selectedIds.size === filteredRows.length;
   const isIndeterminate = selectedIds.size > 0 && selectedIds.size < filteredRows.length;
@@ -410,6 +438,27 @@ export function BreakdownHistoryTable({
   const totals = useMemo(() => {
     return calculateColumnTotals(filteredRows, visibleColumns as any[]);
   }, [filteredRows, visibleColumns]);
+
+  const tableColumnsForToolbar = useMemo(() => (
+    columns.map((col) => ({ key: String(col.key), label: col.label }))
+  ), [columns]);
+
+  const hiddenKanbanFields = useMemo(() => (
+    new Set(
+      KANBAN_FIELD_CONFIG
+        .filter((field) => !visibleFields.has(field.id))
+        .map((field) => field.id)
+    )
+  ), [visibleFields]);
+
+  const breakdownPrintPreviewData = useMemo(() => (
+    createBreakdownPrintPreviewData({
+      rows: rowsForPrintPreview,
+      columns: visibleColumns as ColumnConfig[],
+      year: breakdownYear,
+      entityName,
+    })
+  ), [rowsForPrintPreview, visibleColumns, breakdownYear, entityName]);
 
   /* =======================
      EXPORT CSV HANDLER (defined after filteredRows)
@@ -509,172 +558,32 @@ export function BreakdownHistoryTable({
             borderColor: "var(--border)",
           }}
         >
-          {/* TOOLBAR */}
-          <GenericTableToolbar
-            actions={
-              <div className="flex items-center gap-1 sm:gap-2">
-                {/* Selection Info */}
-                {selectedIds.size > 0 && (
-                  <div className="hidden sm:flex items-center gap-2 mr-2">
-                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {selectedIds.size} selected
-                    </span>
-                    <button
-                      onClick={handleClearSelection}
-                      className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-
-                {/* Bulk Move to Trash Button */}
-                {selectedIds.size > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBulkTrash}
-                    className="text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Move to Trash ({selectedIds.size})
-                  </Button>
-                )}
-
-                {/* Collapsible toolbar actions - hide when search expanded */}
-                <AnimatePresence>
-                  {!isSearchExpanded && (
-                    <motion.div
-                      initial={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95, width: 0 }}
-                      animate={{ opacity: 1, scale: 1, width: "auto" }}
-                      transition={{ duration: 0.2 }}
-                      className="flex items-center gap-2 overflow-hidden"
-                    >
-                      <ColumnVisibilityMenu
-                        columns={columns.map(col => ({ key: String(col.key), label: col.label }))}
-                        hiddenColumns={hiddenColumns}
-                        onToggleColumn={handleToggleColumn}
-                        onShowAll={handleShowAllColumns}
-                        onHideAll={handleHideAllColumns}
-                        variant="table"
-                      />
-
-                      {/* Desktop secondary actions */}
-                      <div className="hidden lg:flex items-center gap-2">
-                        {onOpenTrash && (
-                          <TableActionButton
-                            icon={Trash2}
-                            label="Recycle Bin"
-                            onClick={onOpenTrash}
-                            title="View Recycle Bin"
-                          />
-                        )}
-                        <TableActionButton
-                          icon={Printer}
-                          label="Print"
-                          onClick={handlePrint}
-                          title="Print"
-                        />
-                        <TableActionButton
-                          icon={FileSpreadsheet}
-                          label="Export CSV"
-                          onClick={handleExportCSV}
-                          title="Export to CSV"
-                        />
-                        {isAdmin && (
-                          <TableActionButton
-                            icon={Share2}
-                            label="Share"
-                            onClick={() => setShowShareModal(true)}
-                            title="Share & Manage Access"
-                          />
-                        )}
-                      </div>
-
-                      {/* Mobile/Tablet more menu */}
-                      <div className="lg:hidden">
-                        <ResponsiveMoreMenu>
-                          {onOpenTrash && (
-                            <DropdownMenuItem onClick={onOpenTrash}>
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Recycle Bin
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={handlePrint}>
-                            <Printer className="w-4 h-4 mr-2" />
-                            Print
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleExportCSV}>
-                            <FileSpreadsheet className="w-4 h-4 mr-2" />
-                            Export CSV
-                          </DropdownMenuItem>
-                          {isAdmin && (
-                            <DropdownMenuItem onClick={() => setShowShareModal(true)}>
-                              <Share2 className="w-4 h-4 mr-2" />
-                              Share
-                            </DropdownMenuItem>
-                          )}
-                        </ResponsiveMoreMenu>
-                      </div>
-
-                      {onAdd && (
-                        <TableActionButton
-                          icon={Plus}
-                          label="Add"
-                          onClick={onAdd}
-                          variant="primary"
-                          accentColor={accentColorValue}
-                          hideLabelOnMobile={true}
-                        />
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            }
-          >
-            <div className="flex items-center gap-2 flex-1">
-              {/* Sort Dropdown - always visible on left side */}
-              {onSortChange && selectedIds.size === 0 && (
-                <SortDropdown
-                  value={sortOption || "lastModified"}
-                  onChange={onSortChange}
-                  tooltipText="Sort breakdowns"
-                />
-              )}
-              {/* Animated Search Input */}
-              <motion.div
-                className="relative"
-                initial={false}
-                animate={{
-                  width: isSearchExpanded ? "100%" : "20rem",
-                  flexGrow: isSearchExpanded ? 1 : 0
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              >
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-                  className="w-full h-9 pl-9 pr-9 text-sm border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                    aria-label="Clear search"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </motion.div>
-            </div>
-          </GenericTableToolbar>
+          <TableToolbar
+            searchQuery={search}
+            onSearchChange={setSearch}
+            searchInputRef={searchInputRef}
+            selectedCount={selectedIds.size}
+            onClearSelection={handleClearSelection}
+            hiddenColumns={hiddenColumns}
+            onToggleColumn={handleToggleColumn}
+            onShowAllColumns={handleShowAllColumns}
+            onHideAllColumns={handleHideAllColumns}
+            columns={tableColumnsForToolbar}
+            onBulkTrash={handleBulkTrash}
+            onOpenTrash={onOpenTrash}
+            onExportCSV={handleExportCSV}
+            onOpenPrintPreview={handleOpenPrintPreview}
+            isAdmin={isAdmin}
+            pendingRequestsCount={breakdownPendingCount ?? pendingRequestsCount}
+            onOpenShare={() => setShowShareModal(true)}
+            onAddNew={onAdd}
+            accentColor={accentColorValue}
+            sortOption={sortOption}
+            onSortChange={onSortChange}
+            showSort={!!onSortChange}
+            hasPrintDraft={hasDraft}
+            showDirectPrint={false}
+          />
 
           {/* TABLE WRAPPER - CRITICAL: Contains the border grid */}
           <div
@@ -754,141 +663,33 @@ export function BreakdownHistoryTable({
 
       <TabsContent value="kanban" className="mt-0">
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-          {/* KANBAN TOOLBAR */}
-          <GenericTableToolbar
-            actions={
-              <div className="flex items-center gap-1 sm:gap-2">
-                {/* Collapsible toolbar actions - hide when search expanded */}
-                <AnimatePresence>
-                  {!isSearchExpanded && (
-                    <motion.div
-                      initial={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95, width: 0 }}
-                      animate={{ opacity: 1, scale: 1, width: "auto" }}
-                      transition={{ duration: 0.2 }}
-                      className="flex items-center gap-2 overflow-hidden"
-                    >
-                      <div className="hidden sm:flex items-center gap-2">
-                        <KanbanFieldVisibilityMenu
-                          visibleFields={visibleFields}
-                          onToggleField={handleToggleField}
-                          fields={[
-                            { id: "allocatedBudget", label: "Allocated Budget" },
-                            { id: "obligatedBudget", label: "Obligated Budget" },
-                            { id: "budgetUtilized", label: "Budget Utilized" },
-                            { id: "balance", label: "Balance" },
-                            { id: "utilizationRate", label: "Utilization Rate" },
-                            { id: "date", label: "Date" },
-                            { id: "remarks", label: "Remarks" },
-                          ]}
-                        />
-                        <StatusVisibilityMenu
-                          visibleStatuses={visibleStatuses}
-                          onToggleStatus={handleToggleStatus}
-                          statusOptions={[
-                            { id: "ongoing", label: "Ongoing" },
-                            { id: "delayed", label: "Delayed" },
-                            { id: "completed", label: "Completed" },
-                          ]}
-                        />
-                      </div>
-
-                      {/* Mobile/Tablet more menu for Kanban filters */}
-                      <div className="sm:hidden">
-                        <ResponsiveMoreMenu>
-                          <div className="p-2 border-b">
-                            <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Visibility</p>
-                            <KanbanFieldVisibilityMenu
-                              visibleFields={visibleFields}
-                              onToggleField={handleToggleField}
-                            />
-                            <StatusVisibilityMenu
-                              visibleStatuses={visibleStatuses}
-                              onToggleStatus={handleToggleStatus}
-                            />
-                          </div>
-                        </ResponsiveMoreMenu>
-                      </div>
-
-                      <div className="hidden lg:flex items-center gap-2">
-                        {onOpenTrash && (
-                          <TableActionButton
-                            icon={Trash2}
-                            label="Recycle Bin"
-                            onClick={onOpenTrash}
-                            title="View Recycle Bin"
-                          />
-                        )}
-                      </div>
-
-                      <div className="lg:hidden">
-                        <ResponsiveMoreMenu>
-                          {onOpenTrash && (
-                            <DropdownMenuItem onClick={onOpenTrash}>
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Recycle Bin
-                            </DropdownMenuItem>
-                          )}
-                        </ResponsiveMoreMenu>
-                      </div>
-
-                      {onAdd && (
-                        <TableActionButton
-                          icon={Plus}
-                          label="Add"
-                          onClick={onAdd}
-                          variant="primary"
-                          accentColor={accentColorValue}
-                          hideLabelOnMobile={true}
-                        />
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            }
-          >
-            <div className="flex items-center gap-2 flex-1">
-              {/* Sort Dropdown - always visible on left side */}
-              {onSortChange && selectedIds.size === 0 && (
-                <SortDropdown
-                  value={sortOption || "lastModified"}
-                  onChange={onSortChange}
-                  tooltipText="Sort breakdowns"
-                />
-              )}
-              {/* Animated Search Input */}
-              <motion.div
-                className="relative"
-                initial={false}
-                animate={{
-                  width: isSearchExpanded ? "100%" : "20rem",
-                  flexGrow: isSearchExpanded ? 1 : 0
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              >
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Search items..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                className="w-full h-9 pl-9 pr-9 text-sm border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  aria-label="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </motion.div>
-            </div>
-          </GenericTableToolbar>
+          <TableToolbar
+            searchQuery={search}
+            onSearchChange={setSearch}
+            searchInputRef={searchInputRef}
+            selectedCount={selectedIds.size}
+            onClearSelection={handleClearSelection}
+            hiddenColumns={hiddenKanbanFields}
+            onToggleColumn={handleToggleField}
+            onShowAllColumns={handleShowAllFields}
+            onHideAllColumns={handleHideAllFields}
+            columns={KANBAN_FIELD_CONFIG.map((field) => ({ key: field.id, label: field.label }))}
+            onBulkTrash={handleBulkTrash}
+            onOpenTrash={onOpenTrash}
+            isAdmin={isAdmin}
+            pendingRequestsCount={breakdownPendingCount ?? pendingRequestsCount}
+            onOpenShare={() => setShowShareModal(true)}
+            onAddNew={onAdd}
+            accentColor={accentColorValue}
+            visibleStatuses={visibleStatuses}
+            onToggleStatus={handleToggleStatus}
+            showExport={false}
+            showDirectPrint={false}
+            columnTriggerLabel="Fields"
+            sortOption={sortOption}
+            onSortChange={onSortChange}
+            showSort={!!onSortChange}
+          />
 
           <div className="p-4 bg-zinc-50/50 dark:bg-zinc-950/50">
             <BreakdownKanban
@@ -904,25 +705,44 @@ export function BreakdownHistoryTable({
         </div>
       </TabsContent>
 
-      {/* PRINT PREVIEW MODAL */}
-      {printAdapter && (
-        <GenericPrintPreviewModal
-          isOpen={isPrintPreviewOpen}
-          onClose={() => {
-            setIsPrintPreviewOpen(false);
-            setPrintAdapter(null);
-          }}
-          adapter={printAdapter}
-          hiddenColumns={hiddenColumns}
-          filterState={{
-            searchQuery: search,
-            statusFilter: [],
-            yearFilter: [],
-            sortField: null,
-            sortDirection: null,
-          }}
-        />
-      )}
+      <PrintPreviewModal
+        isOpen={showPrintPreview}
+        onClose={() => setShowPrintPreview(false)}
+        budgetItems={breakdownPrintPreviewData.budgetItems}
+        totals={breakdownPrintPreviewData.totals}
+        columns={breakdownPrintPreviewData.columns}
+        setupColumnSelection={{
+          sourceColumns: breakdownPrintPreviewData.columns,
+          maxColumns: 12,
+        }}
+        hiddenColumns={hiddenColumns}
+        filterState={{
+          searchQuery: search,
+          statusFilter: [],
+          yearFilter: [breakdownYear],
+          sortField: null,
+          sortDirection: null,
+        }}
+        year={breakdownPrintPreviewData.year}
+        particular={entityName}
+        coverTitle={breakdownPrintPreviewData.coverTitle}
+        coverSubtitle={breakdownPrintPreviewData.coverSubtitle}
+        defaultDocumentTitle={breakdownPrintPreviewData.defaultDocumentTitle}
+        existingDraft={draftState}
+        onDraftSaved={saveDraft}
+      />
+
+      <ConfirmationModal
+        isOpen={showDraftConfirm}
+        onClose={() => setShowDraftConfirm(false)}
+        onConfirm={handleLoadDraft}
+        title="Load Existing Draft?"
+        message={`You have a print preview draft from ${formattedLastSaved || "recently"}. Load it or start fresh?`}
+        confirmText="Load Draft"
+        cancelText="Start Fresh"
+        onCancel={handleStartFresh}
+        variant="default"
+      />
 
       {/* SHARE MODAL */}
       {showShareModal && shareEntityId && (
