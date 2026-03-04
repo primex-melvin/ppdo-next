@@ -251,6 +251,7 @@ export async function indexEntity(
     entityId: string;
     primaryText: string;
     secondaryText?: string;
+    aipRefCode?: string;
     departmentId?: string;
     status?: string;
     year?: number;
@@ -291,11 +292,18 @@ export async function indexEntity(
   const normalizedSecondaryText = args.secondaryText
     ? normalizeText(args.secondaryText)
     : undefined;
+  const normalizedAipRefCode = args.aipRefCode
+    ? normalizeText(args.aipRefCode)
+    : undefined;
 
   // Tokenize combined text
-  const combinedText = args.secondaryText
-    ? `${args.primaryText} ${args.secondaryText}`
-    : args.primaryText;
+  const combinedText = [
+    args.primaryText,
+    args.secondaryText,
+    args.aipRefCode,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const tokens = tokenizeText(combinedText);
 
   // Calculate relevance score using original timestamps
@@ -314,6 +322,8 @@ export async function indexEntity(
     normalizedPrimaryText,
     secondaryText: args.secondaryText,
     normalizedSecondaryText,
+    aipRefCode: args.aipRefCode,
+    normalizedAipRefCode,
     tokens,
     departmentId: args.departmentId,
     status: args.status,
@@ -397,6 +407,7 @@ export const indexEntityMutation = mutation({
     entityId: v.string(),
     primaryText: v.string(),
     secondaryText: v.optional(v.string()),
+    aipRefCode: v.optional(v.string()),
     departmentId: v.optional(v.string()),
     status: v.optional(v.string()),
     year: v.optional(v.number()),
@@ -627,6 +638,8 @@ export const search = query({
             normalizedPrimaryText: entry.normalizedPrimaryText,
             secondaryText: entry.secondaryText,
             normalizedSecondaryText: entry.normalizedSecondaryText,
+            aipRefCode: entry.aipRefCode,
+            normalizedAipRefCode: entry.normalizedAipRefCode,
             tokens: entry.tokens,
           },
           userDepartmentId,
@@ -646,6 +659,7 @@ export const search = query({
         const matchedFields: string[] = [];
         let primaryTextHighlighted: string | undefined;
         let secondaryTextHighlighted: string | undefined;
+        let aipRefCodeHighlighted: string | undefined;
 
         // Check primary text for matches using already normalized text
         const primaryTextMatches = containsQueryTokens(entry.normalizedPrimaryText, queryTokens);
@@ -662,9 +676,18 @@ export const search = query({
           secondaryTextHighlighted = createHighlight(entry.secondaryText, queryTokens);
         }
 
+        // Check AIP reference code for matches
+        const aipRefCodeMatches = entry.normalizedAipRefCode &&
+          containsQueryTokens(entry.normalizedAipRefCode, queryTokens);
+        if (aipRefCodeMatches && entry.aipRefCode) {
+          matchedFields.push("aipRefCode");
+          aipRefCodeHighlighted = createHighlight(entry.aipRefCode, queryTokens);
+        }
+
         // Also check if normalized query is a substring of normalized text (for exact phrase matches)
         const exactPhraseMatch = entry.normalizedPrimaryText.includes(normalizedQuery) ||
-          (entry.normalizedSecondaryText && entry.normalizedSecondaryText.includes(normalizedQuery));
+          (entry.normalizedSecondaryText && entry.normalizedSecondaryText.includes(normalizedQuery)) ||
+          (entry.normalizedAipRefCode && entry.normalizedAipRefCode.includes(normalizedQuery));
 
         // Check token matches - this handles cases where tokenization differs
         const matchedTokens = queryTokens.filter((token) =>
@@ -691,6 +714,7 @@ export const search = query({
           highlights: {
             primaryText: primaryTextHighlighted || entry.primaryText,
             secondaryText: secondaryTextHighlighted || entry.secondaryText,
+            aipRefCode: aipRefCodeHighlighted || entry.aipRefCode,
           },
         };
       })
@@ -826,6 +850,12 @@ export const categoryCounts = query({
       ) {
         return true;
       }
+      if (
+        entry.normalizedAipRefCode &&
+        entry.normalizedAipRefCode.includes(normalizedQuery)
+      ) {
+        return true;
+      }
 
       // Check token matches
       const matchedTokens = queryTokens.filter((token) =>
@@ -924,7 +954,10 @@ export const suggestions = query({
           entry.normalizedPrimaryText.includes(` ${normalizedQuery}`) ||
           (entry.normalizedSecondaryText &&
             (entry.normalizedSecondaryText.startsWith(normalizedQuery) ||
-              entry.normalizedSecondaryText.includes(` ${normalizedQuery}`)))
+              entry.normalizedSecondaryText.includes(` ${normalizedQuery}`))) ||
+          (entry.normalizedAipRefCode &&
+            (entry.normalizedAipRefCode.startsWith(normalizedQuery) ||
+              entry.normalizedAipRefCode.includes(` ${normalizedQuery}`)))
       )
       .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
       .slice(0, limit);

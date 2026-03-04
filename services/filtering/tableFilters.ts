@@ -131,7 +131,7 @@ export function createProjectFilterConfig<TSortField extends string>(
 ): FilterConfig<any, TSortField> {
   return {
     searchQuery,
-    searchFields: ["particulars", "implementingOffice", "status"],
+    searchFields: ["particulars", "aipRefCode", "implementingOffice", "status"],
     statusFilter,
     yearFilter,
     sortField,

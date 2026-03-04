@@ -83,6 +83,7 @@ function getFieldLabel(field: string): string {
   const fieldLabels: Record<string, string> = {
     primaryText: "Title",
     secondaryText: "Description",
+    aipRefCode: "AIP Ref. Code",
     normalizedPrimaryText: "Title",
     normalizedSecondaryText: "Description",
     tokens: "Keywords",
@@ -171,7 +172,7 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
   const authorName = apiResult.authorName;
   const authorImage = apiResult.authorImage;
 
-  const { entityType, primaryText, secondaryText, createdAt, updatedAt } = indexEntry;
+  const { entityType, primaryText, secondaryText, aipRefCode, createdAt, updatedAt } = indexEntry;
 
   /**
    * Handle card click - navigate to source with loading state
@@ -323,6 +324,19 @@ export function SearchResultCard({ result, index, onClick }: SearchResultCardPro
                   secondaryText
                 )}
               </p>
+            )}
+
+            {aipRefCode && (
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                <span className="font-medium text-foreground">AIP Ref. Code:</span>
+                <span className="font-mono text-muted-foreground break-all">
+                  {highlights?.aipRefCode ? (
+                    <HighlightText html={highlights.aipRefCode} />
+                  ) : (
+                    aipRefCode
+                  )}
+                </span>
+              </div>
             )}
 
             {/* Matched Fields Chips */}

@@ -14,6 +14,8 @@ export interface Document {
   normalizedPrimaryText: string;
   secondaryText?: string;
   normalizedSecondaryText?: string;
+  aipRefCode?: string;
+  normalizedAipRefCode?: string;
   tokens: string[];
 }
 
@@ -45,6 +47,7 @@ function calculateTermFrequency(term: string, document: Document): number {
   const allText = [
     document.normalizedPrimaryText,
     document.normalizedSecondaryText || "",
+    document.normalizedAipRefCode || "",
   ].join(" ");
 
   // Count term occurrences
@@ -87,6 +90,14 @@ export function calculateTFIDF(query: string, document: Document): number {
   if (
     document.normalizedSecondaryText &&
     document.normalizedSecondaryText.includes(queryLower)
+  ) {
+    score += 60;
+  }
+
+  // 2b. Exact phrase match in AIP reference code
+  if (
+    document.normalizedAipRefCode &&
+    document.normalizedAipRefCode.includes(queryLower)
   ) {
     score += 60;
   }

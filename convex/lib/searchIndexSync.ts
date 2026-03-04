@@ -65,6 +65,7 @@ export async function syncProjectSearchIndex(
     entityId: asStringId(project._id) || "",
     primaryText: project.particulars || "",
     secondaryText: project.implementingOffice,
+    aipRefCode: project.aipRefCode,
     departmentId: project.departmentId,
     status: project.status,
     year: project.year,

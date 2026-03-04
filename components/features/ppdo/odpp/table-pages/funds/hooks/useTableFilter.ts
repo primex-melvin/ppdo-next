@@ -18,6 +18,7 @@ export const useTableFilter = <T extends BaseFund>(
             result = result.filter(
                 (item) =>
                     item.projectTitle.toLowerCase().includes(query) ||
+                    (item.aipRefCode && item.aipRefCode.toLowerCase().includes(query)) ||
                     item.officeInCharge.toLowerCase().includes(query) ||
                     (item.status && item.status.toLowerCase().includes(query)) ||
                     (item.remarks && item.remarks.toLowerCase().includes(query))

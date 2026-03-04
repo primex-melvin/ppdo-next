@@ -82,6 +82,17 @@ export const searchIndexTables = {
     normalizedSecondaryText: v.optional(v.string()),
 
     /**
+     * AIP reference code shown in entity tables
+     * Stored separately so search results can render it explicitly
+     */
+    aipRefCode: v.optional(v.string()),
+
+    /**
+     * Normalized AIP reference code
+     */
+    normalizedAipRefCode: v.optional(v.string()),
+
+    /**
      * Search tokens - Array of keywords extracted from text
      * Used for efficient keyword matching
      * Example: "Road Infrastructure Project" -> ["road", "infrastructure", "project"]
@@ -185,6 +196,7 @@ export const searchIndexTables = {
     // Text search indexes
     .index("normalizedPrimaryText", ["normalizedPrimaryText"])
     .index("normalizedSecondaryText", ["normalizedSecondaryText"])
+    .index("normalizedAipRefCode", ["normalizedAipRefCode"])
 
     // Filter indexes
     .index("departmentId", ["departmentId"])

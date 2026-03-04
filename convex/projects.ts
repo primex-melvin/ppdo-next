@@ -6,7 +6,6 @@ import { recalculateBudgetItemMetrics } from "./lib/budgetAggregation";
 import { recalculateProjectMetrics } from "./lib/projectAggregation";
 import { logProjectActivity } from "./lib/projectActivityLogger";
 import { internal } from "./_generated/api";
-import { indexEntity } from "./search/index";
 import { syncProjectBreakdownSearchIndex, syncProjectSearchIndex } from "./lib/searchIndexSync";
 // buildSlug no longer needed - project page uses encodeURIComponent(particulars) for URLs
 
@@ -157,28 +156,7 @@ export const moveToTrash = mutation({
     });
 
     // 🔍 Update search index - mark as deleted
-    // Get parent budget item for slug
-    let parentBudgetItem: { _id: string; particulars: string } | null = null;
-    if (existing.budgetItemId) {
-      const budgetItem = await ctx.db.get(existing.budgetItemId);
-      if (budgetItem) {
-        parentBudgetItem = { _id: budgetItem._id as string, particulars: budgetItem.particulars };
-      }
-    }
-    await indexEntity(ctx, {
-      entityType: "projectItem",
-      entityId: args.id,
-      primaryText: existing.particulars,
-      secondaryText: existing.implementingOffice,
-      departmentId: existing.departmentId,
-      status: existing.status,
-      year: existing.year,
-      parentSlug: parentBudgetItem
-        ? encodeURIComponent(parentBudgetItem.particulars)
-        : undefined,
-      parentId: parentBudgetItem ? parentBudgetItem._id : undefined,
-      isDeleted: true,
-    });
+    await syncProjectSearchIndex(ctx, { ...existing, isDeleted: true }, { isDeleted: true });
 
     return { success: true, message: "Project moved to trash" };
   },
@@ -260,28 +238,7 @@ export const restoreFromTrash = mutation({
     await recalculateProjectMetrics(ctx, args.id, userId);
 
     // 🔍 Update search index - restore from trash
-    // Get parent budget item for slug
-    let parentBudgetItemForRestore: { _id: string; particulars: string } | null = null;
-    if (existing.budgetItemId) {
-      const budgetItem = await ctx.db.get(existing.budgetItemId);
-      if (budgetItem) {
-        parentBudgetItemForRestore = { _id: budgetItem._id as string, particulars: budgetItem.particulars };
-      }
-    }
-    await indexEntity(ctx, {
-      entityType: "projectItem",
-      entityId: args.id,
-      primaryText: existing.particulars,
-      secondaryText: existing.implementingOffice,
-      departmentId: existing.departmentId,
-      status: existing.status,
-      year: existing.year,
-      parentSlug: parentBudgetItemForRestore
-        ? encodeURIComponent(parentBudgetItemForRestore.particulars)
-        : undefined,
-      parentId: parentBudgetItemForRestore ? parentBudgetItemForRestore._id : undefined,
-      isDeleted: false,
-    });
+    await syncProjectSearchIndex(ctx, { ...existing, isDeleted: false }, { isDeleted: false });
 
     return { success: true, message: "Project restored" };
   },
@@ -440,8 +397,6 @@ export const create = mutation({
         }
       }
 
-      // Get parent budget item for slug generation
-      let parentBudgetItem: { _id: any; particulars: string } | null = null;
       if (args.budgetItemId) {
         const budgetItem = await ctx.db.get(args.budgetItemId);
         if (!budgetItem) {
@@ -453,7 +408,6 @@ export const create = mutation({
             },
           };
         }
-        parentBudgetItem = budgetItem;
       }
 
       const now = Date.now();
@@ -523,20 +477,9 @@ export const create = mutation({
       });
 
       // 🔍 Add to search index with parent slug for nested navigation
-      await indexEntity(ctx, {
-        entityType: "projectItem",
-        entityId: projectId,
-        primaryText: args.particulars,
-        secondaryText: args.implementingOffice,
-        departmentId: departmentId,
-        status: "ongoing",
-        year: args.year,
-        parentSlug: parentBudgetItem
-          ? encodeURIComponent(parentBudgetItem.particulars)
-          : undefined,
-        parentId: parentBudgetItem ? (parentBudgetItem._id as string) : undefined,
-        isDeleted: false,
-      });
+      if (newProject) {
+        await syncProjectSearchIndex(ctx, newProject, { isDeleted: false });
+      }
 
       // ✅ RECALCULATE PARENT BUDGET ITEM
       if (args.budgetItemId) {
@@ -752,28 +695,9 @@ export const update = mutation({
     await recalculateProjectMetrics(ctx, args.id, userId);
 
     // 🔍 Update search index
-    // Get parent budget item for slug
-    let parentBudgetItemForUpdate: { _id: string; particulars: string } | null = null;
-    if (args.budgetItemId) {
-      const budgetItem = await ctx.db.get(args.budgetItemId);
-      if (budgetItem) {
-        parentBudgetItemForUpdate = { _id: budgetItem._id as string, particulars: budgetItem.particulars };
-      }
+    if (updatedProject) {
+      await syncProjectSearchIndex(ctx, updatedProject, { isDeleted: false });
     }
-    await indexEntity(ctx, {
-      entityType: "projectItem",
-      entityId: args.id,
-      primaryText: args.particulars,
-      secondaryText: args.implementingOffice,
-      departmentId: departmentId,
-      status: updatedProject?.status || "ongoing",
-      year: args.year,
-      parentSlug: parentBudgetItemForUpdate
-        ? encodeURIComponent(parentBudgetItemForUpdate.particulars)
-        : undefined,
-      parentId: parentBudgetItemForUpdate ? parentBudgetItemForUpdate._id : undefined,
-      isDeleted: false,
-    });
 
     return args.id;
   },

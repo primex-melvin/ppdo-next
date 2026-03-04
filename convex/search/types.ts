@@ -176,6 +176,8 @@ export interface SearchIndexEntry {
   normalizedPrimaryText: string;
   secondaryText?: string;
   normalizedSecondaryText?: string;
+  aipRefCode?: string;
+  normalizedAipRefCode?: string;
   tokens: string[];
 
   // Metadata for filtering
@@ -221,6 +223,7 @@ export interface SearchResult<T = any> {
   highlights?: {
     primaryText?: string; // Text with <mark> tags around matches
     secondaryText?: string;
+    aipRefCode?: string;
   };
 
   // Display metadata
@@ -385,6 +388,7 @@ export interface SearchIndexUpdate {
   entityId: string;
   primaryText: string;
   secondaryText?: string;
+  aipRefCode?: string;
   departmentId?: string;
   status?: string;
   year?: number;
@@ -503,6 +507,7 @@ export interface SearchApiResult {
   highlights: {
     primaryText?: string;
     secondaryText?: string;
+    aipRefCode?: string;
   };
   sourceUrl: string;
   createdAt: number;
