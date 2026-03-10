@@ -9,7 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useAccentColor } from "@/contexts/AccentColorContext";
-import { Modal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/components/BudgetModal";
+import { FormResizableModal } from "@/components/features/ppdo/odpp/utilities/common/components/modals";
 import { ConfirmationModal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan/components/BudgetConfirmationModal";
 import { ActivityLogSheet } from "@/components/shared/activity/ActivityLogSheet";
 import { FundsTableToolbar } from "./toolbar/FundsTableToolbar";
@@ -499,7 +499,7 @@ export function FundsTable<T extends BaseFund>({
 
             {/* Modals */}
             {showAddModal && FormComponent && (
-                <Modal
+                <FormResizableModal
                     isOpen={showAddModal}
                     onClose={() => setShowAddModal(false)}
                     title={`Add ${title.slice(0, -1)}`}
@@ -513,11 +513,11 @@ export function FundsTable<T extends BaseFund>({
                         }}
                         onCancel={() => setShowAddModal(false)}
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {showEditModal && selectedItem && FormComponent && (
-                <Modal
+                <FormResizableModal
                     isOpen={showEditModal}
                     onClose={() => {
                         setShowEditModal(false);
@@ -539,7 +539,7 @@ export function FundsTable<T extends BaseFund>({
                             setSelectedItem(null);
                         }}
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {showDeleteModal && selectedItem && (

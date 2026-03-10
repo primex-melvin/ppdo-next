@@ -16,6 +16,7 @@ import { Modal } from "./Modal";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { ActivityLogSheet } from "@/components/shared/activity/ActivityLogSheet";
 import { TrashConfirmationModal } from "@/components/shared/modals/TrashConfirmationModal";
+import { FormResizableModal } from "@/components/features/ppdo/odpp/utilities/common/components/modals";
 
 // Local Components
 import { ProjectForm } from "./ProjectForm";
@@ -1015,7 +1016,7 @@ export function ProjectsTable({
 
             {/* Add Project Modal */}
             {showAddModal && (
-                <Modal
+                <FormResizableModal
                     isOpen={showAddModal}
                     onClose={() => setShowAddModal(false)}
                     title="Add Project"
@@ -1030,12 +1031,12 @@ export function ProjectsTable({
                         }}
                         onCancel={() => setShowAddModal(false)}
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {/* Edit Project Modal */}
             {showEditModal && selectedProject && (
-                <Modal
+                <FormResizableModal
                     isOpen={showEditModal}
                     onClose={() => {
                         setShowEditModal(false);
@@ -1057,7 +1058,7 @@ export function ProjectsTable({
                             setSelectedProject(null);
                         }}
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {/* Delete Confirmation Modal */}

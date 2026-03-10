@@ -35,7 +35,7 @@ import {
 
 // Shared Components
 import { TrashBinModal } from "@/components/shared/modals";
-import { Modal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
+import { FormResizableModal } from "@/components/features/ppdo/odpp/utilities/common/components/modals";
 import { TrashConfirmationModal } from "@/components/shared/modals/TrashConfirmationModal";
 
 // Shared Hooks
@@ -327,7 +327,7 @@ export default function TrustFundBreakdownPage() {
 
       {/* Modals */}
       {showAddModal && trustFund && (
-        <Modal
+        <FormResizableModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           title="Add Breakdown Record"
@@ -341,11 +341,11 @@ export default function TrustFundBreakdownPage() {
             onCancel={() => setShowAddModal(false)}
             entityType="trustfund"
           />
-        </Modal>
+        </FormResizableModal>
       )}
 
       {showEditModal && selectedBreakdown && (
-        <Modal
+        <FormResizableModal
           isOpen={showEditModal}
           onClose={() => {
             setShowEditModal(false);
@@ -364,7 +364,7 @@ export default function TrustFundBreakdownPage() {
             }}
             entityType="trustfund"
           />
-        </Modal>
+        </FormResizableModal>
       )}
 
       {/* Trash Confirmation Modal */}

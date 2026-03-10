@@ -13,6 +13,7 @@ import { useAccentColor } from "@/contexts/AccentColorContext";
 import { Modal } from "./Modal";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { ActivityLogSheet } from "@/components/shared/activity/ActivityLogSheet";
+import { FormResizableModal } from "@/components/features/ppdo/odpp/utilities/common/components/modals";
 
 // Local Components
 import { TwentyPercentDFForm } from "./TwentyPercentDFForm";
@@ -869,7 +870,7 @@ export function TwentyPercentDFTable({
             )}
 
             {showAddModal && (
-                <Modal
+                <FormResizableModal
                     isOpen={showAddModal}
                     onClose={() => setShowAddModal(false)}
                     title="Add Item"
@@ -883,11 +884,11 @@ export function TwentyPercentDFTable({
                         }}
                         onCancel={() => setShowAddModal(false)}
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {showEditModal && selectedProject && (
-                <Modal
+                <FormResizableModal
                     isOpen={showEditModal}
                     onClose={() => {
                         setShowEditModal(false);
@@ -908,7 +909,7 @@ export function TwentyPercentDFTable({
                             setSelectedProject(null);
                         }}
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {showDeleteModal && selectedProject && (

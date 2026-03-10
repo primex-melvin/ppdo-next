@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, Table as TableIcon } from "lucide-react";
 
 // Components
-import { Modal } from "./BudgetModal";
+import { FormResizableModal } from "@/components/features/ppdo/odpp/utilities/common/components/modals";
 import { ConfirmationModal } from "./BudgetConfirmationModal";
 import { BudgetItemForm } from "./BudgetItemForm";
 import BudgetShareModal from "./BudgetShareModal";
@@ -667,7 +667,7 @@ export function BudgetTrackingTable({
 
       {/* Modals */}
       {modalStates.showAddModal && (
-        <Modal
+        <FormResizableModal
           isOpen={modalStates.showAddModal}
           onClose={() => {
             setShowAddModal(false);
@@ -683,11 +683,11 @@ export function BudgetTrackingTable({
               setSelectedItem(null);
             }}
           />
-        </Modal>
+        </FormResizableModal>
       )}
 
       {modalStates.showEditModal && selectedItem && (
-        <Modal
+        <FormResizableModal
           isOpen={modalStates.showEditModal}
           onClose={() => {
             setShowEditModal(false);
@@ -704,7 +704,7 @@ export function BudgetTrackingTable({
               setSelectedItem(null);
             }}
           />
-        </Modal>
+        </FormResizableModal>
       )}
 
       {/* Old delete modal - kept for backwards compatibility */}

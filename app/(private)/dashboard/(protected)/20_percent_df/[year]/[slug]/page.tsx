@@ -25,7 +25,7 @@ import {
 
 // Shared Components
 import { TrashBinModal } from "@/components/shared/modals";
-import { Modal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
+import { FormResizableModal } from "@/components/features/ppdo/odpp/utilities/common/components/modals";
 import { TrashConfirmationModal } from "@/components/shared/modals/TrashConfirmationModal";
 
 // Shared Hooks
@@ -319,7 +319,7 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
             </div>
 
             {showAddModal && fund && (
-                <Modal
+                <FormResizableModal
                     isOpen={showAddModal}
                     onClose={() => setShowAddModal(false)}
                     title="Add Breakdown Record"
@@ -333,11 +333,11 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
                         onCancel={() => setShowAddModal(false)}
                         entityType="twentyPercentDF"
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {showEditModal && selectedBreakdown && (
-                <Modal
+                <FormResizableModal
                     isOpen={showEditModal}
                     onClose={() => {
                         setShowEditModal(false);
@@ -356,7 +356,7 @@ export default function TwentyPercentDFBreakdownPage({ params }: PageProps) {
                         }}
                         entityType="twentyPercentDF"
                     />
-                </Modal>
+                </FormResizableModal>
             )}
 
             {/* Trash Confirmation Modal */}

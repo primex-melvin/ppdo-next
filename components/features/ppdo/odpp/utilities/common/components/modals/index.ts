@@ -8,6 +8,9 @@
 export { Modal } from "./Modal";
 export type { ModalProps } from "./Modal";
 
+export { FormResizableModal } from "./FormResizableModal";
+export type { FormResizableModalProps } from "./FormResizableModal";
+
 export { ConfirmationModal } from "./ConfirmationModal";
 export type { ConfirmationModalProps } from "./ConfirmationModal";
 

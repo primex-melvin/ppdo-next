@@ -29,7 +29,7 @@ import {
 // Shared Components
 import { TrashBinModal } from "@/components/shared/modals";
 import { TrashConfirmationModal } from "@/components/shared/modals/TrashConfirmationModal";
-import { Modal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
+import { FormResizableModal } from "@/components/features/ppdo/odpp/utilities/common/components/modals";
 import { ConfirmationModal } from "@/components/features/ppdo/odpp/table-pages/11_project_plan";
 
 // Shared Hooks
@@ -290,7 +290,7 @@ export default function ProjectBreakdownPage() {
 
       {/* Modals */}
       {showAddModal && project && (
-        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Breakdown Record" size="xl">
+        <FormResizableModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Breakdown Record" size="xl">
           <BreakdownForm
             defaultProjectName={project.particulars}
             defaultImplementingOffice={project.implementingOffice}
@@ -298,11 +298,11 @@ export default function ProjectBreakdownPage() {
             onSave={handleAdd}
             onCancel={() => setShowAddModal(false)}
           />
-        </Modal>
+        </FormResizableModal>
       )}
 
       {showEditModal && selectedBreakdown && (
-        <Modal
+        <FormResizableModal
           isOpen={showEditModal}
           onClose={() => { setShowEditModal(false); setSelectedBreakdown(null); }}
           title="Edit Breakdown Record"
@@ -314,7 +314,7 @@ export default function ProjectBreakdownPage() {
             onSave={handleUpdate}
             onCancel={() => { setShowEditModal(false); setSelectedBreakdown(null); }}
           />
-        </Modal>
+        </FormResizableModal>
       )}
 
       {/* Trash Confirmation Modal */}
