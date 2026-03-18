@@ -602,7 +602,7 @@ function calculateOfficeBreakdown(projects: any[]) {
             utilizationRate: d.allocated > 0 ? (d.utilized / d.allocated) * 100 : 0,
         }))
         .sort((a, b) => b.allocated - a.allocated)
-        .slice(0, 10);
+        .slice(0, 100); // Increased limit to support frontend top 50 / show all options
 }
 
 /**
@@ -897,7 +897,7 @@ function calculateDepartmentBreakdown(budgetItems: any[], projects: any[], depar
             utilizationRate: d.allocated > 0 ? (d.utilized / d.allocated) * 100 : 0,
         }))
         .sort((a, b) => b.allocated - a.allocated)
-        .slice(0, 10);
+        .slice(0, 100); // Increased limit to support frontend top 50 / show all options
 }
 
 function calculateTimeSeries(projects: any[], budgetItems: any[], filters: FilterCriteria) {
