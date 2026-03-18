@@ -111,7 +111,7 @@ const ResizableModalContent = React.forwardRef<
         ref={ref}
         className={cn(
           // Base positioning
-          'fixed left-[50%] top-[50%] z-[1001] translate-x-[-50%] translate-y-[-50%]',
+          'fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%]',
           // Styling
           'bg-white dark:bg-stone-900 rounded-lg shadow-2xl',
           'border border-stone-200 dark:border-stone-800',
