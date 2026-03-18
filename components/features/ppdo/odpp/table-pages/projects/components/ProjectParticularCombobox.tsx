@@ -180,11 +180,6 @@ export function ProjectParticularCombobox({
                                 <span className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
                                     {value}
                                 </span>
-                                {selectedParticular && (
-                                    <span className="text-sm truncate">
-                                        {selectedParticular.fullName}
-                                    </span>
-                                )}
                             </span>
                         ) : (
                             "Select project particular..."
@@ -192,7 +187,7 @@ export function ProjectParticularCombobox({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                     <Command shouldFilter={false}>
                         <CommandInput
                             placeholder="Search project particulars..."
@@ -236,11 +231,8 @@ export function ProjectParticularCombobox({
                                                     )}
                                                 />
                                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                    <span className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded shrink-0">
+                                                    <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded flex-1 truncate">
                                                         {particular.code}
-                                                    </span>
-                                                    <span className="text-sm truncate flex-1">
-                                                        {particular.fullName}
                                                     </span>
                                                     {particular.usageCount !== undefined &&
                                                         particular.usageCount > 0 && (
